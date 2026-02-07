@@ -6,21 +6,24 @@ import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database
 
 function ClockIcon() {
   return (
-    <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
   );
 }
 
-function AttractionRow({ attraction }: { attraction: Attraction }) {
+function AttractionRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
   const status = attraction.status as AttractionStatus;
 
   return (
-    <div className="flex items-center justify-between px-5 py-4 sm:px-8 sm:py-5 border-b border-white/10 last:border-b-0 transition-colors">
+    <div
+      className="flex items-center justify-between px-8 rounded-lg bg-white/[0.04] border border-white/[0.08]"
+      style={style}
+    >
       {/* Left: Attraction name */}
-      <div className="flex-1 min-w-0 mr-4">
-        <h3 className="text-white text-lg font-semibold truncate sm:text-xl lg:text-2xl">
+      <div className="flex-1 min-w-0 mr-6">
+        <h3 className="text-white text-2xl font-bold truncate">
           {attraction.name}
         </h3>
       </div>
@@ -28,28 +31,28 @@ function AttractionRow({ attraction }: { attraction: Attraction }) {
       {/* Right: Status / Time */}
       <div className="flex-shrink-0 text-right">
         {status === 'OPEN' && (
-          <div className="flex items-center gap-2 text-white">
+          <div className="flex items-center gap-3 text-white">
             <ClockIcon />
-            <span className="text-xl font-bold tabular-nums sm:text-2xl lg:text-3xl">
+            <span className="text-3xl font-black tabular-nums">
               {attraction.wait_time}
             </span>
-            <span className="text-sm font-semibold uppercase tracking-wider text-white/70 sm:text-base">
+            <span className="text-base font-semibold uppercase tracking-wider text-white/60">
               Mins
             </span>
           </div>
         )}
         {status === 'CLOSED' && (
-          <span className="text-blood-bright text-xl font-bold italic sm:text-2xl lg:text-3xl">
+          <span className="text-blood-bright text-2xl font-bold italic">
             Closed
           </span>
         )}
         {status === 'DELAYED' && (
-          <span className="text-delay-orange text-lg font-bold sm:text-xl lg:text-2xl">
+          <span className="text-delay-orange text-2xl font-bold">
             Technical Delay
           </span>
         )}
         {status === 'AT CAPACITY' && (
-          <span className="text-capacity-amber text-lg font-bold sm:text-xl lg:text-2xl">
+          <span className="text-capacity-amber text-2xl font-bold">
             At Capacity
           </span>
         )}
@@ -68,6 +71,7 @@ function formatClosingTime(time: string): string {
 }
 
 const PAGE_INTERVAL = 10000; // 10 seconds between page switches
+const TV_SAFE_PADDING = '3.5%'; // TV overscan safe area
 
 export default function TVDisplay() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
@@ -76,16 +80,18 @@ export default function TVDisplay() {
   const [currentPage, setCurrentPage] = useState(0);
   const [perPage, setPerPage] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const [mainHeight, setMainHeight] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Calculate how many rows fit in the available space
+  // Measure how many rows fit — each row needs ~height including gap
   const calculatePerPage = useCallback(() => {
-    if (!rowRef.current || !mainRef.current) return;
-    const rowHeight = rowRef.current.getBoundingClientRect().height;
-    if (rowHeight === 0) return;
-    const mainHeight = mainRef.current.getBoundingClientRect().height;
-    const fits = Math.max(1, Math.floor(mainHeight / rowHeight));
+    if (!mainRef.current) return;
+    const available = mainRef.current.getBoundingClientRect().height;
+    setMainHeight(available);
+    // Estimate: each row is roughly 70px + 12px gap = ~82px
+    // We'll use a conservative estimate; the actual flex layout will stretch them
+    const estimatedRowHeight = 82;
+    const fits = Math.max(1, Math.floor(available / estimatedRowHeight));
     setPerPage(fits);
   }, []);
 
@@ -152,11 +158,10 @@ export default function TVDisplay() {
     };
   }, []);
 
-  // Measure row height after first render and on resize
+  // Measure available space after render and on resize
   useEffect(() => {
-    if (loading || attractions.length === 0) return;
+    if (loading) return;
 
-    // Small delay to let DOM settle
     const timer = setTimeout(calculatePerPage, 100);
 
     const handleResize = () => calculatePerPage();
@@ -166,7 +171,7 @@ export default function TVDisplay() {
       clearTimeout(timer);
       window.removeEventListener('resize', handleResize);
     };
-  }, [loading, attractions.length, calculatePerPage]);
+  }, [loading, calculatePerPage]);
 
   // Determine pagination
   const totalPages = perPage && perPage < attractions.length
@@ -181,11 +186,9 @@ export default function TVDisplay() {
     }
 
     const interval = setInterval(() => {
-      // Start fade out
       setFading(true);
       setTimeout(() => {
         setCurrentPage((prev) => (prev + 1) % totalPages);
-        // Fade back in
         setFading(false);
       }, 400);
     }, PAGE_INTERVAL);
@@ -193,7 +196,7 @@ export default function TVDisplay() {
     return () => clearInterval(interval);
   }, [totalPages]);
 
-  // Reset current page if it's out of bounds
+  // Reset current page if out of bounds
   useEffect(() => {
     if (currentPage >= totalPages) {
       setCurrentPage(0);
@@ -205,6 +208,14 @@ export default function TVDisplay() {
     ? attractions.slice(currentPage * perPage, (currentPage + 1) * perPage)
     : attractions;
 
+  // Calculate row height so they stretch to fill the space evenly
+  const count = visibleAttractions.length;
+  const gap = 12; // gap between rows in px
+  const totalGap = count > 1 ? (count - 1) * gap : 0;
+  const rowHeight = count > 0 && mainHeight > 0
+    ? Math.floor((mainHeight - totalGap) / count)
+    : 70;
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
@@ -214,43 +225,56 @@ export default function TVDisplay() {
   }
 
   return (
-    <div className="h-screen bg-black flex flex-col overflow-hidden">
+    <div
+      className="h-screen bg-black flex flex-col overflow-hidden"
+      style={{
+        paddingLeft: TV_SAFE_PADDING,
+        paddingRight: TV_SAFE_PADDING,
+        paddingTop: '2%',
+        paddingBottom: '2%',
+      }}
+    >
       {/* Header banner */}
-      <header className="bg-gradient-to-r from-blood via-gore to-blood py-5 px-6 sm:py-6 sm:px-10 flex-shrink-0">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <h1 className="text-white text-2xl font-black uppercase tracking-wider sm:text-3xl lg:text-4xl">
+      <header className="bg-gradient-to-r from-blood via-gore to-blood py-4 px-8 rounded-lg flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <h1 className="text-white text-3xl font-black uppercase tracking-wider">
             Queue Times
           </h1>
-          <div className="text-white/80 text-sm font-medium sm:text-base">
+          <div className="text-white/80 text-lg font-semibold">
             Scarepark
           </div>
         </div>
       </header>
 
-      {/* Attraction list */}
-      <main ref={mainRef} className="flex-1 max-w-5xl mx-auto w-full overflow-hidden">
+      {/* Attraction list — fills available space */}
+      <main ref={mainRef} className="flex-1 overflow-hidden py-3">
         <div
-          className="bg-[#0a0a0a] divide-y divide-white/10 transition-opacity duration-400"
-          style={{ opacity: fading ? 0 : 1 }}
+          className="h-full flex flex-col transition-opacity duration-400"
+          style={{
+            opacity: fading ? 0 : 1,
+            gap: `${gap}px`,
+          }}
         >
-          {visibleAttractions.map((attraction, index) => (
-            <div key={attraction.id} ref={index === 0 ? rowRef : undefined}>
-              <AttractionRow attraction={attraction} />
-            </div>
+          {visibleAttractions.map((attraction) => (
+            <AttractionRow
+              key={attraction.id}
+              attraction={attraction}
+              style={{ height: `${rowHeight}px`, minHeight: '50px' }}
+            />
           ))}
         </div>
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-gradient-to-r from-[#1a1a2e] via-[#16163a] to-[#1a1a2e] py-4 px-6 sm:py-5 sm:px-10 flex-shrink-0">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          {/* Page dots (left) — only shown when paginating */}
-          <div className="flex items-center gap-1.5 min-w-[60px]">
+      <footer className="bg-gradient-to-r from-[#1a1a2e] via-[#16163a] to-[#1a1a2e] py-4 px-8 rounded-lg flex-shrink-0">
+        <div className="flex items-center justify-between">
+          {/* Page dots (left) */}
+          <div className="flex items-center gap-2 min-w-[80px]">
             {totalPages > 1 &&
               Array.from({ length: totalPages }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                  className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
                     i === currentPage ? 'bg-white' : 'bg-white/30'
                   }`}
                 />
@@ -260,16 +284,16 @@ export default function TVDisplay() {
 
           {/* Closing time (center) */}
           <div className="flex items-center justify-center gap-3">
-            <span className="text-closing-light text-base font-semibold uppercase tracking-wider sm:text-lg">
+            <span className="text-closing-light text-lg font-semibold uppercase tracking-wider">
               Park Closes
             </span>
-            <span className="text-white text-xl font-black tabular-nums sm:text-2xl">
+            <span className="text-white text-2xl font-black tabular-nums">
               {formatClosingTime(closingTime)}
             </span>
           </div>
 
-          {/* Spacer (right) to balance the layout */}
-          <div className="min-w-[60px]" />
+          {/* Spacer (right) */}
+          <div className="min-w-[80px]" />
         </div>
       </footer>
     </div>
