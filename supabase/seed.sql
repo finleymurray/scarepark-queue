@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS attractions (
   wait_time INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL,
   attraction_type TEXT NOT NULL DEFAULT 'ride',
-  next_show_time TEXT,
+  show_times JSONB DEFAULT '[]'::jsonb,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -70,13 +70,16 @@ INSERT INTO park_settings (key, value) VALUES
 
 -- ============================================
 -- MIGRATION: Run this if you already have the
--- tables from a previous version (adds the new
--- columns for Live Show support)
+-- tables from a previous version
 -- ============================================
+-- -- Add columns for Live Show support
 -- ALTER TABLE attractions ADD COLUMN IF NOT EXISTS attraction_type TEXT NOT NULL DEFAULT 'ride';
--- ALTER TABLE attractions ADD COLUMN IF NOT EXISTS next_show_time TEXT;
+-- ALTER TABLE attractions ADD COLUMN IF NOT EXISTS show_times JSONB DEFAULT '[]'::jsonb;
 --
--- If add/delete isn't working, replace the old RLS policies:
+-- -- Remove old next_show_time column if it exists
+-- ALTER TABLE attractions DROP COLUMN IF EXISTS next_show_time;
+--
+-- -- Fix RLS policies if add/delete isn't working:
 -- DROP POLICY IF EXISTS "Allow authenticated insert" ON attractions;
 -- DROP POLICY IF EXISTS "Allow authenticated update" ON attractions;
 -- DROP POLICY IF EXISTS "Allow authenticated delete" ON attractions;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
+import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
 function ClockIcon() {
   return (
@@ -13,13 +13,44 @@ function ClockIcon() {
   );
 }
 
-function AttractionRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
+function formatTime12h(time: string): string {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${hour12}:${m} ${ampm}`;
+}
+
+/** Given sorted show_times ["18:00","19:30","21:00"], return the next one after now */
+function getNextShowTime(showTimes: string[] | null): string | null {
+  if (!showTimes || showTimes.length === 0) return null;
+
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const sorted = [...showTimes].sort();
+
+  for (const time of sorted) {
+    const [h, m] = time.split(':');
+    const timeMinutes = parseInt(h, 10) * 60 + parseInt(m, 10);
+    if (timeMinutes > nowMinutes) {
+      return time;
+    }
+  }
+
+  // All shows have passed — return null (no more shows today)
+  return null;
+}
+
+function AttractionRow({ attraction, style, now }: { attraction: Attraction; style?: React.CSSProperties; now: number }) {
   const status = attraction.status as AttractionStatus;
   const isShow = attraction.attraction_type === 'show';
+  const nextShow = isShow ? getNextShowTime(attraction.show_times) : null;
 
   return (
     <div
-      className={`flex items-center justify-between px-8 rounded-lg border ${
+      className={`flex items-center justify-between px-12 rounded-lg border ${
         isShow
           ? 'bg-purple-950/30 border-purple-500/20'
           : 'bg-white/[0.04] border-white/[0.08]'
@@ -61,9 +92,7 @@ function AttractionRow({ attraction, style }: { attraction: Attraction; style?: 
               Next Show
             </span>
             <span className="text-white text-3xl font-black tabular-nums">
-              {attraction.next_show_time
-                ? formatTime12h(attraction.next_show_time)
-                : '--:--'}
+              {nextShow ? formatTime12h(nextShow) : 'No More Shows'}
             </span>
           </div>
         )}
@@ -83,17 +112,8 @@ function AttractionRow({ attraction, style }: { attraction: Attraction; style?: 
   );
 }
 
-function formatTime12h(time: string): string {
-  if (!time) return '--:--';
-  const [h, m] = time.split(':');
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${hour12}:${m} ${ampm}`;
-}
-
-const PAGE_INTERVAL = 10000; // 10 seconds between page switches
-const TV_SAFE_PADDING = '3.5%'; // TV overscan safe area
+const PAGE_INTERVAL = 10000;
+const TV_SAFE_PADDING = '3.5%';
 
 export default function TVDisplay() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
@@ -103,15 +123,19 @@ export default function TVDisplay() {
   const [perPage, setPerPage] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
   const [mainHeight, setMainHeight] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Measure how many rows fit — each row needs ~height including gap
+  // Tick every 30s so show times auto-advance
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const calculatePerPage = useCallback(() => {
     if (!mainRef.current) return;
     const available = mainRef.current.getBoundingClientRect().height;
     setMainHeight(available);
-    // Estimate: each row is roughly 70px + 12px gap = ~82px
-    // We'll use a conservative estimate; the actual flex layout will stretch them
     const estimatedRowHeight = 82;
     const fits = Math.max(1, Math.floor(available / estimatedRowHeight));
     setPerPage(fits);
@@ -180,7 +204,6 @@ export default function TVDisplay() {
     };
   }, []);
 
-  // Measure available space after render and on resize
   useEffect(() => {
     if (loading) return;
 
@@ -195,12 +218,10 @@ export default function TVDisplay() {
     };
   }, [loading, calculatePerPage]);
 
-  // Determine pagination
   const totalPages = perPage && perPage < attractions.length
     ? Math.ceil(attractions.length / perPage)
     : 1;
 
-  // Auto-cycle pages with fade transition
   useEffect(() => {
     if (totalPages <= 1) {
       setCurrentPage(0);
@@ -218,21 +239,18 @@ export default function TVDisplay() {
     return () => clearInterval(interval);
   }, [totalPages]);
 
-  // Reset current page if out of bounds
   useEffect(() => {
     if (currentPage >= totalPages) {
       setCurrentPage(0);
     }
   }, [currentPage, totalPages]);
 
-  // Slice attractions for current page
   const visibleAttractions = perPage && totalPages > 1
     ? attractions.slice(currentPage * perPage, (currentPage + 1) * perPage)
     : attractions;
 
-  // Calculate row height so they stretch to fill the space evenly
   const count = visibleAttractions.length;
-  const gap = 12; // gap between rows in px
+  const gap = 12;
   const totalGap = count > 1 ? (count - 1) * gap : 0;
   const rowHeight = count > 0 && mainHeight > 0
     ? Math.floor((mainHeight - totalGap) / count)
@@ -257,15 +275,10 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-gradient-to-r from-blood via-gore to-blood py-4 px-8 rounded-lg flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-white text-3xl font-black uppercase tracking-wider">
-            Queue Times
-          </h1>
-          <div className="text-white/80 text-lg font-semibold">
-            Scarepark
-          </div>
-        </div>
+      <header className="bg-gradient-to-r from-blood via-gore to-blood py-4 px-10 rounded-lg flex-shrink-0">
+        <h1 className="text-white text-3xl font-black uppercase tracking-wider">
+          Queue Times
+        </h1>
       </header>
 
       {/* Attraction list — fills available space */}
@@ -282,13 +295,14 @@ export default function TVDisplay() {
               key={attraction.id}
               attraction={attraction}
               style={{ height: `${rowHeight}px`, minHeight: '50px' }}
+              now={now}
             />
           ))}
         </div>
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-gradient-to-r from-[#1a1a2e] via-[#16163a] to-[#1a1a2e] py-4 px-8 rounded-lg flex-shrink-0">
+      <footer className="bg-gradient-to-r from-[#1a1a2e] via-[#16163a] to-[#1a1a2e] py-4 px-10 rounded-lg flex-shrink-0">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">

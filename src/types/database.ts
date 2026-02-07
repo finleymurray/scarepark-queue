@@ -10,7 +10,7 @@ export interface Attraction {
   wait_time: number;
   sort_order: number;
   attraction_type: AttractionType;
-  next_show_time: string | null;
+  show_times: string[] | null;
   updated_at: string;
 }
 

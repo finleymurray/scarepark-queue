@@ -21,6 +21,15 @@ const STATUS_TEXT_COLORS: Record<AttractionStatus, string> = {
   'AT CAPACITY': 'text-capacity-amber',
 };
 
+function formatTime12h(time: string): string {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${hour12}:${m} ${ampm}`;
+}
+
 /* ── Confirm Modal ── */
 function ConfirmModal({
   open,
@@ -368,13 +377,11 @@ function ShowControl({
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-  const [showTime, setShowTime] = useState(attraction.next_show_time || '');
+  const [newTime, setNewTime] = useState('');
 
   const status = attraction.status as AttractionStatus;
-
-  useEffect(() => {
-    setShowTime(attraction.next_show_time || '');
-  }, [attraction.next_show_time]);
+  const showTimes: string[] = attraction.show_times || [];
+  const sortedTimes = [...showTimes].sort();
 
   async function handleUpdate(updates: Partial<Attraction>) {
     setSaving(true);
@@ -384,19 +391,26 @@ function ShowControl({
     setTimeout(() => setShowSaved(false), 1500);
   }
 
-  function handleSetShowTime() {
-    if (showTime) {
-      handleUpdate({ next_show_time: showTime });
+  function handleAddTime() {
+    if (!newTime) return;
+    if (showTimes.includes(newTime)) {
+      setNewTime('');
+      return;
     }
+    handleUpdate({ show_times: [...showTimes, newTime] });
+    setNewTime('');
   }
 
-  function handleClearShowTime() {
-    handleUpdate({ next_show_time: null });
-    setShowTime('');
+  function handleRemoveTime(time: string) {
+    handleUpdate({ show_times: showTimes.filter((t) => t !== time) });
+  }
+
+  function handleClearAll() {
+    handleUpdate({ show_times: [] });
   }
 
   return (
-    <div className="horror-card rounded-xl p-4 relative border-purple-900/50" style={{ borderColor: 'rgba(126, 34, 206, 0.3)' }}>
+    <div className="horror-card rounded-xl p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -429,40 +443,65 @@ function ShowControl({
         </select>
       </div>
 
-      <div className="text-center mb-3">
-        <span className="text-bone/50 text-xs font-medium uppercase tracking-wider">Next Show</span>
-        <div className="text-4xl font-bold tabular-nums mt-1 text-purple-400">
-          {attraction.next_show_time || '--:--'}
-        </div>
+      {/* Show times list */}
+      <div className="mb-3">
+        <label className="block text-bone/50 text-xs font-medium mb-2">Show Times</label>
+        {sortedTimes.length === 0 ? (
+          <p className="text-bone/30 text-xs italic mb-2">No show times added</p>
+        ) : (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {sortedTimes.map((time) => (
+              <div
+                key={time}
+                className="flex items-center gap-1.5 bg-purple-900/40 border border-purple-500/30
+                           text-purple-200 text-sm font-semibold px-3 py-1.5 rounded-lg"
+              >
+                <span className="tabular-nums">{formatTime12h(time)}</span>
+                <button
+                  onClick={() => handleRemoveTime(time)}
+                  disabled={saving}
+                  className="text-purple-400/60 hover:text-blood-bright transition-colors ml-1
+                             disabled:opacity-30"
+                  title="Remove this time"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Add new time */}
       <div className="flex gap-2 mb-3">
         <input
           type="time"
-          value={showTime}
-          onChange={(e) => setShowTime(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSetShowTime(); }}
+          value={newTime}
+          onChange={(e) => setNewTime(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
           className="flex-1 px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
                      focus:outline-none focus:border-purple-500 transition-colors"
         />
         <button
-          onClick={handleSetShowTime}
-          disabled={saving || !showTime || showTime === attraction.next_show_time}
+          onClick={handleAddTime}
+          disabled={saving || !newTime || showTimes.includes(newTime)}
           className="btn-quick px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold
                      rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          Set
+          Add
         </button>
       </div>
 
-      {attraction.next_show_time && (
+      {sortedTimes.length > 0 && (
         <button
-          onClick={handleClearShowTime}
+          onClick={handleClearAll}
           disabled={saving}
           className="w-full py-2 mb-3 text-xs text-purple-400/60 hover:text-purple-300 hover:bg-purple-900/20
                      rounded-lg transition-colors disabled:opacity-30"
         >
-          Clear Show Time
+          Clear All Times
         </button>
       )}
 
@@ -589,7 +628,7 @@ export default function AdminDashboard() {
         wait_time: 0,
         sort_order: nextOrder,
         attraction_type: type,
-        next_show_time: null,
+        show_times: [],
       });
 
     if (error) {
