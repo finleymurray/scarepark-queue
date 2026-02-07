@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
+import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
 
@@ -83,28 +83,61 @@ function SaveFeedback({ show }: { show: boolean }) {
 }
 
 /* ── Add Attraction Form ── */
-function AddAttractionForm({ onAdd }: { onAdd: (name: string) => Promise<void> }) {
+function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionType) => Promise<void> }) {
   const [name, setName] = useState('');
+  const [type, setType] = useState<AttractionType>('ride');
   const [adding, setAdding] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleAdd() {
     if (!name.trim()) return;
     setAdding(true);
-    await onAdd(name.trim());
-    setName('');
+    setError('');
+    try {
+      await onAdd(name.trim(), type);
+      setName('');
+      setType('ride');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add attraction');
+    }
     setAdding(false);
   }
 
   return (
     <div className="horror-card rounded-xl p-4">
       <h3 className="text-bone text-lg font-bold mb-3">Add Attraction</h3>
+
+      {/* Type toggle */}
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setType('ride')}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors border ${
+            type === 'ride'
+              ? 'bg-blood text-white border-blood-bright'
+              : 'bg-black/40 text-bone/50 border-gore hover:border-blood/50'
+          }`}
+        >
+          Ride
+        </button>
+        <button
+          onClick={() => setType('show')}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors border ${
+            type === 'show'
+              ? 'bg-purple-700 text-white border-purple-500'
+              : 'bg-black/40 text-bone/50 border-gore hover:border-purple-500/50'
+          }`}
+        >
+          Live Show
+        </button>
+      </div>
+
       <div className="flex gap-2">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-          placeholder="Attraction name"
+          placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
           className="flex-1 px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
                      placeholder-bone/30 focus:outline-none focus:border-blood-bright transition-colors"
         />
@@ -117,6 +150,10 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string) => Promise<void> }
           {adding ? '...' : 'Add'}
         </button>
       </div>
+
+      {error && (
+        <p className="text-blood-bright text-xs mt-2">{error}</p>
+      )}
     </div>
   );
 }
@@ -183,8 +220,8 @@ function ClosingTimeControl({
   );
 }
 
-/* ── Attraction Control Card ── */
-function AttractionControl({
+/* ── Ride Control Card ── */
+function RideControl({
   attraction,
   onUpdate,
   onDelete,
@@ -308,7 +345,127 @@ function AttractionControl({
         </button>
       </div>
 
-      {/* Delete button */}
+      <button
+        onClick={() => onDelete(attraction.id, attraction.name)}
+        className="w-full py-2 text-xs text-bone/30 hover:text-blood-bright hover:bg-blood/10
+                   rounded-lg transition-colors"
+      >
+        Remove Attraction
+      </button>
+    </div>
+  );
+}
+
+/* ── Show Control Card ── */
+function ShowControl({
+  attraction,
+  onUpdate,
+  onDelete,
+}: {
+  attraction: Attraction;
+  onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
+  onDelete: (id: string, name: string) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const [showTime, setShowTime] = useState(attraction.next_show_time || '');
+
+  const status = attraction.status as AttractionStatus;
+
+  useEffect(() => {
+    setShowTime(attraction.next_show_time || '');
+  }, [attraction.next_show_time]);
+
+  async function handleUpdate(updates: Partial<Attraction>) {
+    setSaving(true);
+    await onUpdate(attraction.id, updates);
+    setSaving(false);
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 1500);
+  }
+
+  function handleSetShowTime() {
+    if (showTime) {
+      handleUpdate({ next_show_time: showTime });
+    }
+  }
+
+  function handleClearShowTime() {
+    handleUpdate({ next_show_time: null });
+    setShowTime('');
+  }
+
+  return (
+    <div className="horror-card rounded-xl p-4 relative border-purple-900/50" style={{ borderColor: 'rgba(126, 34, 206, 0.3)' }}>
+      <SaveFeedback show={showSaved} />
+
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-bone text-lg font-bold truncate mr-2">
+          {attraction.name}
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+            SHOW
+          </span>
+          <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
+            {status}
+          </span>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-bone/50 text-xs font-medium mb-1">Status</label>
+        <select
+          value={status}
+          onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
+          disabled={saving}
+          className="w-full px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
+                     focus:outline-none focus:border-purple-500 transition-colors cursor-pointer
+                     disabled:opacity-50"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="text-center mb-3">
+        <span className="text-bone/50 text-xs font-medium uppercase tracking-wider">Next Show</span>
+        <div className="text-4xl font-bold tabular-nums mt-1 text-purple-400">
+          {attraction.next_show_time || '--:--'}
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-3">
+        <input
+          type="time"
+          value={showTime}
+          onChange={(e) => setShowTime(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSetShowTime(); }}
+          className="flex-1 px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
+                     focus:outline-none focus:border-purple-500 transition-colors"
+        />
+        <button
+          onClick={handleSetShowTime}
+          disabled={saving || !showTime || showTime === attraction.next_show_time}
+          className="btn-quick px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold
+                     rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          Set
+        </button>
+      </div>
+
+      {attraction.next_show_time && (
+        <button
+          onClick={handleClearShowTime}
+          disabled={saving}
+          className="w-full py-2 mb-3 text-xs text-purple-400/60 hover:text-purple-300 hover:bg-purple-900/20
+                     rounded-lg transition-colors disabled:opacity-30"
+        >
+          Clear Show Time
+        </button>
+      )}
+
       <button
         onClick={() => onDelete(attraction.id, attraction.name)}
         className="w-full py-2 text-xs text-bone/30 hover:text-blood-bright hover:bg-blood/10
@@ -417,7 +574,7 @@ export default function AdminDashboard() {
     if (error) console.error('Error updating closing time:', error);
   }, []);
 
-  const handleAddAttraction = useCallback(async (name: string) => {
+  const handleAddAttraction = useCallback(async (name: string, type: AttractionType) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const nextOrder = attractions.length > 0
       ? Math.max(...attractions.map((a) => a.sort_order)) + 1
@@ -431,9 +588,14 @@ export default function AdminDashboard() {
         status: 'CLOSED',
         wait_time: 0,
         sort_order: nextOrder,
+        attraction_type: type,
+        next_show_time: null,
       });
 
-    if (error) console.error('Error adding attraction:', error);
+    if (error) {
+      console.error('Error adding attraction:', error);
+      throw new Error(error.message);
+    }
   }, [attractions]);
 
   const handleDeleteAttraction = useCallback(async (id: string) => {
@@ -527,14 +689,23 @@ export default function AdminDashboard() {
       <div className="mx-auto w-full h-px bg-gradient-to-r from-transparent via-blood/50 to-transparent mb-6" />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {attractions.map((attraction) => (
-          <AttractionControl
-            key={attraction.id}
-            attraction={attraction}
-            onUpdate={handleUpdate}
-            onDelete={(id, name) => setDeleteTarget({ id, name })}
-          />
-        ))}
+        {attractions.map((attraction) =>
+          attraction.attraction_type === 'show' ? (
+            <ShowControl
+              key={attraction.id}
+              attraction={attraction}
+              onUpdate={handleUpdate}
+              onDelete={(id, name) => setDeleteTarget({ id, name })}
+            />
+          ) : (
+            <RideControl
+              key={attraction.id}
+              attraction={attraction}
+              onUpdate={handleUpdate}
+              onDelete={(id, name) => setDeleteTarget({ id, name })}
+            />
+          )
+        )}
         <ClosingTimeControl
           closingTime={closingTime}
           onUpdate={handleClosingTimeUpdate}

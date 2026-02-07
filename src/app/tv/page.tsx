@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
+import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 function ClockIcon() {
   return (
@@ -15,32 +15,31 @@ function ClockIcon() {
 
 function AttractionRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
   const status = attraction.status as AttractionStatus;
+  const isShow = attraction.attraction_type === 'show';
 
   return (
     <div
-      className="flex items-center justify-between px-8 rounded-lg bg-white/[0.04] border border-white/[0.08]"
+      className={`flex items-center justify-between px-8 rounded-lg border ${
+        isShow
+          ? 'bg-purple-950/30 border-purple-500/20'
+          : 'bg-white/[0.04] border-white/[0.08]'
+      }`}
       style={style}
     >
-      {/* Left: Attraction name */}
-      <div className="flex-1 min-w-0 mr-6">
+      {/* Left: Attraction name + type badge */}
+      <div className="flex-1 min-w-0 mr-6 flex items-center gap-4">
         <h3 className="text-white text-2xl font-bold truncate">
           {attraction.name}
         </h3>
+        {isShow && (
+          <span className="flex-shrink-0 bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+            Live Show
+          </span>
+        )}
       </div>
 
-      {/* Right: Status / Time */}
+      {/* Right: Status / Time / Show time */}
       <div className="flex-shrink-0 text-right">
-        {status === 'OPEN' && (
-          <div className="flex items-center gap-3 text-white">
-            <ClockIcon />
-            <span className="text-3xl font-black tabular-nums">
-              {attraction.wait_time}
-            </span>
-            <span className="text-base font-semibold uppercase tracking-wider text-white/60">
-              Mins
-            </span>
-          </div>
-        )}
         {status === 'CLOSED' && (
           <span className="text-blood-bright text-2xl font-bold italic">
             Closed
@@ -56,12 +55,35 @@ function AttractionRow({ attraction, style }: { attraction: Attraction; style?: 
             At Capacity
           </span>
         )}
+        {status === 'OPEN' && isShow && (
+          <div className="flex items-center gap-3">
+            <span className="text-purple-300 text-base font-semibold uppercase tracking-wider">
+              Next Show
+            </span>
+            <span className="text-white text-3xl font-black tabular-nums">
+              {attraction.next_show_time
+                ? formatTime12h(attraction.next_show_time)
+                : '--:--'}
+            </span>
+          </div>
+        )}
+        {status === 'OPEN' && !isShow && (
+          <div className="flex items-center gap-3 text-white">
+            <ClockIcon />
+            <span className="text-3xl font-black tabular-nums">
+              {attraction.wait_time}
+            </span>
+            <span className="text-base font-semibold uppercase tracking-wider text-white/60">
+              Mins
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function formatClosingTime(time: string): string {
+function formatTime12h(time: string): string {
   if (!time) return '--:--';
   const [h, m] = time.split(':');
   const hour = parseInt(h, 10);
@@ -288,7 +310,7 @@ export default function TVDisplay() {
               Park Closes
             </span>
             <span className="text-white text-2xl font-black tabular-nums">
-              {formatClosingTime(closingTime)}
+              {formatTime12h(closingTime)}
             </span>
           </div>
 
