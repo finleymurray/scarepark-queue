@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
+const SHOW_STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'DELAYED'];
 
 const STATUS_COLORS: Record<AttractionStatus, string> = {
   'OPEN': 'bg-green-600',
@@ -510,7 +512,7 @@ function ShowControl({
                      focus:outline-none focus:border-purple-500 transition-colors cursor-pointer
                      disabled:opacity-50"
         >
-          {STATUS_OPTIONS.map((s) => (
+          {SHOW_STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
@@ -779,6 +781,14 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/admin/analytics"
+            className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
+                       rounded-lg transition-colors text-sm"
+          >
+            Analytics
+          </Link>
+
           <button
             onClick={() => setShowCloseAll(true)}
             disabled={closingAll}

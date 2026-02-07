@@ -20,3 +20,12 @@ export interface ParkSetting {
   value: string;
   updated_at: string;
 }
+
+export interface AttractionHistory {
+  id: string;
+  attraction_id: string;
+  attraction_name: string;
+  status: AttractionStatus;
+  wait_time: number;
+  recorded_at: string;
+}

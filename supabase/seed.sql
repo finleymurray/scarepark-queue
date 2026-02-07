@@ -69,6 +69,57 @@ INSERT INTO park_settings (key, value) VALUES
   ('closing_time', '22:00');
 
 -- ============================================
+-- ANALYTICS: Queue Time History
+-- Run this in the Supabase SQL Editor
+-- ============================================
+
+-- 9. Create the attraction_history table
+CREATE TABLE IF NOT EXISTS attraction_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  attraction_id UUID NOT NULL REFERENCES attractions(id) ON DELETE CASCADE,
+  attraction_name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  wait_time INTEGER NOT NULL,
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 10. Create indexes for efficient date-range queries
+CREATE INDEX IF NOT EXISTS idx_attraction_history_recorded_at
+  ON attraction_history (recorded_at);
+
+CREATE INDEX IF NOT EXISTS idx_attraction_history_attraction_date
+  ON attraction_history (attraction_id, recorded_at);
+
+-- 11. Enable RLS on attraction_history
+ALTER TABLE attraction_history ENABLE ROW LEVEL SECURITY;
+
+-- 12. RLS Policy — public read (auth gated at UI layer)
+CREATE POLICY "Allow public read history"
+  ON attraction_history FOR SELECT USING (true);
+
+-- 13. Trigger function to log attraction changes
+CREATE OR REPLACE FUNCTION log_attraction_change()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF (OLD.status IS DISTINCT FROM NEW.status)
+     OR (OLD.wait_time IS DISTINCT FROM NEW.wait_time) THEN
+    INSERT INTO attraction_history (attraction_id, attraction_name, status, wait_time)
+    VALUES (NEW.id, NEW.name, NEW.status, NEW.wait_time);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 14. Attach trigger to attractions table
+CREATE TRIGGER attraction_change_trigger
+  AFTER UPDATE ON attractions
+  FOR EACH ROW
+  EXECUTE FUNCTION log_attraction_change();
+
+-- ============================================
 -- MIGRATION: Run this if you already have the
 -- tables from a previous version
 -- ============================================
