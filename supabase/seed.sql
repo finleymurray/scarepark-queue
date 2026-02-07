@@ -28,24 +28,26 @@ ALTER TABLE park_settings ENABLE ROW LEVEL SECURITY;
 
 -- 4. RLS Policies for attractions
 CREATE POLICY "Allow public read access"
-  ON attractions
-  FOR SELECT
-  USING (true);
+  ON attractions FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated insert"
+  ON attractions FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
 
 CREATE POLICY "Allow authenticated update"
-  ON attractions
-  FOR UPDATE
+  ON attractions FOR UPDATE
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated delete"
+  ON attractions FOR DELETE
   USING (auth.role() = 'authenticated');
 
 -- 5. RLS Policies for park_settings
 CREATE POLICY "Allow public read settings"
-  ON park_settings
-  FOR SELECT
-  USING (true);
+  ON park_settings FOR SELECT USING (true);
 
 CREATE POLICY "Allow authenticated update settings"
-  ON park_settings
-  FOR UPDATE
+  ON park_settings FOR UPDATE
   USING (auth.role() = 'authenticated');
 
 -- 6. Enable Realtime on both tables
