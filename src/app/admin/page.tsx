@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
@@ -88,6 +88,71 @@ function SaveFeedback({ show }: { show: boolean }) {
         Saved
       </div>
     </div>
+  );
+}
+
+/* ── Editable Name ── */
+function EditableName({
+  name,
+  onSave,
+}: {
+  name: string;
+  onSave: (newName: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setValue(name);
+  }, [name]);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  function commit() {
+    const trimmed = value.trim();
+    if (trimmed && trimmed !== name) {
+      onSave(trimmed);
+    } else {
+      setValue(name);
+    }
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit();
+          if (e.key === 'Escape') { setValue(name); setEditing(false); }
+        }}
+        className="text-bone text-lg font-bold bg-black/60 border border-gore rounded px-2 py-0.5 mr-2
+                   focus:outline-none focus:border-blood-bright transition-colors min-w-0 flex-1"
+      />
+    );
+  }
+
+  return (
+    <h3
+      onClick={() => setEditing(true)}
+      className="text-bone text-lg font-bold truncate mr-2 cursor-pointer hover:text-bone/70 transition-colors"
+      title="Click to edit name"
+    >
+      {name}
+      <svg className="w-3.5 h-3.5 inline-block ml-2 text-bone/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    </h3>
   );
 }
 
@@ -271,9 +336,13 @@ function RideControl({
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-bone text-lg font-bold truncate mr-2">
-          {attraction.name}
-        </h3>
+        <EditableName
+          name={attraction.name}
+          onSave={(newName) => {
+            const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            handleUpdate({ name: newName, slug: newSlug });
+          }}
+        />
         <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
           {status}
         </span>
@@ -414,9 +483,13 @@ function ShowControl({
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-bone text-lg font-bold truncate mr-2">
-          {attraction.name}
-        </h3>
+        <EditableName
+          name={attraction.name}
+          onSave={(newName) => {
+            const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            handleUpdate({ name: newName, slug: newSlug });
+          }}
+        />
         <div className="flex items-center gap-2">
           <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
             SHOW
