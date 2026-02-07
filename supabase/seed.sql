@@ -14,28 +14,52 @@ CREATE TABLE IF NOT EXISTS attractions (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2. Enable Row Level Security
-ALTER TABLE attractions ENABLE ROW LEVEL SECURITY;
+-- 2. Create park_settings table (for closing time, etc.)
+CREATE TABLE IF NOT EXISTS park_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL DEFAULT '',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
--- 3. RLS Policy: Anyone can read (for the public TV display)
+-- 3. Enable Row Level Security
+ALTER TABLE attractions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE park_settings ENABLE ROW LEVEL SECURITY;
+
+-- 4. RLS Policies for attractions
 CREATE POLICY "Allow public read access"
   ON attractions
   FOR SELECT
   USING (true);
 
--- 4. RLS Policy: Only authenticated users can update (staff)
 CREATE POLICY "Allow authenticated update"
   ON attractions
   FOR UPDATE
   USING (auth.role() = 'authenticated');
 
--- 5. Enable Realtime on this table
-ALTER PUBLICATION supabase_realtime ADD TABLE attractions;
+-- 5. RLS Policies for park_settings
+CREATE POLICY "Allow public read settings"
+  ON park_settings
+  FOR SELECT
+  USING (true);
 
--- 6. Seed the 5 attractions
+CREATE POLICY "Allow authenticated update settings"
+  ON park_settings
+  FOR UPDATE
+  USING (auth.role() = 'authenticated');
+
+-- 6. Enable Realtime on both tables
+ALTER PUBLICATION supabase_realtime ADD TABLE attractions;
+ALTER PUBLICATION supabase_realtime ADD TABLE park_settings;
+
+-- 7. Seed the 5 attractions
 INSERT INTO attractions (name, slug, status, wait_time, sort_order) VALUES
   ('Night Terrors',          'night-terrors',          'CLOSED', 0, 1),
   ('Westlake Witch Trials',  'westlake-witch-trials',  'CLOSED', 0, 2),
   ('The Bunker',             'the-bunker',             'CLOSED', 0, 3),
   ('Strings of Control',     'strings-of-control',     'CLOSED', 0, 4),
   ('Drowned',                'drowned',                'CLOSED', 0, 5);
+
+-- 8. Seed the closing time setting
+INSERT INTO park_settings (key, value) VALUES
+  ('closing_time', '22:00');

@@ -9,3 +9,10 @@ export interface Attraction {
   sort_order: number;
   updated_at: string;
 }
+
+export interface ParkSetting {
+  id: string;
+  key: string;
+  value: string;
+  updated_at: string;
+}

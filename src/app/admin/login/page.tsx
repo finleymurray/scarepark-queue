@@ -38,10 +38,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1
-            className="text-blood-bright text-5xl mb-2 animate-flicker"
-            style={{ fontFamily: 'var(--font-horror)' }}
-          >
+          <h1 className="text-blood-bright text-4xl font-black uppercase tracking-wide mb-2">
             Staff Login
           </h1>
           <p className="text-bone/50 text-sm">Scarepark Queue Management</p>

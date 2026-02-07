@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Attraction, AttractionStatus } from '@/types/database';
+import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
 
@@ -35,7 +35,7 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
       <div className="horror-card rounded-xl p-8 max-w-md w-full text-center space-y-6">
-        <div className="text-blood-bright text-5xl mb-2" style={{ fontFamily: 'var(--font-horror)' }}>
+        <div className="text-blood-bright text-5xl mb-2">
           ⚠
         </div>
         <h2 className="text-bone text-xl font-bold">Close the Entire Park?</h2>
@@ -79,6 +79,70 @@ function SaveFeedback({ show }: { show: boolean }) {
   );
 }
 
+function ClosingTimeControl({
+  closingTime,
+  onUpdate,
+}: {
+  closingTime: string;
+  onUpdate: (value: string) => Promise<void>;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const [timeValue, setTimeValue] = useState(closingTime);
+
+  useEffect(() => {
+    setTimeValue(closingTime);
+  }, [closingTime]);
+
+  async function handleSave() {
+    setSaving(true);
+    await onUpdate(timeValue);
+    setSaving(false);
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 1500);
+  }
+
+  return (
+    <div className="closing-card rounded-xl p-4 relative">
+      <SaveFeedback show={showSaved} />
+
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-closing-light text-lg font-bold">
+          Park Closing Time
+        </h3>
+        <span className="bg-closing text-white text-xs font-bold px-2.5 py-1 rounded-full">
+          INFO
+        </span>
+      </div>
+
+      <div className="text-center mb-3">
+        <span className="text-closing-light/50 text-xs font-medium uppercase tracking-wider">Current Time</span>
+        <div className="text-4xl font-bold tabular-nums mt-1 text-closing-light">
+          {closingTime || '--:--'}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          type="time"
+          value={timeValue}
+          onChange={(e) => setTimeValue(e.target.value)}
+          className="flex-1 px-3 py-2 bg-black/60 border border-[#2a2a5a] rounded-lg text-bone text-sm
+                     focus:outline-none focus:border-closing transition-colors"
+        />
+        <button
+          onClick={handleSave}
+          disabled={saving || timeValue === closingTime}
+          className="btn-quick px-4 py-2 bg-closing hover:bg-closing-light text-white text-sm font-semibold
+                     rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          Set
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AttractionControl({
   attraction,
   onUpdate,
@@ -117,12 +181,8 @@ function AttractionControl({
     <div className="horror-card rounded-xl p-4 relative">
       <SaveFeedback show={showSaved} />
 
-      {/* Header: Name + Status Badge */}
       <div className="flex items-center justify-between mb-4">
-        <h3
-          className="text-bone text-lg truncate mr-2"
-          style={{ fontFamily: 'var(--font-horror)' }}
-        >
+        <h3 className="text-bone text-lg font-bold truncate mr-2">
           {attraction.name}
         </h3>
         <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
@@ -130,7 +190,6 @@ function AttractionControl({
         </span>
       </div>
 
-      {/* Status Dropdown */}
       <div className="mb-4">
         <label className="block text-bone/50 text-xs font-medium mb-1">Status</label>
         <select
@@ -149,7 +208,6 @@ function AttractionControl({
         </select>
       </div>
 
-      {/* Current Wait Time */}
       <div className="text-center mb-3">
         <span className="text-bone/50 text-xs font-medium uppercase tracking-wider">Wait Time</span>
         <div className={`text-4xl font-bold tabular-nums mt-1 ${STATUS_TEXT_COLORS[status]}`}>
@@ -158,7 +216,6 @@ function AttractionControl({
         </div>
       </div>
 
-      {/* Quick Adjust Buttons */}
       <div className="grid grid-cols-3 gap-2 mb-3">
         <button
           onClick={() => handleTimeAdjust(-5)}
@@ -186,7 +243,6 @@ function AttractionControl({
         </button>
       </div>
 
-      {/* Set Exact Time */}
       <div className="flex gap-2">
         <input
           type="number"
@@ -216,36 +272,38 @@ function AttractionControl({
 export default function AdminDashboard() {
   const router = useRouter();
   const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [showCloseAll, setShowCloseAll] = useState(false);
   const [closingAll, setClosingAll] = useState(false);
 
   useEffect(() => {
     async function init() {
-      // Check auth
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push('/admin/login');
         return;
       }
 
-      // Fetch attractions
-      const { data, error } = await supabase
-        .from('attractions')
-        .select('*')
-        .order('sort_order', { ascending: true });
+      const [attractionsRes, settingsRes] = await Promise.all([
+        supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
+        supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
+      ]);
 
-      if (error) {
-        console.error('Error fetching attractions:', error);
-        return;
+      if (attractionsRes.error) {
+        console.error('Error fetching attractions:', attractionsRes.error);
+      } else {
+        setAttractions(attractionsRes.data || []);
       }
 
-      setAttractions(data || []);
+      if (settingsRes.data) {
+        setClosingTime(settingsRes.data.value);
+      }
+
       setLoading(false);
 
-      // Realtime subscription so multiple staff see the same state
-      const channel = supabase
-        .channel('admin-dashboard')
+      const attractionsChannel = supabase
+        .channel('admin-attractions')
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'attractions' },
@@ -261,8 +319,23 @@ export default function AdminDashboard() {
         )
         .subscribe();
 
+      const settingsChannel = supabase
+        .channel('admin-settings')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'park_settings' },
+          (payload) => {
+            const setting = payload.new as ParkSetting;
+            if (setting.key === 'closing_time') {
+              setClosingTime(setting.value);
+            }
+          }
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(attractionsChannel);
+        supabase.removeChannel(settingsChannel);
       };
     }
 
@@ -280,11 +353,21 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const handleClosingTimeUpdate = useCallback(async (value: string) => {
+    const { error } = await supabase
+      .from('park_settings')
+      .update({ value, updated_at: new Date().toISOString() })
+      .eq('key', 'closing_time');
+
+    if (error) {
+      console.error('Error updating closing time:', error);
+    }
+  }, []);
+
   async function handleCloseAll() {
     setClosingAll(true);
     setShowCloseAll(false);
 
-    // Update all attractions to CLOSED
     const updatePromises = attractions.map((a) =>
       supabase
         .from('attractions')
@@ -305,11 +388,9 @@ export default function AdminDashboard() {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
         <div className="text-center">
-          <h1 className="text-blood-bright text-3xl animate-flicker mb-4"
-              style={{ fontFamily: 'var(--font-horror)' }}>
+          <h1 className="text-blood-bright text-3xl font-bold mb-4">
             Loading Dashboard...
           </h1>
-          <div className="w-16 h-1 bg-blood mx-auto rounded-full animate-pulse" />
         </div>
       </div>
     );
@@ -323,31 +404,24 @@ export default function AdminDashboard() {
         onCancel={() => setShowCloseAll(false)}
       />
 
-      {/* Top Bar */}
       <header className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1
-            className="text-blood-bright text-3xl sm:text-4xl"
-            style={{ fontFamily: 'var(--font-horror)' }}
-          >
+          <h1 className="text-blood-bright text-3xl font-black uppercase tracking-wide sm:text-4xl">
             Control Room
           </h1>
           <p className="text-bone/40 text-sm mt-1">Scarepark Queue Management</p>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Close All Button */}
           <button
             onClick={() => setShowCloseAll(true)}
             disabled={closingAll}
             className="px-5 py-2.5 bg-blood-bright hover:bg-blood-glow text-white font-bold rounded-lg
-                       transition-all duration-200 disabled:opacity-50 text-sm sm:text-base
-                       shadow-[0_0_15px_rgba(204,0,0,0.4)] hover:shadow-[0_0_25px_rgba(204,0,0,0.6)]"
+                       transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
           >
-            {closingAll ? 'Closing...' : '🚨 CLOSE ALL'}
+            {closingAll ? 'Closing...' : 'CLOSE ALL'}
           </button>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
@@ -360,8 +434,7 @@ export default function AdminDashboard() {
 
       <div className="mx-auto w-full h-px bg-gradient-to-r from-transparent via-blood/50 to-transparent mb-6" />
 
-      {/* Dashboard Grid — all 5 attractions visible at once */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {attractions.map((attraction) => (
           <AttractionControl
             key={attraction.id}
@@ -369,6 +442,10 @@ export default function AdminDashboard() {
             onUpdate={handleUpdate}
           />
         ))}
+        <ClosingTimeControl
+          closingTime={closingTime}
+          onUpdate={handleClosingTimeUpdate}
+        />
       </div>
     </div>
   );

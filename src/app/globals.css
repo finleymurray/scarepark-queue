@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme inline {
@@ -12,7 +12,8 @@
   --color-delay-yellow: #FFD700;
   --color-capacity-amber: #F59E0B;
   --color-success: #22C55E;
-  --font-horror: 'Creepster', cursive;
+  --color-closing: #6366F1;
+  --color-closing-light: #818CF8;
   --font-body: 'Inter', sans-serif;
 }
 
@@ -29,35 +30,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Blood drip animation for TV display */
-@keyframes drip {
-  0% { transform: scaleY(0); opacity: 0; }
-  20% { transform: scaleY(0.3); opacity: 1; }
-  100% { transform: scaleY(1); opacity: 1; }
-}
-
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  41% { opacity: 1; }
-  42% { opacity: 0.8; }
-  43% { opacity: 1; }
-  45% { opacity: 0.3; }
-  46% { opacity: 1; }
-  50% { opacity: 1; }
-  51% { opacity: 0.6; }
-  52% { opacity: 1; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
-  50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor; }
-}
-
-@keyframes pulse-red {
-  0%, 100% { box-shadow: 0 0 5px rgba(139, 0, 0, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(139, 0, 0, 0.6), 0 0 40px rgba(139, 0, 0, 0.3); }
-}
-
 @keyframes fadeInSave {
   0% { opacity: 0; transform: scale(0.8); }
   20% { opacity: 1; transform: scale(1); }
@@ -65,23 +37,11 @@ body {
   100% { opacity: 0; transform: scale(0.8); }
 }
 
-.animate-flicker {
-  animation: flicker 4s infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-pulse-red {
-  animation: pulse-red 3s ease-in-out infinite;
-}
-
 .animate-save-feedback {
   animation: fadeInSave 1.5s ease-in-out forwards;
 }
 
-/* Horror card styling */
+/* Card styling */
 .horror-card {
   background: linear-gradient(145deg, #1a0000 0%, #0d0000 50%, #000000 100%);
   border: 1px solid #3a0000;
@@ -90,36 +50,33 @@ body {
   transition: border-color 0.3s ease;
 }
 
-.horror-card:hover {
-  border-color: #5a0000;
-}
-
 .horror-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 2px;
   background: linear-gradient(90deg, transparent, #8B0000, transparent);
 }
 
-/* Blood drip decoration */
-.blood-drip {
+/* Closing time card variant */
+.closing-card {
+  background: linear-gradient(145deg, #1a1a2e 0%, #0d0d1a 50%, #000000 100%);
+  border: 1px solid #2a2a5a;
   position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
 }
 
-.blood-drip::after {
+.closing-card::before {
   content: '';
   position: absolute;
-  bottom: -8px;
-  left: 50%;
-  width: 3px;
-  height: 8px;
-  background: #8B0000;
-  border-radius: 0 0 50% 50%;
-  transform-origin: top;
-  animation: drip 3s ease-in infinite;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #6366F1, transparent);
 }
 
 /* Scrollbar styling */
@@ -127,14 +84,14 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0000;
+  background: #0a0a0a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a0000;
+  background: #3a3a3a;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #5a0000;
+  background: #5a5a5a;
 }
 
 /* Admin button styles */
@@ -155,15 +112,15 @@ body {
 /* Landscape orientation: multi-column auto-fit */
 @media (orientation: landscape) {
   .tv-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
   }
 }
 
-/* Large landscape screens: force 5 columns for 5 attractions */
+/* Large landscape screens: 6 columns for 6 items */
 @media (orientation: landscape) and (min-width: 1200px) {
   .tv-grid {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
