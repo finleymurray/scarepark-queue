@@ -4,10 +4,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import type { Attraction, AttractionHistory } from '@/types/database';
+import type { AttractionHistory } from '@/types/database';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  Tooltip, Legend, ResponsiveContainer, ReferenceArea,
 } from 'recharts';
 
 const LINE_COLORS = [
@@ -23,6 +23,25 @@ const LINE_COLORS = [
   '#14B8A6',
 ];
 
+const STATUS_BAND_COLORS: Record<string, string> = {
+  'CLOSED': '#CC000025',
+  'DELAYED': '#FF8C0025',
+  'AT CAPACITY': '#F59E0B25',
+};
+
+const STATUS_LABEL_COLORS: Record<string, string> = {
+  'CLOSED': '#CC0000',
+  'DELAYED': '#FF8C00',
+  'AT CAPACITY': '#F59E0B',
+};
+
+interface StatusPeriod {
+  attractionName: string;
+  status: string;
+  start: number;
+  end: number;
+}
+
 function getTimeRange(dateStr: string): { start: string; end: string } {
   const start = new Date(`${dateStr}T17:00:00`);
   const end = new Date(`${dateStr}T00:00:00`);
@@ -33,12 +52,19 @@ function getTimeRange(dateStr: string): { start: string; end: string } {
   };
 }
 
+function formatTimeShort(ts: number): string {
+  return new Date(ts).toLocaleTimeString('en-GB', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
 export default function AnalyticsPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [historyData, setHistoryData] = useState<AttractionHistory[]>([]);
-  const [rideIds, setRideIds] = useState<Set<string>>(new Set());
   const [selectedDate, setSelectedDate] = useState(() =>
     new Date().toISOString().split('T')[0]
   );
@@ -55,20 +81,6 @@ export default function AnalyticsPage() {
     }
     checkAuth();
   }, [router]);
-
-  // Fetch ride IDs
-  useEffect(() => {
-    if (!authenticated) return;
-    async function fetchRides() {
-      const { data } = await supabase
-        .from('attractions')
-        .select('id, attraction_type');
-      if (data) {
-        setRideIds(new Set(data.filter((a) => a.attraction_type === 'ride').map((a) => a.id)));
-      }
-    }
-    fetchRides();
-  }, [authenticated]);
 
   // Fetch history when date changes
   useEffect(() => {
@@ -96,51 +108,109 @@ export default function AnalyticsPage() {
   }, [authenticated, selectedDate]);
 
   // Transform data for Recharts
-  const { chartData, attractionNames } = useMemo(() => {
-    if (historyData.length === 0) return { chartData: [], attractionNames: [] };
+  const { chartData, attractionNames, statusPeriods, colorMap } = useMemo(() => {
+    if (historyData.length === 0) {
+      return { chartData: [], attractionNames: [], statusPeriods: [], colorMap: new Map() };
+    }
 
-    // Filter to rides only
-    const rideData = historyData.filter((h) => rideIds.has(h.attraction_id));
-    if (rideData.length === 0) return { chartData: [], attractionNames: [] };
-
-    // Collect unique attraction names
+    // Collect unique attraction names (preserving order of first appearance)
     const namesSet = new Set<string>();
-    rideData.forEach((r) => namesSet.add(r.attraction_name));
+    historyData.forEach((r) => namesSet.add(r.attraction_name));
     const names = Array.from(namesSet);
 
-    // Build chart data: one entry per history record timestamp
-    // Group records that share the same timestamp
-    const timeMap = new Map<number, Record<string, number | string>>();
+    // Build color map
+    const cMap = new Map<string, string>();
+    names.forEach((name, i) => cMap.set(name, LINE_COLORS[i % LINE_COLORS.length]));
 
-    for (const record of rideData) {
+    // Build chart data points — only plot wait_time when OPEN
+    const timeMap = new Map<number, Record<string, number | string | null>>();
+    // Track current status per attraction for forward-fill
+    const currentStatus: Record<string, string> = {};
+    const currentWait: Record<string, number> = {};
+
+    for (const record of historyData) {
       const time = new Date(record.recorded_at).getTime();
+      currentStatus[record.attraction_name] = record.status;
+      currentWait[record.attraction_name] = record.wait_time;
 
       if (!timeMap.has(time)) {
         timeMap.set(time, { time });
       }
       const point = timeMap.get(time)!;
-      point[record.attraction_name] = record.wait_time;
+      // Only show wait time line when OPEN
+      point[record.attraction_name] = record.status === 'OPEN' ? record.wait_time : null;
     }
 
-    // Sort by time and forward-fill missing values
+    // Sort by time
     const sorted = Array.from(timeMap.values()).sort(
       (a, b) => (a.time as number) - (b.time as number)
     );
 
     // Forward-fill: carry the last known value for each attraction
-    const lastKnown: Record<string, number> = {};
+    const lastKnown: Record<string, number | null> = {};
     for (const point of sorted) {
       for (const name of names) {
         if (name in point) {
-          lastKnown[name] = point[name] as number;
+          lastKnown[name] = point[name] as number | null;
         } else if (name in lastKnown) {
           point[name] = lastKnown[name];
         }
       }
     }
 
-    return { chartData: sorted, attractionNames: names };
-  }, [historyData, rideIds]);
+    // Build status periods (CLOSED/DELAYED/AT CAPACITY bands)
+    const periods: StatusPeriod[] = [];
+    const openStatus: Record<string, { status: string; start: number } | null> = {};
+
+    for (const record of historyData) {
+      const time = new Date(record.recorded_at).getTime();
+      const name = record.attraction_name;
+      const prevPeriod = openStatus[name];
+
+      if (record.status !== 'OPEN') {
+        if (!prevPeriod || prevPeriod.status !== record.status) {
+          // Close previous period if different status
+          if (prevPeriod) {
+            periods.push({
+              attractionName: name,
+              status: prevPeriod.status,
+              start: prevPeriod.start,
+              end: time,
+            });
+          }
+          openStatus[name] = { status: record.status, start: time };
+        }
+      } else {
+        // Going OPEN — close any active non-OPEN period
+        if (prevPeriod) {
+          periods.push({
+            attractionName: name,
+            status: prevPeriod.status,
+            start: prevPeriod.start,
+            end: time,
+          });
+          openStatus[name] = null;
+        }
+      }
+    }
+
+    // Close any remaining open periods at the last data point time
+    if (sorted.length > 0) {
+      const lastTime = sorted[sorted.length - 1].time as number;
+      for (const name of names) {
+        if (openStatus[name]) {
+          periods.push({
+            attractionName: name,
+            status: openStatus[name]!.status,
+            start: openStatus[name]!.start,
+            end: lastTime,
+          });
+        }
+      }
+    }
+
+    return { chartData: sorted, attractionNames: names, statusPeriods: periods, colorMap: cMap };
+  }, [historyData]);
 
   if (!authenticated) {
     return (
@@ -197,67 +267,127 @@ export default function AnalyticsPage() {
           </p>
         </div>
       ) : (
-        <div className="horror-card rounded-xl p-4 sm:p-6">
-          <h2 className="text-bone text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
-          <ResponsiveContainer width="100%" height={500}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3a0000" />
-              <XAxis
-                dataKey="time"
-                type="number"
-                domain={['dataMin', 'dataMax']}
-                tickFormatter={(ts) =>
-                  new Date(Number(ts)).toLocaleTimeString('en-GB', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                  })
-                }
-                stroke="#E8E0D0"
-                tick={{ fill: '#E8E0D0', fontSize: 12 }}
-              />
-              <YAxis
-                stroke="#E8E0D0"
-                tick={{ fill: '#E8E0D0', fontSize: 12 }}
-                label={{
-                  value: 'Wait (min)',
-                  angle: -90,
-                  position: 'insideLeft',
-                  fill: '#E8E0D0',
-                  style: { fontSize: 12 },
-                }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1a0000',
-                  border: '1px solid #3a0000',
-                  borderRadius: '8px',
-                  color: '#E8E0D0',
-                }}
-                labelFormatter={(ts) =>
-                  new Date(Number(ts)).toLocaleTimeString('en-GB', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                  })
-                }
-                formatter={(value, name) => [`${value} min`, name]}
-              />
-              <Legend wrapperStyle={{ color: '#E8E0D0' }} />
-              {attractionNames.map((name, i) => (
-                <Line
-                  key={name}
-                  type="monotone"
-                  dataKey={name}
-                  stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls
+        <>
+          {/* Wait time line chart */}
+          <div className="horror-card rounded-xl p-4 sm:p-6 mb-6">
+            <h2 className="text-bone text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
+            <ResponsiveContainer width="100%" height={500}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3a0000" />
+                {/* Shaded bands for CLOSED / DELAYED / AT CAPACITY periods */}
+                {statusPeriods.map((period, i) => (
+                  <ReferenceArea
+                    key={`${period.attractionName}-${period.start}-${i}`}
+                    x1={period.start}
+                    x2={period.end}
+                    fill={STATUS_BAND_COLORS[period.status] || '#ffffff10'}
+                    fillOpacity={1}
+                    strokeOpacity={0}
+                  />
+                ))}
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  domain={['dataMin', 'dataMax']}
+                  tickFormatter={(ts) => formatTimeShort(Number(ts))}
+                  stroke="#E8E0D0"
+                  tick={{ fill: '#E8E0D0', fontSize: 12 }}
                 />
+                <YAxis
+                  stroke="#E8E0D0"
+                  tick={{ fill: '#E8E0D0', fontSize: 12 }}
+                  label={{
+                    value: 'Wait (min)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    fill: '#E8E0D0',
+                    style: { fontSize: 12 },
+                  }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1a0000',
+                    border: '1px solid #3a0000',
+                    borderRadius: '8px',
+                    color: '#E8E0D0',
+                  }}
+                  labelFormatter={(ts) => formatTimeShort(Number(ts))}
+                  formatter={(value, name) => {
+                    if (value === null || value === undefined) return ['--', name];
+                    return [`${value} min`, name];
+                  }}
+                />
+                <Legend wrapperStyle={{ color: '#E8E0D0' }} />
+                {attractionNames.map((name, i) => (
+                  <Line
+                    key={name}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={LINE_COLORS[i % LINE_COLORS.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+
+            {/* Legend for status bands */}
+            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-white/[0.08]">
+              <span className="text-bone/50 text-xs font-medium uppercase tracking-wider">Shaded areas:</span>
+              {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
+                <div key={status} className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-3 rounded-sm"
+                    style={{ backgroundColor: STATUS_BAND_COLORS[status] }}
+                  />
+                  <span className="text-xs font-medium" style={{ color }}>{status}</span>
+                </div>
               ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+            </div>
+          </div>
+
+          {/* Status timeline */}
+          <div className="horror-card rounded-xl p-4 sm:p-6">
+            <h2 className="text-bone text-lg font-bold mb-4">Status Timeline</h2>
+            {statusPeriods.length === 0 ? (
+              <p className="text-bone/30 text-sm">All attractions were open for the entire night.</p>
+            ) : (
+              <div className="space-y-3">
+                {attractionNames.map((name) => {
+                  const periods = statusPeriods.filter((p) => p.attractionName === name);
+                  if (periods.length === 0) return null;
+                  return (
+                    <div key={name}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: colorMap.get(name) }}
+                        />
+                        <span className="text-bone text-sm font-semibold">{name}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 ml-5">
+                        {periods.map((p, i) => (
+                          <div
+                            key={i}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg border"
+                            style={{
+                              color: STATUS_LABEL_COLORS[p.status] || '#E8E0D0',
+                              borderColor: (STATUS_LABEL_COLORS[p.status] || '#E8E0D0') + '40',
+                              backgroundColor: (STATUS_BAND_COLORS[p.status] || '#ffffff10'),
+                            }}
+                          >
+                            {p.status} — {formatTimeShort(p.start)} to {formatTimeShort(p.end)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
