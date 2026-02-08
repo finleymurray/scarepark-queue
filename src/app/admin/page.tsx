@@ -296,15 +296,57 @@ function ClosingTimeControl({
   );
 }
 
+/* ── Reorder Arrows ── */
+function ReorderButtons({
+  onMove,
+  isFirst,
+  isLast,
+}: {
+  onMove: (dir: 'up' | 'down') => void;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
+  return (
+    <div className="flex gap-0.5">
+      <button
+        onClick={() => onMove('up')}
+        disabled={isFirst}
+        className="p-1 text-bone/30 hover:text-bone disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        title="Move up"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+      </button>
+      <button
+        onClick={() => onMove('down')}
+        disabled={isLast}
+        className="p-1 text-bone/30 hover:text-bone disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        title="Move down"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 /* ── Ride Control Card ── */
 function RideControl({
   attraction,
   onUpdate,
   onDelete,
+  onMove,
+  isFirst,
+  isLast,
 }: {
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
   onDelete: (id: string, name: string) => void;
+  onMove?: (dir: 'up' | 'down') => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -345,9 +387,12 @@ function RideControl({
             handleUpdate({ name: newName, slug: newSlug });
           }}
         />
-        <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
-          {status}
-        </span>
+        <div className="flex items-center gap-2">
+          {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
+          <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
+            {status}
+          </span>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -441,10 +486,16 @@ function ShowControl({
   attraction,
   onUpdate,
   onDelete,
+  onMove,
+  isFirst,
+  isLast,
 }: {
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
   onDelete: (id: string, name: string) => void;
+  onMove?: (dir: 'up' | 'down') => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -493,6 +544,7 @@ function ShowControl({
           }}
         />
         <div className="flex items-center gap-2">
+          {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
           <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
             SHOW
           </span>
@@ -602,6 +654,8 @@ export default function AdminDashboard() {
   const [showOpenAll, setShowOpenAll] = useState(false);
   const [openingAll, setOpeningAll] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [autoSort, setAutoSort] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -610,17 +664,22 @@ export default function AdminDashboard() {
         router.push('/admin/login');
         return;
       }
+      setUserEmail(session.user.email || '');
 
-      const [attractionsRes, settingsRes] = await Promise.all([
+      const [attractionsRes, closingRes, autoSortRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
+        supabase.from('park_settings').select('*').eq('key', 'auto_sort_by_wait').single(),
       ]);
 
       if (!attractionsRes.error) {
         setAttractions(attractionsRes.data || []);
       }
-      if (settingsRes.data) {
-        setClosingTime(settingsRes.data.value);
+      if (closingRes.data) {
+        setClosingTime(closingRes.data.value);
+      }
+      if (autoSortRes.data) {
+        setAutoSort(autoSortRes.data.value === 'true');
       }
       setLoading(false);
 
@@ -658,6 +717,8 @@ export default function AdminDashboard() {
             const setting = payload.new as ParkSetting;
             if (setting.key === 'closing_time') {
               setClosingTime(setting.value);
+            } else if (setting.key === 'auto_sort_by_wait') {
+              setAutoSort(setting.value === 'true');
             }
           }
         )
@@ -767,6 +828,38 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   }
 
+  async function handleToggleAutoSort() {
+    const newValue = !autoSort;
+    setAutoSort(newValue);
+    await supabase
+      .from('park_settings')
+      .upsert({ key: 'auto_sort_by_wait', value: String(newValue), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  }
+
+  async function handleMoveAttraction(id: string, direction: 'up' | 'down') {
+    const idx = attractions.findIndex((a) => a.id === id);
+    if (idx < 0) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= attractions.length) return;
+
+    const current = attractions[idx];
+    const swap = attractions[swapIdx];
+
+    // Swap sort_order values
+    await Promise.all([
+      supabase.from('attractions').update({ sort_order: swap.sort_order, updated_at: new Date().toISOString() }).eq('id', current.id),
+      supabase.from('attractions').update({ sort_order: current.sort_order, updated_at: new Date().toISOString() }).eq('id', swap.id),
+    ]);
+
+    // Optimistic local update
+    setAttractions((prev) => {
+      const next = [...prev];
+      next[idx] = { ...current, sort_order: swap.sort_order };
+      next[swapIdx] = { ...swap, sort_order: current.sort_order };
+      return next.sort((a, b) => a.sort_order - b.sort_order);
+    });
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
@@ -807,61 +900,94 @@ export default function AdminDashboard() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      <header className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-blood-bright text-3xl font-black uppercase tracking-wide sm:text-4xl">
-            Control Room
-          </h1>
-          <p className="text-bone/40 text-sm mt-1">Scarepark Queue Management</p>
+      <header className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-blood-bright text-3xl font-black uppercase tracking-wide sm:text-4xl">
+              Control Room
+            </h1>
+            <p className="text-bone/40 text-sm mt-1">Scarepark Queue Management</p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {userEmail && (
+              <span className="text-bone/40 text-xs truncate max-w-[200px]" title={userEmail}>
+                {userEmail}
+              </span>
+            )}
+
+            <Link
+              href="/admin/analytics"
+              className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
+                         rounded-lg transition-colors text-sm"
+            >
+              Analytics
+            </Link>
+
+            <button
+              onClick={() => setShowOpenAll(true)}
+              disabled={openingAll}
+              className="px-5 py-2.5 bg-green-700 hover:bg-green-600 text-white font-bold rounded-lg
+                         transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
+            >
+              {openingAll ? 'Opening...' : 'OPEN ALL'}
+            </button>
+
+            <button
+              onClick={() => setShowCloseAll(true)}
+              disabled={closingAll}
+              className="px-5 py-2.5 bg-blood-bright hover:bg-blood-glow text-white font-bold rounded-lg
+                         transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
+            >
+              {closingAll ? 'Closing...' : 'CLOSE ALL'}
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
+                         rounded-lg transition-colors text-sm"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
+        {/* Auto-sort toggle */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/admin/analytics"
-            className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
-                       rounded-lg transition-colors text-sm"
-          >
-            Analytics
-          </Link>
-
           <button
-            onClick={() => setShowOpenAll(true)}
-            disabled={openingAll}
-            className="px-5 py-2.5 bg-green-700 hover:bg-green-600 text-white font-bold rounded-lg
-                       transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
+            onClick={handleToggleAutoSort}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              autoSort ? 'bg-green-600' : 'bg-gore border border-blood/30'
+            }`}
           >
-            {openingAll ? 'Opening...' : 'OPEN ALL'}
+            <span
+              className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                autoSort ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
           </button>
-
-          <button
-            onClick={() => setShowCloseAll(true)}
-            disabled={closingAll}
-            className="px-5 py-2.5 bg-blood-bright hover:bg-blood-glow text-white font-bold rounded-lg
-                       transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
-          >
-            {closingAll ? 'Closing...' : 'CLOSE ALL'}
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
-                       rounded-lg transition-colors text-sm"
-          >
-            Logout
-          </button>
+          <span className="text-bone/60 text-sm">
+            Auto-sort by wait time {autoSort ? <span className="text-green-400 font-semibold">(ON)</span> : <span className="text-bone/30">(OFF)</span>}
+          </span>
+          {autoSort && (
+            <span className="text-bone/30 text-xs">Manual reorder disabled</span>
+          )}
         </div>
       </header>
 
       <div className="mx-auto w-full h-px bg-gradient-to-r from-transparent via-blood/50 to-transparent mb-6" />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {attractions.map((attraction) =>
+        {attractions.map((attraction, idx) =>
           attraction.attraction_type === 'show' ? (
             <ShowControl
               key={attraction.id}
               attraction={attraction}
               onUpdate={handleUpdate}
               onDelete={(id, name) => setDeleteTarget({ id, name })}
+              onMove={!autoSort ? (dir) => handleMoveAttraction(attraction.id, dir) : undefined}
+              isFirst={idx === 0}
+              isLast={idx === attractions.length - 1}
             />
           ) : (
             <RideControl
@@ -869,6 +995,9 @@ export default function AdminDashboard() {
               attraction={attraction}
               onUpdate={handleUpdate}
               onDelete={(id, name) => setDeleteTarget({ id, name })}
+              onMove={!autoSort ? (dir) => handleMoveAttraction(attraction.id, dir) : undefined}
+              isFirst={idx === 0}
+              isLast={idx === attractions.length - 1}
             />
           )
         )}

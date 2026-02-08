@@ -64,9 +64,10 @@ INSERT INTO attractions (name, slug, status, wait_time, sort_order, attraction_t
   ('Strings of Control',     'strings-of-control',     'CLOSED', 0, 4, 'ride'),
   ('Drowned',                'drowned',                'CLOSED', 0, 5, 'ride');
 
--- 8. Seed the closing time setting
+-- 8. Seed the settings
 INSERT INTO park_settings (key, value) VALUES
-  ('closing_time', '22:00');
+  ('closing_time', '22:00'),
+  ('auto_sort_by_wait', 'false');
 
 -- ============================================
 -- ANALYTICS: Queue Time History

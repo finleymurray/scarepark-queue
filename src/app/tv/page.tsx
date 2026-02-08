@@ -118,6 +118,7 @@ const TV_SAFE_PADDING = '3.5%';
 export default function TVDisplay() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [closingTime, setClosingTime] = useState('');
+  const [autoSort, setAutoSort] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [perPage, setPerPage] = useState<number | null>(null);
@@ -143,16 +144,20 @@ export default function TVDisplay() {
 
   useEffect(() => {
     async function fetchData() {
-      const [attractionsRes, settingsRes] = await Promise.all([
+      const [attractionsRes, closingRes, autoSortRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
+        supabase.from('park_settings').select('*').eq('key', 'auto_sort_by_wait').single(),
       ]);
 
       if (!attractionsRes.error) {
         setAttractions(attractionsRes.data || []);
       }
-      if (settingsRes.data) {
-        setClosingTime(settingsRes.data.value);
+      if (closingRes.data) {
+        setClosingTime(closingRes.data.value);
+      }
+      if (autoSortRes.data) {
+        setAutoSort(autoSortRes.data.value === 'true');
       }
       setLoading(false);
     }
@@ -193,6 +198,8 @@ export default function TVDisplay() {
           const setting = payload.new as ParkSetting;
           if (setting.key === 'closing_time') {
             setClosingTime(setting.value);
+          } else if (setting.key === 'auto_sort_by_wait') {
+            setAutoSort(setting.value === 'true');
           }
         }
       )
@@ -245,9 +252,19 @@ export default function TVDisplay() {
     }
   }, [currentPage, totalPages]);
 
-  const visibleAttractions = perPage && totalPages > 1
-    ? attractions.slice(currentPage * perPage, (currentPage + 1) * perPage)
+  // When auto-sort is on, sort by wait_time descending (OPEN rides first, then others)
+  const sortedAttractions = autoSort
+    ? [...attractions].sort((a, b) => {
+        const aOpen = a.status === 'OPEN' ? 1 : 0;
+        const bOpen = b.status === 'OPEN' ? 1 : 0;
+        if (aOpen !== bOpen) return bOpen - aOpen;
+        return b.wait_time - a.wait_time;
+      })
     : attractions;
+
+  const visibleAttractions = perPage && totalPages > 1
+    ? sortedAttractions.slice(currentPage * perPage, (currentPage + 1) * perPage)
+    : sortedAttractions;
 
   const count = visibleAttractions.length;
   const gap = 12;
