@@ -599,6 +599,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [showCloseAll, setShowCloseAll] = useState(false);
   const [closingAll, setClosingAll] = useState(false);
+  const [showOpenAll, setShowOpenAll] = useState(false);
+  const [openingAll, setOpeningAll] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
@@ -726,7 +728,8 @@ export default function AdminDashboard() {
     setClosingAll(true);
     setShowCloseAll(false);
 
-    const updatePromises = attractions.map((a) =>
+    const rides = attractions.filter((a) => a.attraction_type !== 'show');
+    const updatePromises = rides.map((a) =>
       supabase
         .from('attractions')
         .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
@@ -735,6 +738,28 @@ export default function AdminDashboard() {
 
     await Promise.all(updatePromises);
     setClosingAll(false);
+  }
+
+  async function handleOpenAll() {
+    setOpeningAll(true);
+    setShowOpenAll(false);
+
+    const updatePromises = attractions.map((a) => {
+      const updates: Record<string, string | number> = {
+        status: 'OPEN',
+        updated_at: new Date().toISOString(),
+      };
+      if (a.attraction_type !== 'show') {
+        updates.wait_time = 5;
+      }
+      return supabase
+        .from('attractions')
+        .update(updates)
+        .eq('id', a.id);
+    });
+
+    await Promise.all(updatePromises);
+    setOpeningAll(false);
   }
 
   async function handleLogout() {
@@ -755,11 +780,21 @@ export default function AdminDashboard() {
       {/* Close All Modal */}
       <ConfirmModal
         open={showCloseAll}
-        title="Close the Entire Park?"
-        message="This will set ALL attractions to CLOSED immediately. This action is visible to the public displays instantly."
-        confirmLabel="Yes, Close All"
+        title="Close All Rides?"
+        message="This will set all rides to CLOSED immediately. Shows will not be affected. This is visible on the public displays instantly."
+        confirmLabel="Yes, Close Rides"
         onConfirm={handleCloseAll}
         onCancel={() => setShowCloseAll(false)}
+      />
+
+      {/* Open All Modal */}
+      <ConfirmModal
+        open={showOpenAll}
+        title="Open All Attractions?"
+        message="This will set all attractions to OPEN and set ride wait times to 5 minutes. This is visible on the public displays instantly."
+        confirmLabel="Yes, Open All"
+        onConfirm={handleOpenAll}
+        onCancel={() => setShowOpenAll(false)}
       />
 
       {/* Delete Modal */}
@@ -788,6 +823,15 @@ export default function AdminDashboard() {
           >
             Analytics
           </Link>
+
+          <button
+            onClick={() => setShowOpenAll(true)}
+            disabled={openingAll}
+            className="px-5 py-2.5 bg-green-700 hover:bg-green-600 text-white font-bold rounded-lg
+                       transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
+          >
+            {openingAll ? 'Opening...' : 'OPEN ALL'}
+          </button>
 
           <button
             onClick={() => setShowCloseAll(true)}

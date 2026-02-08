@@ -50,7 +50,7 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
 
   return (
     <div
-      className={`flex items-center justify-between px-12 rounded-lg border ${
+      className={`flex items-center justify-between px-16 rounded-lg border ${
         isShow
           ? 'bg-purple-950/30 border-purple-500/20'
           : 'bg-white/[0.04] border-white/[0.08]'
