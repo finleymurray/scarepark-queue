@@ -26,20 +26,20 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="panel p-6 w-full max-w-sm">
+      <div className="panel rounded-xl p-6 w-full max-w-sm">
         <h3 className="text-white text-lg font-bold mb-2">{title}</h3>
         <p className="text-[#888] text-sm mb-6">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 bg-transparent border border-[#333] text-white hover:border-[#555]
-                       rounded text-sm font-medium transition-colors"
+                       rounded-lg text-sm font-medium transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 bg-[#dc3545] hover:bg-[#c82333] text-white rounded
+            className="flex-1 px-4 py-2.5 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-lg
                        text-sm font-bold transition-colors"
           >
             {confirmLabel}
@@ -64,6 +64,9 @@ export default function UsersPage() {
   const [formAttractions, setFormAttractions] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // Form visibility
+  const [showForm, setShowForm] = useState(false);
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<UserRole | null>(null);
@@ -108,6 +111,7 @@ export default function UsersPage() {
     setFormRole(user.role);
     setFormAttractions(user.allowed_attractions || []);
     setFormError('');
+    setShowForm(true);
   }
 
   function startAdd() {
@@ -116,6 +120,7 @@ export default function UsersPage() {
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
+    setShowForm(true);
   }
 
   function cancelForm() {
@@ -124,6 +129,7 @@ export default function UsersPage() {
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
+    setShowForm(false);
   }
 
   function toggleAttraction(id: string) {
@@ -169,7 +175,7 @@ export default function UsersPage() {
     }
 
     await fetchUsers();
-    cancelForm();
+    cancelForm(); // this also sets showForm to false
     setSaving(false);
   }
 
@@ -198,8 +204,6 @@ export default function UsersPage() {
     );
   }
 
-  const showForm = editing !== null || formEmail !== '' || formRole !== 'supervisor';
-
   return (
     <div className="min-h-screen bg-black p-4 sm:p-6">
       <AdminNav userEmail={userEmail} onLogout={handleLogout} />
@@ -214,12 +218,12 @@ export default function UsersPage() {
       />
 
       {/* User list */}
-      <div className="panel p-4 sm:p-6 mb-6">
+      <div className="panel rounded-xl p-4 sm:p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[#888] text-xs font-medium uppercase tracking-wider">Users</h2>
           <button
             onClick={startAdd}
-            className="px-3 py-1.5 bg-white text-black text-xs font-semibold rounded
+            className="px-3 py-1.5 bg-white text-black text-xs font-semibold rounded-lg
                        hover:bg-[#e0e0e0] transition-colors"
           >
             + Add User
@@ -287,7 +291,7 @@ export default function UsersPage() {
 
       {/* Add / Edit form */}
       {showForm && (
-        <div className="panel p-4 sm:p-6">
+        <div className="panel rounded-xl p-4 sm:p-6">
           <h2 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">
             {editing ? 'Edit User' : 'Add User'}
           </h2>
@@ -338,7 +342,7 @@ export default function UsersPage() {
                     return (
                       <label
                         key={a.id}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded cursor-pointer transition-colors
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-colors
                           ${checked ? 'bg-white/[0.05] border border-white/20' : 'border border-[#333] hover:border-[#555]'}`}
                       >
                         <input
@@ -363,7 +367,7 @@ export default function UsersPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded
+                className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-lg
                            hover:bg-[#e0e0e0] transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : editing ? 'Update User' : 'Add User'}
@@ -371,7 +375,7 @@ export default function UsersPage() {
               <button
                 onClick={cancelForm}
                 className="px-5 py-2.5 bg-transparent border border-[#333] text-white text-sm
-                           hover:border-[#555] rounded transition-colors"
+                           hover:border-[#555] rounded-lg transition-colors"
               >
                 Cancel
               </button>

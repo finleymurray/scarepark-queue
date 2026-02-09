@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
@@ -51,10 +50,10 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
 
   return (
     <div
-      className={`flex items-center justify-between rounded border ${
+      className={`flex items-center justify-between rounded-xl border ${
         isShow
-          ? 'bg-white/[0.04] border-white/20'
-          : 'bg-white/[0.04] border-white/[0.08]'
+          ? 'bg-purple-950/30 border-purple-500/20'
+          : 'bg-white/[0.03] border-white/[0.08]'
       }`}
       style={{ ...style, paddingLeft: '3%', paddingRight: '3%' }}
     >
@@ -64,7 +63,7 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
           {attraction.name}
         </h3>
         {isShow && (
-          <span className="flex-shrink-0 border border-white/40 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          <span className="flex-shrink-0 bg-purple-700/60 border border-purple-400/30 text-purple-200 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
             Live Show
           </span>
         )}
@@ -293,23 +292,10 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-[#111] border-b border-[#333] py-4 px-10 rounded flex-shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
-          <h1 className="text-white text-3xl font-black uppercase tracking-wider">
-            Queue Times
-          </h1>
-        </div>
-        {closingTime && (
-          <div className="flex items-center gap-3">
-            <span className="text-[#888] text-lg font-semibold uppercase tracking-wider">
-              Closes
-            </span>
-            <span className="text-white text-2xl font-black tabular-nums">
-              {formatTime12h(closingTime)}
-            </span>
-          </div>
-        )}
+      <header className="bg-white/[0.03] border-b border-white/[0.06] py-4 px-10 rounded-xl flex-shrink-0 flex items-center justify-center">
+        <h1 className="text-white text-3xl font-black uppercase tracking-wider">
+          Queue Times
+        </h1>
       </header>
 
       {/* Attraction list — fills available space */}
@@ -333,7 +319,7 @@ export default function TVDisplay() {
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-[#111] border-t border-[#333] py-4 px-10 rounded flex-shrink-0">
+      <footer className="bg-white/[0.03] border-t border-white/[0.06] py-4 px-10 rounded-xl flex-shrink-0">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">

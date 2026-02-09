@@ -53,7 +53,7 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="panel p-6 max-w-md w-full text-center space-y-6">
+      <div className="panel rounded-xl p-6 max-w-md w-full text-center space-y-6">
         <div className="text-[#dc3545] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
         <p className="text-[#888] text-sm">{message}</p>
@@ -61,13 +61,13 @@ function ConfirmModal({
           <button
             onClick={onCancel}
             className="px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
-                       rounded transition-colors font-medium"
+                       rounded-lg transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-6 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white rounded
+            className="px-6 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-lg
                        transition-colors font-bold"
           >
             {confirmLabel}
@@ -181,7 +181,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div className="panel p-4">
+    <div className="panel rounded-xl p-4">
       <h3 className="text-white text-lg font-bold mb-3">Add Attraction</h3>
 
       {/* Type toggle */}
@@ -269,7 +269,7 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div className="panel p-4 relative">
+    <div className="panel rounded-xl p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -409,7 +409,7 @@ function RideControl({
   }
 
   return (
-    <div className="panel rounded p-4 relative">
+    <div className="panel rounded-xl p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -565,7 +565,7 @@ function ShowControl({
   }
 
   return (
-    <div className="panel rounded p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)' }}>
+    <div className="panel rounded-xl p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)', background: 'rgba(88, 28, 135, 0.08)' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -952,19 +952,19 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-6">
-        <div className="panel p-5">
+        <div className="panel rounded-xl p-5">
           <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
-              className="flex-1 btn-quick px-4 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded text-sm transition-colors disabled:opacity-50">
+              className="flex-1 btn-quick px-4 py-3.5 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded-lg text-sm transition-colors disabled:opacity-50">
               {openingAll ? 'Opening...' : 'Open All Rides'}
             </button>
             <button onClick={() => setShowCloseAll(true)} disabled={closingAll}
-              className="flex-1 btn-quick px-4 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white font-bold rounded text-sm transition-colors disabled:opacity-50">
+              className="flex-1 btn-quick px-4 py-3.5 bg-[#dc3545] hover:bg-[#c82333] text-white font-bold rounded-lg text-sm transition-colors disabled:opacity-50">
               {closingAll ? 'Closing...' : 'Close All Rides'}
             </button>
           </div>
-          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#333]">
+          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/[0.06]">
             <button onClick={handleToggleAutoSort}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#222] border border-[#444]'}`}>
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
