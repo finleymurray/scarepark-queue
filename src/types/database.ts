@@ -29,3 +29,15 @@ export interface AttractionHistory {
   wait_time: number;
   recorded_at: string;
 }
+
+export interface ThroughputLog {
+  id: string;
+  attraction_id: string;
+  slot_start: string;
+  slot_end: string;
+  guest_count: number;
+  logged_by: string;
+  log_date: string;
+  created_at: string;
+  updated_at: string;
+}

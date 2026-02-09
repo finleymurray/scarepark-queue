@@ -66,6 +66,7 @@ INSERT INTO attractions (name, slug, status, wait_time, sort_order, attraction_t
 
 -- 8. Seed the settings
 INSERT INTO park_settings (key, value) VALUES
+  ('opening_time', '18:00'),
   ('closing_time', '22:00'),
   ('auto_sort_by_wait', 'false');
 
@@ -119,6 +120,57 @@ CREATE TRIGGER attraction_change_trigger
   AFTER UPDATE ON attractions
   FOR EACH ROW
   EXECUTE FUNCTION log_attraction_change();
+
+-- ============================================
+-- SUPERVISOR: Throughput Logs
+-- ============================================
+
+-- 15. Create the throughput_logs table
+CREATE TABLE IF NOT EXISTS throughput_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  attraction_id UUID NOT NULL REFERENCES attractions(id) ON DELETE CASCADE,
+  slot_start TEXT NOT NULL,
+  slot_end TEXT NOT NULL,
+  guest_count INTEGER NOT NULL DEFAULT 0,
+  logged_by TEXT NOT NULL DEFAULT '',
+  log_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 16. Create indexes for efficient queries
+CREATE INDEX IF NOT EXISTS idx_throughput_logs_attraction_date
+  ON throughput_logs (attraction_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_throughput_logs_created_at
+  ON throughput_logs (created_at);
+
+-- 17. Unique constraint: one log per attraction per slot per day
+CREATE UNIQUE INDEX IF NOT EXISTS idx_throughput_logs_unique_slot
+  ON throughput_logs (attraction_id, slot_start, slot_end, log_date);
+
+-- 18. Enable RLS on throughput_logs
+ALTER TABLE throughput_logs ENABLE ROW LEVEL SECURITY;
+
+-- 19. RLS Policies for throughput_logs
+CREATE POLICY "Allow public read throughput"
+  ON throughput_logs FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated insert throughput"
+  ON throughput_logs FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated update throughput"
+  ON throughput_logs FOR UPDATE
+  USING (auth.uid() IS NOT NULL);
+
+-- 20. Enable Realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE throughput_logs;
+
+-- 21. RLS Policy for park_settings insert (needed for upsert of opening_time)
+CREATE POLICY "Allow authenticated insert settings"
+  ON park_settings FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- ============================================
 -- MIGRATION: Run this if you already have the

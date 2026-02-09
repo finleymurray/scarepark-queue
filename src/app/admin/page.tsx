@@ -234,62 +234,94 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   );
 }
 
-/* ── Closing Time Control ── */
-function ClosingTimeControl({
+/* ── Operating Hours Control ── */
+function OperatingHoursControl({
+  openingTime,
   closingTime,
-  onUpdate,
+  onUpdateOpening,
+  onUpdateClosing,
 }: {
+  openingTime: string;
   closingTime: string;
-  onUpdate: (value: string) => Promise<void>;
+  onUpdateOpening: (value: string) => Promise<void>;
+  onUpdateClosing: (value: string) => Promise<void>;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-  const [timeValue, setTimeValue] = useState(closingTime);
+  const [openValue, setOpenValue] = useState(openingTime);
+  const [closeValue, setCloseValue] = useState(closingTime);
 
-  useEffect(() => {
-    setTimeValue(closingTime);
-  }, [closingTime]);
+  useEffect(() => { setOpenValue(openingTime); }, [openingTime]);
+  useEffect(() => { setCloseValue(closingTime); }, [closingTime]);
 
   async function handleSave() {
     setSaving(true);
-    await onUpdate(timeValue);
+    const promises: Promise<void>[] = [];
+    if (openValue !== openingTime) promises.push(onUpdateOpening(openValue));
+    if (closeValue !== closingTime) promises.push(onUpdateClosing(closeValue));
+    await Promise.all(promises);
     setSaving(false);
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 1500);
   }
+
+  const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
     <div className="closing-card rounded-xl p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-closing-light text-lg font-bold">Park Closing Time</h3>
+        <h3 className="text-closing-light text-lg font-bold">Operating Hours</h3>
         <span className="bg-closing text-white text-xs font-bold px-2.5 py-1 rounded-full">INFO</span>
       </div>
 
-      <div className="text-center mb-3">
-        <span className="text-closing-light/50 text-xs font-medium uppercase tracking-wider">Current Time</span>
-        <div className="text-4xl font-bold tabular-nums mt-1 text-closing-light">
-          {closingTime || '--:--'}
+      <div className="flex gap-4 text-center mb-3">
+        <div className="flex-1">
+          <span className="text-closing-light/50 text-xs font-medium uppercase tracking-wider">Opens</span>
+          <div className="text-2xl font-bold tabular-nums mt-1 text-closing-light">
+            {openingTime || '--:--'}
+          </div>
+        </div>
+        <div className="text-closing-light/30 self-center text-lg">—</div>
+        <div className="flex-1">
+          <span className="text-closing-light/50 text-xs font-medium uppercase tracking-wider">Closes</span>
+          <div className="text-2xl font-bold tabular-nums mt-1 text-closing-light">
+            {closingTime || '--:--'}
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          type="time"
-          value={timeValue}
-          onChange={(e) => setTimeValue(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
-          className="flex-1 px-3 py-2 bg-black/60 border border-[#2a2a5a] rounded-lg text-bone text-sm
-                     focus:outline-none focus:border-closing transition-colors"
-        />
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label className="block text-closing-light/40 text-xs mb-1">Opening</label>
+            <input
+              type="time"
+              value={openValue}
+              onChange={(e) => setOpenValue(e.target.value)}
+              className="w-full px-3 py-2 bg-black/60 border border-[#2a2a5a] rounded-lg text-bone text-sm
+                         focus:outline-none focus:border-closing transition-colors"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-closing-light/40 text-xs mb-1">Closing</label>
+            <input
+              type="time"
+              value={closeValue}
+              onChange={(e) => setCloseValue(e.target.value)}
+              className="w-full px-3 py-2 bg-black/60 border border-[#2a2a5a] rounded-lg text-bone text-sm
+                         focus:outline-none focus:border-closing transition-colors"
+            />
+          </div>
+        </div>
         <button
           onClick={handleSave}
-          disabled={saving || timeValue === closingTime}
-          className="btn-quick px-4 py-2 bg-closing hover:bg-closing-light text-white text-sm font-semibold
+          disabled={saving || !hasChanges}
+          className="w-full btn-quick px-4 py-2 bg-closing hover:bg-closing-light text-white text-sm font-semibold
                      rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          Set
+          {saving ? 'Saving...' : 'Set Hours'}
         </button>
       </div>
     </div>
@@ -647,6 +679,7 @@ function ShowControl({
 export default function AdminDashboard() {
   const router = useRouter();
   const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [openingTime, setOpeningTime] = useState('');
   const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [showCloseAll, setShowCloseAll] = useState(false);
@@ -666,14 +699,18 @@ export default function AdminDashboard() {
       }
       setUserEmail(session.user.email || '');
 
-      const [attractionsRes, closingRes, autoSortRes] = await Promise.all([
+      const [attractionsRes, openingRes, closingRes, autoSortRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
+        supabase.from('park_settings').select('*').eq('key', 'opening_time').single(),
         supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
         supabase.from('park_settings').select('*').eq('key', 'auto_sort_by_wait').single(),
       ]);
 
       if (!attractionsRes.error) {
         setAttractions(attractionsRes.data || []);
+      }
+      if (openingRes.data) {
+        setOpeningTime(openingRes.data.value);
       }
       if (closingRes.data) {
         setClosingTime(closingRes.data.value);
@@ -715,7 +752,9 @@ export default function AdminDashboard() {
           { event: 'UPDATE', schema: 'public', table: 'park_settings' },
           (payload) => {
             const setting = payload.new as ParkSetting;
-            if (setting.key === 'closing_time') {
+            if (setting.key === 'opening_time') {
+              setOpeningTime(setting.value);
+            } else if (setting.key === 'closing_time') {
               setClosingTime(setting.value);
             } else if (setting.key === 'auto_sort_by_wait') {
               setAutoSort(setting.value === 'true');
@@ -740,6 +779,14 @@ export default function AdminDashboard() {
       .eq('id', id);
 
     if (error) console.error('Error updating attraction:', error);
+  }, []);
+
+  const handleOpeningTimeUpdate = useCallback(async (value: string) => {
+    const { error } = await supabase
+      .from('park_settings')
+      .upsert({ key: 'opening_time', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+    if (error) console.error('Error updating opening time:', error);
   }, []);
 
   const handleClosingTimeUpdate = useCallback(async (value: string) => {
@@ -1001,9 +1048,11 @@ export default function AdminDashboard() {
             />
           )
         )}
-        <ClosingTimeControl
+        <OperatingHoursControl
+          openingTime={openingTime}
           closingTime={closingTime}
-          onUpdate={handleClosingTimeUpdate}
+          onUpdateOpening={handleOpeningTimeUpdate}
+          onUpdateClosing={handleClosingTimeUpdate}
         />
         <AddAttractionForm onAdd={handleAddAttraction} />
       </div>

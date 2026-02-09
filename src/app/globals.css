@@ -41,6 +41,15 @@ body {
   animation: fadeInSave 1.5s ease-in-out forwards;
 }
 
+@keyframes pulseBorder {
+  0%, 100% { border-color: #4ade80; }
+  50% { border-color: #4ade8060; }
+}
+
+.animate-pulse-subtle {
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+
 /* Card styling */
 .horror-card {
   background: linear-gradient(145deg, #1a0000 0%, #0d0000 50%, #000000 100%);
