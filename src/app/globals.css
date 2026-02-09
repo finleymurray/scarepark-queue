@@ -2,18 +2,17 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-blood: #8B0000;
-  --color-blood-bright: #CC0000;
-  --color-blood-glow: #FF0000;
-  --color-gore: #4A0000;
-  --color-flesh: #2A0000;
-  --color-bone: #E8E0D0;
-  --color-delay-orange: #FF8C00;
-  --color-delay-yellow: #FFD700;
-  --color-capacity-amber: #F59E0B;
+  --color-border: #333333;
+  --color-border-hover: #555555;
+  --color-text-secondary: #888888;
+  --color-text-muted: #666666;
+  --color-surface: #0a0a0a;
+  --color-surface-hover: #111111;
+  --color-status-open: #22C55E;
+  --color-status-closed: #dc3545;
+  --color-status-delayed: #f0ad4e;
+  --color-status-capacity: #F59E0B;
   --color-success: #22C55E;
-  --color-closing: #6366F1;
-  --color-closing-light: #818CF8;
   --font-body: 'Inter', sans-serif;
 }
 
@@ -25,7 +24,7 @@
 
 body {
   background: #000000;
-  color: #E8E0D0;
+  color: #ffffff;
   font-family: var(--font-body);
   overflow-x: hidden;
 }
@@ -42,50 +41,20 @@ body {
 }
 
 @keyframes pulseBorder {
-  0%, 100% { border-color: #4ade80; }
-  50% { border-color: #4ade8060; }
+  0%, 100% { border-color: #22C55E; }
+  50% { border-color: #22C55E60; }
 }
 
 .animate-pulse-subtle {
   animation: pulseBorder 2s ease-in-out infinite;
 }
 
-/* Card styling */
-.horror-card {
-  background: linear-gradient(145deg, #1a0000 0%, #0d0000 50%, #000000 100%);
-  border: 1px solid #3a0000;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.3s ease;
-}
-
-.horror-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #8B0000, transparent);
-}
-
-/* Closing time card variant */
-.closing-card {
-  background: linear-gradient(145deg, #1a1a2e 0%, #0d0d1a 50%, #000000 100%);
-  border: 1px solid #2a2a5a;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.3s ease;
-}
-
-.closing-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #6366F1, transparent);
+/* Panel styling */
+.panel {
+  background: transparent;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  transition: border-color 0.2s ease;
 }
 
 /* Scrollbar styling */
@@ -93,17 +62,17 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
+  background: #333333;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #5a5a5a;
+  background: #555555;
 }
 
-/* Admin button styles */
+/* Button styles */
 .btn-quick {
   transition: all 0.15s ease;
 }

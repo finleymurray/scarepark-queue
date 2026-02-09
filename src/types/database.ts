@@ -41,3 +41,12 @@ export interface ThroughputLog {
   created_at: string;
   updated_at: string;
 }
+
+export interface UserRole {
+  id: string;
+  email: string;
+  role: 'admin' | 'supervisor';
+  allowed_attractions: string[] | null;
+  created_at: string;
+  updated_at: string;
+}

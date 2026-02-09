@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
@@ -50,9 +51,9 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
 
   return (
     <div
-      className={`flex items-center justify-between rounded-lg border ${
+      className={`flex items-center justify-between rounded border ${
         isShow
-          ? 'bg-purple-950/30 border-purple-500/20'
+          ? 'bg-white/[0.04] border-white/20'
           : 'bg-white/[0.04] border-white/[0.08]'
       }`}
       style={{ ...style, paddingLeft: '3%', paddingRight: '3%' }}
@@ -63,7 +64,7 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
           {attraction.name}
         </h3>
         {isShow && (
-          <span className="flex-shrink-0 bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          <span className="flex-shrink-0 border border-white/40 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
             Live Show
           </span>
         )}
@@ -72,23 +73,23 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
       {/* Right: Status / Time / Show time */}
       <div className="flex-shrink-0 text-right">
         {status === 'CLOSED' && (
-          <span className="text-blood-bright text-2xl font-bold italic">
+          <span className="text-[#dc3545] text-2xl font-bold italic">
             Closed
           </span>
         )}
         {status === 'DELAYED' && (
-          <span className="text-delay-orange text-2xl font-bold">
+          <span className="text-[#f0ad4e] text-2xl font-bold">
             Technical Delay
           </span>
         )}
         {status === 'AT CAPACITY' && (
-          <span className="text-capacity-amber text-2xl font-bold">
+          <span className="text-[#F59E0B] text-2xl font-bold">
             At Capacity
           </span>
         )}
         {status === 'OPEN' && isShow && (
           <div className="flex items-center gap-3">
-            <span className="text-purple-300 text-base font-semibold uppercase tracking-wider">
+            <span className="text-white/60 text-base font-semibold uppercase tracking-wider">
               Next Show
             </span>
             <span className="text-white text-3xl font-black tabular-nums">
@@ -292,10 +293,23 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-gradient-to-r from-blood via-gore to-blood py-4 px-10 rounded-lg flex-shrink-0">
-        <h1 className="text-white text-3xl font-black uppercase tracking-wider">
-          Queue Times
-        </h1>
+      <header className="bg-[#111] border-b border-[#333] py-4 px-10 rounded flex-shrink-0 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
+          <h1 className="text-white text-3xl font-black uppercase tracking-wider">
+            Queue Times
+          </h1>
+        </div>
+        {closingTime && (
+          <div className="flex items-center gap-3">
+            <span className="text-[#888] text-lg font-semibold uppercase tracking-wider">
+              Closes
+            </span>
+            <span className="text-white text-2xl font-black tabular-nums">
+              {formatTime12h(closingTime)}
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Attraction list — fills available space */}
@@ -319,7 +333,7 @@ export default function TVDisplay() {
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-gradient-to-r from-[#1a1a2e] via-[#16163a] to-[#1a1a2e] py-4 px-10 rounded-lg flex-shrink-0">
+      <footer className="bg-[#111] border-t border-[#333] py-4 px-10 rounded flex-shrink-0">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">
@@ -337,7 +351,7 @@ export default function TVDisplay() {
 
           {/* Closing time (center) */}
           <div className="flex items-center justify-center gap-3">
-            <span className="text-closing-light text-lg font-semibold uppercase tracking-wider">
+            <span className="text-[#888] text-lg font-semibold uppercase tracking-wider">
               Park Closes
             </span>
             <span className="text-white text-2xl font-black tabular-nums">

@@ -2,23 +2,24 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { checkAuth } from '@/lib/auth';
+import AdminNav from '@/components/AdminNav';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
 const SHOW_STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'DELAYED'];
 
 const STATUS_COLORS: Record<AttractionStatus, string> = {
-  'OPEN': 'bg-green-600',
-  'CLOSED': 'bg-blood-bright',
-  'DELAYED': 'bg-delay-orange',
-  'AT CAPACITY': 'bg-capacity-amber',
+  'OPEN': 'bg-[#22C55E]',
+  'CLOSED': 'bg-[#dc3545]',
+  'DELAYED': 'bg-[#f0ad4e]',
+  'AT CAPACITY': 'bg-[#F59E0B]',
 };
 
 const STATUS_TEXT_COLORS: Record<AttractionStatus, string> = {
   'OPEN': 'text-green-400',
-  'CLOSED': 'text-blood-bright',
+  'CLOSED': 'text-[#dc3545]',
   'DELAYED': 'text-delay-orange',
   'AT CAPACITY': 'text-capacity-amber',
 };
@@ -51,22 +52,22 @@ function ConfirmModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-      <div className="horror-card rounded-xl p-8 max-w-md w-full text-center space-y-6">
-        <div className="text-blood-bright text-5xl mb-2">⚠</div>
-        <h2 className="text-bone text-xl font-bold">{title}</h2>
-        <p className="text-bone/60 text-sm">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="panel p-6 max-w-md w-full text-center space-y-6">
+        <div className="text-[#dc3545] text-5xl mb-2">⚠</div>
+        <h2 className="text-white text-xl font-bold">{title}</h2>
+        <p className="text-[#888] text-sm">{message}</p>
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={onCancel}
-            className="px-6 py-3 bg-gore border border-blood/30 text-bone rounded-lg
-                       hover:bg-flesh transition-colors font-medium"
+            className="px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
+                       rounded transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-6 py-3 bg-blood-bright hover:bg-blood-glow text-white rounded-lg
+            className="px-6 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white rounded
                        transition-colors font-bold"
           >
             {confirmLabel}
@@ -83,7 +84,7 @@ function SaveFeedback({ show }: { show: boolean }) {
 
   return (
     <div className="absolute top-2 right-2 animate-save-feedback">
-      <div className="bg-success/20 border border-success/40 text-success text-xs font-medium px-2 py-1 rounded-md flex items-center gap-1">
+      <div className="bg-[#22C55E]/20 border border-[#22C55E]/40 text-[#22C55E] text-xs font-medium px-2 py-1 rounded-md flex items-center gap-1">
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
@@ -138,8 +139,8 @@ function EditableName({
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setValue(name); setEditing(false); }
         }}
-        className="text-bone text-lg font-bold bg-black/60 border border-gore rounded px-2 py-0.5 mr-2
-                   focus:outline-none focus:border-blood-bright transition-colors min-w-0 flex-1"
+        className="text-white text-lg font-bold bg-transparent border border-[#333] rounded px-2 py-0.5 mr-2
+                   focus:outline-none focus:border-[#888] transition-colors min-w-0 flex-1"
       />
     );
   }
@@ -147,11 +148,11 @@ function EditableName({
   return (
     <h3
       onClick={() => setEditing(true)}
-      className="text-bone text-lg font-bold truncate mr-2 cursor-pointer hover:text-bone/70 transition-colors"
+      className="text-white text-lg font-bold truncate mr-2 cursor-pointer hover:text-white/70 transition-colors"
       title="Click to edit name"
     >
       {name}
-      <svg className="w-3.5 h-3.5 inline-block ml-2 text-bone/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-3.5 h-3.5 inline-block ml-2 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     </h3>
@@ -180,27 +181,27 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div className="horror-card rounded-xl p-4">
-      <h3 className="text-bone text-lg font-bold mb-3">Add Attraction</h3>
+    <div className="panel p-4">
+      <h3 className="text-white text-lg font-bold mb-3">Add Attraction</h3>
 
       {/* Type toggle */}
       <div className="flex gap-2 mb-3">
         <button
           onClick={() => setType('ride')}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors border ${
+          className={`flex-1 py-2 text-sm font-semibold rounded transition-colors border ${
             type === 'ride'
-              ? 'bg-blood text-white border-blood-bright'
-              : 'bg-black/40 text-bone/50 border-gore hover:border-blood/50'
+              ? 'bg-white text-black border-white'
+              : 'bg-transparent text-[#888] border-[#333]'
           }`}
         >
           Ride
         </button>
         <button
           onClick={() => setType('show')}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors border ${
+          className={`flex-1 py-2 text-sm font-semibold rounded transition-colors border ${
             type === 'show'
-              ? 'bg-purple-700 text-white border-purple-500'
-              : 'bg-black/40 text-bone/50 border-gore hover:border-purple-500/50'
+              ? 'bg-white text-black border-white'
+              : 'bg-transparent text-[#888] border-[#333]'
           }`}
         >
           Live Show
@@ -214,21 +215,21 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
           placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
-          className="flex-1 px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
-                     placeholder-bone/30 focus:outline-none focus:border-blood-bright transition-colors"
+          className="flex-1 px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
+                     placeholder-white/30 focus:outline-none focus:border-[#888] transition-colors"
         />
         <button
           onClick={handleAdd}
           disabled={adding || !name.trim()}
-          className="btn-quick px-4 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold
-                     rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-4 py-2 bg-[#22C55E] hover:bg-[#16a34a] text-black text-sm font-semibold
+                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {adding ? '...' : 'Add'}
         </button>
       </div>
 
       {error && (
-        <p className="text-blood-bright text-xs mt-2">{error}</p>
+        <p className="text-[#dc3545] text-xs mt-2">{error}</p>
       )}
     </div>
   );
@@ -268,25 +269,25 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div className="closing-card rounded-xl p-4 relative">
+    <div className="panel p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-closing-light text-lg font-bold">Operating Hours</h3>
-        <span className="bg-closing text-white text-xs font-bold px-2.5 py-1 rounded-full">INFO</span>
+        <h3 className="text-white text-lg font-bold">Operating Hours</h3>
+        <span className="bg-white text-black text-xs font-bold px-2.5 py-1 rounded-full">INFO</span>
       </div>
 
       <div className="flex gap-4 text-center mb-3">
         <div className="flex-1">
-          <span className="text-closing-light/50 text-xs font-medium uppercase tracking-wider">Opens</span>
-          <div className="text-2xl font-bold tabular-nums mt-1 text-closing-light">
+          <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Opens</span>
+          <div className="text-2xl font-bold tabular-nums mt-1 text-white">
             {openingTime || '--:--'}
           </div>
         </div>
-        <div className="text-closing-light/30 self-center text-lg">—</div>
+        <div className="text-white/30 self-center text-lg">—</div>
         <div className="flex-1">
-          <span className="text-closing-light/50 text-xs font-medium uppercase tracking-wider">Closes</span>
-          <div className="text-2xl font-bold tabular-nums mt-1 text-closing-light">
+          <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Closes</span>
+          <div className="text-2xl font-bold tabular-nums mt-1 text-white">
             {closingTime || '--:--'}
           </div>
         </div>
@@ -295,31 +296,31 @@ function OperatingHoursControl({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="block text-closing-light/40 text-xs mb-1">Opening</label>
+            <label className="block text-white/40 text-xs mb-1">Opening</label>
             <input
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              className="w-full px-3 py-2 bg-black/60 border border-[#2a2a5a] rounded-lg text-bone text-sm
-                         focus:outline-none focus:border-closing transition-colors"
+              className="w-full px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
+                         focus:outline-none focus:border-[#888] transition-colors"
             />
           </div>
           <div className="flex-1">
-            <label className="block text-closing-light/40 text-xs mb-1">Closing</label>
+            <label className="block text-white/40 text-xs mb-1">Closing</label>
             <input
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              className="w-full px-3 py-2 bg-black/60 border border-[#2a2a5a] rounded-lg text-bone text-sm
-                         focus:outline-none focus:border-closing transition-colors"
+              className="w-full px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
+                         focus:outline-none focus:border-[#888] transition-colors"
             />
           </div>
         </div>
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="w-full btn-quick px-4 py-2 bg-closing hover:bg-closing-light text-white text-sm font-semibold
-                     rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full btn-quick px-4 py-2 bg-white text-black hover:bg-[#e0e0e0] text-sm font-semibold
+                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {saving ? 'Saving...' : 'Set Hours'}
         </button>
@@ -343,7 +344,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('up')}
         disabled={isFirst}
-        className="p-1 text-bone/30 hover:text-bone disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-white/30 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move up"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -353,7 +354,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('down')}
         disabled={isLast}
-        className="p-1 text-bone/30 hover:text-bone disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-white/30 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move down"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -408,7 +409,7 @@ function RideControl({
   }
 
   return (
-    <div className="horror-card rounded-xl p-4 relative">
+    <div className="panel rounded p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -428,13 +429,13 @@ function RideControl({
       </div>
 
       <div className="mb-4">
-        <label className="block text-bone/50 text-xs font-medium mb-1">Status</label>
+        <label className="block text-white/50 text-xs font-medium mb-1">Status</label>
         <select
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
-                     focus:outline-none focus:border-blood-bright transition-colors cursor-pointer
+          className="w-full px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
+                     focus:outline-none focus:border-[#888] transition-colors cursor-pointer
                      disabled:opacity-50"
         >
           {STATUS_OPTIONS.map((s) => (
@@ -444,10 +445,10 @@ function RideControl({
       </div>
 
       <div className="text-center mb-3">
-        <span className="text-bone/50 text-xs font-medium uppercase tracking-wider">Wait Time</span>
+        <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Wait Time</span>
         <div className={`text-4xl font-bold tabular-nums mt-1 ${STATUS_TEXT_COLORS[status]}`}>
           {attraction.wait_time}
-          <span className="text-base text-bone/40 ml-1">min</span>
+          <span className="text-base text-white/40 ml-1">min</span>
         </div>
       </div>
 
@@ -455,24 +456,24 @@ function RideControl({
         <button
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
-          className="btn-quick px-2 py-2.5 bg-gore border border-blood/30 text-bone rounded-lg
-                     hover:bg-flesh text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-2 py-2.5 bg-[#111] border border-[#333] text-white rounded
+                     hover:bg-[#111] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           -5m
         </button>
         <button
           onClick={() => handleTimeAdjust(5)}
           disabled={saving}
-          className="btn-quick px-2 py-2.5 bg-gore border border-blood/30 text-bone rounded-lg
-                     hover:bg-flesh text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-2 py-2.5 bg-[#111] border border-[#333] text-white rounded
+                     hover:bg-[#111] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +5m
         </button>
         <button
           onClick={() => handleTimeAdjust(10)}
           disabled={saving}
-          className="btn-quick px-2 py-2.5 bg-gore border border-blood/30 text-bone rounded-lg
-                     hover:bg-flesh text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-2 py-2.5 bg-[#111] border border-[#333] text-white rounded
+                     hover:bg-[#111] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +10m
         </button>
@@ -487,16 +488,16 @@ function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
-                     placeholder-bone/30 focus:outline-none focus:border-blood-bright transition-colors
+          className="flex-1 px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
+                     placeholder-white/30 focus:outline-none focus:border-[#888] transition-colors
                      [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                      [&::-webkit-outer-spin-button]:appearance-none"
         />
         <button
           onClick={handleSetTime}
           disabled={saving || !customTime}
-          className="btn-quick px-4 py-2 bg-blood hover:bg-blood-bright text-bone text-sm font-semibold
-                     rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-4 py-2 bg-[#dc3545] hover:bg-[#dc3545] text-white text-sm font-semibold
+                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Set
         </button>
@@ -504,8 +505,8 @@ function RideControl({
 
       <button
         onClick={() => onDelete(attraction.id, attraction.name)}
-        className="w-full py-2 text-xs text-bone/30 hover:text-blood-bright hover:bg-blood/10
-                   rounded-lg transition-colors"
+        className="w-full py-2 text-xs text-white/30 hover:text-[#dc3545] hover:bg-[#dc3545]/10
+                   rounded transition-colors"
       >
         Remove Attraction
       </button>
@@ -564,7 +565,7 @@ function ShowControl({
   }
 
   return (
-    <div className="horror-card rounded-xl p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)' }}>
+    <div className="panel rounded p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -587,12 +588,12 @@ function ShowControl({
       </div>
 
       <div className="mb-4">
-        <label className="block text-bone/50 text-xs font-medium mb-1">Status</label>
+        <label className="block text-white/50 text-xs font-medium mb-1">Status</label>
         <select
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
+          className="w-full px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
                      focus:outline-none focus:border-purple-500 transition-colors cursor-pointer
                      disabled:opacity-50"
         >
@@ -604,22 +605,22 @@ function ShowControl({
 
       {/* Show times list */}
       <div className="mb-3">
-        <label className="block text-bone/50 text-xs font-medium mb-2">Show Times</label>
+        <label className="block text-white/50 text-xs font-medium mb-2">Show Times</label>
         {sortedTimes.length === 0 ? (
-          <p className="text-bone/30 text-xs italic mb-2">No show times added</p>
+          <p className="text-white/30 text-xs italic mb-2">No show times added</p>
         ) : (
           <div className="flex flex-wrap gap-2 mb-2">
             {sortedTimes.map((time) => (
               <div
                 key={time}
                 className="flex items-center gap-1.5 bg-purple-900/40 border border-purple-500/30
-                           text-purple-200 text-sm font-semibold px-3 py-1.5 rounded-lg"
+                           text-purple-200 text-sm font-semibold px-3 py-1.5 rounded"
               >
                 <span className="tabular-nums">{formatTime12h(time)}</span>
                 <button
                   onClick={() => handleRemoveTime(time)}
                   disabled={saving}
-                  className="text-purple-400/60 hover:text-blood-bright transition-colors ml-1
+                  className="text-purple-400/60 hover:text-[#dc3545] transition-colors ml-1
                              disabled:opacity-30"
                   title="Remove this time"
                 >
@@ -640,14 +641,14 @@ function ShowControl({
           value={newTime}
           onChange={(e) => setNewTime(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-          className="flex-1 px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
+          className="flex-1 px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
                      focus:outline-none focus:border-purple-500 transition-colors"
         />
         <button
           onClick={handleAddTime}
           disabled={saving || !newTime || showTimes.includes(newTime)}
           className="btn-quick px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold
-                     rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Add
         </button>
@@ -658,7 +659,7 @@ function ShowControl({
           onClick={handleClearAll}
           disabled={saving}
           className="w-full py-2 mb-3 text-xs text-purple-400/60 hover:text-purple-300 hover:bg-purple-900/20
-                     rounded-lg transition-colors disabled:opacity-30"
+                     rounded transition-colors disabled:opacity-30"
         >
           Clear All Times
         </button>
@@ -666,8 +667,8 @@ function ShowControl({
 
       <button
         onClick={() => onDelete(attraction.id, attraction.name)}
-        className="w-full py-2 text-xs text-bone/30 hover:text-blood-bright hover:bg-blood/10
-                   rounded-lg transition-colors"
+        className="w-full py-2 text-xs text-white/30 hover:text-[#dc3545] hover:bg-[#dc3545]/10
+                   rounded transition-colors"
       >
         Remove Attraction
       </button>
@@ -692,12 +693,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/admin/login');
+      const auth = await checkAuth();
+      if (!auth.authenticated || auth.role !== 'admin') {
+        router.push('/login');
         return;
       }
-      setUserEmail(session.user.email || '');
+      setUserEmail(auth.email || '');
 
       const [attractionsRes, openingRes, closingRes, autoSortRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
@@ -872,7 +873,7 @@ export default function AdminDashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/admin/login');
+    router.push('/login');
   }
 
   async function handleToggleAutoSort() {
@@ -910,7 +911,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
-        <h1 className="text-blood-bright text-3xl font-bold">Loading Dashboard...</h1>
+        <h1 className="text-white text-3xl font-bold">Loading Dashboard...</h1>
       </div>
     );
   }
@@ -947,82 +948,34 @@ export default function AdminDashboard() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      <header className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-blood-bright text-3xl font-black uppercase tracking-wide sm:text-4xl">
-              Control Room
-            </h1>
-            <p className="text-bone/40 text-sm mt-1">Scarepark Queue Management</p>
-          </div>
+      <AdminNav userEmail={userEmail} onLogout={handleLogout} />
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {userEmail && (
-              <span className="text-bone/40 text-xs truncate max-w-[200px]" title={userEmail}>
-                {userEmail}
-              </span>
-            )}
-
-            <Link
-              href="/admin/analytics"
-              className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
-                         rounded-lg transition-colors text-sm"
-            >
-              Analytics
-            </Link>
-
-            <button
-              onClick={() => setShowOpenAll(true)}
-              disabled={openingAll}
-              className="px-5 py-2.5 bg-green-700 hover:bg-green-600 text-white font-bold rounded-lg
-                         transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
-            >
-              {openingAll ? 'Opening...' : 'OPEN ALL'}
+      {/* Quick Actions */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-6">
+        <div className="panel p-5">
+          <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
+          <div className="flex gap-3">
+            <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
+              className="flex-1 btn-quick px-4 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded text-sm transition-colors disabled:opacity-50">
+              {openingAll ? 'Opening...' : 'Open All Rides'}
             </button>
-
-            <button
-              onClick={() => setShowCloseAll(true)}
-              disabled={closingAll}
-              className="px-5 py-2.5 bg-blood-bright hover:bg-blood-glow text-white font-bold rounded-lg
-                         transition-all duration-200 disabled:opacity-50 text-sm sm:text-base"
-            >
-              {closingAll ? 'Closing...' : 'CLOSE ALL'}
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
-                         rounded-lg transition-colors text-sm"
-            >
-              Logout
+            <button onClick={() => setShowCloseAll(true)} disabled={closingAll}
+              className="flex-1 btn-quick px-4 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white font-bold rounded text-sm transition-colors disabled:opacity-50">
+              {closingAll ? 'Closing...' : 'Close All Rides'}
             </button>
           </div>
+          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#333]">
+            <button onClick={handleToggleAutoSort}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#222] border border-[#444]'}`}>
+              <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <span className="text-[#888] text-sm">
+              Auto-sort by wait time {autoSort ? <span className="text-[#22C55E] font-semibold">(ON)</span> : <span className="text-white/30">(OFF)</span>}
+            </span>
+          </div>
         </div>
-
-        {/* Auto-sort toggle */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleToggleAutoSort}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              autoSort ? 'bg-green-600' : 'bg-gore border border-blood/30'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-                autoSort ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-          <span className="text-bone/60 text-sm">
-            Auto-sort by wait time {autoSort ? <span className="text-green-400 font-semibold">(ON)</span> : <span className="text-bone/30">(OFF)</span>}
-          </span>
-          {autoSort && (
-            <span className="text-bone/30 text-xs">Manual reorder disabled</span>
-          )}
-        </div>
-      </header>
-
-      <div className="mx-auto w-full h-px bg-gradient-to-r from-transparent via-blood/50 to-transparent mb-6" />
+        <OperatingHoursControl openingTime={openingTime} closingTime={closingTime} onUpdateOpening={handleOpeningTimeUpdate} onUpdateClosing={handleClosingTimeUpdate} />
+      </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {attractions.map((attraction, idx) =>
@@ -1048,12 +1001,6 @@ export default function AdminDashboard() {
             />
           )
         )}
-        <OperatingHoursControl
-          openingTime={openingTime}
-          closingTime={closingTime}
-          onUpdateOpening={handleOpeningTimeUpdate}
-          onUpdateClosing={handleClosingTimeUpdate}
-        />
         <AddAttractionForm onAdd={handleAddAttraction} />
       </div>
     </div>

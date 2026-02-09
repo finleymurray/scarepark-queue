@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Scarepark Queue Times",
-  description: "Real-time queue management for the Halloween Scarepark",
+  title: "Immersive Core — Queue Management",
+  description: "Real-time queue management system",
 };
 
 export default function RootLayout({

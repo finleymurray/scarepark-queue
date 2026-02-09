@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { checkAuth } from '@/lib/auth';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
 
 /* ── Helpers ── */
@@ -101,15 +103,15 @@ function NumericKeypad({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#0a0a0a] border border-[#1a3a1a] p-6 space-y-4">
+      <div className="w-full max-w-sm rounded-2xl bg-[#0a0a0a] border border-[#333] p-6 space-y-4">
         <div className="text-center">
-          <p className="text-[#4ade80]/60 text-xs uppercase tracking-wider font-medium">{slotLabel}</p>
+          <p className="text-white/50 text-xs uppercase tracking-wider font-medium">{slotLabel}</p>
           <p className="text-white text-sm mt-1">Enter guest count</p>
         </div>
 
         {/* Display */}
-        <div className="bg-black border border-[#1a3a1a] rounded-xl px-4 py-5 text-center">
-          <span className="text-[#4ade80] text-5xl font-bold tabular-nums">
+        <div className="bg-black border border-[#333] rounded-xl px-4 py-5 text-center">
+          <span className="text-white text-5xl font-bold tabular-nums">
             {display || '0'}
           </span>
         </div>
@@ -121,7 +123,7 @@ function NumericKeypad({
               key={k}
               onClick={() => handleKey(k)}
               className="py-4 text-2xl font-bold text-white bg-[#111] rounded-xl
-                         active:bg-[#1a3a1a] transition-colors touch-manipulation"
+                         active:bg-[#222] transition-colors touch-manipulation"
             >
               {k}
             </button>
@@ -136,7 +138,7 @@ function NumericKeypad({
           <button
             onClick={() => handleKey('0')}
             className="py-4 text-2xl font-bold text-white bg-[#111] rounded-xl
-                       active:bg-[#1a3a1a] transition-colors touch-manipulation"
+                       active:bg-[#222] transition-colors touch-manipulation"
           >
             0
           </button>
@@ -160,8 +162,8 @@ function NumericKeypad({
           </button>
           <button
             onClick={() => onConfirm(parseInt(display, 10) || 0)}
-            className="flex-1 py-4 text-lg font-bold text-black bg-[#4ade80] rounded-xl
-                       active:bg-[#22c55e] transition-colors touch-manipulation"
+            className="flex-1 py-4 text-lg font-bold text-black bg-white rounded-xl
+                       active:bg-white/80 transition-colors touch-manipulation"
           >
             Confirm
           </button>
@@ -185,6 +187,7 @@ export default function SupervisorDashboard() {
   const [keypadValue, setKeypadValue] = useState(0);
   const [customWait, setCustomWait] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [userEmail, setUserEmail] = useState('');
   const tabBarRef = useRef<HTMLDivElement>(null);
 
   // Tick every 30s to keep current slot highlighting fresh
@@ -196,11 +199,13 @@ export default function SupervisorDashboard() {
   // Auth & initial data fetch
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/admin/login');
+      const auth = await checkAuth();
+      if (!auth.authenticated || !auth.role) {
+        router.push('/login');
         return;
       }
+      // Store email for display
+      setUserEmail(auth.email || '');
 
       const [attractionsRes, settingsRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
@@ -208,7 +213,13 @@ export default function SupervisorDashboard() {
       ]);
 
       if (!attractionsRes.error && attractionsRes.data) {
-        setAttractions(attractionsRes.data);
+        if (auth.role === 'supervisor' && auth.allowedAttractions) {
+          const allowed = new Set(auth.allowedAttractions);
+          const filtered = attractionsRes.data.filter((a: Attraction) => allowed.has(a.id));
+          setAttractions(filtered);
+        } else {
+          setAttractions(attractionsRes.data);
+        }
         const firstRide = attractionsRes.data.find((a: Attraction) => a.attraction_type !== 'show');
         if (firstRide) {
           setSelectedId(firstRide.id);
@@ -396,13 +407,13 @@ export default function SupervisorDashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/admin/login');
+    router.push('/login');
   }
 
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-[#4ade80] text-2xl font-bold animate-pulse">Loading...</div>
+        <div className="text-white text-2xl font-bold animate-pulse">Loading...</div>
       </div>
     );
   }
@@ -433,21 +444,27 @@ export default function SupervisorDashboard() {
       />
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] flex-shrink-0">
-        <h1 className="text-[#4ade80] text-lg font-black uppercase tracking-wider">Field Control</h1>
-        <button
-          onClick={handleLogout}
-          className="px-3 py-1.5 text-white/40 text-xs border border-white/10 rounded-lg
-                     active:bg-white/10 transition-colors touch-manipulation"
-        >
-          Logout
-        </button>
-      </header>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
+          <span className="text-white/30 text-lg font-light">|</span>
+          <h1 className="text-white text-lg font-semibold">Field Control</h1>
+        </div>
+        <div className="flex items-center gap-3">
+          {userEmail && <span className="text-[#888] text-xs truncate max-w-[150px]">{userEmail}</span>}
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 bg-transparent border border-[#333] text-[#888] hover:text-white hover:border-[#555] rounded text-xs transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
 
       {/* Attraction Tab Bar */}
       <div
         ref={tabBarRef}
-        className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-white/[0.06] flex-shrink-0
+        className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-[#333] flex-shrink-0
                    scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]
                    [&::-webkit-scrollbar]:hidden"
       >
@@ -459,8 +476,8 @@ export default function SupervisorDashboard() {
               onClick={() => setSelectedId(a.id)}
               className={`flex-shrink-0 px-5 py-3 rounded-xl text-sm font-bold transition-all touch-manipulation
                 ${isSelected
-                  ? 'bg-[#4ade80] text-black shadow-[0_0_20px_rgba(74,222,128,0.3)]'
-                  : 'bg-[#111] text-white/50 border border-white/[0.08] active:bg-[#1a1a1a]'
+                  ? 'bg-white text-black'
+                  : 'bg-[#111] text-white/50 border border-[#333] active:bg-[#1a1a1a]'
                 }`}
             >
               {a.name}
@@ -476,18 +493,18 @@ export default function SupervisorDashboard() {
             {/* ── Queue Time Control ── */}
             <section>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-[#4ade80]" />
+                <div className="w-2 h-2 rounded-full bg-white" />
                 <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Queue Time</h2>
               </div>
 
-              <div className="bg-[#0a0a0a] border border-white/[0.06] rounded-2xl p-5">
+              <div className="bg-[#0a0a0a] border border-[#333] rounded-2xl p-5">
                 {/* Current wait display */}
                 <div className="text-center mb-5">
                   <div className={`text-6xl font-black tabular-nums ${
-                    selected.status === 'OPEN' ? 'text-[#4ade80]' :
-                    selected.status === 'CLOSED' ? 'text-red-500' :
-                    selected.status === 'DELAYED' ? 'text-orange-400' :
-                    'text-amber-400'
+                    selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                    selected.status === 'CLOSED' ? 'text-[#dc3545]' :
+                    selected.status === 'DELAYED' ? 'text-[#f0ad4e]' :
+                    'text-[#F59E0B]'
                   }`}>
                     {selected.attraction_type === 'show' ? (
                       <span className="text-3xl">{selected.status}</span>
@@ -499,9 +516,9 @@ export default function SupervisorDashboard() {
                     )}
                   </div>
                   <p className={`text-xs mt-1 font-medium uppercase tracking-wider ${
-                    selected.status === 'OPEN' ? 'text-[#4ade80]/50' :
-                    selected.status === 'CLOSED' ? 'text-red-500/50' :
-                    'text-orange-400/50'
+                    selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
+                    selected.status === 'CLOSED' ? 'text-[#dc3545]/50' :
+                    'text-[#f0ad4e]/50'
                   }`}>
                     {selected.status}
                   </p>
@@ -522,7 +539,7 @@ export default function SupervisorDashboard() {
                       </button>
                       <button
                         onClick={() => handleWaitTimeUpdate(5)}
-                        className="py-5 text-2xl font-black bg-[#111] rounded-xl text-[#4ade80]
+                        className="py-5 text-2xl font-black bg-[#111] rounded-xl text-[#22C55E]
                                    active:bg-green-900/20 transition-colors touch-manipulation"
                       >
                         +5
@@ -538,16 +555,16 @@ export default function SupervisorDashboard() {
                         placeholder="Custom minutes"
                         min={0}
                         max={180}
-                        className="flex-1 px-4 py-4 bg-[#111] border border-white/[0.06] rounded-xl text-white text-lg
-                                   placeholder-white/20 focus:outline-none focus:border-[#4ade80]/50 transition-colors
+                        className="flex-1 px-4 py-4 bg-[#111] border border-[#333] rounded-xl text-white text-lg
+                                   placeholder-white/20 focus:outline-none focus:border-white/50 transition-colors
                                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                                    [&::-webkit-outer-spin-button]:appearance-none touch-manipulation"
                       />
                       <button
                         onClick={handleSetCustomWait}
                         disabled={!customWait}
-                        className="px-6 py-4 bg-[#4ade80] text-black font-bold text-lg rounded-xl
-                                   active:bg-[#22c55e] transition-colors touch-manipulation
+                        className="px-6 py-4 bg-white text-black font-bold text-lg rounded-xl
+                                   active:bg-white/80 transition-colors touch-manipulation
                                    disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         Set
@@ -561,12 +578,12 @@ export default function SupervisorDashboard() {
             {/* ── Hourly Throughput Grid ── */}
             <section>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-[#4ade80]" />
+                <div className="w-2 h-2 rounded-full bg-white" />
                 <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Hourly Throughput</h2>
               </div>
 
               {slots.length === 0 ? (
-                <div className="bg-[#0a0a0a] border border-white/[0.06] rounded-2xl p-6 text-center">
+                <div className="bg-[#0a0a0a] border border-[#333] rounded-2xl p-6 text-center">
                   <p className="text-white/30 text-sm">Operating hours not set.</p>
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
@@ -588,28 +605,28 @@ export default function SupervisorDashboard() {
                         disabled={isFuture}
                         className={`w-full flex items-center justify-between px-5 py-4 rounded-xl transition-all touch-manipulation
                           ${isCurrent
-                            ? 'bg-[#4ade80]/10 border-2 border-[#4ade80] shadow-[0_0_20px_rgba(74,222,128,0.15)] animate-pulse-subtle'
+                            ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
                             : isPast
-                              ? 'bg-[#0a0a0a] border border-white/[0.06] active:bg-[#111]'
-                              : 'bg-[#0a0a0a] border border-white/[0.04] opacity-40 cursor-not-allowed'
+                              ? 'bg-[#0a0a0a] border border-[#333] active:bg-[#111]'
+                              : 'bg-[#0a0a0a] border border-[#222] opacity-40 cursor-not-allowed'
                           }`}
                       >
                         <div className="text-left">
-                          <div className={`text-sm font-bold ${isCurrent ? 'text-[#4ade80]' : 'text-white/70'}`}>
+                          <div className={`text-sm font-bold ${isCurrent ? 'text-[#22C55E]' : 'text-white/70'}`}>
                             {formatSlotTime(slot.start)} - {formatSlotTime(slot.end)}
                           </div>
                           {isCurrent && (
-                            <div className="text-[#4ade80]/60 text-xs font-medium mt-0.5">CURRENT HOUR</div>
+                            <div className="text-[#22C55E]/60 text-xs font-medium mt-0.5">CURRENT HOUR</div>
                           )}
                         </div>
 
                         <div className="text-right">
                           {guestCount !== null ? (
-                            <div className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#4ade80]' : 'text-white'}`}>
+                            <div className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
                               {guestCount}
                             </div>
                           ) : (
-                            <div className={`text-lg ${isCurrent ? 'text-[#4ade80]/40' : 'text-white/20'}`}>
+                            <div className={`text-lg ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
                               {isFuture ? '—' : 'Tap to log'}
                             </div>
                           )}
@@ -625,13 +642,13 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* ── Footer: Guests Tonight ── */}
-      <footer className="flex-shrink-0 border-t border-white/[0.06] bg-[#0a0a0a] px-4 py-3">
+      <footer className="flex-shrink-0 border-t border-[#333] bg-[#0a0a0a] px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-white/40 text-xs uppercase tracking-wider font-medium">
               {selected?.name || 'All'} Tonight
             </div>
-            <div className="text-[#4ade80] text-2xl font-black tabular-nums">
+            <div className="text-[#22C55E] text-2xl font-black tabular-nums">
               {guestsTonight.toLocaleString()}
               <span className="text-white/30 text-sm ml-1">guests</span>
             </div>

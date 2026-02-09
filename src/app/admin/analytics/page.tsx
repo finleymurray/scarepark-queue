@@ -2,37 +2,39 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { checkAuth } from '@/lib/auth';
+import AdminNav from '@/components/AdminNav';
 import type { Attraction, AttractionHistory, ThroughputLog } from '@/types/database';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceArea,
+  BarChart, Bar, ComposedChart,
 } from 'recharts';
 import * as XLSX from 'xlsx';
 
 const LINE_COLORS = [
-  '#CC0000',
   '#22C55E',
-  '#6366F1',
-  '#FF8C00',
+  '#3B82F6',
   '#F59E0B',
+  '#EF4444',
+  '#8B5CF6',
   '#EC4899',
   '#06B6D4',
-  '#8B5CF6',
-  '#EF4444',
+  '#F97316',
   '#14B8A6',
+  '#A855F7',
 ];
 
 const STATUS_BAND_COLORS: Record<string, string> = {
-  'CLOSED': '#CC000025',
-  'DELAYED': '#FF8C0025',
+  'CLOSED': '#dc354525',
+  'DELAYED': '#f0ad4e25',
   'AT CAPACITY': '#F59E0B25',
 };
 
 const STATUS_LABEL_COLORS: Record<string, string> = {
-  'CLOSED': '#CC0000',
-  'DELAYED': '#FF8C00',
+  'CLOSED': '#dc3545',
+  'DELAYED': '#f0ad4e',
   'AT CAPACITY': '#F59E0B',
 };
 
@@ -62,9 +64,19 @@ function formatTimeShort(ts: number): string {
   });
 }
 
+function formatSlotTime(time: string): string {
+  if (!time) return '';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${hour12}:${m || '00'} ${ampm}`;
+}
+
 export default function AnalyticsPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [historyData, setHistoryData] = useState<AttractionHistory[]>([]);
   const [selectedDate, setSelectedDate] = useState(() =>
@@ -84,7 +96,6 @@ export default function AnalyticsPage() {
   async function handleExportExcel() {
     setExporting(true);
     try {
-      // Generate list of dates in range
       const dates: string[] = [];
       const current = new Date(exportStartDate + 'T12:00:00');
       const end = new Date(exportEndDate + 'T12:00:00');
@@ -110,13 +121,11 @@ export default function AnalyticsPage() {
           .order('recorded_at', { ascending: true });
 
         if (error || !data || data.length === 0) {
-          // Add empty sheet with a note
           const ws = XLSX.utils.aoa_to_sheet([['No data recorded for this night.']]);
           XLSX.utils.book_append_sheet(wb, ws, dateStr);
           continue;
         }
 
-        // Build raw data rows: Time | Attraction | Status | Wait Time (min)
         const rows = data.map((r: AttractionHistory) => ({
           'Time': new Date(r.recorded_at).toLocaleTimeString('en-GB', {
             hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
@@ -128,17 +137,14 @@ export default function AnalyticsPage() {
 
         const ws = XLSX.utils.json_to_sheet(rows);
 
-        // Auto-size columns
         const colWidths = [
-          { wch: 10 }, // Time
-          { wch: 25 }, // Attraction
-          { wch: 14 }, // Status
-          { wch: 16 }, // Wait Time
+          { wch: 10 },
+          { wch: 25 },
+          { wch: 14 },
+          { wch: 16 },
         ];
         ws['!cols'] = colWidths;
 
-        // Also add a pivoted view below the raw data for easy charting:
-        // Time | Attraction1 | Attraction2 | ...
         const names = Array.from(new Set(data.map((r: AttractionHistory) => r.attraction_name)));
         const timeMap = new Map<string, Record<string, number | string | null>>();
         for (const record of data) {
@@ -155,30 +161,34 @@ export default function AnalyticsPage() {
         }
         const pivotRows = Array.from(timeMap.values());
 
-        // Add gap rows then the pivot table
-        const rawRowCount = rows.length + 2; // +1 header +1 for gap
+        const rawRowCount = rows.length + 2;
         XLSX.utils.sheet_add_aoa(ws, [[], ['PIVOT TABLE — Select this range to create a chart in Excel']], { origin: `A${rawRowCount + 1}` });
         XLSX.utils.sheet_add_json(ws, pivotRows, { origin: `A${rawRowCount + 3}`, skipHeader: false });
 
         XLSX.utils.book_append_sheet(wb, ws, dateStr);
       }
 
-      // Download the workbook
-      XLSX.writeFile(wb, `scarepark-analytics-${exportStartDate}-to-${exportEndDate}.xlsx`);
+      XLSX.writeFile(wb, `analytics-${exportStartDate}-to-${exportEndDate}.xlsx`);
     } catch (err) {
       console.error('Export error:', err);
     }
     setExporting(false);
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push('/login');
+  }
+
   // Auth check + fetch settings
   useEffect(() => {
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/admin/login');
+    async function init() {
+      const auth = await checkAuth();
+      if (!auth.authenticated || auth.role !== 'admin') {
+        router.push('/login');
         return;
       }
+      setUserEmail(auth.email || '');
       setAuthenticated(true);
 
       const { data: settings } = await supabase
@@ -197,7 +207,7 @@ export default function AnalyticsPage() {
         .order('sort_order', { ascending: true });
       if (attractionsData) setAttractions(attractionsData);
     }
-    checkAuth();
+    init();
   }, [router]);
 
   // Fetch history + throughput when date changes
@@ -236,46 +246,36 @@ export default function AnalyticsPage() {
     fetchData();
   }, [authenticated, selectedDate, openingTime]);
 
-  // Transform data for Recharts
+  // Transform data for wait time line chart
   const { chartData, attractionNames, statusPeriods, colorMap } = useMemo(() => {
     if (historyData.length === 0) {
       return { chartData: [], attractionNames: [], statusPeriods: [], colorMap: new Map() };
     }
 
-    // Collect unique attraction names (preserving order of first appearance)
     const namesSet = new Set<string>();
     historyData.forEach((r) => namesSet.add(r.attraction_name));
     const names = Array.from(namesSet);
 
-    // Build color map
     const cMap = new Map<string, string>();
     names.forEach((name, i) => cMap.set(name, LINE_COLORS[i % LINE_COLORS.length]));
 
-    // Build chart data points — only plot wait_time when OPEN
     const timeMap = new Map<number, Record<string, number | string | null>>();
-    // Track current status per attraction for forward-fill
-    const currentStatus: Record<string, string> = {};
-    const currentWait: Record<string, number> = {};
 
     for (const record of historyData) {
       const time = new Date(record.recorded_at).getTime();
-      currentStatus[record.attraction_name] = record.status;
-      currentWait[record.attraction_name] = record.wait_time;
 
       if (!timeMap.has(time)) {
         timeMap.set(time, { time });
       }
       const point = timeMap.get(time)!;
-      // Only show wait time line when OPEN
       point[record.attraction_name] = record.status === 'OPEN' ? record.wait_time : null;
     }
 
-    // Sort by time
     const sorted = Array.from(timeMap.values()).sort(
       (a, b) => (a.time as number) - (b.time as number)
     );
 
-    // Forward-fill: carry the last known value for each attraction
+    // Forward-fill
     const lastKnown: Record<string, number | null> = {};
     for (const point of sorted) {
       for (const name of names) {
@@ -287,7 +287,7 @@ export default function AnalyticsPage() {
       }
     }
 
-    // Build status periods (CLOSED/DELAYED/AT CAPACITY bands)
+    // Build status periods
     const periods: StatusPeriod[] = [];
     const openStatus: Record<string, { status: string; start: number } | null> = {};
 
@@ -298,7 +298,6 @@ export default function AnalyticsPage() {
 
       if (record.status !== 'OPEN') {
         if (!prevPeriod || prevPeriod.status !== record.status) {
-          // Close previous period if different status
           if (prevPeriod) {
             periods.push({
               attractionName: name,
@@ -310,7 +309,6 @@ export default function AnalyticsPage() {
           openStatus[name] = { status: record.status, start: time };
         }
       } else {
-        // Going OPEN — close any active non-OPEN period
         if (prevPeriod) {
           periods.push({
             attractionName: name,
@@ -323,7 +321,6 @@ export default function AnalyticsPage() {
       }
     }
 
-    // Close any remaining open periods at the last data point time
     if (sorted.length > 0) {
       const lastTime = sorted[sorted.length - 1].time as number;
       for (const name of names) {
@@ -341,45 +338,153 @@ export default function AnalyticsPage() {
     return { chartData: sorted, attractionNames: names, statusPeriods: periods, colorMap: cMap };
   }, [historyData]);
 
+  // Transform throughput data for BarChart
+  const { throughputChartData, throughputAttractionNames } = useMemo(() => {
+    if (throughputData.length === 0) {
+      return { throughputChartData: [], throughputAttractionNames: [] };
+    }
+
+    // Resolve attraction names
+    const idToName = new Map<string, string>();
+    for (const a of attractions) {
+      idToName.set(a.id, a.name);
+    }
+    for (const h of historyData) {
+      if (!idToName.has(h.attraction_id)) {
+        idToName.set(h.attraction_id, h.attraction_name);
+      }
+    }
+
+    // Get unique attraction IDs and names
+    const attractionIds = Array.from(new Set(throughputData.map((l) => l.attraction_id)));
+    const names = attractionIds.map((id) => idToName.get(id) || id.slice(0, 8));
+
+    // Get all unique time slots, sorted
+    const allSlots = Array.from(
+      new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
+    ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
+
+    // Build chart data: one row per slot, one key per attraction name
+    const data = allSlots.map((slot) => {
+      const [start, end] = slot.split('|');
+      const row: Record<string, string | number> = {
+        slot: `${formatSlotTime(start)}–${formatSlotTime(end)}`,
+      };
+      attractionIds.forEach((id, idx) => {
+        const log = throughputData.find(
+          (l) => l.attraction_id === id && l.slot_start === start && l.slot_end === end
+        );
+        row[names[idx]] = log?.guest_count || 0;
+      });
+      return row;
+    });
+
+    return { throughputChartData: data, throughputAttractionNames: names };
+  }, [throughputData, attractions, historyData]);
+
+  // Transform data for combined ComposedChart (wait time + throughput by slot)
+  const { combinedChartData, combinedAttractionNames } = useMemo(() => {
+    if (throughputData.length === 0 && historyData.length === 0) {
+      return { combinedChartData: [], combinedAttractionNames: [] };
+    }
+
+    // Resolve attraction names
+    const idToName = new Map<string, string>();
+    for (const a of attractions) {
+      idToName.set(a.id, a.name);
+    }
+    for (const h of historyData) {
+      if (!idToName.has(h.attraction_id)) {
+        idToName.set(h.attraction_id, h.attraction_name);
+      }
+    }
+
+    // Get all unique time slots from throughput data
+    const allSlots = Array.from(
+      new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
+    ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
+
+    if (allSlots.length === 0) {
+      return { combinedChartData: [], combinedAttractionNames: [] };
+    }
+
+    // Get unique attraction IDs from throughput
+    const attractionIds = Array.from(new Set(throughputData.map((l) => l.attraction_id)));
+    const names = attractionIds.map((id) => idToName.get(id) || id.slice(0, 8));
+
+    // For each slot, calculate avg wait time from history data
+    const data = allSlots.map((slot) => {
+      const [start, end] = slot.split('|');
+      const row: Record<string, string | number> = {
+        slot: `${formatSlotTime(start)}–${formatSlotTime(end)}`,
+      };
+
+      // Parse slot times to filter history data
+      const slotStartParts = start.split(':');
+      const slotEndParts = end.split(':');
+      const slotStartMin = parseInt(slotStartParts[0], 10) * 60 + parseInt(slotStartParts[1] || '0', 10);
+      const slotEndMin = parseInt(slotEndParts[0], 10) * 60 + parseInt(slotEndParts[1] || '0', 10);
+
+      attractionIds.forEach((id, idx) => {
+        const name = names[idx];
+
+        // Throughput bar
+        const log = throughputData.find(
+          (l) => l.attraction_id === id && l.slot_start === start && l.slot_end === end
+        );
+        row[`${name} (guests)`] = log?.guest_count || 0;
+
+        // Average wait time from history during this slot
+        const slotHistory = historyData.filter((h) => {
+          if (h.attraction_name !== name || h.status !== 'OPEN') return false;
+          const recorded = new Date(h.recorded_at);
+          const recordedMin = recorded.getHours() * 60 + recorded.getMinutes();
+          return recordedMin >= slotStartMin && recordedMin < slotEndMin;
+        });
+
+        if (slotHistory.length > 0) {
+          const avgWait = Math.round(
+            slotHistory.reduce((sum, h) => sum + h.wait_time, 0) / slotHistory.length
+          );
+          row[`${name} (wait)`] = avgWait;
+        }
+      });
+
+      return row;
+    });
+
+    return { combinedChartData: data, combinedAttractionNames: names };
+  }, [throughputData, historyData, attractions]);
+
+  const tooltipStyle = {
+    backgroundColor: '#0a0a0a',
+    border: '1px solid #333',
+    borderRadius: '4px',
+    color: '#fff',
+  };
+
   if (!authenticated) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
-        <h1 className="text-bone/60 text-2xl font-semibold">Loading...</h1>
+        <h1 className="text-white/40 text-lg">Loading...</h1>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black p-4 sm:p-6">
-      <header className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-blood-bright text-3xl font-black uppercase tracking-wide sm:text-4xl">
-            Queue Analytics
-          </h1>
-          <p className="text-bone/40 text-sm mt-1">Historical wait time data</p>
-        </div>
-
-        <Link
-          href="/admin"
-          className="px-4 py-2.5 bg-gore border border-blood/30 text-bone/60 hover:text-bone
-                     rounded-lg transition-colors text-sm w-fit"
-        >
-          Back to Control Room
-        </Link>
-      </header>
-
-      <div className="mx-auto w-full h-px bg-gradient-to-r from-transparent via-blood/50 to-transparent mb-6" />
+      <AdminNav userEmail={userEmail} onLogout={handleLogout} />
 
       {/* Date picker + Export */}
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-4">
-          <label className="text-bone/70 text-sm font-medium">Select Night:</label>
+          <label className="text-[#888] text-sm font-medium">Select Night:</label>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
-                       focus:outline-none focus:border-blood-bright transition-colors
+            className="px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
+                       focus:outline-none focus:border-[#888] transition-colors
                        [color-scheme:dark]"
           />
         </div>
@@ -387,32 +492,32 @@ export default function AnalyticsPage() {
         {/* Excel export */}
         <div className="flex items-end gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-bone/50 text-xs font-medium">Export From</label>
+            <label className="text-[#888] text-xs font-medium">Export From</label>
             <input
               type="date"
               value={exportStartDate}
               onChange={(e) => setExportStartDate(e.target.value)}
-              className="px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
-                         focus:outline-none focus:border-blood-bright transition-colors
+              className="px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
+                         focus:outline-none focus:border-[#888] transition-colors
                          [color-scheme:dark]"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-bone/50 text-xs font-medium">To</label>
+            <label className="text-[#888] text-xs font-medium">To</label>
             <input
               type="date"
               value={exportEndDate}
               onChange={(e) => setExportEndDate(e.target.value)}
-              className="px-3 py-2 bg-black/60 border border-gore rounded-lg text-bone text-sm
-                         focus:outline-none focus:border-blood-bright transition-colors
+              className="px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
+                         focus:outline-none focus:border-[#888] transition-colors
                          [color-scheme:dark]"
             />
           </div>
           <button
             onClick={handleExportExcel}
             disabled={exporting || exportStartDate > exportEndDate}
-            className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold
-                       rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed
+            className="px-4 py-2 bg-white text-black text-sm font-semibold
+                       rounded transition-colors hover:bg-[#e0e0e0] disabled:opacity-30 disabled:cursor-not-allowed
                        whitespace-nowrap"
           >
             {exporting ? 'Exporting...' : 'Export Excel'}
@@ -420,253 +525,360 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Charts */}
       {loading ? (
-        <div className="horror-card rounded-xl p-12 text-center">
-          <p className="text-bone/60 text-lg">Loading historical data...</p>
+        <div className="panel p-12 text-center">
+          <p className="text-[#888] text-lg">Loading historical data...</p>
         </div>
       ) : (
         <>
-          {chartData.length === 0 ? (
-            <div className="horror-card rounded-xl p-12 text-center mb-6">
-              <p className="text-bone/40 text-lg">No queue time data recorded for this night.</p>
-              <p className="text-bone/30 text-sm mt-2">
+          {chartData.length === 0 && throughputData.length === 0 ? (
+            <div className="panel p-12 text-center mb-6">
+              <p className="text-[#666] text-lg">No data recorded for this night.</p>
+              <p className="text-[#444] text-sm mt-2">
                 Data is captured automatically when staff update queue times.
               </p>
             </div>
           ) : (
             <>
-              {/* Wait time line chart */}
-              <div className="horror-card rounded-xl p-4 sm:p-6 mb-6">
-                <h2 className="text-bone text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
-                <ResponsiveContainer width="100%" height={500}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#3a0000" />
-                    {statusPeriods.map((period, i) => (
-                      <ReferenceArea
-                        key={`${period.attractionName}-${period.start}-${i}`}
-                        x1={period.start}
-                        x2={period.end}
-                        fill={STATUS_BAND_COLORS[period.status] || '#ffffff10'}
-                        fillOpacity={1}
-                        strokeOpacity={0}
-                      />
-                    ))}
-                    <XAxis
-                      dataKey="time"
-                      type="number"
-                      domain={['dataMin', 'dataMax']}
-                      tickFormatter={(ts) => formatTimeShort(Number(ts))}
-                      stroke="#E8E0D0"
-                      tick={{ fill: '#E8E0D0', fontSize: 12 }}
-                    />
-                    <YAxis
-                      stroke="#E8E0D0"
-                      tick={{ fill: '#E8E0D0', fontSize: 12 }}
-                      label={{
-                        value: 'Wait (min)',
-                        angle: -90,
-                        position: 'insideLeft',
-                        fill: '#E8E0D0',
-                        style: { fontSize: 12 },
-                      }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1a0000',
-                        border: '1px solid #3a0000',
-                        borderRadius: '8px',
-                        color: '#E8E0D0',
-                      }}
-                      labelFormatter={(ts) => formatTimeShort(Number(ts))}
-                      formatter={(value, name) => {
-                        if (value === null || value === undefined) return ['--', name];
-                        return [`${value} min`, name];
-                      }}
-                    />
-                    <Legend wrapperStyle={{ color: '#E8E0D0' }} />
-                    {attractionNames.map((name, i) => (
-                      <Line
-                        key={name}
-                        type="monotone"
-                        dataKey={name}
-                        stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                        strokeWidth={2}
-                        dot={false}
-                        connectNulls={false}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
+              {/* ── Wait Time Line Chart ── */}
+              {chartData.length > 0 && (
+                <>
+                  <div className="panel p-4 sm:p-6 mb-6">
+                    <h2 className="text-white text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
+                    <ResponsiveContainer width="100%" height={500}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        {statusPeriods.map((period, i) => (
+                          <ReferenceArea
+                            key={`${period.attractionName}-${period.start}-${i}`}
+                            x1={period.start}
+                            x2={period.end}
+                            fill={STATUS_BAND_COLORS[period.status] || '#ffffff10'}
+                            fillOpacity={1}
+                            strokeOpacity={0}
+                          />
+                        ))}
+                        <XAxis
+                          dataKey="time"
+                          type="number"
+                          domain={['dataMin', 'dataMax']}
+                          tickFormatter={(ts) => formatTimeShort(Number(ts))}
+                          stroke="#fff"
+                          tick={{ fill: '#fff', fontSize: 12 }}
+                        />
+                        <YAxis
+                          stroke="#fff"
+                          tick={{ fill: '#fff', fontSize: 12 }}
+                          label={{
+                            value: 'Wait (min)',
+                            angle: -90,
+                            position: 'insideLeft',
+                            fill: '#fff',
+                            style: { fontSize: 12 },
+                          }}
+                        />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          labelFormatter={(ts) => formatTimeShort(Number(ts))}
+                          formatter={(value, name) => {
+                            if (value === null || value === undefined) return ['--', name];
+                            return [`${value} min`, name];
+                          }}
+                        />
+                        <Legend wrapperStyle={{ color: '#fff' }} />
+                        {attractionNames.map((name, i) => (
+                          <Line
+                            key={name}
+                            type="monotone"
+                            dataKey={name}
+                            stroke={LINE_COLORS[i % LINE_COLORS.length]}
+                            strokeWidth={2}
+                            dot={false}
+                            connectNulls={false}
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
 
-                {/* Legend for status bands */}
-                <div className="flex items-center gap-6 mt-4 pt-4 border-t border-white/[0.08]">
-                  <span className="text-bone/50 text-xs font-medium uppercase tracking-wider">Shaded areas:</span>
-                  {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
-                    <div key={status} className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-3 rounded-sm"
-                        style={{ backgroundColor: STATUS_BAND_COLORS[status] }}
-                      />
-                      <span className="text-xs font-medium" style={{ color }}>{status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Status timeline */}
-              <div className="horror-card rounded-xl p-4 sm:p-6 mb-6">
-                <h2 className="text-bone text-lg font-bold mb-4">Status Timeline</h2>
-                {statusPeriods.length === 0 ? (
-                  <p className="text-bone/30 text-sm">All attractions were open for the entire night.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {attractionNames.map((name) => {
-                      const periods = statusPeriods.filter((p) => p.attractionName === name);
-                      if (periods.length === 0) return null;
-                      return (
-                        <div key={name}>
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: colorMap.get(name) }}
-                            />
-                            <span className="text-bone text-sm font-semibold">{name}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 ml-5">
-                            {periods.map((p, i) => (
-                              <div
-                                key={i}
-                                className="text-xs font-medium px-3 py-1.5 rounded-lg border"
-                                style={{
-                                  color: STATUS_LABEL_COLORS[p.status] || '#E8E0D0',
-                                  borderColor: (STATUS_LABEL_COLORS[p.status] || '#E8E0D0') + '40',
-                                  backgroundColor: (STATUS_BAND_COLORS[p.status] || '#ffffff10'),
-                                }}
-                              >
-                                {p.status} — {formatTimeShort(p.start)} to {formatTimeShort(p.end)}
-                              </div>
-                            ))}
-                          </div>
+                    {/* Legend for status bands */}
+                    <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#333]">
+                      <span className="text-[#888] text-xs font-medium uppercase tracking-wider">Shaded areas:</span>
+                      {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
+                        <div key={status} className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-3 rounded-sm"
+                            style={{ backgroundColor: STATUS_BAND_COLORS[status] }}
+                          />
+                          <span className="text-xs font-medium" style={{ color }}>{status}</span>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
-            </>
-          )}
 
-          {/* Throughput summary — always shows if data exists, independent of chart data */}
-          <div className="horror-card rounded-xl p-4 sm:p-6">
-            <h2 className="text-bone text-lg font-bold mb-4">Throughput — {selectedDate}</h2>
-            {throughputData.length === 0 ? (
-              <p className="text-bone/30 text-sm">No throughput data logged for this night.</p>
-            ) : (() => {
-              // Group by attraction_id
-              const idToLogs = new Map<string, ThroughputLog[]>();
-              for (const log of throughputData) {
-                if (!idToLogs.has(log.attraction_id)) idToLogs.set(log.attraction_id, []);
-                idToLogs.get(log.attraction_id)!.push(log);
-              }
-
-              // Resolve names from attractions table (primary) or history data (fallback)
-              const idToName = new Map<string, string>();
-              for (const a of attractions) {
-                idToName.set(a.id, a.name);
-              }
-              for (const h of historyData) {
-                if (!idToName.has(h.attraction_id)) {
-                  idToName.set(h.attraction_id, h.attraction_name);
-                }
-              }
-
-              // Get all unique time slots, sorted
-              const allSlots = Array.from(
-                new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
-              ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
-
-              const attractionIds = Array.from(idToLogs.keys());
-              const parkTotal = throughputData.reduce((sum, l) => sum + l.guest_count, 0);
-
-              return (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-white/[0.08]">
-                        <th className="text-left text-bone/50 font-medium py-2 pr-4 whitespace-nowrap">Attraction</th>
-                        {allSlots.map((slot) => {
-                          const [start, end] = slot.split('|');
+                  {/* Status timeline */}
+                  <div className="panel p-4 sm:p-6 mb-6">
+                    <h2 className="text-white text-lg font-bold mb-4">Status Timeline</h2>
+                    {statusPeriods.length === 0 ? (
+                      <p className="text-[#666] text-sm">All attractions were open for the entire night.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {attractionNames.map((name) => {
+                          const periods = statusPeriods.filter((p) => p.attractionName === name);
+                          if (periods.length === 0) return null;
                           return (
-                            <th key={slot} className="text-center text-bone/50 font-medium py-2 px-2 whitespace-nowrap">
-                              {start}–{end}
-                            </th>
+                            <div key={name}>
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <div
+                                  className="w-3 h-3 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: colorMap.get(name) }}
+                                />
+                                <span className="text-white text-sm font-semibold">{name}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2 ml-5">
+                                {periods.map((p, i) => (
+                                  <div
+                                    key={i}
+                                    className="text-xs font-medium px-3 py-1.5 rounded border"
+                                    style={{
+                                      color: STATUS_LABEL_COLORS[p.status] || '#fff',
+                                      borderColor: (STATUS_LABEL_COLORS[p.status] || '#fff') + '40',
+                                      backgroundColor: (STATUS_BAND_COLORS[p.status] || '#ffffff10'),
+                                    }}
+                                  >
+                                    {p.status} — {formatTimeShort(p.start)} to {formatTimeShort(p.end)}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           );
                         })}
-                        <th className="text-center text-bone/70 font-semibold py-2 pl-4 whitespace-nowrap">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {attractionIds.map((id) => {
-                        const logs = idToLogs.get(id)!;
-                        const name = idToName.get(id) || id.slice(0, 8);
-                        const total = logs.reduce((sum, l) => sum + l.guest_count, 0);
-                        const nameColor = colorMap.get(name) || LINE_COLORS[attractionIds.indexOf(id) % LINE_COLORS.length];
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
-                        return (
-                          <tr key={id} className="border-b border-white/[0.05]">
-                            <td className="py-2 pr-4 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: nameColor }} />
-                                <span className="text-bone text-sm font-medium">{name}</span>
-                              </div>
+              {/* ── Throughput Bar Chart ── */}
+              {throughputChartData.length > 0 && (
+                <div className="panel p-4 sm:p-6 mb-6">
+                  <h2 className="text-white text-lg font-bold mb-4">Guest Throughput — {selectedDate}</h2>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart data={throughputChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis
+                        dataKey="slot"
+                        stroke="#fff"
+                        tick={{ fill: '#fff', fontSize: 11 }}
+                        angle={-30}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis
+                        stroke="#fff"
+                        tick={{ fill: '#fff', fontSize: 12 }}
+                        label={{
+                          value: 'Guests',
+                          angle: -90,
+                          position: 'insideLeft',
+                          fill: '#fff',
+                          style: { fontSize: 12 },
+                        }}
+                      />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ color: '#fff' }} />
+                      {throughputAttractionNames.map((name, i) => (
+                        <Bar
+                          key={name}
+                          dataKey={name}
+                          fill={LINE_COLORS[i % LINE_COLORS.length]}
+                          radius={[2, 2, 0, 0]}
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* ── Combined Wait Time + Throughput Chart ── */}
+              {combinedChartData.length > 0 && combinedAttractionNames.length > 0 && (
+                <div className="panel p-4 sm:p-6 mb-6">
+                  <h2 className="text-white text-lg font-bold mb-2">Wait Time vs Throughput — {selectedDate}</h2>
+                  <p className="text-[#888] text-xs mb-4">Lines show average wait time per slot. Bars show guest throughput.</p>
+                  <ResponsiveContainer width="100%" height={450}>
+                    <ComposedChart data={combinedChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis
+                        dataKey="slot"
+                        stroke="#fff"
+                        tick={{ fill: '#fff', fontSize: 11 }}
+                        angle={-30}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        stroke="#fff"
+                        tick={{ fill: '#fff', fontSize: 12 }}
+                        label={{
+                          value: 'Wait (min)',
+                          angle: -90,
+                          position: 'insideLeft',
+                          fill: '#fff',
+                          style: { fontSize: 12 },
+                        }}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="#fff"
+                        tick={{ fill: '#fff', fontSize: 12 }}
+                        label={{
+                          value: 'Guests',
+                          angle: 90,
+                          position: 'insideRight',
+                          fill: '#fff',
+                          style: { fontSize: 12 },
+                        }}
+                      />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ color: '#fff' }} />
+                      {combinedAttractionNames.map((name, i) => (
+                        <Bar
+                          key={`bar-${name}`}
+                          yAxisId="right"
+                          dataKey={`${name} (guests)`}
+                          fill={LINE_COLORS[i % LINE_COLORS.length]}
+                          fillOpacity={0.35}
+                          radius={[2, 2, 0, 0]}
+                        />
+                      ))}
+                      {combinedAttractionNames.map((name, i) => (
+                        <Line
+                          key={`line-${name}`}
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey={`${name} (wait)`}
+                          stroke={LINE_COLORS[i % LINE_COLORS.length]}
+                          strokeWidth={2.5}
+                          dot={{ r: 3, fill: LINE_COLORS[i % LINE_COLORS.length] }}
+                          connectNulls={false}
+                        />
+                      ))}
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* ── Throughput Summary Table ── */}
+              <div className="panel p-4 sm:p-6">
+                <h2 className="text-white text-lg font-bold mb-4">Throughput Summary — {selectedDate}</h2>
+                {throughputData.length === 0 ? (
+                  <p className="text-[#666] text-sm">No throughput data logged for this night.</p>
+                ) : (() => {
+                  const idToLogs = new Map<string, ThroughputLog[]>();
+                  for (const log of throughputData) {
+                    if (!idToLogs.has(log.attraction_id)) idToLogs.set(log.attraction_id, []);
+                    idToLogs.get(log.attraction_id)!.push(log);
+                  }
+
+                  const idToName = new Map<string, string>();
+                  for (const a of attractions) {
+                    idToName.set(a.id, a.name);
+                  }
+                  for (const h of historyData) {
+                    if (!idToName.has(h.attraction_id)) {
+                      idToName.set(h.attraction_id, h.attraction_name);
+                    }
+                  }
+
+                  const allSlots = Array.from(
+                    new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
+                  ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
+
+                  const attractionIds = Array.from(idToLogs.keys());
+                  const parkTotal = throughputData.reduce((sum, l) => sum + l.guest_count, 0);
+
+                  return (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#333]">
+                            <th className="text-left text-[#888] font-medium py-2 pr-4 whitespace-nowrap">Attraction</th>
+                            {allSlots.map((slot) => {
+                              const [start, end] = slot.split('|');
+                              return (
+                                <th key={slot} className="text-center text-[#888] font-medium py-2 px-2 whitespace-nowrap">
+                                  {start}–{end}
+                                </th>
+                              );
+                            })}
+                            <th className="text-center text-white font-semibold py-2 pl-4 whitespace-nowrap">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {attractionIds.map((id) => {
+                            const logs = idToLogs.get(id)!;
+                            const name = idToName.get(id) || id.slice(0, 8);
+                            const total = logs.reduce((sum, l) => sum + l.guest_count, 0);
+                            const nameColor = colorMap.get(name) || LINE_COLORS[attractionIds.indexOf(id) % LINE_COLORS.length];
+
+                            return (
+                              <tr key={id} className="border-b border-[#222]">
+                                <td className="py-2 pr-4 whitespace-nowrap">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: nameColor }} />
+                                    <span className="text-white text-sm font-medium">{name}</span>
+                                  </div>
+                                </td>
+                                {allSlots.map((slot) => {
+                                  const [start, end] = slot.split('|');
+                                  const log = logs.find((l) => l.slot_start === start && l.slot_end === end);
+                                  return (
+                                    <td key={slot} className="text-center py-2 px-2">
+                                      {log && log.guest_count > 0 ? (
+                                        <span className="text-white font-medium">{log.guest_count}</span>
+                                      ) : (
+                                        <span className="text-white/20">—</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                                <td className="text-center py-2 pl-4">
+                                  <span className="text-white font-bold">{total}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-[#333]">
+                            <td className="py-3 pr-4">
+                              <span className="text-[#888] font-semibold text-sm">Park Total</span>
                             </td>
                             {allSlots.map((slot) => {
                               const [start, end] = slot.split('|');
-                              const log = logs.find((l) => l.slot_start === start && l.slot_end === end);
+                              const slotTotal = throughputData
+                                .filter((l) => l.slot_start === start && l.slot_end === end)
+                                .reduce((sum, l) => sum + l.guest_count, 0);
                               return (
-                                <td key={slot} className="text-center py-2 px-2">
-                                  {log && log.guest_count > 0 ? (
-                                    <span className="text-bone font-medium">{log.guest_count}</span>
-                                  ) : (
-                                    <span className="text-bone/20">—</span>
-                                  )}
+                                <td key={slot} className="text-center py-3 px-2">
+                                  <span className="text-[#888] font-semibold">{slotTotal > 0 ? slotTotal : '—'}</span>
                                 </td>
                               );
                             })}
-                            <td className="text-center py-2 pl-4">
-                              <span className="text-bone font-bold">{total}</span>
+                            <td className="text-center py-3 pl-4">
+                              <span className="text-white font-black text-base">{parkTotal}</span>
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-blood/30">
-                        <td className="py-3 pr-4">
-                          <span className="text-bone/70 font-semibold text-sm">Park Total</span>
-                        </td>
-                        {allSlots.map((slot) => {
-                          const [start, end] = slot.split('|');
-                          const slotTotal = throughputData
-                            .filter((l) => l.slot_start === start && l.slot_end === end)
-                            .reduce((sum, l) => sum + l.guest_count, 0);
-                          return (
-                            <td key={slot} className="text-center py-3 px-2">
-                              <span className="text-bone/70 font-semibold">{slotTotal > 0 ? slotTotal : '—'}</span>
-                            </td>
-                          );
-                        })}
-                        <td className="text-center py-3 pl-4">
-                          <span className="text-blood-bright font-black text-base">{parkTotal}</span>
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              );
-            })()}
-          </div>
+                        </tfoot>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

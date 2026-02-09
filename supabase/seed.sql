@@ -173,6 +173,42 @@ CREATE POLICY "Allow authenticated insert settings"
   WITH CHECK (auth.uid() IS NOT NULL);
 
 -- ============================================
+-- USER MANAGEMENT: Role-Based Access Control
+-- ============================================
+
+-- 22. Create the user_roles table
+CREATE TABLE IF NOT EXISTS user_roles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'supervisor')),
+  allowed_attractions UUID[] DEFAULT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 23. Enable RLS on user_roles
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+
+-- 24. RLS Policies for user_roles
+CREATE POLICY "Allow authenticated read user_roles"
+  ON user_roles FOR SELECT USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated insert user_roles"
+  ON user_roles FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated update user_roles"
+  ON user_roles FOR UPDATE
+  USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated delete user_roles"
+  ON user_roles FOR DELETE
+  USING (auth.uid() IS NOT NULL);
+
+-- 25. Enable Realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE user_roles;
+
+-- ============================================
 -- MIGRATION: Run this if you already have the
 -- tables from a previous version
 -- ============================================
