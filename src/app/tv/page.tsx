@@ -297,7 +297,7 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-[#1a1a1a] border border-[#444] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
+      <header className="bg-[#0a0a0a] border border-[#222] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
         <h1 className="text-white text-4xl font-black uppercase tracking-[0.2em]">
           Queue Times
         </h1>
@@ -324,7 +324,7 @@ export default function TVDisplay() {
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-[#1a1a1a] border border-[#444] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
+      <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">
