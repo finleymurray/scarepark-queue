@@ -917,7 +917,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black p-4 sm:p-6">
+    <div className="min-h-screen bg-black">
       {/* Close All Modal */}
       <ConfirmModal
         open={showCloseAll}
@@ -950,6 +950,7 @@ export default function AdminDashboard() {
 
       <AdminNav userEmail={userEmail} onLogout={handleLogout} />
 
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
       {/* Quick Actions */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-6">
         <div className="panel p-5">
@@ -1003,6 +1004,7 @@ export default function AdminDashboard() {
         )}
         <AddAttractionForm onAdd={handleAddAttraction} />
       </div>
+      </main>
     </div>
   );
 }

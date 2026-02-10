@@ -257,7 +257,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black p-4 sm:p-6">
+    <div className="min-h-screen bg-black">
       <AdminNav userEmail={userEmail} onLogout={handleLogout} />
 
       <ConfirmModal
@@ -269,6 +269,7 @@ export default function UsersPage() {
         onCancel={() => setDeleteTarget(null)}
       />
 
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
       {/* Page header */}
       <h2 className="text-white text-2xl font-bold mb-5">Users</h2>
 
@@ -461,6 +462,7 @@ export default function UsersPage() {
           </table>
         )}
       </div>
+      </main>
     </div>
   );
 }

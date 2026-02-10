@@ -443,21 +443,22 @@ export default function SupervisorDashboard() {
         onCancel={() => setKeypadOpen(false)}
       />
 
-      {/* Header */}
-      <div className="flex items-center px-4 py-3 bg-[#111] border-b border-[#333] flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
-          <h1 className="text-white text-lg font-bold">Field Control</h1>
+      {/* Header — matches people.immersivecore.network */}
+      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0', flexShrink: 0 }}>
+        <div style={{ padding: '0 20px', display: 'flex', alignItems: 'center' }}>
+          <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+            <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
+            <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
+          </a>
         </div>
       </div>
 
-      {/* Nav / Attraction Tab Bar */}
-      <div className="flex items-center bg-[#111] border-b border-[#333] flex-shrink-0">
+      {/* Nav / Attraction Tab Bar — matches people.immersivecore.network */}
+      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         <div
           ref={tabBarRef}
-          className="flex gap-2 px-4 py-2 overflow-x-auto flex-1
-                     scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]
-                     [&::-webkit-scrollbar]:hidden"
+          className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ display: 'flex', gap: 4, padding: '0 20px', overflowX: 'auto', flex: 1 }}
         >
           {rides.map((a) => {
             const isSelected = a.id === selectedId;
@@ -465,11 +466,30 @@ export default function SupervisorDashboard() {
               <button
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
-                className={`flex-shrink-0 px-3 py-1.5 text-sm rounded-md transition-colors touch-manipulation
-                  ${isSelected
-                    ? 'bg-[#333] text-white'
-                    : 'text-[#aaa] hover:bg-[#222] hover:text-white'
-                  }`}
+                style={{
+                  flexShrink: 0,
+                  color: isSelected ? '#fff' : '#aaa',
+                  fontSize: 14,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  background: isSelected ? '#222' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                  touchAction: 'manipulation',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = '#222';
+                    e.currentTarget.style.color = '#fff';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#aaa';
+                  }
+                }}
               >
                 {a.name}
               </button>
@@ -478,12 +498,28 @@ export default function SupervisorDashboard() {
         </div>
 
         {/* User info — pushed right */}
-        <div className="flex items-center gap-2.5 px-4 flex-shrink-0 text-[13px]">
-          {userEmail && <span className="text-[#ccc] truncate max-w-[150px]">{userEmail}</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 20px', flexShrink: 0, fontSize: 13, color: '#aaa' }}>
+          {userEmail && <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</span>}
           <button
             onClick={handleLogout}
-            className="px-2.5 py-1 bg-transparent border border-[#555] text-[#aaa] text-xs
-                       rounded transition-colors hover:border-[#888] hover:text-white cursor-pointer"
+            style={{
+              background: 'none',
+              border: '1px solid #555',
+              color: '#aaa',
+              padding: '4px 10px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontSize: 12,
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#888';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#555';
+              e.currentTarget.style.color = '#aaa';
+            }}
           >
             Sign out
           </button>
