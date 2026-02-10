@@ -444,46 +444,50 @@ export default function SupervisorDashboard() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#111] border-b border-[#333] flex-shrink-0">
+      <div className="flex items-center px-4 py-3 bg-[#111] border-b border-[#333] flex-shrink-0">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
-          <span className="text-white/30 text-lg font-light">|</span>
           <h1 className="text-white text-lg font-semibold">Field Control</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          {userEmail && <span className="text-[#888] text-xs truncate max-w-[150px]">{userEmail}</span>}
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1.5 border border-[#555] text-[#aaa] hover:border-[#888] hover:text-white rounded text-xs transition-colors"
-          >
-            Logout
-          </button>
         </div>
       </div>
 
-      {/* Attraction Tab Bar */}
-      <div
-        ref={tabBarRef}
-        className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-[#333] flex-shrink-0
-                   scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]
-                   [&::-webkit-scrollbar]:hidden"
-      >
-        {rides.map((a) => {
-          const isSelected = a.id === selectedId;
-          return (
-            <button
-              key={a.id}
-              onClick={() => setSelectedId(a.id)}
-              className={`flex-shrink-0 px-5 py-3 rounded-md text-sm font-bold transition-all touch-manipulation
-                ${isSelected
-                  ? 'bg-white text-black'
-                  : 'bg-[#1a1a1a] text-white/50 border border-[#333] active:bg-[#1a1a1a]'
-                }`}
-            >
-              {a.name}
-            </button>
-          );
-        })}
+      {/* Nav / Attraction Tab Bar */}
+      <div className="flex items-center bg-[#111] border-b border-[#333] flex-shrink-0">
+        <div
+          ref={tabBarRef}
+          className="flex gap-2 px-4 py-2 overflow-x-auto flex-1
+                     scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]
+                     [&::-webkit-scrollbar]:hidden"
+        >
+          {rides.map((a) => {
+            const isSelected = a.id === selectedId;
+            return (
+              <button
+                key={a.id}
+                onClick={() => setSelectedId(a.id)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-md text-sm transition-colors touch-manipulation
+                  ${isSelected
+                    ? 'bg-[#222] text-white'
+                    : 'text-[#aaa] hover:bg-[#222] hover:text-white'
+                  }`}
+              >
+                {a.name}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* User info — pushed right */}
+        <div className="flex items-center gap-3 px-4 flex-shrink-0">
+          {userEmail && <span className="text-[#aaa] text-[13px] truncate max-w-[150px]">{userEmail}</span>}
+          <button
+            onClick={handleLogout}
+            className="px-3.5 py-1.5 text-white text-sm font-semibold border border-white/30
+                       rounded transition-colors hover:bg-[#222]"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
 
       {/* Main Content — Scrollable */}

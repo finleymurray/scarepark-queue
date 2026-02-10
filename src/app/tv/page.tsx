@@ -50,10 +50,10 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
 
   return (
     <div
-      className={`flex items-center justify-between rounded-xl border ${
+      className={`flex items-center justify-between rounded-lg border ${
         isShow
-          ? 'bg-purple-950/30 border-purple-500/20'
-          : 'bg-white/[0.03] border-white/[0.08]'
+          ? 'bg-purple-950/40 border-purple-500/30'
+          : 'bg-[#111] border-[#333]'
       }`}
       style={{ ...style, paddingLeft: '3%', paddingRight: '3%' }}
     >
@@ -292,7 +292,7 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-[#111] border border-[#333] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
+      <header className="bg-[#1a3a5c] border border-[#3B82F6]/40 py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
         <h1 className="text-white text-4xl font-black uppercase tracking-[0.2em]">
           Queue Times
         </h1>
@@ -319,7 +319,7 @@ export default function TVDisplay() {
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-[#111] border border-[#333] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
+      <footer className="bg-[#1a3a5c] border border-[#3B82F6]/40 py-4 px-10 rounded-lg flex-shrink-0 mt-4">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">
@@ -328,15 +328,15 @@ export default function TVDisplay() {
                 <div
                   key={i}
                   className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                    i === currentPage ? 'bg-white' : 'bg-white/30'
+                    i === currentPage ? 'bg-white' : 'bg-white/40'
                   }`}
                 />
               ))
             }
           </div>
 
-          {/* Closing time (center) — blue highlight */}
-          <div className="flex items-center justify-center gap-4 bg-[#1a3a5c] border border-[#3B82F6]/40 rounded-md px-6 py-2">
+          {/* Closing time (center) */}
+          <div className="flex items-center justify-center gap-4">
             <span className="text-[#6ea8fe] text-lg font-semibold uppercase tracking-wider">
               Park Closes
             </span>
