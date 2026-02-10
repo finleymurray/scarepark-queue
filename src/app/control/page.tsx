@@ -515,17 +515,17 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
         {selected && (
           <>
             {/* ── Queue Time Control ── */}
             <section>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-white" />
                 <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Queue Time</h2>
               </div>
 
-              <div className="bg-[#111] border border-[#333] rounded-lg p-4">
+              <div className="bg-[#111] border border-[#333] rounded-lg p-6">
                 {selected.attraction_type === 'show' ? (
                   <div className="text-center py-4">
                     <div className={`text-3xl font-black ${
@@ -539,13 +539,14 @@ export default function SupervisorDashboard() {
                 ) : (
                   <>
                     {/* Inline stepper: [-5]  TIME  [+5] */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleWaitTimeUpdate(-5)}
                         disabled={selected.wait_time <= 0}
-                        className="w-16 h-16 flex items-center justify-center rounded-xl bg-[#1a1a1a]
+                        className="w-18 h-18 flex items-center justify-center rounded-xl bg-[#1a1a1a]
                                    text-red-400 text-2xl font-black active:bg-red-900/20
-                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed"
+                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
+                                   min-w-[72px] min-h-[72px]"
                       >
                         -5
                       </button>
@@ -571,9 +572,10 @@ export default function SupervisorDashboard() {
 
                       <button
                         onClick={() => handleWaitTimeUpdate(5)}
-                        className="w-16 h-16 flex items-center justify-center rounded-xl bg-[#1a1a1a]
+                        className="w-18 h-18 flex items-center justify-center rounded-xl bg-[#1a1a1a]
                                    text-[#22C55E] text-2xl font-black active:bg-green-900/20
-                                   transition-colors touch-manipulation"
+                                   transition-colors touch-manipulation
+                                   min-w-[72px] min-h-[72px]"
                       >
                         +5
                       </button>
@@ -583,9 +585,9 @@ export default function SupervisorDashboard() {
               </div>
             </section>
 
-            {/* ── Hourly Throughput Grid ── */}
+            {/* ── Hourly Throughput ── */}
             <section>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-white" />
                 <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Hourly Throughput</h2>
               </div>
@@ -596,7 +598,7 @@ export default function SupervisorDashboard() {
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {slots.map((slot, idx) => {
                     const isCurrent = idx === currentSlotIdx;
                     const isPast = idx < currentSlotIdx || currentSlotIdx === -1;
@@ -611,7 +613,7 @@ export default function SupervisorDashboard() {
                           if (isCurrent || isPast) openKeypadForSlot(slot);
                         }}
                         disabled={isFuture}
-                        className={`w-full flex items-center justify-between px-4 py-4 rounded-lg
+                        className={`w-full flex items-center justify-between px-5 py-4 rounded-lg
                                     transition-all touch-manipulation
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
@@ -646,7 +648,7 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer className="flex-shrink-0 bg-[#111] border-t border-[#333] px-4 py-3">
+        <footer className="flex-shrink-0 bg-[#111] border-t border-[#333] px-5 py-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
