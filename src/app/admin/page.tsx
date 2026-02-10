@@ -917,7 +917,7 @@ export default function AdminDashboard() {
       attractionName: name,
       performedBy: performer,
       newValue: type,
-      details: `${type === 'show' ? 'Show' : 'Ride'} "${name}" created`,
+      details: `${type === 'show' ? 'Show' : 'Attraction'} "${name}" added`,
     });
   }, []);
 
@@ -935,11 +935,11 @@ export default function AdminDashboard() {
       const performer = displayNameRef.current || userEmailRef.current;
       logAudit({
         actionType: 'attraction_deleted',
-        attractionId: id,
+        attractionId: null,
         attractionName: current.name,
         performedBy: performer,
         oldValue: current.attraction_type,
-        details: `${current.attraction_type === 'show' ? 'Show' : 'Ride'} "${current.name}" deleted`,
+        details: `${current.attraction_type === 'show' ? 'Show' : 'Ride'} "${current.name}" removed`,
       });
     }
     setDeleteTarget(null);

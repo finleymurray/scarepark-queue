@@ -202,7 +202,9 @@ export default function LogsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-white/80">
-                      {log.old_value !== null && log.new_value !== null ? (
+                      {log.details ? (
+                        <span className="text-white/80">{log.details}</span>
+                      ) : log.old_value !== null && log.new_value !== null ? (
                         <span>
                           <span className="text-white/40">{log.old_value}</span>
                           <span className="text-white/20 mx-1.5">&rarr;</span>
