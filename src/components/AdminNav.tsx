@@ -30,9 +30,9 @@ export default function AdminNav({
 
   return (
     <>
-      {/* Header bar — matches people.immersivecore.network */}
+      {/* Header bar — logo, user info & sign out */}
       <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <a href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
             <Image
               src="/logo.png"
@@ -44,49 +44,9 @@ export default function AdminNav({
             />
             <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Admin</h1>
           </a>
-        </div>
-      </div>
-
-      {/* Nav bar — matches people.immersivecore.network */}
-      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center' }}>
-          {TABS.map((tab) => {
-            const active = isActive(tab.href);
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                style={{
-                  color: active ? '#fff' : '#aaa',
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  background: active ? '#222' : 'transparent',
-                  transition: 'background 0.2s, color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = '#222';
-                    e.currentTarget.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#aaa';
-                  }
-                }}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-
-          {/* User info — pushed right */}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
             {userEmail && (
-              <span title={userEmail}>
+              <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {displayName || userEmail}
               </span>
             )}
@@ -114,6 +74,48 @@ export default function AdminNav({
               Sign out
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Nav tabs — horizontally scrollable on mobile */}
+      <div
+        className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', overflowX: 'auto' }}
+      >
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center' }}>
+          {TABS.map((tab) => {
+            const active = isActive(tab.href);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                style={{
+                  color: active ? '#fff' : '#aaa',
+                  textDecoration: 'none',
+                  fontSize: 14,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  background: active ? '#222' : 'transparent',
+                  transition: 'background 0.2s, color 0.2s',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = '#222';
+                    e.currentTarget.style.color = '#fff';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#aaa';
+                  }
+                }}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </>
