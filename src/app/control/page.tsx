@@ -20,6 +20,10 @@ function generateHourlySlots(openTime: string, closeTime: string): { start: stri
   // Handle crossing midnight (e.g., 18:00 - 01:00)
   if (endMinutes <= startMinutes) endMinutes += 24 * 60;
 
+  // Add an extra hour after closing for queue clearance
+  // (guests already in the queue when the park closes still go through)
+  endMinutes += 60;
+
   const slots: { start: string; end: string }[] = [];
   let cursor = startMinutes;
   while (cursor < endMinutes) {
@@ -515,11 +519,11 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="space-y-10">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }}>
         {selected && (
           <>
             {/* ── Queue Time Control ── */}
-            <section>
+            <section style={{ marginBottom: 48 }}>
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-2 h-2 rounded-full bg-white" />
                 <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Queue Time</h2>
@@ -587,9 +591,9 @@ export default function SupervisorDashboard() {
 
             {/* ── Hourly Throughput ── */}
             <section>
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-2 h-2 rounded-full bg-white" />
-                <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Hourly Throughput</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />
+                <h2 style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Hourly Throughput</h2>
               </div>
 
               {slots.length === 0 ? (
