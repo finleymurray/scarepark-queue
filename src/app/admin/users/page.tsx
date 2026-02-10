@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import type { Attraction, UserRole } from '@/types/database';
@@ -62,7 +62,6 @@ export default function UsersPage() {
   // Form state
   const [editing, setEditing] = useState<UserRole | null>(null);
   const [formEmail, setFormEmail] = useState('');
-  const [formPassword, setFormPassword] = useState('');
   const [formRole, setFormRole] = useState<'admin' | 'supervisor'>('supervisor');
   const [formAttractions, setFormAttractions] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -111,7 +110,6 @@ export default function UsersPage() {
   function startEdit(user: UserRole) {
     setEditing(user);
     setFormEmail(user.email);
-    setFormPassword('');
     setFormRole(user.role);
     setFormAttractions(user.allowed_attractions || []);
     setFormError('');
@@ -121,7 +119,6 @@ export default function UsersPage() {
   function startAdd() {
     setEditing(null);
     setFormEmail('');
-    setFormPassword('');
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
@@ -131,7 +128,6 @@ export default function UsersPage() {
   function cancelForm() {
     setEditing(null);
     setFormEmail('');
-    setFormPassword('');
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
@@ -147,14 +143,6 @@ export default function UsersPage() {
   async function handleSave() {
     if (!formEmail.trim()) {
       setFormError('Email is required.');
-      return;
-    }
-    if (!editing && !formPassword.trim()) {
-      setFormError('Password is required for new users.');
-      return;
-    }
-    if (!editing && formPassword.trim().length < 6) {
-      setFormError('Password must be at least 6 characters.');
       return;
     }
     setSaving(true);
@@ -180,27 +168,8 @@ export default function UsersPage() {
         return;
       }
     } else {
-      if (!supabaseAdmin) {
-        setFormError('Admin client not configured. Service role key missing.');
-        setSaving(false);
-        return;
-      }
-      // Create Supabase Auth user first
-      const { error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password: formPassword.trim(),
-        email_confirm: true,
-      });
-
-      if (authError) {
-        setFormError(authError.message.includes('already been registered')
-          ? 'An auth account with this email already exists.'
-          : authError.message);
-        setSaving(false);
-        return;
-      }
-
-      // Then create the user_roles record
+      // Insert user_roles record — the auth account must be created
+      // separately via Supabase Dashboard (Authentication > Users > Add user)
       const { error } = await supabase
         .from('user_roles')
         .insert({ ...payload, created_at: new Date().toISOString() });
@@ -219,18 +188,8 @@ export default function UsersPage() {
   async function handleDelete() {
     if (!deleteTarget) return;
 
-    // Delete the Supabase Auth user first
-    if (supabaseAdmin) {
-      const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
-      const authUser = authList?.users?.find(
-        (u) => u.email?.toLowerCase() === deleteTarget.email.toLowerCase()
-      );
-      if (authUser) {
-        await supabaseAdmin.auth.admin.deleteUser(authUser.id);
-      }
-    }
-
-    // Then delete the user_roles record
+    // Delete the user_roles record — the auth account should be removed
+    // separately via Supabase Dashboard (Authentication > Users)
     await supabase.from('user_roles').delete().eq('id', deleteTarget.id);
     setDeleteTarget(null);
     await fetchUsers();
@@ -302,21 +261,12 @@ export default function UsersPage() {
             />
           </div>
 
-          {!editing ? (
-            <div>
-              <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-                Password <span className="text-[#888] font-normal text-xs">(optional — user will set via email if blank)</span>
-              </label>
-              <input
-                type="password"
-                value={formPassword}
-                onChange={(e) => setFormPassword(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
-              />
+          {!editing && (
+            <div className="flex items-center">
+              <p className="text-[#888] text-[13px]">
+                Auth account must be created via Supabase Dashboard first.
+              </p>
             </div>
-          ) : (
-            <div />
           )}
 
           <div>
