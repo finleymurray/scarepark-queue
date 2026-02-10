@@ -14,24 +14,18 @@ const BANNER_IMAGES: Record<string, string> = {
   'signal-loss': '/Queue Board Images/signal-loss.png',
 };
 
-function ClockIcon() {
-  return (
-    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
 function BannerRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
   const status = attraction.status as AttractionStatus;
   const bannerSrc = BANNER_IMAGES[attraction.slug];
 
   return (
     <div
-      className="relative rounded-lg overflow-hidden"
       style={{
         ...style,
+        position: 'relative',
+        borderRadius: '1rem',
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.08)',
       }}
     >
       {/* Banner image — full bleed */}
@@ -58,7 +52,19 @@ function BannerRow({ attraction, style }: { attraction: Attraction; style?: Reac
             inset: 0,
             backgroundColor: 'rgba(34, 197, 94, 0.06)',
             border: '1px solid rgba(34, 197, 94, 0.15)',
-            borderRadius: '0.5rem',
+            borderRadius: '1rem',
+          }}
+        />
+      )}
+
+      {/* Gradient overlay — right side fade for text readability */}
+      {bannerSrc && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to right, transparent 50%, rgba(0,0,0,0.85) 100%)',
+            zIndex: 5,
           }}
         />
       )}
@@ -72,7 +78,7 @@ function BannerRow({ attraction, style }: { attraction: Attraction; style?: Reac
           alignItems: 'center',
           justifyContent: 'flex-end',
           height: '100%',
-          paddingRight: '4%',
+          paddingRight: '5%',
           paddingLeft: '3%',
         }}
       >
@@ -88,37 +94,63 @@ function BannerRow({ attraction, style }: { attraction: Attraction; style?: Reac
         <div className="flex-shrink-0 text-right">
           {status === 'CLOSED' && (
             <span
-              className="font-bold italic"
-              style={{ color: '#dc3545', fontSize: '2rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+              className="font-black uppercase tracking-wider"
+              style={{
+                color: '#dc3545',
+                fontSize: '2.5rem',
+                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+                letterSpacing: '0.05em',
+              }}
             >
               Closed
             </span>
           )}
           {status === 'DELAYED' && (
             <span
-              className="font-bold"
-              style={{ color: '#f0ad4e', fontSize: '2rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+              className="font-black uppercase tracking-wider"
+              style={{
+                color: '#f0ad4e',
+                fontSize: '2rem',
+                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+                letterSpacing: '0.05em',
+              }}
             >
               Technical Delay
             </span>
           )}
           {status === 'AT CAPACITY' && (
             <span
-              className="font-bold"
-              style={{ color: '#F59E0B', fontSize: '2rem', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+              className="font-black uppercase tracking-wider"
+              style={{
+                color: '#F59E0B',
+                fontSize: '2.2rem',
+                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+                letterSpacing: '0.05em',
+              }}
             >
               At Capacity
             </span>
           )}
           {status === 'OPEN' && (
-            <div className="flex items-center gap-3" style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-              <ClockIcon />
-              <span className="font-black tabular-nums" style={{ fontSize: '2.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                color: 'white',
+                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+                lineHeight: 1,
+              }}
+            >
+              <span
+                className="font-black tabular-nums"
+                style={{ fontSize: '4rem' }}
+              >
                 {attraction.wait_time}
               </span>
               <span
-                className="font-semibold uppercase tracking-wider"
-                style={{ fontSize: '1rem', opacity: 0.7 }}
+                className="font-bold uppercase tracking-widest"
+                style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '2px' }}
               >
                 Mins
               </span>
@@ -269,7 +301,7 @@ export default function TV2Display() {
     : sortedRides;
 
   const count = visibleRides.length;
-  const gap = 12;
+  const gap = 20;
   const totalGap = count > 1 ? (count - 1) * gap : 0;
   const rowHeight = count > 0 && mainHeight > 0
     ? Math.floor((mainHeight - totalGap) / count)
