@@ -613,7 +613,7 @@ export default function SupervisorDashboard() {
                           if (isCurrent || isPast) openKeypadForSlot(slot);
                         }}
                         disabled={isFuture}
-                        className={`w-full flex items-center justify-between px-6 py-5 rounded-xl
+                        className={`w-full flex items-center justify-between px-6 py-7 rounded-xl
                                     transition-all touch-manipulation
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
