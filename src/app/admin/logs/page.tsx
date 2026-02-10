@@ -13,12 +13,18 @@ const ACTION_LABELS: Record<AuditActionType, string> = {
   queue_time_change: 'Queue Time',
   status_change: 'Status',
   throughput_entry: 'Throughput',
+  show_time_change: 'Show Time',
+  attraction_created: 'Created',
+  attraction_deleted: 'Deleted',
 };
 
 const ACTION_COLORS: Record<AuditActionType, string> = {
   queue_time_change: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   status_change: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   throughput_entry: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  show_time_change: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  attraction_created: 'bg-green-500/20 text-green-400 border-green-500/30',
+  attraction_deleted: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
 function formatTimestamp(ts: string): string {
@@ -155,6 +161,9 @@ export default function LogsPage() {
             <option value="queue_time_change">Queue Time</option>
             <option value="status_change">Status Change</option>
             <option value="throughput_entry">Throughput Entry</option>
+            <option value="show_time_change">Show Time Change</option>
+            <option value="attraction_created">Created</option>
+            <option value="attraction_deleted">Deleted</option>
           </select>
         </div>
 

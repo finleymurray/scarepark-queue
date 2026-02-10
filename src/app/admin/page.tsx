@@ -836,6 +836,34 @@ export default function AdminDashboard() {
           details: `Wait time changed from ${current.wait_time}min to ${updates.wait_time}min`,
         });
       }
+      if ('show_times' in updates) {
+        const oldTimes = current.show_times || [];
+        const newTimes = updates.show_times || [];
+        const added = newTimes.filter((t) => !oldTimes.includes(t));
+        const removed = oldTimes.filter((t) => !newTimes.includes(t));
+        for (const time of added) {
+          logAudit({
+            actionType: 'show_time_change',
+            attractionId: id,
+            attractionName: current.name,
+            performedBy: performer,
+            oldValue: null,
+            newValue: time,
+            details: `Show time ${time} added`,
+          });
+        }
+        for (const time of removed) {
+          logAudit({
+            actionType: 'show_time_change',
+            attractionId: id,
+            attractionName: current.name,
+            performedBy: performer,
+            oldValue: time,
+            newValue: null,
+            details: `Show time ${time} removed`,
+          });
+        }
+      }
     }
   }, []);
 
@@ -863,7 +891,7 @@ export default function AdminDashboard() {
       ? Math.max(...current.map((a) => a.sort_order)) + 1
       : 1;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('attractions')
       .insert({
         name,
@@ -873,21 +901,47 @@ export default function AdminDashboard() {
         sort_order: nextOrder,
         attraction_type: type,
         show_times: [],
-      });
+      })
+      .select('id')
+      .single();
 
     if (error) {
       console.error('Error adding attraction:', error);
       throw new Error(error.message);
     }
+
+    const performer = displayNameRef.current || userEmailRef.current;
+    logAudit({
+      actionType: 'attraction_created',
+      attractionId: data.id,
+      attractionName: name,
+      performedBy: performer,
+      newValue: type,
+      details: `${type === 'show' ? 'Show' : 'Ride'} "${name}" created`,
+    });
   }, []);
 
   const handleDeleteAttraction = useCallback(async (id: string) => {
+    const current = attractionsRef.current.find((a) => a.id === id);
+
     const { error } = await supabase
       .from('attractions')
       .delete()
       .eq('id', id);
 
-    if (error) console.error('Error deleting attraction:', error);
+    if (error) {
+      console.error('Error deleting attraction:', error);
+    } else if (current) {
+      const performer = displayNameRef.current || userEmailRef.current;
+      logAudit({
+        actionType: 'attraction_deleted',
+        attractionId: id,
+        attractionName: current.name,
+        performedBy: performer,
+        oldValue: current.attraction_type,
+        details: `${current.attraction_type === 'show' ? 'Show' : 'Ride'} "${current.name}" deleted`,
+      });
+    }
     setDeleteTarget(null);
   }, []);
 

@@ -52,7 +52,7 @@ export interface UserRole {
   updated_at: string;
 }
 
-export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry';
+export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_change' | 'attraction_created' | 'attraction_deleted';
 
 export interface AuditLog {
   id: string;
