@@ -26,21 +26,23 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="panel p-6 w-full max-w-sm">
-        <h3 className="text-white text-lg font-bold mb-2">{title}</h3>
-        <p className="text-[#888] text-sm mb-6">{message}</p>
+      <div className="bg-[#1a1a1a] border border-[#444] rounded-lg p-6 w-full max-w-[400px]">
+        <p className="text-[#ccc] text-sm mb-1">
+          <strong className="text-white">{title}</strong>
+        </p>
+        <p className="text-[#ccc] text-sm mb-5">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 bg-transparent border border-[#333] text-white hover:border-[#555]
-                       rounded-md text-sm font-medium transition-colors"
+            className="flex-1 px-5 py-2.5 bg-transparent border border-[#555] text-[#ccc] hover:border-[#888] hover:text-white
+                       rounded-md text-sm font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-md
-                       text-sm font-bold transition-colors"
+            className="flex-1 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white rounded-md
+                       text-sm font-semibold transition-colors"
           >
             {confirmLabel}
           </button>
@@ -249,7 +251,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-white/40 text-lg">Loading...</div>
+        <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
   }
@@ -267,192 +269,198 @@ export default function UsersPage() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      {/* User list */}
-      <div className="panel p-4 sm:p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[#888] text-xs font-medium uppercase tracking-wider">Users</h2>
+      {/* Page header */}
+      <h2 className="text-white text-2xl font-bold mb-5">Users</h2>
+
+      {/* Create New User — form section card */}
+      <div className="bg-[#111] border border-[#333] rounded-lg p-5 mb-5">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="inline-flex items-center justify-center w-7 h-7 bg-white text-black rounded-full text-sm font-bold">+</span>
+          <h3 className="text-white text-base font-semibold">{editing ? 'Edit User' : 'Create New User'}</h3>
+        </div>
+
+        {formError && (
+          <div className="bg-[#2a1010] border border-[#d43518] rounded-md p-3 mb-4">
+            <p className="text-[#f0a0a0] text-[13px]">{formError}</p>
+          </div>
+        )}
+
+        {/* 2-column form grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-[#ccc] text-[13px] font-medium mb-1">
+              Email <span className="text-[#d43518]">*</span>
+            </label>
+            <input
+              type="email"
+              value={formEmail}
+              onChange={(e) => setFormEmail(e.target.value)}
+              disabled={!!editing}
+              placeholder="user@example.com"
+              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                         placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          {!editing ? (
+            <div>
+              <label className="block text-[#ccc] text-[13px] font-medium mb-1">
+                Password <span className="text-[#888] font-normal text-xs">(optional — user will set via email if blank)</span>
+              </label>
+              <input
+                type="password"
+                value={formPassword}
+                onChange={(e) => setFormPassword(e.target.value)}
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+              />
+            </div>
+          ) : (
+            <div />
+          )}
+
+          <div>
+            <label className="block text-[#ccc] text-[13px] font-medium mb-1">Role</label>
+            <select
+              value={formRole}
+              onChange={(e) => setFormRole(e.target.value as 'admin' | 'supervisor')}
+              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                         focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+            >
+              <option value="supervisor">Supervisor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        {formRole === 'supervisor' && (
+          <div className="mb-4">
+            <label className="block text-[#ccc] text-[13px] font-medium mb-2">
+              Allowed Attractions
+            </label>
+            <p className="text-[#888] text-[13px] mb-3">
+              Select which attractions this supervisor can access. Leave empty for all.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {rides.map((a) => {
+                const checked = formAttractions.includes(a.id);
+                return (
+                  <label
+                    key={a.id}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer border transition-colors
+                      ${checked ? 'bg-[#1a1a1a] border-[#555]' : 'border-[#333] hover:border-[#555]'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleAttraction(a.id)}
+                      className="accent-[#6ea8fe] w-4 h-4"
+                    />
+                    <span className="text-[#ccc] text-[13px]">{a.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3">
           <button
-            onClick={startAdd}
-            className="px-3 py-1.5 bg-white text-black text-xs font-semibold rounded-md
-                       hover:bg-[#e0e0e0] transition-colors"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-md
+                       hover:bg-[#ddd] transition-colors disabled:opacity-50"
           >
-            + Add User
+            {saving ? 'Saving...' : editing ? 'Update user' : 'Create user'}
           </button>
+          {showForm && editing && (
+            <button
+              onClick={cancelForm}
+              className="px-5 py-2.5 bg-transparent border border-[#555] text-[#ccc] text-sm font-semibold
+                         hover:border-[#888] hover:text-white rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* User list — data table card */}
+      <div className="bg-[#111] border border-[#333] rounded-lg overflow-hidden">
+        <div className="p-5 pb-0">
+          <h3 className="text-white text-base font-semibold mb-4">All Users ({users.length})</h3>
         </div>
 
         {users.length === 0 ? (
-          <p className="text-[#666] text-sm">No users configured yet.</p>
+          <p className="text-[#666] text-sm px-5 pb-5">No users configured yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#333]">
-                  <th className="text-left text-[#888] font-medium py-2 pr-4">Email</th>
-                  <th className="text-left text-[#888] font-medium py-2 pr-4">Role</th>
-                  <th className="text-left text-[#888] font-medium py-2 pr-4">Attractions</th>
-                  <th className="text-right text-[#888] font-medium py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="border-b border-[#222]">
-                    <td className="py-3 pr-4">
-                      <span className="text-white text-sm">{user.email}</span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      {user.role === 'admin' ? (
-                        <span className="px-2 py-0.5 bg-white text-black text-xs font-semibold rounded">
-                          Admin
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 border border-[#555] text-[#aaa] text-xs font-medium rounded">
-                          Supervisor
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className="text-[#888] text-xs">
-                        {user.role === 'admin' ? 'All' : getAttractionNames(user.allowed_attractions)}
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                  Email
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                  Role
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                  Attractions
+                </th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b border-[#222] hover:bg-[#1a1a1a] transition-colors">
+                  <td className="px-4 py-3 text-sm text-[#e0e0e0]">
+                    {user.email}
+                    {user.email === userEmail && (
+                      <span className="text-[#888] text-xs ml-2">(you)</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.role === 'admin' ? (
+                      <span className="inline-block px-2.5 py-0.5 bg-[#0a3d1f] text-[#4caf50] text-xs font-semibold rounded-full">
+                        admin
                       </span>
-                    </td>
-                    <td className="py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => startEdit(user)}
-                          className="px-2 py-1 text-[#888] hover:text-white text-xs transition-colors"
-                        >
-                          Edit
-                        </button>
+                    ) : (
+                      <span className="inline-block px-2.5 py-0.5 bg-[#3d3000] text-[#ffc107] text-xs font-semibold rounded-full">
+                        supervisor
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#888]">
+                    {user.role === 'admin' ? 'All' : getAttractionNames(user.allowed_attractions)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => startEdit(user)}
+                        className="px-2.5 py-1 border border-[#555] text-[#ccc] text-xs font-medium rounded
+                                   hover:border-[#888] hover:text-white transition-colors"
+                      >
+                        Edit
+                      </button>
+                      {user.email !== userEmail && (
                         <button
                           onClick={() => setDeleteTarget(user)}
-                          className="px-2 py-1 text-[#dc3545] hover:text-[#ff4d5e] text-xs transition-colors"
+                          className="px-2.5 py-1 bg-[#d43518] text-white text-xs font-semibold rounded
+                                     hover:bg-[#b52d14] transition-colors"
                         >
                           Delete
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
-
-      {/* Add / Edit form */}
-      {showForm && (
-        <div className="panel p-4 sm:p-6">
-          <h2 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">
-            {editing ? 'Edit User' : 'Add User'}
-          </h2>
-
-          <div className="space-y-4 max-w-lg">
-            <div>
-              <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
-                Email
-              </label>
-              <input
-                type="email"
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                disabled={!!editing}
-                placeholder="user@example.com"
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
-                           disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            {!editing && (
-              <div>
-                <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                             placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
-                Role
-              </label>
-              <select
-                value={formRole}
-                onChange={(e) => setFormRole(e.target.value as 'admin' | 'supervisor')}
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                           focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
-              >
-                <option value="admin">Admin</option>
-                <option value="supervisor">Supervisor</option>
-              </select>
-            </div>
-
-            {formRole === 'supervisor' && (
-              <div>
-                <label className="block text-[#888] text-xs font-medium mb-2 uppercase tracking-wider">
-                  Allowed Attractions
-                </label>
-                <p className="text-[#666] text-xs mb-3">
-                  Select which attractions this supervisor can access. Leave empty for all.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {rides.map((a) => {
-                    const checked = formAttractions.includes(a.id);
-                    return (
-                      <label
-                        key={a.id}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors
-                          ${checked ? 'bg-white/[0.05] border border-white/20' : 'border border-[#333] hover:border-[#555]'}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleAttraction(a.id)}
-                          className="accent-white w-4 h-4"
-                        />
-                        <span className="text-white text-sm">{a.name}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {formError && (
-              <p className="text-[#dc3545] text-sm">{formError}</p>
-            )}
-
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-md
-                           hover:bg-[#e0e0e0] transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : editing ? 'Update User' : 'Add User'}
-              </button>
-              <button
-                onClick={cancelForm}
-                className="px-5 py-2.5 bg-transparent border border-[#333] text-white text-sm
-                           hover:border-[#555] rounded-md transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-
-            <p className="text-[#666] text-xs mt-2">
-              Adding a user creates their login account and role. Deleting a user removes both.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

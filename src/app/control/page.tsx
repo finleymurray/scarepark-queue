@@ -465,10 +465,10 @@ export default function SupervisorDashboard() {
               <button
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
-                className={`flex-shrink-0 px-3 py-1.5 text-sm transition-colors touch-manipulation
+                className={`flex-shrink-0 px-3 py-1.5 text-sm rounded-md transition-colors touch-manipulation
                   ${isSelected
-                    ? 'text-white'
-                    : 'text-[#aaa] hover:text-white'
+                    ? 'bg-[#333] text-white'
+                    : 'text-[#aaa] hover:bg-[#222] hover:text-white'
                   }`}
               >
                 {a.name}
@@ -479,10 +479,11 @@ export default function SupervisorDashboard() {
 
         {/* User info — pushed right */}
         <div className="flex items-center gap-2.5 px-4 flex-shrink-0 text-[13px]">
-          {userEmail && <span className="text-[#aaa] truncate max-w-[150px]">{userEmail}</span>}
+          {userEmail && <span className="text-[#ccc] truncate max-w-[150px]">{userEmail}</span>}
           <button
             onClick={handleLogout}
-            className="text-[#aaa] hover:text-white text-[13px] transition-colors bg-transparent border-none cursor-pointer"
+            className="px-2.5 py-1 bg-transparent border border-[#555] text-[#aaa] text-xs
+                       rounded transition-colors hover:border-[#888] hover:text-white cursor-pointer"
           >
             Sign out
           </button>

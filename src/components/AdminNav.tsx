@@ -27,7 +27,7 @@ export default function AdminNav({
   return (
     <div className="mb-6 -mx-4 sm:-mx-6">
       {/* Header bar */}
-      <div className="bg-[#111] border-b border-[#333] px-5 py-3 flex items-center justify-between">
+      <div className="bg-[#111] border-b border-[#333] px-5 py-3 flex items-center">
         <a href="/admin" className="flex items-center gap-3 no-underline">
           <Image
             src="/logo.png"
@@ -36,7 +36,7 @@ export default function AdminNav({
             height={36}
             priority
           />
-          <h1 className="text-white text-lg font-bold">Admin</h1>
+          <h1 className="text-white text-lg font-semibold">Admin</h1>
         </a>
       </div>
 
@@ -48,10 +48,10 @@ export default function AdminNav({
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-3 py-1.5 text-sm no-underline transition-colors
+              className={`px-3 py-1.5 text-sm no-underline rounded-md transition-colors
                 ${active
-                  ? 'text-white'
-                  : 'text-[#aaa] hover:text-white'
+                  ? 'bg-[#333] text-white'
+                  : 'text-[#aaa] hover:bg-[#222] hover:text-white'
                 }`}
             >
               {tab.label}
@@ -62,13 +62,14 @@ export default function AdminNav({
         {/* User info — pushed right */}
         <div className="ml-auto flex items-center gap-2.5 text-[13px]">
           {userEmail && (
-            <span className="text-[#aaa]" title={userEmail}>
+            <span className="text-[#ccc]" title={userEmail}>
               {userEmail}
             </span>
           )}
           <button
             onClick={onLogout}
-            className="text-[#aaa] hover:text-white text-[13px] transition-colors bg-transparent border-none cursor-pointer"
+            className="px-2.5 py-1 bg-transparent border border-[#555] text-[#aaa] text-xs
+                       rounded transition-colors hover:border-[#888] hover:text-white cursor-pointer"
           >
             Sign out
           </button>
