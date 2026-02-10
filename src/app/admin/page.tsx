@@ -924,24 +924,25 @@ export default function AdminDashboard() {
   const handleDeleteAttraction = useCallback(async (id: string) => {
     const current = attractionsRef.current.find((a) => a.id === id);
 
-    const { error } = await supabase
-      .from('attractions')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting attraction:', error);
-    } else if (current) {
+    // Log before delete so the FK reference is still valid
+    if (current) {
       const performer = displayNameRef.current || userEmailRef.current;
-      logAudit({
+      await logAudit({
         actionType: 'attraction_deleted',
-        attractionId: null,
+        attractionId: id,
         attractionName: current.name,
         performedBy: performer,
         oldValue: current.attraction_type,
         details: `${current.attraction_type === 'show' ? 'Show' : 'Ride'} "${current.name}" removed`,
       });
     }
+
+    const { error } = await supabase
+      .from('attractions')
+      .delete()
+      .eq('id', id);
+
+    if (error) console.error('Error deleting attraction:', error);
     setDeleteTarget(null);
   }, []);
 
