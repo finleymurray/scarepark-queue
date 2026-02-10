@@ -191,6 +191,7 @@ export default function SupervisorDashboard() {
   const [keypadValue, setKeypadValue] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
@@ -209,8 +210,9 @@ export default function SupervisorDashboard() {
         router.push('/login');
         return;
       }
-      // Store email for display
+      // Store email and role for display
       setUserEmail(auth.email || '');
+      setUserRole(auth.role);
 
       const [attractionsRes, settingsRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
@@ -445,6 +447,31 @@ export default function SupervisorDashboard() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
           {userEmail && <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</span>}
+          {userRole === 'admin' && (
+            <a
+              href="/admin"
+              style={{
+                background: 'none',
+                border: '1px solid #555',
+                color: '#aaa',
+                padding: '4px 10px',
+                borderRadius: 4,
+                fontSize: 12,
+                textDecoration: 'none',
+                transition: 'border-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#888';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#555';
+                e.currentTarget.style.color = '#aaa';
+              }}
+            >
+              Admin
+            </a>
+          )}
           <button
             onClick={handleLogout}
             style={{
