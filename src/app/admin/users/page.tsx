@@ -181,12 +181,6 @@ export default function UsersPage() {
       }
     } else {
       // Create Supabase Auth user first
-      if (!supabaseAdmin) {
-        setFormError('Admin client not configured. Service role key missing.');
-        setSaving(false);
-        return;
-      }
-
       const { error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: formPassword.trim(),
@@ -221,15 +215,12 @@ export default function UsersPage() {
     if (!deleteTarget) return;
 
     // Delete the Supabase Auth user first
-    if (supabaseAdmin) {
-      // Look up the auth user by email
-      const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
-      const authUser = authList?.users?.find(
-        (u) => u.email?.toLowerCase() === deleteTarget.email.toLowerCase()
-      );
-      if (authUser) {
-        await supabaseAdmin.auth.admin.deleteUser(authUser.id);
-      }
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+    const authUser = authList?.users?.find(
+      (u) => u.email?.toLowerCase() === deleteTarget.email.toLowerCase()
+    );
+    if (authUser) {
+      await supabaseAdmin.auth.admin.deleteUser(authUser.id);
     }
 
     // Then delete the user_roles record
