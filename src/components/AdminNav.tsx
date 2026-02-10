@@ -27,8 +27,8 @@ export default function AdminNav({
   return (
     <div className="mb-6 -mx-4 sm:-mx-6">
       {/* Header bar */}
-      <div className="bg-[#111] border-b border-[#333] px-5 py-3 flex items-center">
-        <div className="flex items-center gap-3">
+      <div className="bg-[#111] border-b border-[#333] px-5 py-3 flex items-center justify-between">
+        <a href="/admin" className="flex items-center gap-3 no-underline">
           <Image
             src="/logo.png"
             alt="Immersive Core"
@@ -36,8 +36,8 @@ export default function AdminNav({
             height={36}
             priority
           />
-          <h1 className="text-white text-lg font-semibold">Admin</h1>
-        </div>
+          <h1 className="text-white text-lg font-bold">Admin</h1>
+        </a>
       </div>
 
       {/* Nav bar */}
@@ -48,10 +48,10 @@ export default function AdminNav({
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors
+              className={`px-3 py-1.5 text-sm no-underline transition-colors
                 ${active
-                  ? 'bg-[#222] text-white'
-                  : 'text-[#aaa] hover:bg-[#222] hover:text-white'
+                  ? 'text-white'
+                  : 'text-[#aaa] hover:text-white'
                 }`}
             >
               {tab.label}
@@ -60,16 +60,15 @@ export default function AdminNav({
         })}
 
         {/* User info — pushed right */}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2.5 text-[13px]">
           {userEmail && (
-            <span className="text-[#aaa] text-[13px] truncate max-w-[200px]" title={userEmail}>
+            <span className="text-[#aaa]" title={userEmail}>
               {userEmail}
             </span>
           )}
           <button
             onClick={onLogout}
-            className="px-3.5 py-1.5 text-white text-sm font-semibold border border-white/30
-                       rounded transition-colors hover:bg-[#222]"
+            className="text-[#aaa] hover:text-white text-[13px] transition-colors bg-transparent border-none cursor-pointer"
           >
             Sign out
           </button>

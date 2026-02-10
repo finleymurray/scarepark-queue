@@ -447,7 +447,7 @@ export default function SupervisorDashboard() {
       <div className="flex items-center px-4 py-3 bg-[#111] border-b border-[#333] flex-shrink-0">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
-          <h1 className="text-white text-lg font-semibold">Field Control</h1>
+          <h1 className="text-white text-lg font-bold">Field Control</h1>
         </div>
       </div>
 
@@ -465,10 +465,10 @@ export default function SupervisorDashboard() {
               <button
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-md text-sm transition-colors touch-manipulation
+                className={`flex-shrink-0 px-3 py-1.5 text-sm transition-colors touch-manipulation
                   ${isSelected
-                    ? 'bg-[#222] text-white'
-                    : 'text-[#aaa] hover:bg-[#222] hover:text-white'
+                    ? 'text-white'
+                    : 'text-[#aaa] hover:text-white'
                   }`}
               >
                 {a.name}
@@ -478,12 +478,11 @@ export default function SupervisorDashboard() {
         </div>
 
         {/* User info — pushed right */}
-        <div className="flex items-center gap-3 px-4 flex-shrink-0">
-          {userEmail && <span className="text-[#aaa] text-[13px] truncate max-w-[150px]">{userEmail}</span>}
+        <div className="flex items-center gap-2.5 px-4 flex-shrink-0 text-[13px]">
+          {userEmail && <span className="text-[#aaa] truncate max-w-[150px]">{userEmail}</span>}
           <button
             onClick={handleLogout}
-            className="px-3.5 py-1.5 text-white text-sm font-semibold border border-white/30
-                       rounded transition-colors hover:bg-[#222]"
+            className="text-[#aaa] hover:text-white text-[13px] transition-colors bg-transparent border-none cursor-pointer"
           >
             Sign out
           </button>
