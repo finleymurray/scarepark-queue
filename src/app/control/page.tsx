@@ -587,7 +587,7 @@ export default function SupervisorDashboard() {
 
             {/* ── Hourly Throughput ── */}
             <section>
-              <div className="flex items-center gap-2.5 mb-5">
+              <div className="flex items-center gap-2.5 mb-6">
                 <div className="w-2 h-2 rounded-full bg-white" />
                 <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Hourly Throughput</h2>
               </div>
