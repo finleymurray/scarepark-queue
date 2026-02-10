@@ -515,7 +515,7 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div className="flex-1 overflow-y-auto px-6 sm:px-12 lg:px-20 py-8 space-y-10">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="space-y-10">
         {selected && (
           <>
             {/* ── Queue Time Control ── */}
@@ -598,7 +598,7 @@ export default function SupervisorDashboard() {
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {slots.map((slot, idx) => {
                     const isCurrent = idx === currentSlotIdx;
                     const isPast = idx < currentSlotIdx || currentSlotIdx === -1;
@@ -648,13 +648,13 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer className="flex-shrink-0 bg-[#111] border-t border-[#333] px-6 sm:px-12 lg:px-20 py-5">
+        <footer style={{ flexShrink: 0, background: '#111', borderTop: '1px solid #333', padding: '20px 24px' }}>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">
                 {selected.name} Tonight
               </div>
-              <div className="text-[#22C55E] text-3xl font-black tabular-nums">
+              <div className="text-[#22C55E] text-2xl font-black tabular-nums">
                 {guestsTonight.toLocaleString()}
                 <span className="text-white/30 text-sm ml-1.5">guests</span>
               </div>
@@ -663,7 +663,7 @@ export default function SupervisorDashboard() {
               <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">
                 Park Total
               </div>
-              <div className="text-white text-3xl font-black tabular-nums">
+              <div className="text-white text-2xl font-black tabular-nums">
                 {totalGuestsAllAttractions.toLocaleString()}
               </div>
             </div>
