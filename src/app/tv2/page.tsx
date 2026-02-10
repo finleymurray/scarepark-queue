@@ -11,6 +11,7 @@ const BANNER_IMAGES: Record<string, string> = {
   'westlake-witch-trials': '/Queue Board Images/westlake-witch-trials.png',
   'drowned': '/Queue Board Images/drowned.png',
   'strings-of-control': '/Queue Board Images/strings-of-control.png',
+  'signal-loss': '/Queue Board Images/signal-loss.png',
 };
 
 function ClockIcon() {
@@ -137,18 +138,14 @@ export default function TV2Display() {
   const [autoSort, setAutoSort] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [perPage, setPerPage] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
   const [mainHeight, setMainHeight] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
+  const perPage = 2;
 
-  const calculatePerPage = useCallback(() => {
+  const measureHeight = useCallback(() => {
     if (!mainRef.current) return;
-    const available = mainRef.current.getBoundingClientRect().height;
-    setMainHeight(available);
-    const estimatedRowHeight = 120;
-    const fits = Math.max(1, Math.floor(available / estimatedRowHeight));
-    setPerPage(fits);
+    setMainHeight(mainRef.current.getBoundingClientRect().height);
   }, []);
 
   useEffect(() => {
@@ -217,16 +214,16 @@ export default function TV2Display() {
   useEffect(() => {
     if (loading) return;
 
-    const timer = setTimeout(calculatePerPage, 100);
+    const timer = setTimeout(measureHeight, 100);
 
-    const handleResize = () => calculatePerPage();
+    const handleResize = () => measureHeight();
     window.addEventListener('resize', handleResize);
 
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', handleResize);
     };
-  }, [loading, calculatePerPage]);
+  }, [loading, measureHeight]);
 
   // Filter to rides only (no shows)
   const rides = attractions.filter((a) => a.attraction_type !== 'show');
@@ -240,7 +237,7 @@ export default function TV2Display() {
       })
     : rides;
 
-  const totalPages = perPage && perPage < sortedRides.length
+  const totalPages = sortedRides.length > perPage
     ? Math.ceil(sortedRides.length / perPage)
     : 1;
 
@@ -267,7 +264,7 @@ export default function TV2Display() {
     }
   }, [currentPage, totalPages]);
 
-  const visibleRides = perPage && totalPages > 1
+  const visibleRides = totalPages > 1
     ? sortedRides.slice(currentPage * perPage, (currentPage + 1) * perPage)
     : sortedRides;
 
