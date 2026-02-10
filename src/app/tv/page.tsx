@@ -142,9 +142,9 @@ export default function TVDisplay() {
   useEffect(() => {
     async function fetchData() {
       const [attractionsRes, closingRes, autoSortRes] = await Promise.all([
-        supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
-        supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
-        supabase.from('park_settings').select('*').eq('key', 'auto_sort_by_wait').single(),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
+        supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
       ]);
 
       if (!attractionsRes.error) {

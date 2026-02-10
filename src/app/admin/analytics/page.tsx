@@ -11,7 +11,7 @@ import {
   Tooltip, Legend, ResponsiveContainer, ReferenceArea,
   BarChart, Bar, ComposedChart,
 } from 'recharts';
-import * as XLSX from 'xlsx';
+// xlsx is lazy-loaded when the user clicks Export to avoid loading ~1MB upfront
 
 const LINE_COLORS = [
   '#22C55E',
@@ -96,6 +96,8 @@ export default function AnalyticsPage() {
   async function handleExportExcel() {
     setExporting(true);
     try {
+      const XLSX = await import('xlsx');
+
       const dates: string[] = [];
       const current = new Date(exportStartDate + 'T12:00:00');
       const end = new Date(exportEndDate + 'T12:00:00');
@@ -109,24 +111,29 @@ export default function AnalyticsPage() {
         return;
       }
 
-      const wb = XLSX.utils.book_new();
-
-      for (const dateStr of dates) {
+      // Fetch all dates in parallel instead of sequentially
+      const fetchPromises = dates.map((dateStr) => {
         const { start, end: rangeEnd } = getTimeRange(dateStr, openingTime || undefined);
-        const { data, error } = await supabase
+        return supabase
           .from('attraction_history')
-          .select('*')
+          .select('recorded_at,attraction_name,status,wait_time')
           .gte('recorded_at', start)
           .lte('recorded_at', rangeEnd)
-          .order('recorded_at', { ascending: true });
+          .order('recorded_at', { ascending: true })
+          .then((res) => ({ dateStr, data: res.data, error: res.error }));
+      });
 
+      const results = await Promise.all(fetchPromises);
+      const wb = XLSX.utils.book_new();
+
+      for (const { dateStr, data, error } of results) {
         if (error || !data || data.length === 0) {
           const ws = XLSX.utils.aoa_to_sheet([['No data recorded for this night.']]);
           XLSX.utils.book_append_sheet(wb, ws, dateStr);
           continue;
         }
 
-        const rows = data.map((r: AttractionHistory) => ({
+        const rows = data.map((r) => ({
           'Time': new Date(r.recorded_at).toLocaleTimeString('en-GB', {
             hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
           }),
@@ -145,7 +152,7 @@ export default function AnalyticsPage() {
         ];
         ws['!cols'] = colWidths;
 
-        const names = Array.from(new Set(data.map((r: AttractionHistory) => r.attraction_name)));
+        const names = Array.from(new Set(data.map((r) => r.attraction_name)));
         const timeMap = new Map<string, Record<string, number | string | null>>();
         for (const record of data) {
           const timeKey = new Date(record.recorded_at).toLocaleTimeString('en-GB', {
@@ -180,7 +187,7 @@ export default function AnalyticsPage() {
     router.push('/login');
   }
 
-  // Auth check + fetch settings
+  // Auth check + fetch settings (parallelized)
   useEffect(() => {
     async function init() {
       const auth = await checkAuth();
@@ -191,21 +198,15 @@ export default function AnalyticsPage() {
       setUserEmail(auth.email || '');
       setAuthenticated(true);
 
-      const { data: settings } = await supabase
-        .from('park_settings')
-        .select('*')
-        .eq('key', 'opening_time')
-        .single();
+      const [settingsRes, attractionsRes] = await Promise.all([
+        supabase.from('park_settings').select('key,value').eq('key', 'opening_time').single(),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+      ]);
 
-      if (settings) {
-        setOpeningTime(settings.value);
+      if (settingsRes.data) {
+        setOpeningTime(settingsRes.data.value);
       }
-
-      const { data: attractionsData } = await supabase
-        .from('attractions')
-        .select('*')
-        .order('sort_order', { ascending: true });
-      if (attractionsData) setAttractions(attractionsData);
+      if (attractionsRes.data) setAttractions(attractionsRes.data);
     }
     init();
   }, [router]);
@@ -220,13 +221,13 @@ export default function AnalyticsPage() {
       const [historyRes, throughputRes] = await Promise.all([
         supabase
           .from('attraction_history')
-          .select('*')
+          .select('id,attraction_id,attraction_name,status,wait_time,recorded_at')
           .gte('recorded_at', start)
           .lte('recorded_at', end)
           .order('recorded_at', { ascending: true }),
         supabase
           .from('throughput_logs')
-          .select('*')
+          .select('id,attraction_id,slot_start,slot_end,guest_count,logged_by,log_date,created_at,updated_at')
           .eq('log_date', selectedDate),
       ]);
 

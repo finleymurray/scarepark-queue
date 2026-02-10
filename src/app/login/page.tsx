@@ -20,7 +20,7 @@ export default function LoginPage() {
       if (session) {
         const { data: userRole } = await supabase
           .from('user_roles')
-          .select('*')
+          .select('role')
           .eq('email', session.user.email)
           .single();
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
 
     const { data: userRole } = await supabase
       .from('user_roles')
-      .select('*')
+      .select('role')
       .eq('email', data.session?.user.email)
       .single();
 

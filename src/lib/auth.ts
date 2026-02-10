@@ -18,7 +18,7 @@ export async function checkAuth(): Promise<AuthResult> {
 
   const { data: userRole } = await supabase
     .from('user_roles')
-    .select('*')
+    .select('role,email,allowed_attractions')
     .eq('email', session.user.email)
     .single();
 

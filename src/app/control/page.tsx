@@ -204,6 +204,10 @@ export default function SupervisorDashboard() {
 
   // Auth & initial data fetch
   useEffect(() => {
+    let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
+    let settingsChannel: ReturnType<typeof supabase.channel> | null = null;
+    let logsChannel: ReturnType<typeof supabase.channel> | null = null;
+
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || !auth.role) {
@@ -215,8 +219,8 @@ export default function SupervisorDashboard() {
       setUserRole(auth.role);
 
       const [attractionsRes, settingsRes] = await Promise.all([
-        supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
-        supabase.from('park_settings').select('*'),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        supabase.from('park_settings').select('key,value'),
       ]);
 
       if (!attractionsRes.error && attractionsRes.data) {
@@ -243,7 +247,7 @@ export default function SupervisorDashboard() {
       setLoading(false);
 
       // Realtime: attractions
-      const attractionsChannel = supabase
+      attractionsChannel = supabase
         .channel('control-attractions')
         .on(
           'postgres_changes',
@@ -269,11 +273,11 @@ export default function SupervisorDashboard() {
         .subscribe();
 
       // Realtime: settings
-      const settingsChannel = supabase
+      settingsChannel = supabase
         .channel('control-settings')
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'park_settings' },
+          { event: 'UPDATE', schema: 'public', table: 'park_settings' },
           (payload) => {
             const setting = payload.new as ParkSetting;
             if (setting.key === 'opening_time') setOpeningTime(setting.value);
@@ -283,26 +287,25 @@ export default function SupervisorDashboard() {
         .subscribe();
 
       // Realtime: throughput_logs
-      const logsChannel = supabase
+      logsChannel = supabase
         .channel('control-logs')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'throughput_logs' },
           () => {
-            // Refetch logs when anything changes
             fetchThroughputLogs();
           }
         )
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(attractionsChannel);
-        supabase.removeChannel(settingsChannel);
-        supabase.removeChannel(logsChannel);
-      };
     }
 
     init();
+
+    return () => {
+      if (attractionsChannel) supabase.removeChannel(attractionsChannel);
+      if (settingsChannel) supabase.removeChannel(settingsChannel);
+      if (logsChannel) supabase.removeChannel(logsChannel);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
@@ -312,7 +315,7 @@ export default function SupervisorDashboard() {
 
     const { data, error } = await supabase
       .from('throughput_logs')
-      .select('*')
+      .select('id,attraction_id,slot_start,slot_end,guest_count,logged_by,log_date,created_at,updated_at')
       .eq('log_date', today);
 
     if (!error && data) {

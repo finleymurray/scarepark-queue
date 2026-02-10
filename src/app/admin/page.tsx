@@ -704,6 +704,9 @@ export default function AdminDashboard() {
   const [autoSort, setAutoSort] = useState(false);
 
   useEffect(() => {
+    let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
+    let settingsChannel: ReturnType<typeof supabase.channel> | null = null;
+
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || auth.role !== 'admin') {
@@ -713,10 +716,10 @@ export default function AdminDashboard() {
       setUserEmail(auth.email || '');
 
       const [attractionsRes, openingRes, closingRes, autoSortRes] = await Promise.all([
-        supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
-        supabase.from('park_settings').select('*').eq('key', 'opening_time').single(),
-        supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
-        supabase.from('park_settings').select('*').eq('key', 'auto_sort_by_wait').single(),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        supabase.from('park_settings').select('key,value').eq('key', 'opening_time').single(),
+        supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
+        supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
       ]);
 
       if (!attractionsRes.error) {
@@ -733,7 +736,7 @@ export default function AdminDashboard() {
       }
       setLoading(false);
 
-      const attractionsChannel = supabase
+      attractionsChannel = supabase
         .channel('admin-attractions')
         .on(
           'postgres_changes',
@@ -758,7 +761,7 @@ export default function AdminDashboard() {
         )
         .subscribe();
 
-      const settingsChannel = supabase
+      settingsChannel = supabase
         .channel('admin-settings')
         .on(
           'postgres_changes',
@@ -775,14 +778,14 @@ export default function AdminDashboard() {
           }
         )
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(attractionsChannel);
-        supabase.removeChannel(settingsChannel);
-      };
     }
 
     init();
+
+    return () => {
+      if (attractionsChannel) supabase.removeChannel(attractionsChannel);
+      if (settingsChannel) supabase.removeChannel(settingsChannel);
+    };
   }, [router]);
 
   const handleUpdate = useCallback(async (id: string, updates: Partial<Attraction>) => {
@@ -849,15 +852,12 @@ export default function AdminDashboard() {
     setClosingAll(true);
     setShowCloseAll(false);
 
-    const rides = attractions.filter((a) => a.attraction_type !== 'show');
-    const updatePromises = rides.map((a) =>
-      supabase
-        .from('attractions')
-        .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
-        .eq('id', a.id)
-    );
+    const rideIds = attractions.filter((a) => a.attraction_type !== 'show').map((a) => a.id);
+    await supabase
+      .from('attractions')
+      .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
+      .in('id', rideIds);
 
-    await Promise.all(updatePromises);
     setClosingAll(false);
   }
 
@@ -865,21 +865,22 @@ export default function AdminDashboard() {
     setOpeningAll(true);
     setShowOpenAll(false);
 
-    const updatePromises = attractions.map((a) => {
-      const updates: Record<string, string | number> = {
-        status: 'OPEN',
-        updated_at: new Date().toISOString(),
-      };
-      if (a.attraction_type !== 'show') {
-        updates.wait_time = 5;
-      }
-      return supabase
-        .from('attractions')
-        .update(updates)
-        .eq('id', a.id);
-    });
+    const rideIds = attractions.filter((a) => a.attraction_type !== 'show').map((a) => a.id);
+    const showIds = attractions.filter((a) => a.attraction_type === 'show').map((a) => a.id);
 
-    await Promise.all(updatePromises);
+    if (rideIds.length > 0) {
+      await supabase
+        .from('attractions')
+        .update({ status: 'OPEN', wait_time: 5, updated_at: new Date().toISOString() })
+        .in('id', rideIds);
+    }
+    if (showIds.length > 0) {
+      await supabase
+        .from('attractions')
+        .update({ status: 'OPEN', updated_at: new Date().toISOString() })
+        .in('id', showIds);
+    }
+
     setOpeningAll(false);
   }
 
