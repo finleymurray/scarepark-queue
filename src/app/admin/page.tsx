@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
@@ -367,7 +367,7 @@ function ReorderButtons({
 }
 
 /* ── Ride Control Card ── */
-function RideControl({
+const RideControl = React.memo(function RideControl({
   attraction,
   onUpdate,
   onDelete,
@@ -523,10 +523,10 @@ function RideControl({
       </div>
     </div>
   );
-}
+});
 
 /* ── Show Control Card ── */
-function ShowControl({
+const ShowControl = React.memo(function ShowControl({
   attraction,
   onUpdate,
   onDelete,
@@ -687,7 +687,7 @@ function ShowControl({
       </button>
     </div>
   );
-}
+});
 
 /* ── Main Dashboard ── */
 export default function AdminDashboard() {
@@ -704,6 +704,14 @@ export default function AdminDashboard() {
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [autoSort, setAutoSort] = useState(false);
+  const attractionsRef = useRef<Attraction[]>([]);
+  const userEmailRef = useRef('');
+  const displayNameRef = useRef('');
+
+  // Keep refs in sync for stable callbacks
+  attractionsRef.current = attractions;
+  userEmailRef.current = userEmail;
+  displayNameRef.current = displayName;
 
   useEffect(() => {
     let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -792,7 +800,7 @@ export default function AdminDashboard() {
   }, [router]);
 
   const handleUpdate = useCallback(async (id: string, updates: Partial<Attraction>) => {
-    const current = attractions.find((a) => a.id === id);
+    const current = attractionsRef.current.find((a) => a.id === id);
 
     const { error } = await supabase
       .from('attractions')
@@ -805,7 +813,7 @@ export default function AdminDashboard() {
     }
 
     if (current) {
-      const performer = displayName || userEmail;
+      const performer = displayNameRef.current || userEmailRef.current;
       if ('status' in updates && updates.status !== current.status) {
         logAudit({
           actionType: 'status_change',
@@ -829,7 +837,7 @@ export default function AdminDashboard() {
         });
       }
     }
-  }, [attractions, userEmail, displayName]);
+  }, []);
 
   const handleOpeningTimeUpdate = useCallback(async (value: string) => {
     const { error } = await supabase
@@ -850,8 +858,9 @@ export default function AdminDashboard() {
 
   const handleAddAttraction = useCallback(async (name: string, type: AttractionType) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const nextOrder = attractions.length > 0
-      ? Math.max(...attractions.map((a) => a.sort_order)) + 1
+    const current = attractionsRef.current;
+    const nextOrder = current.length > 0
+      ? Math.max(...current.map((a) => a.sort_order)) + 1
       : 1;
 
     const { error } = await supabase
@@ -870,7 +879,7 @@ export default function AdminDashboard() {
       console.error('Error adding attraction:', error);
       throw new Error(error.message);
     }
-  }, [attractions]);
+  }, []);
 
   const handleDeleteAttraction = useCallback(async (id: string) => {
     const { error } = await supabase

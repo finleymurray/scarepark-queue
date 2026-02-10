@@ -11,7 +11,6 @@ import {
   Tooltip, Legend, ResponsiveContainer, ReferenceArea,
   BarChart, Bar, ComposedChart,
 } from 'recharts';
-// xlsx is lazy-loaded when the user clicks Export to avoid loading ~1MB upfront
 
 const LINE_COLORS = [
   '#22C55E',
@@ -83,105 +82,9 @@ export default function AnalyticsPage() {
   const [selectedDate, setSelectedDate] = useState(() =>
     new Date().toISOString().split('T')[0]
   );
-  const [exportStartDate, setExportStartDate] = useState(() =>
-    new Date().toISOString().split('T')[0]
-  );
-  const [exportEndDate, setExportEndDate] = useState(() =>
-    new Date().toISOString().split('T')[0]
-  );
-  const [exporting, setExporting] = useState(false);
   const [openingTime, setOpeningTime] = useState('');
   const [throughputData, setThroughputData] = useState<ThroughputLog[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
-
-  async function handleExportExcel() {
-    setExporting(true);
-    try {
-      const XLSX = await import('xlsx');
-
-      const dates: string[] = [];
-      const current = new Date(exportStartDate + 'T12:00:00');
-      const end = new Date(exportEndDate + 'T12:00:00');
-      while (current <= end) {
-        dates.push(current.toISOString().split('T')[0]);
-        current.setDate(current.getDate() + 1);
-      }
-
-      if (dates.length === 0) {
-        setExporting(false);
-        return;
-      }
-
-      // Fetch all dates in parallel instead of sequentially
-      const fetchPromises = dates.map((dateStr) => {
-        const { start, end: rangeEnd } = getTimeRange(dateStr, openingTime || undefined);
-        return supabase
-          .from('attraction_history')
-          .select('recorded_at,attraction_name,status,wait_time')
-          .gte('recorded_at', start)
-          .lte('recorded_at', rangeEnd)
-          .order('recorded_at', { ascending: true })
-          .then((res) => ({ dateStr, data: res.data, error: res.error }));
-      });
-
-      const results = await Promise.all(fetchPromises);
-      const wb = XLSX.utils.book_new();
-
-      for (const { dateStr, data, error } of results) {
-        if (error || !data || data.length === 0) {
-          const ws = XLSX.utils.aoa_to_sheet([['No data recorded for this night.']]);
-          XLSX.utils.book_append_sheet(wb, ws, dateStr);
-          continue;
-        }
-
-        const rows = data.map((r) => ({
-          'Time': new Date(r.recorded_at).toLocaleTimeString('en-GB', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-          }),
-          'Attraction': r.attraction_name,
-          'Status': r.status,
-          'Wait Time (min)': r.wait_time,
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(rows);
-
-        const colWidths = [
-          { wch: 10 },
-          { wch: 25 },
-          { wch: 14 },
-          { wch: 16 },
-        ];
-        ws['!cols'] = colWidths;
-
-        const names = Array.from(new Set(data.map((r) => r.attraction_name)));
-        const timeMap = new Map<string, Record<string, number | string | null>>();
-        for (const record of data) {
-          const timeKey = new Date(record.recorded_at).toLocaleTimeString('en-GB', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-          });
-          if (!timeMap.has(timeKey)) {
-            const row: Record<string, number | string | null> = { 'Time': timeKey };
-            names.forEach((n) => { row[n] = null; });
-            timeMap.set(timeKey, row);
-          }
-          const point = timeMap.get(timeKey)!;
-          point[record.attraction_name] = record.status === 'OPEN' ? record.wait_time : null;
-        }
-        const pivotRows = Array.from(timeMap.values());
-
-        const rawRowCount = rows.length + 2;
-        XLSX.utils.sheet_add_aoa(ws, [[], ['PIVOT TABLE — Select this range to create a chart in Excel']], { origin: `A${rawRowCount + 1}` });
-        XLSX.utils.sheet_add_json(ws, pivotRows, { origin: `A${rawRowCount + 3}`, skipHeader: false });
-
-        XLSX.utils.book_append_sheet(wb, ws, dateStr);
-      }
-
-      XLSX.writeFile(wb, `analytics-${exportStartDate}-to-${exportEndDate}.xlsx`);
-    } catch (err) {
-      console.error('Export error:', err);
-    }
-    setExporting(false);
-  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -479,54 +382,17 @@ export default function AnalyticsPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
-      {/* Date picker + Export */}
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex items-center gap-4">
-          <label className="text-[#888] text-sm font-medium">Select Night:</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                       focus:outline-none focus:border-[#6ea8fe] transition-colors
-                       [color-scheme:dark]"
-          />
-        </div>
-
-        {/* Excel export */}
-        <div className="flex items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-[#888] text-xs font-medium">Export From</label>
-            <input
-              type="date"
-              value={exportStartDate}
-              onChange={(e) => setExportStartDate(e.target.value)}
-              className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                         focus:outline-none focus:border-[#6ea8fe] transition-colors
-                         [color-scheme:dark]"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[#888] text-xs font-medium">To</label>
-            <input
-              type="date"
-              value={exportEndDate}
-              onChange={(e) => setExportEndDate(e.target.value)}
-              className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                         focus:outline-none focus:border-[#6ea8fe] transition-colors
-                         [color-scheme:dark]"
-            />
-          </div>
-          <button
-            onClick={handleExportExcel}
-            disabled={exporting || exportStartDate > exportEndDate}
-            className="px-4 py-2 bg-white text-black text-sm font-semibold
-                       rounded-md transition-colors hover:bg-[#e0e0e0] disabled:opacity-30 disabled:cursor-not-allowed
-                       whitespace-nowrap"
-          >
-            {exporting ? 'Exporting...' : 'Export Excel'}
-          </button>
-        </div>
+      {/* Date picker */}
+      <div className="flex items-center gap-4 mb-6">
+        <label className="text-[#888] text-sm font-medium">Select Night:</label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                     focus:outline-none focus:border-[#6ea8fe] transition-colors
+                     [color-scheme:dark]"
+        />
       </div>
 
       {/* Charts */}
