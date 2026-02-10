@@ -53,9 +53,14 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
       className={`flex items-center justify-between rounded-lg border ${
         isShow
           ? 'bg-purple-950/40 border-purple-500/30'
-          : 'bg-[#111] border-[#333]'
+          : 'border-[#22C55E]/15'
       }`}
-      style={{ ...style, paddingLeft: '3%', paddingRight: '3%' }}
+      style={{
+        ...style,
+        paddingLeft: '3%',
+        paddingRight: '3%',
+        backgroundColor: isShow ? undefined : 'rgba(34, 197, 94, 0.06)',
+      }}
     >
       {/* Left: Attraction name + type badge */}
       <div className="flex-1 min-w-0 mr-6 flex items-center gap-4">
