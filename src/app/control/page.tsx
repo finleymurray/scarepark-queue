@@ -515,17 +515,17 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-6 sm:px-12 lg:px-20 py-8 space-y-10">
         {selected && (
           <>
             {/* ── Queue Time Control ── */}
             <section>
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-2 h-2 rounded-full bg-white" />
-                <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Queue Time</h2>
+                <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Queue Time</h2>
               </div>
 
-              <div className="bg-[#111] border border-[#333] rounded-lg p-6">
+              <div className="bg-[#111] border border-[#333] rounded-xl p-8">
                 {selected.attraction_type === 'show' ? (
                   <div className="text-center py-4">
                     <div className={`text-3xl font-black ${
@@ -539,14 +539,14 @@ export default function SupervisorDashboard() {
                 ) : (
                   <>
                     {/* Inline stepper: [-5]  TIME  [+5] */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                       <button
                         onClick={() => handleWaitTimeUpdate(-5)}
                         disabled={selected.wait_time <= 0}
-                        className="w-18 h-18 flex items-center justify-center rounded-xl bg-[#1a1a1a]
-                                   text-red-400 text-2xl font-black active:bg-red-900/20
+                        className="flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333]
+                                   text-red-400 text-3xl font-black active:bg-red-900/20
                                    transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
-                                   min-w-[72px] min-h-[72px]"
+                                   min-w-[80px] min-h-[80px]"
                       >
                         -5
                       </button>
@@ -572,10 +572,10 @@ export default function SupervisorDashboard() {
 
                       <button
                         onClick={() => handleWaitTimeUpdate(5)}
-                        className="w-18 h-18 flex items-center justify-center rounded-xl bg-[#1a1a1a]
-                                   text-[#22C55E] text-2xl font-black active:bg-green-900/20
+                        className="flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333]
+                                   text-[#22C55E] text-3xl font-black active:bg-green-900/20
                                    transition-colors touch-manipulation
-                                   min-w-[72px] min-h-[72px]"
+                                   min-w-[80px] min-h-[80px]"
                       >
                         +5
                       </button>
@@ -587,9 +587,9 @@ export default function SupervisorDashboard() {
 
             {/* ── Hourly Throughput ── */}
             <section>
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-2 h-2 rounded-full bg-white" />
-                <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Hourly Throughput</h2>
+                <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Hourly Throughput</h2>
               </div>
 
               {slots.length === 0 ? (
@@ -598,7 +598,7 @@ export default function SupervisorDashboard() {
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {slots.map((slot, idx) => {
                     const isCurrent = idx === currentSlotIdx;
                     const isPast = idx < currentSlotIdx || currentSlotIdx === -1;
@@ -613,7 +613,7 @@ export default function SupervisorDashboard() {
                           if (isCurrent || isPast) openKeypadForSlot(slot);
                         }}
                         disabled={isFuture}
-                        className={`w-full flex items-center justify-between px-5 py-4 rounded-lg
+                        className={`w-full flex items-center justify-between px-6 py-5 rounded-xl
                                     transition-all touch-manipulation
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
@@ -622,16 +622,16 @@ export default function SupervisorDashboard() {
                               : 'bg-[#1a1a1a] border border-[#222] opacity-40 cursor-not-allowed'
                           }`}
                       >
-                        <div className={`text-sm font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/50'}`}>
+                        <div className={`text-base font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/60'}`}>
                           {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
                         </div>
                         <div>
                           {guestCount !== null ? (
-                            <span className={`text-xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
+                            <span className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
                               {guestCount}
                             </span>
                           ) : (
-                            <span className={`text-sm ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
+                            <span className={`text-base ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
                               {isFuture ? '—' : 'Tap to log'}
                             </span>
                           )}
@@ -648,22 +648,22 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer className="flex-shrink-0 bg-[#111] border-t border-[#333] px-5 py-4">
+        <footer className="flex-shrink-0 bg-[#111] border-t border-[#333] px-6 sm:px-12 lg:px-20 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
+              <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">
                 {selected.name} Tonight
               </div>
-              <div className="text-[#22C55E] text-2xl font-black tabular-nums">
+              <div className="text-[#22C55E] text-3xl font-black tabular-nums">
                 {guestsTonight.toLocaleString()}
-                <span className="text-white/30 text-xs ml-1">guests</span>
+                <span className="text-white/30 text-sm ml-1.5">guests</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
+              <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">
                 Park Total
               </div>
-              <div className="text-white text-2xl font-black tabular-nums">
+              <div className="text-white text-3xl font-black tabular-nums">
                 {totalGuestsAllAttractions.toLocaleString()}
               </div>
             </div>
