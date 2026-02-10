@@ -9,22 +9,24 @@ import type { Attraction, AuditLog, AuditActionType } from '@/types/database';
 
 const PAGE_SIZE = 100;
 
-const ACTION_LABELS: Record<AuditActionType, string> = {
+const ACTION_LABELS: Record<string, string> = {
   queue_time_change: 'Queue Time',
   status_change: 'Status',
   throughput_entry: 'Throughput',
   show_time_added: 'Time Added',
   show_time_removed: 'Time Removed',
+  show_time_change: 'Show Time',
   attraction_created: 'Created',
   attraction_deleted: 'Deleted',
 };
 
-const ACTION_COLORS: Record<AuditActionType, string> = {
+const ACTION_COLORS: Record<string, string> = {
   queue_time_change: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   status_change: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   throughput_entry: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   show_time_added: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   show_time_removed: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  show_time_change: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   attraction_created: 'bg-green-500/20 text-green-400 border-green-500/30',
   attraction_deleted: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
@@ -200,8 +202,8 @@ export default function LogsPage() {
                       {log.attraction_name}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${ACTION_COLORS[log.action_type as AuditActionType] || 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
-                        {ACTION_LABELS[log.action_type as AuditActionType] || log.action_type}
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${ACTION_COLORS[log.action_type] || 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
+                        {ACTION_LABELS[log.action_type] || log.action_type}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-white/80">
