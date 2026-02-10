@@ -360,14 +360,6 @@ export default function SupervisorDashboard() {
       .eq('id', selected.id);
   }
 
-  async function handleSetWaitTimeDirect(minutes: number) {
-    if (!selected) return;
-    await supabase
-      .from('attractions')
-      .update({ wait_time: minutes, updated_at: new Date().toISOString() })
-      .eq('id', selected.id);
-  }
-
   // Handle throughput log save
   async function handleLogThroughput(slot: { start: string; end: string }, count: number) {
     if (!selectedId) return;
@@ -526,27 +518,6 @@ export default function SupervisorDashboard() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {selected && (
           <>
-            {/* ── Guest Stats Bar ── */}
-            <div className="flex gap-3">
-              <div className="flex-1 bg-[#111] border border-[#333] rounded-lg px-4 py-3">
-                <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
-                  {selected.name} Tonight
-                </div>
-                <div className="text-[#22C55E] text-2xl font-black tabular-nums">
-                  {guestsTonight.toLocaleString()}
-                  <span className="text-white/30 text-xs ml-1">guests</span>
-                </div>
-              </div>
-              <div className="flex-1 bg-[#111] border border-[#333] rounded-lg px-4 py-3">
-                <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
-                  Park Total
-                </div>
-                <div className="text-white text-2xl font-black tabular-nums">
-                  {totalGuestsAllAttractions.toLocaleString()}
-                </div>
-              </div>
-            </div>
-
             {/* ── Queue Time Control ── */}
             <section>
               <div className="flex items-center gap-2 mb-3">
@@ -607,23 +578,6 @@ export default function SupervisorDashboard() {
                         +5
                       </button>
                     </div>
-
-                    {/* Quick-set presets */}
-                    <div className="grid grid-cols-4 gap-2 mt-3">
-                      {[0, 5, 10, 15, 20, 30, 45, 60].map((mins) => (
-                        <button
-                          key={mins}
-                          onClick={() => handleSetWaitTimeDirect(mins)}
-                          className={`py-2.5 text-sm font-bold rounded-md transition-colors touch-manipulation
-                            ${selected.wait_time === mins
-                              ? 'bg-white text-black'
-                              : 'bg-[#1a1a1a] text-white/60 active:bg-[#222]'
-                            }`}
-                        >
-                          {mins}
-                        </button>
-                      ))}
-                    </div>
                   </>
                 )}
               </div>
@@ -642,7 +596,7 @@ export default function SupervisorDashboard() {
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {slots.map((slot, idx) => {
                     const isCurrent = idx === currentSlotIdx;
                     const isPast = idx < currentSlotIdx || currentSlotIdx === -1;
@@ -657,8 +611,8 @@ export default function SupervisorDashboard() {
                           if (isCurrent || isPast) openKeypadForSlot(slot);
                         }}
                         disabled={isFuture}
-                        className={`flex flex-col items-center justify-center px-3 py-3 rounded-lg
-                                    transition-all touch-manipulation text-center
+                        className={`w-full flex items-center justify-between px-4 py-4 rounded-lg
+                                    transition-all touch-manipulation
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
                             : isPast
@@ -666,17 +620,17 @@ export default function SupervisorDashboard() {
                               : 'bg-[#1a1a1a] border border-[#222] opacity-40 cursor-not-allowed'
                           }`}
                       >
-                        <div className={`text-xs font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/50'}`}>
-                          {formatSlotTime(slot.start)}
+                        <div className={`text-sm font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/50'}`}>
+                          {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
                         </div>
-                        <div className="mt-1">
+                        <div>
                           {guestCount !== null ? (
                             <span className={`text-xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
                               {guestCount}
                             </span>
                           ) : (
                             <span className={`text-sm ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
-                              {isFuture ? '—' : 'Tap'}
+                              {isFuture ? '—' : 'Tap to log'}
                             </span>
                           )}
                         </div>
@@ -689,6 +643,31 @@ export default function SupervisorDashboard() {
           </>
         )}
       </div>
+
+      {/* ── Sticky Footer — Guest Stats ── */}
+      {selected && (
+        <footer className="flex-shrink-0 bg-[#111] border-t border-[#333] px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
+                {selected.name} Tonight
+              </div>
+              <div className="text-[#22C55E] text-2xl font-black tabular-nums">
+                {guestsTonight.toLocaleString()}
+                <span className="text-white/30 text-xs ml-1">guests</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
+                Park Total
+              </div>
+              <div className="text-white text-2xl font-black tabular-nums">
+                {totalGuestsAllAttractions.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }
