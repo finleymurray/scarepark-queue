@@ -22,15 +22,6 @@ function ClockIcon() {
   );
 }
 
-function formatTime12h(time: string): string {
-  if (!time) return '--:--';
-  const [h, m] = time.split(':');
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${hour12}:${m} ${ampm}`;
-}
-
 function BannerRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
   const status = attraction.status as AttractionStatus;
   const bannerSrc = BANNER_IMAGES[attraction.slug];
@@ -143,7 +134,6 @@ const TV_SAFE_PADDING = '3.5%';
 
 export default function TV2Display() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
-  const [closingTime, setClosingTime] = useState('');
   const [autoSort, setAutoSort] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -163,17 +153,13 @@ export default function TV2Display() {
 
   useEffect(() => {
     async function fetchData() {
-      const [attractionsRes, closingRes, autoSortRes] = await Promise.all([
+      const [attractionsRes, autoSortRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
-        supabase.from('park_settings').select('*').eq('key', 'closing_time').single(),
         supabase.from('park_settings').select('*').eq('key', 'auto_sort_by_wait').single(),
       ]);
 
       if (!attractionsRes.error) {
         setAttractions(attractionsRes.data || []);
-      }
-      if (closingRes.data) {
-        setClosingTime(closingRes.data.value);
       }
       if (autoSortRes.data) {
         setAutoSort(autoSortRes.data.value === 'true');
@@ -215,9 +201,7 @@ export default function TV2Display() {
         { event: 'UPDATE', schema: 'public', table: 'park_settings' },
         (payload) => {
           const setting = payload.new as ParkSetting;
-          if (setting.key === 'closing_time') {
-            setClosingTime(setting.value);
-          } else if (setting.key === 'auto_sort_by_wait') {
+          if (setting.key === 'auto_sort_by_wait') {
             setAutoSort(setting.value === 'true');
           }
         }
@@ -312,15 +296,8 @@ export default function TV2Display() {
         paddingBottom: '2%',
       }}
     >
-      {/* Header banner */}
-      <header className="bg-[#0a0a0a] border border-[#222] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
-        <h1 className="text-white text-4xl font-black uppercase tracking-[0.2em]">
-          Queue Times
-        </h1>
-      </header>
-
-      {/* Ride list — fills available space */}
-      <main ref={mainRef} className="flex-1 overflow-hidden">
+      {/* Ride list — fills entire screen */}
+      <main ref={mainRef} className="flex-1 overflow-hidden relative">
         <div
           className="h-full flex flex-col transition-opacity duration-400"
           style={{
@@ -332,43 +309,35 @@ export default function TV2Display() {
             <BannerRow
               key={attraction.id}
               attraction={attraction}
-              style={{ height: `${rowHeight}px`, minHeight: '60px' }}
+              style={{ height: `${rowHeight}px`, minHeight: '80px' }}
             />
           ))}
         </div>
+
+        {/* Page dots overlay — bottom center */}
+        {totalPages > 1 && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <div
+                key={i}
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+                  i === currentPage ? 'bg-white' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </main>
-
-      {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
-        <div className="flex items-center justify-between">
-          {/* Page dots (left) */}
-          <div className="flex items-center gap-2 min-w-[80px]">
-            {totalPages > 1 &&
-              Array.from({ length: totalPages }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                    i === currentPage ? 'bg-white' : 'bg-white/40'
-                  }`}
-                />
-              ))
-            }
-          </div>
-
-          {/* Closing time (center) */}
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
-              Park Closes
-            </span>
-            <span className="text-white text-2xl font-black tabular-nums">
-              {formatTime12h(closingTime)}
-            </span>
-          </div>
-
-          {/* Spacer (right) */}
-          <div className="min-w-[80px]" />
-        </div>
-      </footer>
     </div>
   );
 }
