@@ -10,31 +10,56 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
+  const [verifyError, setVerifyError] = useState('');
   const [saving, setSaving] = useState(false);
   const [ready, setReady] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isInvite, setIsInvite] = useState(false);
 
   useEffect(() => {
-    // Check URL hash for token type (invite vs recovery)
-    const hash = window.location.hash;
-    const isInviteFlow = hash.includes('type=invite') || hash.includes('type=signup');
-    setIsInvite(isInviteFlow);
+    async function init() {
+      // Check for token_hash in query params (PKCE / email template approach)
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get('token_hash');
+      const type = params.get('type');
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || (isInviteFlow && event === 'SIGNED_IN')) {
-        setReady(true);
+      // Check URL hash for token type (legacy redirect approach)
+      const hash = window.location.hash;
+      const hashIsInvite = hash.includes('type=invite') || hash.includes('type=signup');
+      const isInviteFlow = type === 'invite' || type === 'signup' || hashIsInvite;
+      setIsInvite(isInviteFlow);
+
+      if (tokenHash && type) {
+        // Verify the OTP token hash directly
+        const otpType = type === 'invite' ? 'invite' : type === 'recovery' ? 'recovery' : 'email';
+        const { error: verifyErr } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: otpType as 'invite' | 'recovery' | 'email',
+        });
+        if (verifyErr) {
+          setVerifyError(verifyErr.message);
+        } else {
+          setReady(true);
+        }
+        return;
       }
-    });
 
-    // Also check if there's already a session (user may have arrived with token)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+      // Fallback: listen for auth state change (hash fragment approach)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY' || (isInviteFlow && event === 'SIGNED_IN')) {
+          setReady(true);
+        }
+      });
+
+      // Also check if there's already a session
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setReady(true);
       }
-    });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
+    init();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,7 +100,15 @@ export default function ResetPasswordPage() {
             className="mx-auto mb-6"
             priority
           />
-          <p className="text-white/40 text-sm">Verifying link...</p>
+          {verifyError ? (
+            <div className="panel p-8">
+              <p className="text-[#dc3545] text-lg font-semibold mb-2">Link expired or invalid</p>
+              <p className="text-white/40 text-sm mb-4">{verifyError}</p>
+              <a href="/login" className="text-[#6ea8fe] text-sm hover:underline">Back to sign in</a>
+            </div>
+          ) : (
+            <p className="text-white/40 text-sm">Verifying link...</p>
+          )}
         </div>
       </div>
     );
