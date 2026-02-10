@@ -63,7 +63,7 @@ function BannerRow({ attraction, style }: { attraction: Attraction; style?: Reac
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to right, transparent 50%, rgba(0,0,0,0.85) 100%)',
+            background: 'linear-gradient(to right, transparent 65%, rgba(0,0,0,0.85) 100%)',
             zIndex: 5,
           }}
         />
@@ -325,8 +325,8 @@ export default function TV2Display() {
         paddingBottom: '2%',
       }}
     >
-      {/* Ride list — fills entire screen */}
-      <main ref={mainRef} className="flex-1 overflow-hidden relative">
+      {/* Ride list — fills available space */}
+      <main ref={mainRef} className="flex-1 overflow-hidden">
         <div
           className="h-full flex flex-col transition-opacity duration-400"
           style={{
@@ -342,31 +342,34 @@ export default function TV2Display() {
             />
           ))}
         </div>
-
-        {/* Page dots overlay — bottom center */}
-        {totalPages > 1 && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                  i === currentPage ? 'bg-white' : 'bg-white/40'
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </main>
+
+      {/* Page dots — below attraction boxes */}
+      {totalPages > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px',
+            paddingTop: '12px',
+            flexShrink: 0,
+          }}
+        >
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: i === currentPage ? 'white' : 'rgba(255,255,255,0.4)',
+                transition: 'background-color 0.3s',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
