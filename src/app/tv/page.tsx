@@ -292,8 +292,8 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-[#111] border border-[#333] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
-        <h1 className="text-[#22C55E] text-4xl font-black uppercase tracking-[0.2em]">
+      <header className="bg-[#1a1a1a] border border-[#444] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
+        <h1 className="text-white text-4xl font-black uppercase tracking-[0.2em]">
           Queue Times
         </h1>
       </header>
@@ -319,7 +319,7 @@ export default function TVDisplay() {
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-[#111] border border-[#333] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
+      <footer className="bg-[#1a1a1a] border border-[#444] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">
@@ -337,7 +337,7 @@ export default function TVDisplay() {
 
           {/* Closing time (center) */}
           <div className="flex items-center justify-center gap-4">
-            <span className="text-lg font-semibold uppercase tracking-wider" style={{ color: 'rgba(34, 197, 94, 0.55)' }}>
+            <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
               Park Closes
             </span>
             <span className="text-white text-2xl font-black tabular-nums">
