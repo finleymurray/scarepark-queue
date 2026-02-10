@@ -13,15 +13,21 @@ export default function ResetPasswordPage() {
   const [saving, setSaving] = useState(false);
   const [ready, setReady] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isInvite, setIsInvite] = useState(false);
 
   useEffect(() => {
+    // Check URL hash for token type (invite vs recovery)
+    const hash = window.location.hash;
+    const isInviteFlow = hash.includes('type=invite') || hash.includes('type=signup');
+    setIsInvite(isInviteFlow);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || (isInviteFlow && event === 'SIGNED_IN')) {
         setReady(true);
       }
     });
 
-    // Also check if there's already a session (user may have arrived with recovery token)
+    // Also check if there's already a session (user may have arrived with token)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setReady(true);
@@ -69,7 +75,7 @@ export default function ResetPasswordPage() {
             className="mx-auto mb-6"
             priority
           />
-          <p className="text-white/40 text-sm">Verifying reset link...</p>
+          <p className="text-white/40 text-sm">Verifying link...</p>
         </div>
       </div>
     );
@@ -114,7 +120,9 @@ export default function ResetPasswordPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="panel p-8">
-          <h2 className="text-white text-lg font-semibold mb-6">Set new password</h2>
+          <h2 className="text-white text-lg font-semibold mb-6">
+            {isInvite ? 'Set your password' : 'Set new password'}
+          </h2>
 
           <div className="space-y-4">
             <div>
