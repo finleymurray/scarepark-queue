@@ -247,9 +247,25 @@ export default function TV2Display() {
     });
   }, [attractions, autoSort]);
 
-  const totalPages = sortedRides.length > perPage
-    ? Math.ceil(sortedRides.length / perPage)
-    : 1;
+  // Build pages array — each page is a slice of rides
+  const pages = useMemo(() => {
+    const result: Attraction[][] = [];
+    for (let i = 0; i < sortedRides.length; i += perPage) {
+      result.push(sortedRides.slice(i, i + perPage));
+    }
+    return result.length > 0 ? result : [[]];
+  }, [sortedRides]);
+
+  const totalPages = pages.length;
+
+  const gap = 20;
+  const rowHeight = useMemo(() => {
+    const count = Math.min(perPage, sortedRides.length || 1);
+    const totalGap = count > 1 ? (count - 1) * gap : 0;
+    return count > 0 && mainHeight > 0
+      ? Math.floor((mainHeight - totalGap) / count)
+      : 100;
+  }, [sortedRides.length, mainHeight]);
 
   useEffect(() => {
     if (totalPages <= 1) {
@@ -274,17 +290,6 @@ export default function TV2Display() {
     }
   }, [currentPage, totalPages]);
 
-  const visibleRides = totalPages > 1
-    ? sortedRides.slice(currentPage * perPage, (currentPage + 1) * perPage)
-    : sortedRides;
-
-  const count = visibleRides.length;
-  const gap = 20;
-  const totalGap = count > 1 ? (count - 1) * gap : 0;
-  const rowHeight = count > 0 && mainHeight > 0
-    ? Math.floor((mainHeight - totalGap) / count)
-    : 100;
-
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
@@ -303,23 +308,29 @@ export default function TV2Display() {
         paddingBottom: '2%',
       }}
     >
-      {/* Ride list — fills available space */}
-      <main ref={mainRef} className="flex-1 overflow-hidden">
-        <div
-          className="h-full flex flex-col transition-opacity duration-400"
-          style={{
-            opacity: fading ? 0 : 1,
-            gap: `${gap}px`,
-          }}
-        >
-          {visibleRides.map((attraction) => (
-            <BannerRow
-              key={attraction.id}
-              attraction={attraction}
-              style={{ height: `${rowHeight}px`, minHeight: '80px' }}
-            />
-          ))}
-        </div>
+      {/* Ride list — all pages stay mounted, only active page visible */}
+      <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
+        {pages.map((pageRides, pageIndex) => (
+          <div
+            key={pageIndex}
+            className="flex flex-col transition-opacity duration-400"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: pageIndex === currentPage && !fading ? 1 : 0,
+              pointerEvents: pageIndex === currentPage ? 'auto' : 'none',
+              gap: `${gap}px`,
+            }}
+          >
+            {pageRides.map((attraction) => (
+              <BannerRow
+                key={attraction.id}
+                attraction={attraction}
+                style={{ height: `${rowHeight}px`, minHeight: '80px' }}
+              />
+            ))}
+          </div>
+        ))}
       </main>
 
       {/* Page dots — below attraction boxes */}
