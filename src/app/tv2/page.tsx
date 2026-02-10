@@ -6,12 +6,12 @@ import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database
 
 /** Map attraction slug to banner image path */
 const BANNER_IMAGES: Record<string, string> = {
-  'the-bunker': '/Queue Board Images/the-bunker.png',
-  'night-terrors': '/Queue Board Images/night-terrors.png',
-  'westlake-witch-trials': '/Queue Board Images/westlake-witch-trials.png',
-  'drowned': '/Queue Board Images/drowned.png',
-  'strings-of-control': '/Queue Board Images/strings-of-control.png',
-  'signal-loss': '/Queue Board Images/signal-loss.png',
+  'the-bunker': '/Queue Board Images/the-bunker.jpg',
+  'night-terrors': '/Queue Board Images/night-terrors.jpg',
+  'westlake-witch-trials': '/Queue Board Images/westlake-witch-trials.jpg',
+  'drowned': '/Queue Board Images/drowned.jpg',
+  'strings-of-control': '/Queue Board Images/strings-of-control.jpg',
+  'signal-loss': '/Queue Board Images/signal-loss.jpg',
 };
 
 function BannerRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
