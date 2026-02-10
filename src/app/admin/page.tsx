@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
+import { logAudit } from '@/lib/audit';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
@@ -701,6 +702,7 @@ export default function AdminDashboard() {
   const [openingAll, setOpeningAll] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [autoSort, setAutoSort] = useState(false);
 
   useEffect(() => {
@@ -714,6 +716,7 @@ export default function AdminDashboard() {
         return;
       }
       setUserEmail(auth.email || '');
+      setDisplayName(auth.displayName || '');
 
       const [attractionsRes, openingRes, closingRes, autoSortRes] = await Promise.all([
         supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
@@ -789,13 +792,44 @@ export default function AdminDashboard() {
   }, [router]);
 
   const handleUpdate = useCallback(async (id: string, updates: Partial<Attraction>) => {
+    const current = attractions.find((a) => a.id === id);
+
     const { error } = await supabase
       .from('attractions')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) console.error('Error updating attraction:', error);
-  }, []);
+    if (error) {
+      console.error('Error updating attraction:', error);
+      return;
+    }
+
+    if (current) {
+      const performer = displayName || userEmail;
+      if ('status' in updates && updates.status !== current.status) {
+        logAudit({
+          actionType: 'status_change',
+          attractionId: id,
+          attractionName: current.name,
+          performedBy: performer,
+          oldValue: current.status,
+          newValue: updates.status!,
+          details: `Status changed from ${current.status} to ${updates.status}`,
+        });
+      }
+      if ('wait_time' in updates && updates.wait_time !== current.wait_time) {
+        logAudit({
+          actionType: 'queue_time_change',
+          attractionId: id,
+          attractionName: current.name,
+          performedBy: performer,
+          oldValue: String(current.wait_time),
+          newValue: String(updates.wait_time),
+          details: `Wait time changed from ${current.wait_time}min to ${updates.wait_time}min`,
+        });
+      }
+    }
+  }, [attractions, userEmail, displayName]);
 
   const handleOpeningTimeUpdate = useCallback(async (value: string) => {
     const { error } = await supabase
@@ -852,11 +886,27 @@ export default function AdminDashboard() {
     setClosingAll(true);
     setShowCloseAll(false);
 
-    const rideIds = attractions.filter((a) => a.attraction_type !== 'show').map((a) => a.id);
+    const rides = attractions.filter((a) => a.attraction_type !== 'show');
+    const rideIds = rides.map((a) => a.id);
     await supabase
       .from('attractions')
       .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
       .in('id', rideIds);
+
+    const performer = displayName || userEmail;
+    for (const ride of rides) {
+      if (ride.status !== 'CLOSED') {
+        logAudit({
+          actionType: 'status_change',
+          attractionId: ride.id,
+          attractionName: ride.name,
+          performedBy: performer,
+          oldValue: ride.status,
+          newValue: 'CLOSED',
+          details: 'Bulk close all rides',
+        });
+      }
+    }
 
     setClosingAll(false);
   }
@@ -865,8 +915,10 @@ export default function AdminDashboard() {
     setOpeningAll(true);
     setShowOpenAll(false);
 
-    const rideIds = attractions.filter((a) => a.attraction_type !== 'show').map((a) => a.id);
-    const showIds = attractions.filter((a) => a.attraction_type === 'show').map((a) => a.id);
+    const rides = attractions.filter((a) => a.attraction_type !== 'show');
+    const shows = attractions.filter((a) => a.attraction_type === 'show');
+    const rideIds = rides.map((a) => a.id);
+    const showIds = shows.map((a) => a.id);
 
     if (rideIds.length > 0) {
       await supabase
@@ -879,6 +931,34 @@ export default function AdminDashboard() {
         .from('attractions')
         .update({ status: 'OPEN', updated_at: new Date().toISOString() })
         .in('id', showIds);
+    }
+
+    const performer = displayName || userEmail;
+    for (const a of [...rides, ...shows]) {
+      if (a.status !== 'OPEN') {
+        logAudit({
+          actionType: 'status_change',
+          attractionId: a.id,
+          attractionName: a.name,
+          performedBy: performer,
+          oldValue: a.status,
+          newValue: 'OPEN',
+          details: 'Bulk open all attractions',
+        });
+      }
+    }
+    for (const ride of rides) {
+      if (ride.status !== 'OPEN' || ride.wait_time !== 5) {
+        logAudit({
+          actionType: 'queue_time_change',
+          attractionId: ride.id,
+          attractionName: ride.name,
+          performedBy: performer,
+          oldValue: String(ride.wait_time),
+          newValue: '5',
+          details: `Wait time reset to 5min (was ${ride.wait_time}min)`,
+        });
+      }
     }
 
     setOpeningAll(false);
@@ -961,7 +1041,7 @@ export default function AdminDashboard() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      <AdminNav userEmail={userEmail} onLogout={handleLogout} />
+      <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ padding: '24px 20px' }}>
       {/* Quick Actions */}

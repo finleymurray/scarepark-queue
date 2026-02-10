@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
 
 /* ── Helpers ── */
@@ -191,6 +192,7 @@ export default function SupervisorDashboard() {
   const [keypadValue, setKeypadValue] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [userEmail, setUserEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -214,8 +216,9 @@ export default function SupervisorDashboard() {
         router.push('/login');
         return;
       }
-      // Store email and role for display
+      // Store email, display name and role for display
       setUserEmail(auth.email || '');
+      setDisplayName(auth.displayName || '');
       setUserRole(auth.role);
 
       const [attractionsRes, settingsRes] = await Promise.all([
@@ -364,23 +367,50 @@ export default function SupervisorDashboard() {
   // Handle queue time update
   async function handleWaitTimeUpdate(delta: number) {
     if (!selected) return;
-    const newTime = Math.max(0, Math.min(180, selected.wait_time + delta));
+    const oldTime = selected.wait_time;
+    const newTime = Math.max(0, Math.min(180, oldTime + delta));
+    if (newTime === oldTime) return;
     await supabase
       .from('attractions')
       .update({ wait_time: newTime, updated_at: new Date().toISOString() })
       .eq('id', selected.id);
+
+    logAudit({
+      actionType: 'queue_time_change',
+      attractionId: selected.id,
+      attractionName: selected.name,
+      performedBy: displayName || userEmail,
+      oldValue: String(oldTime),
+      newValue: String(newTime),
+      details: `Wait time changed from ${oldTime}min to ${newTime}min`,
+    });
   }
 
   // Handle throughput log save
   async function handleLogThroughput(slot: { start: string; end: string }, count: number) {
     if (!selectedId) return;
+    const attraction = rides.find((r) => r.id === selectedId);
+    const attractionName = attraction?.name || 'Unknown';
     const existing = getLogForSlot(slot);
+    const slotLabel = `${formatSlotTime(slot.start)}-${formatSlotTime(slot.end)}`;
+    const performer = displayName || userEmail;
 
     if (existing) {
+      const oldCount = existing.guest_count;
       await supabase
         .from('throughput_logs')
         .update({ guest_count: count, updated_at: new Date().toISOString() })
         .eq('id', existing.id);
+
+      logAudit({
+        actionType: 'throughput_entry',
+        attractionId: selectedId,
+        attractionName,
+        performedBy: performer,
+        oldValue: String(oldCount),
+        newValue: String(count),
+        details: `Throughput edited for ${slotLabel}: ${oldCount} -> ${count} guests`,
+      });
     } else {
       await supabase
         .from('throughput_logs')
@@ -392,6 +422,16 @@ export default function SupervisorDashboard() {
           logged_by: 'supervisor',
           log_date: getTodayDateStr(),
         });
+
+      logAudit({
+        actionType: 'throughput_entry',
+        attractionId: selectedId,
+        attractionName,
+        performedBy: performer,
+        oldValue: null,
+        newValue: String(count),
+        details: `Throughput logged for ${slotLabel}: ${count} guests`,
+      });
     }
 
     await fetchThroughputLogs();
@@ -449,7 +489,7 @@ export default function SupervisorDashboard() {
           <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
-          {userEmail && <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</span>}
+          {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || userEmail}</span>}
           {userRole === 'admin' && (
             <a
               href="/admin"

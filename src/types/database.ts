@@ -45,8 +45,23 @@ export interface ThroughputLog {
 export interface UserRole {
   id: string;
   email: string;
+  display_name: string | null;
   role: 'admin' | 'supervisor';
   allowed_attractions: string[] | null;
   created_at: string;
   updated_at: string;
+}
+
+export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry';
+
+export interface AuditLog {
+  id: string;
+  action_type: AuditActionType;
+  attraction_id: string | null;
+  attraction_name: string;
+  performed_by: string;
+  old_value: string | null;
+  new_value: string | null;
+  details: string | null;
+  created_at: string;
 }

@@ -56,6 +56,7 @@ function ConfirmModal({
 export default function UsersPage() {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserRole[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
@@ -63,6 +64,7 @@ export default function UsersPage() {
   // Form state
   const [editing, setEditing] = useState<UserRole | null>(null);
   const [formEmail, setFormEmail] = useState('');
+  const [formDisplayName, setFormDisplayName] = useState('');
   const [formRole, setFormRole] = useState<'admin' | 'supervisor'>('supervisor');
   const [formAttractions, setFormAttractions] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -90,6 +92,7 @@ export default function UsersPage() {
         return;
       }
       setUserEmail(auth.email || '');
+      setDisplayName(auth.displayName || '');
 
       const [usersRes, attractionsRes] = await Promise.all([
         supabase.from('user_roles').select('*').order('created_at', { ascending: true }),
@@ -111,6 +114,7 @@ export default function UsersPage() {
   function startEdit(user: UserRole) {
     setEditing(user);
     setFormEmail(user.email);
+    setFormDisplayName(user.display_name || '');
     setFormRole(user.role);
     setFormAttractions(user.allowed_attractions || []);
     setFormError('');
@@ -120,6 +124,7 @@ export default function UsersPage() {
   function startAdd() {
     setEditing(null);
     setFormEmail('');
+    setFormDisplayName('');
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
@@ -129,6 +134,7 @@ export default function UsersPage() {
   function cancelForm() {
     setEditing(null);
     setFormEmail('');
+    setFormDisplayName('');
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
@@ -153,6 +159,7 @@ export default function UsersPage() {
 
     const payload = {
       email,
+      display_name: formDisplayName.trim() || null,
       role: formRole,
       allowed_attractions: formRole === 'admin' ? null : formAttractions.length > 0 ? formAttractions : null,
       updated_at: new Date().toISOString(),
@@ -216,7 +223,7 @@ export default function UsersPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <AdminNav userEmail={userEmail} onLogout={handleLogout} />
+      <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <ConfirmModal
         open={!!deleteTarget}
@@ -262,13 +269,19 @@ export default function UsersPage() {
             />
           </div>
 
-          {!editing && (
-            <div className="flex items-center">
-              <p className="text-[#888] text-[13px]">
-                Auth account must be created via Supabase Dashboard first.
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="block text-[#ccc] text-[13px] font-medium mb-1">
+              Display Name
+            </label>
+            <input
+              type="text"
+              value={formDisplayName}
+              onChange={(e) => setFormDisplayName(e.target.value)}
+              placeholder="e.g. John S."
+              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                         placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+            />
+          </div>
 
           <div>
             <label className="block text-[#ccc] text-[13px] font-medium mb-1">Role</label>
@@ -352,6 +365,9 @@ export default function UsersPage() {
                   Email
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                  Display Name
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
                   Role
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
@@ -370,6 +386,9 @@ export default function UsersPage() {
                     {user.email === userEmail && (
                       <span className="text-[#888] text-xs ml-2">(you)</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#888]">
+                    {user.display_name || '\u2014'}
                   </td>
                   <td className="px-4 py-3">
                     {user.role === 'admin' ? (

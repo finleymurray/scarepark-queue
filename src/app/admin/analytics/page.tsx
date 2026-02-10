@@ -77,6 +77,7 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [historyData, setHistoryData] = useState<AttractionHistory[]>([]);
   const [selectedDate, setSelectedDate] = useState(() =>
@@ -196,6 +197,7 @@ export default function AnalyticsPage() {
         return;
       }
       setUserEmail(auth.email || '');
+      setDisplayName(auth.displayName || '');
       setAuthenticated(true);
 
       const [settingsRes, attractionsRes] = await Promise.all([
@@ -474,7 +476,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <AdminNav userEmail={userEmail} onLogout={handleLogout} />
+      <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
       {/* Date picker + Export */}

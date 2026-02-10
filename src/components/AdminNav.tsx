@@ -8,14 +8,17 @@ const TABS = [
   { label: 'Attractions', href: '/admin' },
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Users', href: '/admin/users' },
+  { label: 'Logs', href: '/admin/logs' },
   { label: 'Field Control', href: '/control' },
 ];
 
 export default function AdminNav({
   userEmail,
+  displayName,
   onLogout,
 }: {
   userEmail: string;
+  displayName?: string;
   onLogout: () => void;
 }) {
   const pathname = usePathname();
@@ -84,7 +87,7 @@ export default function AdminNav({
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
             {userEmail && (
               <span title={userEmail}>
-                {userEmail}
+                {displayName || userEmail}
               </span>
             )}
             <button
