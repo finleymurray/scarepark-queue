@@ -53,7 +53,7 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="panel p-6 max-w-md w-full text-center space-y-6">
+      <div style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: 8, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
         <div className="text-[#dc3545] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
         <p className="text-[#888] text-sm">{message}</p>
@@ -181,7 +181,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div className="panel p-4">
+    <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20 }}>
       <h3 className="text-white text-lg font-bold mb-3">Add Attraction</h3>
 
       {/* Type toggle */}
@@ -269,7 +269,7 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div className="panel p-4 relative">
+    <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -409,18 +409,21 @@ function RideControl({
   }
 
   return (
-    <div className="panel p-4 relative">
+    <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
-      <div className="flex items-center justify-between mb-4">
-        <EditableName
-          name={attraction.name}
-          onSave={(newName) => {
-            const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-            handleUpdate({ name: newName, slug: newSlug });
-          }}
-        />
-        <div className="flex items-center gap-2">
+      {/* Header: name + status badge */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <EditableName
+            name={attraction.name}
+            onSave={(newName) => {
+              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              handleUpdate({ name: newName, slug: newSlug });
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
           <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
             {status}
@@ -428,13 +431,14 @@ function RideControl({
         </div>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-white/50 text-xs font-medium mb-1">Status</label>
+      {/* Status select */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', color: '#888', fontSize: 12, fontWeight: 500, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>Status</label>
         <select
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
                      focus:outline-none focus:border-[#6ea8fe] transition-colors cursor-pointer
                      disabled:opacity-50"
         >
@@ -444,19 +448,21 @@ function RideControl({
         </select>
       </div>
 
-      <div className="text-center mb-3">
-        <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Wait Time</span>
-        <div className={`text-4xl font-bold tabular-nums mt-1 ${STATUS_TEXT_COLORS[status]}`}>
+      {/* Wait time display */}
+      <div style={{ textAlign: 'center' as const, marginBottom: 16, padding: '12px 0', background: '#0a0a0a', borderRadius: 6 }}>
+        <div style={{ color: '#888', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 4 }}>Wait Time</div>
+        <div className={`text-4xl font-bold tabular-nums ${STATUS_TEXT_COLORS[status]}`}>
           {attraction.wait_time}
-          <span className="text-base text-white/40 ml-1">min</span>
+          <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)', marginLeft: 4 }}>min</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      {/* Quick adjust buttons */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
         <button
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
-          className="btn-quick px-2 py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+          className="btn-quick py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
                      hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           -5m
@@ -464,7 +470,7 @@ function RideControl({
         <button
           onClick={() => handleTimeAdjust(5)}
           disabled={saving}
-          className="btn-quick px-2 py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+          className="btn-quick py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
                      hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +5m
@@ -472,14 +478,15 @@ function RideControl({
         <button
           onClick={() => handleTimeAdjust(10)}
           disabled={saving}
-          className="btn-quick px-2 py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+          className="btn-quick py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
                      hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +10m
         </button>
       </div>
 
-      <div className="flex gap-2 mb-3">
+      {/* Custom time input */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <input
           type="number"
           value={customTime}
@@ -488,7 +495,7 @@ function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
                      placeholder-white/30 focus:outline-none focus:border-[#6ea8fe] transition-colors
                      [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                      [&::-webkit-outer-spin-button]:appearance-none"
@@ -496,20 +503,23 @@ function RideControl({
         <button
           onClick={handleSetTime}
           disabled={saving || !customTime}
-          className="btn-quick px-4 py-2 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-semibold
+          className="btn-quick px-4 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-semibold
                      rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Set
         </button>
       </div>
 
-      <button
-        onClick={() => onDelete(attraction.id, attraction.name)}
-        className="w-full py-2 text-xs text-white/30 hover:text-[#d43518] hover:bg-[#d43518]/10
-                   rounded-md transition-colors"
-      >
-        Remove Attraction
-      </button>
+      {/* Remove */}
+      <div style={{ borderTop: '1px solid #222', paddingTop: 12 }}>
+        <button
+          onClick={() => onDelete(attraction.id, attraction.name)}
+          className="w-full py-2 text-xs text-white/30 hover:text-[#d43518] hover:bg-[#d43518]/10
+                     rounded-md transition-colors"
+        >
+          Remove Attraction
+        </button>
+      </div>
     </div>
   );
 }
@@ -565,18 +575,20 @@ function ShowControl({
   }
 
   return (
-    <div className="panel p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)', background: 'rgba(88, 28, 135, 0.08)' }}>
+    <div style={{ background: 'rgba(88, 28, 135, 0.08)', border: '1px solid rgba(126, 34, 206, 0.3)', borderRadius: 8, padding: 20, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
-      <div className="flex items-center justify-between mb-4">
-        <EditableName
-          name={attraction.name}
-          onSave={(newName) => {
-            const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-            handleUpdate({ name: newName, slug: newSlug });
-          }}
-        />
-        <div className="flex items-center gap-2">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <EditableName
+            name={attraction.name}
+            onSave={(newName) => {
+              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              handleUpdate({ name: newName, slug: newSlug });
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
           <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
             SHOW
@@ -950,10 +962,10 @@ export default function AdminDashboard() {
 
       <AdminNav userEmail={userEmail} onLogout={handleLogout} />
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
+      <main style={{ padding: '24px 20px' }}>
       {/* Quick Actions */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-6">
-        <div className="panel p-5">
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 mb-8">
+        <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20 }}>
           <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
@@ -978,7 +990,7 @@ export default function AdminDashboard() {
         <OperatingHoursControl openingTime={openingTime} closingTime={closingTime} onUpdateOpening={handleOpeningTimeUpdate} onUpdateClosing={handleClosingTimeUpdate} />
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {attractions.map((attraction, idx) =>
           attraction.attraction_type === 'show' ? (
             <ShowControl

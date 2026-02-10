@@ -447,7 +447,7 @@ export default function SupervisorDashboard() {
       <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0', flexShrink: 0 }}>
         <div style={{ padding: '0 20px', display: 'flex', alignItems: 'center' }}>
           <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-            <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
+            <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
             <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
           </a>
         </div>

@@ -269,12 +269,12 @@ export default function UsersPage() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
       {/* Page header */}
-      <h2 className="text-white text-2xl font-bold mb-5">Users</h2>
+      <h2 style={{ color: '#fff', fontSize: 24, fontWeight: 700, marginBottom: 20 }}>Users</h2>
 
       {/* Create New User — form section card */}
-      <div className="bg-[#111] border border-[#333] rounded-lg p-5 mb-5">
+      <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <div className="flex items-center gap-2 mb-4">
           <span className="inline-flex items-center justify-center w-7 h-7 bg-white text-black rounded-full text-sm font-bold">+</span>
           <h3 className="text-white text-base font-semibold">{editing ? 'Edit User' : 'Create New User'}</h3>
@@ -388,9 +388,9 @@ export default function UsersPage() {
       </div>
 
       {/* User list — data table card */}
-      <div className="bg-[#111] border border-[#333] rounded-lg overflow-hidden">
-        <div className="p-5 pb-0">
-          <h3 className="text-white text-base font-semibold mb-4">All Users ({users.length})</h3>
+      <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ padding: '20px 20px 0' }}>
+          <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 600, marginBottom: 16 }}>All Users ({users.length})</h3>
         </div>
 
         {users.length === 0 ? (

@@ -33,9 +33,10 @@ export default function AdminNav({
             <Image
               src="/logo.png"
               alt="Immersive Core"
-              width={120}
-              height={36}
+              width={32}
+              height={32}
               priority
+              style={{ width: 32, height: 'auto' }}
             />
             <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Admin</h1>
           </a>

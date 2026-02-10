@@ -475,7 +475,7 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-black">
       <AdminNav userEmail={userEmail} onLogout={handleLogout} />
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
       {/* Date picker + Export */}
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-4">
