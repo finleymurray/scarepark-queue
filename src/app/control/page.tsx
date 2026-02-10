@@ -192,6 +192,8 @@ export default function SupervisorDashboard() {
   const [now, setNow] = useState(Date.now());
   const [userEmail, setUserEmail] = useState('');
   const tabBarRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
 
   // Tick every 30s to keep current slot highlighting fresh
   useEffect(() => {
@@ -603,15 +605,48 @@ export default function SupervisorDashboard() {
                     const isFuture = idx > currentSlotIdx && currentSlotIdx !== -1;
                     const log = getLogForSlot(slot);
                     const guestCount = log?.guest_count ?? null;
+                    const hasLog = guestCount !== null;
+                    const needsLongPress = hasLog && !isFuture;
+
+                    function startPress() {
+                      if (isFuture) return;
+                      longPressTriggered.current = false;
+                      if (needsLongPress) {
+                        longPressTimer.current = setTimeout(() => {
+                          longPressTriggered.current = true;
+                          openKeypadForSlot(slot);
+                        }, 500);
+                      }
+                    }
+
+                    function endPress() {
+                      if (longPressTimer.current) {
+                        clearTimeout(longPressTimer.current);
+                        longPressTimer.current = null;
+                      }
+                    }
+
+                    function handleTap() {
+                      if (isFuture) return;
+                      if (longPressTriggered.current) return;
+                      if (!needsLongPress) {
+                        openKeypadForSlot(slot);
+                      }
+                    }
 
                     return (
                       <button
                         key={`${slot.start}-${slot.end}`}
-                        onClick={() => {
-                          if (isCurrent || isPast) openKeypadForSlot(slot);
-                        }}
+                        onClick={handleTap}
+                        onTouchStart={startPress}
+                        onTouchEnd={endPress}
+                        onTouchCancel={endPress}
+                        onMouseDown={startPress}
+                        onMouseUp={endPress}
+                        onMouseLeave={endPress}
+                        onContextMenu={(e) => e.preventDefault()}
                         disabled={isFuture}
-                        style={{ minHeight: 72, padding: '0 24px' }}
+                        style={{ minHeight: 72, padding: '0 24px', userSelect: 'none', WebkitUserSelect: 'none' }}
                         className={`w-full flex items-center justify-between rounded-xl
                                     transition-all touch-manipulation
                           ${isCurrent
@@ -624,11 +659,14 @@ export default function SupervisorDashboard() {
                         <div className={`text-base font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/60'}`}>
                           {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
                         </div>
-                        <div>
+                        <div className="flex items-center gap-2">
                           {guestCount !== null ? (
-                            <span className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
-                              {guestCount}
-                            </span>
+                            <>
+                              <span className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
+                                {guestCount}
+                              </span>
+                              <span className="text-white/20 text-xs">hold to edit</span>
+                            </>
                           ) : (
                             <span className={`text-base ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
                               {isFuture ? '—' : 'Tap to log'}
