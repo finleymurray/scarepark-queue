@@ -117,7 +117,6 @@ function AttractionRow({ attraction, style, now }: { attraction: Attraction; sty
   );
 }
 
-const PAGE_INTERVAL = 10000;
 const TV_SAFE_PADDING = '3.5%';
 
 export default function TVDisplay() {
@@ -125,9 +124,6 @@ export default function TVDisplay() {
   const [closingTime, setClosingTime] = useState('');
   const [autoSort, setAutoSort] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [perPage, setPerPage] = useState<number | null>(null);
-  const [fading, setFading] = useState(false);
   const [mainHeight, setMainHeight] = useState(0);
   const [now, setNow] = useState(Date.now());
   const mainRef = useRef<HTMLDivElement>(null);
@@ -138,13 +134,9 @@ export default function TVDisplay() {
     return () => clearInterval(interval);
   }, []);
 
-  const calculatePerPage = useCallback(() => {
+  const measureHeight = useCallback(() => {
     if (!mainRef.current) return;
-    const available = mainRef.current.getBoundingClientRect().height;
-    setMainHeight(available);
-    const estimatedRowHeight = 82;
-    const fits = Math.max(1, Math.floor(available / estimatedRowHeight));
-    setPerPage(fits);
+    setMainHeight(mainRef.current.getBoundingClientRect().height);
   }, []);
 
   useEffect(() => {
@@ -219,43 +211,16 @@ export default function TVDisplay() {
   useEffect(() => {
     if (loading) return;
 
-    const timer = setTimeout(calculatePerPage, 100);
+    const timer = setTimeout(measureHeight, 100);
 
-    const handleResize = () => calculatePerPage();
+    const handleResize = () => measureHeight();
     window.addEventListener('resize', handleResize);
 
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', handleResize);
     };
-  }, [loading, calculatePerPage]);
-
-  const totalPages = perPage && perPage < attractions.length
-    ? Math.ceil(attractions.length / perPage)
-    : 1;
-
-  useEffect(() => {
-    if (totalPages <= 1) {
-      setCurrentPage(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setCurrentPage((prev) => (prev + 1) % totalPages);
-        setFading(false);
-      }, 400);
-    }, PAGE_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [totalPages]);
-
-  useEffect(() => {
-    if (currentPage >= totalPages) {
-      setCurrentPage(0);
-    }
-  }, [currentPage, totalPages]);
+  }, [loading, measureHeight]);
 
   // When auto-sort is on, sort by wait_time descending (OPEN rides first, then others)
   const sortedAttractions = autoSort
@@ -267,12 +232,8 @@ export default function TVDisplay() {
       })
     : attractions;
 
-  const visibleAttractions = perPage && totalPages > 1
-    ? sortedAttractions.slice(currentPage * perPage, (currentPage + 1) * perPage)
-    : sortedAttractions;
-
-  const count = visibleAttractions.length;
-  const gap = 12;
+  const count = sortedAttractions.length;
+  const gap = 10;
   const totalGap = count > 1 ? (count - 1) * gap : 0;
   const rowHeight = count > 0 && mainHeight > 0
     ? Math.floor((mainHeight - totalGap) / count)
@@ -303,16 +264,13 @@ export default function TVDisplay() {
         </h1>
       </header>
 
-      {/* Attraction list — fills available space */}
+      {/* Attraction list — all items on one screen */}
       <main ref={mainRef} className="flex-1 overflow-hidden">
         <div
-          className="h-full flex flex-col transition-opacity duration-400"
-          style={{
-            opacity: fading ? 0 : 1,
-            gap: `${gap}px`,
-          }}
+          className="h-full flex flex-col"
+          style={{ gap: `${gap}px` }}
         >
-          {visibleAttractions.map((attraction) => (
+          {sortedAttractions.map((attraction) => (
             <AttractionRow
               key={attraction.id}
               attraction={attraction}
@@ -323,35 +281,15 @@ export default function TVDisplay() {
         </div>
       </main>
 
-      {/* Footer bar — Park closing time + page indicator */}
+      {/* Footer bar — Park closing time */}
       <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
-        <div className="flex items-center justify-between">
-          {/* Page dots (left) */}
-          <div className="flex items-center gap-2 min-w-[80px]">
-            {totalPages > 1 &&
-              Array.from({ length: totalPages }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                    i === currentPage ? 'bg-white' : 'bg-white/40'
-                  }`}
-                />
-              ))
-            }
-          </div>
-
-          {/* Closing time (center) */}
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
-              Park Closes
-            </span>
-            <span className="text-white text-2xl font-black tabular-nums">
-              {formatTime12h(closingTime)}
-            </span>
-          </div>
-
-          {/* Spacer (right) */}
-          <div className="min-w-[80px]" />
+        <div className="flex items-center justify-center gap-4">
+          <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
+            Park Closes
+          </span>
+          <span className="text-white text-2xl font-black tabular-nums">
+            {formatTime12h(closingTime)}
+          </span>
         </div>
       </footer>
     </div>
