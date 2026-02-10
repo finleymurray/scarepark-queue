@@ -185,7 +185,6 @@ export default function SupervisorDashboard() {
   const [keypadOpen, setKeypadOpen] = useState(false);
   const [keypadSlot, setKeypadSlot] = useState<{ start: string; end: string } | null>(null);
   const [keypadValue, setKeypadValue] = useState(0);
-  const [customWait, setCustomWait] = useState('');
   const [now, setNow] = useState(Date.now());
   const [userEmail, setUserEmail] = useState('');
   const tabBarRef = useRef<HTMLDivElement>(null);
@@ -361,15 +360,12 @@ export default function SupervisorDashboard() {
       .eq('id', selected.id);
   }
 
-  async function handleSetCustomWait() {
-    if (!selected || !customWait) return;
-    const t = parseInt(customWait, 10);
-    if (isNaN(t) || t < 0 || t > 180) return;
+  async function handleSetWaitTimeDirect(minutes: number) {
+    if (!selected) return;
     await supabase
       .from('attractions')
-      .update({ wait_time: t, updated_at: new Date().toISOString() })
+      .update({ wait_time: minutes, updated_at: new Date().toISOString() })
       .eq('id', selected.id);
-    setCustomWait('');
   }
 
   // Handle throughput log save
@@ -527,9 +523,30 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {selected && (
           <>
+            {/* ── Guest Stats Bar ── */}
+            <div className="flex gap-3">
+              <div className="flex-1 bg-[#111] border border-[#333] rounded-lg px-4 py-3">
+                <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
+                  {selected.name} Tonight
+                </div>
+                <div className="text-[#22C55E] text-2xl font-black tabular-nums">
+                  {guestsTonight.toLocaleString()}
+                  <span className="text-white/30 text-xs ml-1">guests</span>
+                </div>
+              </div>
+              <div className="flex-1 bg-[#111] border border-[#333] rounded-lg px-4 py-3">
+                <div className="text-white/40 text-[10px] uppercase tracking-wider font-medium">
+                  Park Total
+                </div>
+                <div className="text-white text-2xl font-black tabular-nums">
+                  {totalGuestsAllAttractions.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
             {/* ── Queue Time Control ── */}
             <section>
               <div className="flex items-center gap-2 mb-3">
@@ -537,78 +554,75 @@ export default function SupervisorDashboard() {
                 <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Queue Time</h2>
               </div>
 
-              <div className="bg-[#111] border border-[#333] rounded-lg p-5">
-                {/* Current wait display */}
-                <div className="text-center mb-5">
-                  <div className={`text-6xl font-black tabular-nums ${
-                    selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                    selected.status === 'CLOSED' ? 'text-[#dc3545]' :
-                    selected.status === 'DELAYED' ? 'text-[#f0ad4e]' :
-                    'text-[#F59E0B]'
-                  }`}>
-                    {selected.attraction_type === 'show' ? (
-                      <span className="text-3xl">{selected.status}</span>
-                    ) : (
-                      <>
-                        {selected.wait_time}
-                        <span className="text-2xl text-white/30 ml-1">min</span>
-                      </>
-                    )}
+              <div className="bg-[#111] border border-[#333] rounded-lg p-4">
+                {selected.attraction_type === 'show' ? (
+                  <div className="text-center py-4">
+                    <div className={`text-3xl font-black ${
+                      selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                      selected.status === 'CLOSED' ? 'text-[#dc3545]' :
+                      'text-[#f0ad4e]'
+                    }`}>
+                      {selected.status}
+                    </div>
                   </div>
-                  <p className={`text-xs mt-1 font-medium uppercase tracking-wider ${
-                    selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
-                    selected.status === 'CLOSED' ? 'text-[#dc3545]/50' :
-                    'text-[#f0ad4e]/50'
-                  }`}>
-                    {selected.status}
-                  </p>
-                </div>
-
-                {/* +/- Buttons (only for rides) */}
-                {selected.attraction_type !== 'show' && (
+                ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
+                    {/* Inline stepper: [-5]  TIME  [+5] */}
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleWaitTimeUpdate(-5)}
                         disabled={selected.wait_time <= 0}
-                        className="py-5 text-2xl font-black bg-[#1a1a1a] rounded-md text-red-400
-                                   active:bg-red-900/20 transition-colors touch-manipulation
-                                   disabled:opacity-20 disabled:cursor-not-allowed"
+                        className="w-16 h-16 flex items-center justify-center rounded-xl bg-[#1a1a1a]
+                                   text-red-400 text-2xl font-black active:bg-red-900/20
+                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         -5
                       </button>
+
+                      <div className="flex-1 text-center">
+                        <div className={`text-5xl font-black tabular-nums ${
+                          selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                          selected.status === 'CLOSED' ? 'text-[#dc3545]' :
+                          selected.status === 'DELAYED' ? 'text-[#f0ad4e]' :
+                          'text-[#F59E0B]'
+                        }`}>
+                          {selected.wait_time}
+                          <span className="text-xl text-white/30 ml-1">min</span>
+                        </div>
+                        <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
+                          selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
+                          selected.status === 'CLOSED' ? 'text-[#dc3545]/50' :
+                          'text-[#f0ad4e]/50'
+                        }`}>
+                          {selected.status}
+                        </p>
+                      </div>
+
                       <button
                         onClick={() => handleWaitTimeUpdate(5)}
-                        className="py-5 text-2xl font-black bg-[#1a1a1a] rounded-md text-[#22C55E]
-                                   active:bg-green-900/20 transition-colors touch-manipulation"
+                        className="w-16 h-16 flex items-center justify-center rounded-xl bg-[#1a1a1a]
+                                   text-[#22C55E] text-2xl font-black active:bg-green-900/20
+                                   transition-colors touch-manipulation"
                       >
                         +5
                       </button>
                     </div>
 
-                    {/* Custom input */}
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={customWait}
-                        onChange={(e) => setCustomWait(e.target.value)}
-                        placeholder="Custom minutes"
-                        min={0}
-                        max={180}
-                        className="flex-1 px-4 py-4 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-lg
-                                   placeholder-white/20 focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
-                                   [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
-                                   [&::-webkit-outer-spin-button]:appearance-none touch-manipulation"
-                      />
-                      <button
-                        onClick={handleSetCustomWait}
-                        disabled={!customWait}
-                        className="px-6 py-4 bg-white text-black font-bold text-lg rounded-md
-                                   active:bg-white/80 transition-colors touch-manipulation
-                                   disabled:opacity-20 disabled:cursor-not-allowed"
-                      >
-                        Set
-                      </button>
+                    {/* Quick-set presets */}
+                    <div className="grid grid-cols-4 gap-2 mt-3">
+                      {[0, 5, 10, 15, 20, 30, 45, 60].map((mins) => (
+                        <button
+                          key={mins}
+                          onClick={() => handleSetWaitTimeDirect(mins)}
+                          className={`py-2.5 text-sm font-bold rounded-md transition-colors touch-manipulation
+                            ${selected.wait_time === mins
+                              ? 'bg-white text-black'
+                              : 'bg-[#1a1a1a] text-white/60 active:bg-[#222]'
+                            }`}
+                        >
+                          {mins}
+                        </button>
+                      ))}
                     </div>
                   </>
                 )}
@@ -628,7 +642,7 @@ export default function SupervisorDashboard() {
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
                   {slots.map((slot, idx) => {
                     const isCurrent = idx === currentSlotIdx;
                     const isPast = idx < currentSlotIdx || currentSlotIdx === -1;
@@ -643,7 +657,8 @@ export default function SupervisorDashboard() {
                           if (isCurrent || isPast) openKeypadForSlot(slot);
                         }}
                         disabled={isFuture}
-                        className={`w-full flex items-center justify-between px-5 py-4 rounded-md transition-all touch-manipulation
+                        className={`flex flex-col items-center justify-center px-3 py-3 rounded-lg
+                                    transition-all touch-manipulation text-center
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
                             : isPast
@@ -651,24 +666,18 @@ export default function SupervisorDashboard() {
                               : 'bg-[#1a1a1a] border border-[#222] opacity-40 cursor-not-allowed'
                           }`}
                       >
-                        <div className="text-left">
-                          <div className={`text-sm font-bold ${isCurrent ? 'text-[#22C55E]' : 'text-white/70'}`}>
-                            {formatSlotTime(slot.start)} - {formatSlotTime(slot.end)}
-                          </div>
-                          {isCurrent && (
-                            <div className="text-[#22C55E]/60 text-xs font-medium mt-0.5">CURRENT HOUR</div>
-                          )}
+                        <div className={`text-xs font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/50'}`}>
+                          {formatSlotTime(slot.start)}
                         </div>
-
-                        <div className="text-right">
+                        <div className="mt-1">
                           {guestCount !== null ? (
-                            <div className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
+                            <span className={`text-xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
                               {guestCount}
-                            </div>
+                            </span>
                           ) : (
-                            <div className={`text-lg ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
-                              {isFuture ? '—' : 'Tap to log'}
-                            </div>
+                            <span className={`text-sm ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
+                              {isFuture ? '—' : 'Tap'}
+                            </span>
                           )}
                         </div>
                       </button>
@@ -680,27 +689,6 @@ export default function SupervisorDashboard() {
           </>
         )}
       </div>
-
-      {/* ── Footer: Guests Tonight ── */}
-      <footer className="flex-shrink-0 border-t border-[#333] bg-[#111] px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-white/40 text-xs uppercase tracking-wider font-medium">
-              {selected?.name || 'All'} Tonight
-            </div>
-            <div className="text-[#22C55E] text-2xl font-black tabular-nums">
-              {guestsTonight.toLocaleString()}
-              <span className="text-white/30 text-sm ml-1">guests</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-white/40 text-xs uppercase tracking-wider font-medium">Park Total</div>
-            <div className="text-white text-2xl font-black tabular-nums">
-              {totalGuestsAllAttractions.toLocaleString()}
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
