@@ -1,90 +1,107 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
+/** Cache-bust version — bump when images change */
+const IMG_V = '2';
+
 /** Map attraction slug to banner image path */
 const BANNER_IMAGES: Record<string, string> = {
-  'the-bunker': '/Queue Board Images/the-bunker.webp',
-  'night-terrors': '/Queue Board Images/night-terrors.webp',
-  'westlake-witch-trials': '/Queue Board Images/westlake-witch-trials.webp',
-  'drowned': '/Queue Board Images/drowned.webp',
-  'strings-of-control': '/Queue Board Images/strings-of-control.webp',
-  'signal-loss': '/Queue Board Images/signal-loss.webp',
+  'the-bunker': `/Queue Board Images/the-bunker.webp?v=${IMG_V}`,
+  'night-terrors': `/Queue Board Images/night-terrors.webp?v=${IMG_V}`,
+  'westlake-witch-trials': `/Queue Board Images/westlake-witch-trials.webp?v=${IMG_V}`,
+  'drowned': `/Queue Board Images/drowned.webp?v=${IMG_V}`,
+  'strings-of-control': `/Queue Board Images/strings-of-control.webp?v=${IMG_V}`,
+  'signal-loss': `/Queue Board Images/signal-loss.webp?v=${IMG_V}`,
 };
 
-function BannerRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
+// Static style objects — defined once, never recreated
+const imgStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  objectPosition: 'left center',
+};
+const fallbackBgStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  backgroundColor: 'rgba(34, 197, 94, 0.06)',
+  border: '1px solid rgba(34, 197, 94, 0.15)',
+  borderRadius: '1rem',
+};
+const gradientStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(to right, transparent 65%, rgba(0,0,0,0.85) 100%)',
+  zIndex: 5,
+};
+const statusOverlayStyle: React.CSSProperties = {
+  position: 'relative',
+  zIndex: 10,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  height: '100%',
+  paddingRight: '5%',
+  paddingLeft: '3%',
+};
+const closedStyle: React.CSSProperties = {
+  color: '#dc3545',
+  fontSize: '2.5rem',
+  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+  letterSpacing: '0.05em',
+};
+const delayedStyle: React.CSSProperties = {
+  color: '#f0ad4e',
+  fontSize: '2rem',
+  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+  letterSpacing: '0.05em',
+};
+const capacityStyle: React.CSSProperties = {
+  color: '#F59E0B',
+  fontSize: '2.2rem',
+  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+  letterSpacing: '0.05em',
+};
+const openWrapStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  color: 'white',
+  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
+  lineHeight: 1,
+};
+const waitTimeStyle: React.CSSProperties = { fontSize: '4rem' };
+const minsStyle: React.CSSProperties = { fontSize: '0.9rem', opacity: 0.7, marginTop: '2px' };
+const fallbackNameStyle: React.CSSProperties = { flex: 1, minWidth: 0, marginRight: '1.5rem' };
+
+const BannerRow = React.memo(function BannerRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
   const status = attraction.status as AttractionStatus;
   const bannerSrc = BANNER_IMAGES[attraction.slug];
 
+  const rowStyle = useMemo<React.CSSProperties>(() => ({
+    ...style,
+    position: 'relative',
+    borderRadius: '1rem',
+    overflow: 'hidden',
+    border: '1px solid rgba(255,255,255,0.08)',
+  }), [style]);
+
   return (
-    <div
-      style={{
-        ...style,
-        position: 'relative',
-        borderRadius: '1rem',
-        overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
-      {/* Banner image — full bleed */}
+    <div style={rowStyle}>
       {bannerSrc && (
-        <img
-          src={bannerSrc}
-          alt={attraction.name}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'left center',
-          }}
-        />
+        <img src={bannerSrc} alt={attraction.name} style={imgStyle} />
       )}
+      {!bannerSrc && <div style={fallbackBgStyle} />}
+      {bannerSrc && <div style={gradientStyle} />}
 
-      {/* Fallback if no banner */}
-      {!bannerSrc && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(34, 197, 94, 0.06)',
-            border: '1px solid rgba(34, 197, 94, 0.15)',
-            borderRadius: '1rem',
-          }}
-        />
-      )}
-
-      {/* Gradient overlay — right side fade for text readability */}
-      {bannerSrc && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to right, transparent 65%, rgba(0,0,0,0.85) 100%)',
-            zIndex: 5,
-          }}
-        />
-      )}
-
-      {/* Status overlay — positioned on the right */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          height: '100%',
-          paddingRight: '5%',
-          paddingLeft: '3%',
-        }}
-      >
-        {/* Fallback name if no banner */}
+      <div style={statusOverlayStyle}>
         {!bannerSrc && (
-          <div style={{ flex: 1, minWidth: 0, marginRight: '1.5rem' }}>
+          <div style={fallbackNameStyle}>
             <h3 className="text-white text-2xl font-bold truncate">
               {attraction.name}
             </h3>
@@ -93,65 +110,26 @@ function BannerRow({ attraction, style }: { attraction: Attraction; style?: Reac
 
         <div className="flex-shrink-0 text-right">
           {status === 'CLOSED' && (
-            <span
-              className="font-black uppercase tracking-wider"
-              style={{
-                color: '#dc3545',
-                fontSize: '2.5rem',
-                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-                letterSpacing: '0.05em',
-              }}
-            >
+            <span className="font-black uppercase tracking-wider" style={closedStyle}>
               Closed
             </span>
           )}
           {status === 'DELAYED' && (
-            <span
-              className="font-black uppercase tracking-wider"
-              style={{
-                color: '#f0ad4e',
-                fontSize: '2rem',
-                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-                letterSpacing: '0.05em',
-              }}
-            >
+            <span className="font-black uppercase tracking-wider" style={delayedStyle}>
               Technical Delay
             </span>
           )}
           {status === 'AT CAPACITY' && (
-            <span
-              className="font-black uppercase tracking-wider"
-              style={{
-                color: '#F59E0B',
-                fontSize: '2.2rem',
-                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-                letterSpacing: '0.05em',
-              }}
-            >
+            <span className="font-black uppercase tracking-wider" style={capacityStyle}>
               At Capacity
             </span>
           )}
           {status === 'OPEN' && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                color: 'white',
-                textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-                lineHeight: 1,
-              }}
-            >
-              <span
-                className="font-black tabular-nums"
-                style={{ fontSize: '4rem' }}
-              >
+            <div style={openWrapStyle}>
+              <span className="font-black tabular-nums" style={waitTimeStyle}>
                 {attraction.wait_time}
               </span>
-              <span
-                className="font-bold uppercase tracking-widest"
-                style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '2px' }}
-              >
+              <span className="font-bold uppercase tracking-widest" style={minsStyle}>
                 Mins
               </span>
             </div>
@@ -160,7 +138,7 @@ function BannerRow({ attraction, style }: { attraction: Attraction; style?: Reac
       </div>
     </div>
   );
-}
+});
 
 const PAGE_INTERVAL = 10000;
 const TV_SAFE_PADDING = '3.5%';
@@ -257,17 +235,17 @@ export default function TV2Display() {
     };
   }, [loading, measureHeight]);
 
-  // Filter to rides only (no shows)
-  const rides = attractions.filter((a) => a.attraction_type !== 'show');
-
-  const sortedRides = autoSort
-    ? [...rides].sort((a, b) => {
-        const aOpen = a.status === 'OPEN' ? 1 : 0;
-        const bOpen = b.status === 'OPEN' ? 1 : 0;
-        if (aOpen !== bOpen) return bOpen - aOpen;
-        return b.wait_time - a.wait_time;
-      })
-    : rides;
+  // Filter to rides only (no shows), then sort if enabled
+  const sortedRides = useMemo(() => {
+    const rides = attractions.filter((a) => a.attraction_type !== 'show');
+    if (!autoSort) return rides;
+    return [...rides].sort((a, b) => {
+      const aOpen = a.status === 'OPEN' ? 1 : 0;
+      const bOpen = b.status === 'OPEN' ? 1 : 0;
+      if (aOpen !== bOpen) return bOpen - aOpen;
+      return b.wait_time - a.wait_time;
+    });
+  }, [attractions, autoSort]);
 
   const totalPages = sortedRides.length > perPage
     ? Math.ceil(sortedRides.length / perPage)
