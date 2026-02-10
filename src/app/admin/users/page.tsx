@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
@@ -410,6 +411,11 @@ export default function UsersPage() {
           </table>
         )}
       </div>
+        <div style={{ marginTop: 24, textAlign: 'center' }}>
+          <Link href="/privacy" style={{ color: '#555', fontSize: 11, textDecoration: 'none' }}>
+            Privacy Policy
+          </Link>
+        </div>
       </main>
     </div>
   );

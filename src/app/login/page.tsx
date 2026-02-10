@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
@@ -144,6 +145,12 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <Link href="/privacy" style={{ color: '#555', fontSize: 11, textDecoration: 'none' }}>
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </div>
   );
