@@ -13,7 +13,8 @@ const ACTION_LABELS: Record<AuditActionType, string> = {
   queue_time_change: 'Queue Time',
   status_change: 'Status',
   throughput_entry: 'Throughput',
-  show_time_change: 'Show Time',
+  show_time_added: 'Time Added',
+  show_time_removed: 'Time Removed',
   attraction_created: 'Created',
   attraction_deleted: 'Deleted',
 };
@@ -22,7 +23,8 @@ const ACTION_COLORS: Record<AuditActionType, string> = {
   queue_time_change: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   status_change: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   throughput_entry: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  show_time_change: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  show_time_added: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  show_time_removed: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   attraction_created: 'bg-green-500/20 text-green-400 border-green-500/30',
   attraction_deleted: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
@@ -161,7 +163,8 @@ export default function LogsPage() {
             <option value="queue_time_change">Queue Time</option>
             <option value="status_change">Status Change</option>
             <option value="throughput_entry">Throughput Entry</option>
-            <option value="show_time_change">Show Time Change</option>
+            <option value="show_time_added">Time Added</option>
+            <option value="show_time_removed">Time Removed</option>
             <option value="attraction_created">Created</option>
             <option value="attraction_deleted">Deleted</option>
           </select>
@@ -202,9 +205,7 @@ export default function LogsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-white/80">
-                      {log.details ? (
-                        <span className="text-white/80">{log.details}</span>
-                      ) : log.old_value !== null && log.new_value !== null ? (
+                      {log.old_value !== null && log.new_value !== null ? (
                         <span>
                           <span className="text-white/40">{log.old_value}</span>
                           <span className="text-white/20 mx-1.5">&rarr;</span>
@@ -212,6 +213,8 @@ export default function LogsPage() {
                         </span>
                       ) : log.new_value !== null ? (
                         <span className="text-white">{log.new_value}</span>
+                      ) : log.old_value !== null ? (
+                        <span className="text-white/40">{log.old_value}</span>
                       ) : (
                         <span className="text-white/20">—</span>
                       )}

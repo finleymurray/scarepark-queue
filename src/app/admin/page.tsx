@@ -843,24 +843,20 @@ export default function AdminDashboard() {
         const removed = oldTimes.filter((t) => !newTimes.includes(t));
         for (const time of added) {
           logAudit({
-            actionType: 'show_time_change',
+            actionType: 'show_time_added',
             attractionId: id,
             attractionName: current.name,
             performedBy: performer,
-            oldValue: null,
             newValue: time,
-            details: `Show time ${time} added`,
           });
         }
         for (const time of removed) {
           logAudit({
-            actionType: 'show_time_change',
+            actionType: 'show_time_removed',
             attractionId: id,
             attractionName: current.name,
             performedBy: performer,
-            oldValue: time,
-            newValue: null,
-            details: `Show time ${time} removed`,
+            newValue: time,
           });
         }
       }
@@ -916,26 +912,24 @@ export default function AdminDashboard() {
       attractionId: data.id,
       attractionName: name,
       performedBy: performer,
-      newValue: type,
-      details: `${type === 'show' ? 'Show' : 'Attraction'} "${name}" added`,
+      newValue: type === 'show' ? 'Show' : 'Ride',
     });
   }, []);
 
-  const handleDeleteAttraction = useCallback(async (id: string) => {
+  const handleDeleteAttraction = useCallback(async (id: string, name: string) => {
     const current = attractionsRef.current.find((a) => a.id === id);
+    const attractionName = current?.name || name;
+    const attractionType = current?.attraction_type === 'show' ? 'Show' : 'Ride';
 
     // Log before delete so the FK reference is still valid
-    if (current) {
-      const performer = displayNameRef.current || userEmailRef.current;
-      await logAudit({
-        actionType: 'attraction_deleted',
-        attractionId: id,
-        attractionName: current.name,
-        performedBy: performer,
-        oldValue: current.attraction_type,
-        details: `${current.attraction_type === 'show' ? 'Show' : 'Ride'} "${current.name}" removed`,
-      });
-    }
+    const performer = displayNameRef.current || userEmailRef.current;
+    await logAudit({
+      actionType: 'attraction_deleted',
+      attractionId: id,
+      attractionName,
+      performedBy: performer,
+      oldValue: attractionType,
+    });
 
     const { error } = await supabase
       .from('attractions')
@@ -1101,7 +1095,7 @@ export default function AdminDashboard() {
         title={`Remove "${deleteTarget?.name}"?`}
         message="This attraction will be permanently removed from the queue board. This takes effect immediately."
         confirmLabel="Yes, Remove"
-        onConfirm={() => deleteTarget && handleDeleteAttraction(deleteTarget.id)}
+        onConfirm={() => deleteTarget && handleDeleteAttraction(deleteTarget.id, deleteTarget.name)}
         onCancel={() => setDeleteTarget(null)}
       />
 
