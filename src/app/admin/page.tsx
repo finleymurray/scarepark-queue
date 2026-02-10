@@ -53,7 +53,7 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="panel rounded-xl p-6 max-w-md w-full text-center space-y-6">
+      <div className="panel p-6 max-w-md w-full text-center space-y-6">
         <div className="text-[#dc3545] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
         <p className="text-[#888] text-sm">{message}</p>
@@ -61,13 +61,13 @@ function ConfirmModal({
           <button
             onClick={onCancel}
             className="px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
-                       rounded-lg transition-colors font-medium"
+                       rounded-md transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-6 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-lg
+            className="px-6 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-md
                        transition-colors font-bold"
           >
             {confirmLabel}
@@ -139,7 +139,7 @@ function EditableName({
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setValue(name); setEditing(false); }
         }}
-        className="text-white text-lg font-bold bg-transparent border border-[#333] rounded px-2 py-0.5 mr-2
+        className="text-white text-lg font-bold bg-[#1a1a1a] border border-[#444] rounded-md px-2 py-0.5 mr-2
                    focus:outline-none focus:border-[#888] transition-colors min-w-0 flex-1"
       />
     );
@@ -181,14 +181,14 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div className="panel rounded-xl p-4">
+    <div className="panel p-4">
       <h3 className="text-white text-lg font-bold mb-3">Add Attraction</h3>
 
       {/* Type toggle */}
       <div className="flex gap-2 mb-3">
         <button
           onClick={() => setType('ride')}
-          className={`flex-1 py-2 text-sm font-semibold rounded transition-colors border ${
+          className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${
             type === 'ride'
               ? 'bg-white text-black border-white'
               : 'bg-transparent text-[#888] border-[#333]'
@@ -198,7 +198,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
         </button>
         <button
           onClick={() => setType('show')}
-          className={`flex-1 py-2 text-sm font-semibold rounded transition-colors border ${
+          className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${
             type === 'show'
               ? 'bg-white text-black border-white'
               : 'bg-transparent text-[#888] border-[#333]'
@@ -215,14 +215,14 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
           placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
-          className="flex-1 px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
+          className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
                      placeholder-white/30 focus:outline-none focus:border-[#888] transition-colors"
         />
         <button
           onClick={handleAdd}
           disabled={adding || !name.trim()}
           className="btn-quick px-4 py-2 bg-[#22C55E] hover:bg-[#16a34a] text-black text-sm font-semibold
-                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {adding ? '...' : 'Add'}
         </button>
@@ -269,7 +269,7 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div className="panel rounded-xl p-4 relative">
+    <div className="panel p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -301,8 +301,8 @@ function OperatingHoursControl({
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              className="w-full px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
-                         focus:outline-none focus:border-[#888] transition-colors"
+              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                         focus:outline-none focus:border-[#6ea8fe] transition-colors"
             />
           </div>
           <div className="flex-1">
@@ -311,16 +311,16 @@ function OperatingHoursControl({
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              className="w-full px-3 py-2 bg-transparent border border-[#444] rounded text-white text-sm
-                         focus:outline-none focus:border-[#888] transition-colors"
+              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                         focus:outline-none focus:border-[#6ea8fe] transition-colors"
             />
           </div>
         </div>
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="w-full btn-quick px-4 py-2 bg-white text-black hover:bg-[#e0e0e0] text-sm font-semibold
-                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full btn-quick px-4 py-2 bg-white text-black hover:bg-[#ddd] text-sm font-semibold
+                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {saving ? 'Saving...' : 'Set Hours'}
         </button>
@@ -409,7 +409,7 @@ function RideControl({
   }
 
   return (
-    <div className="panel rounded-xl p-4 relative">
+    <div className="panel p-4 relative">
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -434,8 +434,8 @@ function RideControl({
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
-                     focus:outline-none focus:border-[#888] transition-colors cursor-pointer
+          className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                     focus:outline-none focus:border-[#6ea8fe] transition-colors cursor-pointer
                      disabled:opacity-50"
         >
           {STATUS_OPTIONS.map((s) => (
@@ -456,24 +456,24 @@ function RideControl({
         <button
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
-          className="btn-quick px-2 py-2.5 bg-[#111] border border-[#333] text-white rounded
-                     hover:bg-[#111] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-2 py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+                     hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           -5m
         </button>
         <button
           onClick={() => handleTimeAdjust(5)}
           disabled={saving}
-          className="btn-quick px-2 py-2.5 bg-[#111] border border-[#333] text-white rounded
-                     hover:bg-[#111] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-2 py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+                     hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +5m
         </button>
         <button
           onClick={() => handleTimeAdjust(10)}
           disabled={saving}
-          className="btn-quick px-2 py-2.5 bg-[#111] border border-[#333] text-white rounded
-                     hover:bg-[#111] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-2 py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+                     hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +10m
         </button>
@@ -488,16 +488,16 @@ function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
-                     placeholder-white/30 focus:outline-none focus:border-[#888] transition-colors
+          className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                     placeholder-white/30 focus:outline-none focus:border-[#6ea8fe] transition-colors
                      [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                      [&::-webkit-outer-spin-button]:appearance-none"
         />
         <button
           onClick={handleSetTime}
           disabled={saving || !customTime}
-          className="btn-quick px-4 py-2 bg-[#dc3545] hover:bg-[#dc3545] text-white text-sm font-semibold
-                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-4 py-2 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-semibold
+                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Set
         </button>
@@ -505,8 +505,8 @@ function RideControl({
 
       <button
         onClick={() => onDelete(attraction.id, attraction.name)}
-        className="w-full py-2 text-xs text-white/30 hover:text-[#dc3545] hover:bg-[#dc3545]/10
-                   rounded transition-colors"
+        className="w-full py-2 text-xs text-white/30 hover:text-[#d43518] hover:bg-[#d43518]/10
+                   rounded-md transition-colors"
       >
         Remove Attraction
       </button>
@@ -565,7 +565,7 @@ function ShowControl({
   }
 
   return (
-    <div className="panel rounded-xl p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)', background: 'rgba(88, 28, 135, 0.08)' }}>
+    <div className="panel p-4 relative" style={{ borderColor: 'rgba(126, 34, 206, 0.3)', background: 'rgba(88, 28, 135, 0.08)' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -588,13 +588,13 @@ function ShowControl({
       </div>
 
       <div className="mb-4">
-        <label className="block text-white/50 text-xs font-medium mb-1">Status</label>
+        <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">Status</label>
         <select
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
-                     focus:outline-none focus:border-purple-500 transition-colors cursor-pointer
+          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                     focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors cursor-pointer
                      disabled:opacity-50"
         >
           {SHOW_STATUS_OPTIONS.map((s) => (
@@ -605,7 +605,7 @@ function ShowControl({
 
       {/* Show times list */}
       <div className="mb-3">
-        <label className="block text-white/50 text-xs font-medium mb-2">Show Times</label>
+        <label className="block text-[#888] text-xs font-medium mb-2 uppercase tracking-wider">Show Times</label>
         {sortedTimes.length === 0 ? (
           <p className="text-white/30 text-xs italic mb-2">No show times added</p>
         ) : (
@@ -614,7 +614,7 @@ function ShowControl({
               <div
                 key={time}
                 className="flex items-center gap-1.5 bg-purple-900/40 border border-purple-500/30
-                           text-purple-200 text-sm font-semibold px-3 py-1.5 rounded"
+                           text-purple-200 text-sm font-semibold px-3 py-1.5 rounded-md"
               >
                 <span className="tabular-nums">{formatTime12h(time)}</span>
                 <button
@@ -641,14 +641,14 @@ function ShowControl({
           value={newTime}
           onChange={(e) => setNewTime(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-          className="flex-1 px-3 py-2 bg-transparent border border-[#333] rounded text-white text-sm
-                     focus:outline-none focus:border-purple-500 transition-colors"
+          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                     focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
         />
         <button
           onClick={handleAddTime}
           disabled={saving || !newTime || showTimes.includes(newTime)}
-          className="btn-quick px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold
-                     rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-quick px-4 py-2.5 bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold
+                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Add
         </button>
@@ -659,7 +659,7 @@ function ShowControl({
           onClick={handleClearAll}
           disabled={saving}
           className="w-full py-2 mb-3 text-xs text-purple-400/60 hover:text-purple-300 hover:bg-purple-900/20
-                     rounded transition-colors disabled:opacity-30"
+                     rounded-md transition-colors disabled:opacity-30"
         >
           Clear All Times
         </button>
@@ -668,7 +668,7 @@ function ShowControl({
       <button
         onClick={() => onDelete(attraction.id, attraction.name)}
         className="w-full py-2 text-xs text-white/30 hover:text-[#dc3545] hover:bg-[#dc3545]/10
-                   rounded transition-colors"
+                   rounded-md transition-colors"
       >
         Remove Attraction
       </button>
@@ -952,19 +952,19 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-6">
-        <div className="panel rounded-xl p-5">
+        <div className="panel p-5">
           <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
-              className="flex-1 btn-quick px-4 py-3.5 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded-lg text-sm transition-colors disabled:opacity-50">
+              className="flex-1 btn-quick px-4 py-3.5 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded-md text-sm transition-colors disabled:opacity-50">
               {openingAll ? 'Opening...' : 'Open All Rides'}
             </button>
             <button onClick={() => setShowCloseAll(true)} disabled={closingAll}
-              className="flex-1 btn-quick px-4 py-3.5 bg-[#dc3545] hover:bg-[#c82333] text-white font-bold rounded-lg text-sm transition-colors disabled:opacity-50">
+              className="flex-1 btn-quick px-4 py-3.5 bg-[#dc3545] hover:bg-[#c82333] text-white font-bold rounded-md text-sm transition-colors disabled:opacity-50">
               {closingAll ? 'Closing...' : 'Close All Rides'}
             </button>
           </div>
-          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/[0.06]">
+          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#333]">
             <button onClick={handleToggleAutoSort}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#222] border border-[#444]'}`}>
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />

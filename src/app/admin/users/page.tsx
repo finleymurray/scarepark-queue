@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import type { Attraction, UserRole } from '@/types/database';
@@ -26,20 +26,20 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="panel rounded-xl p-6 w-full max-w-sm">
+      <div className="panel p-6 w-full max-w-sm">
         <h3 className="text-white text-lg font-bold mb-2">{title}</h3>
         <p className="text-[#888] text-sm mb-6">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 bg-transparent border border-[#333] text-white hover:border-[#555]
-                       rounded-lg text-sm font-medium transition-colors"
+                       rounded-md text-sm font-medium transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-lg
+            className="flex-1 px-4 py-2.5 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-md
                        text-sm font-bold transition-colors"
           >
             {confirmLabel}
@@ -60,6 +60,7 @@ export default function UsersPage() {
   // Form state
   const [editing, setEditing] = useState<UserRole | null>(null);
   const [formEmail, setFormEmail] = useState('');
+  const [formPassword, setFormPassword] = useState('');
   const [formRole, setFormRole] = useState<'admin' | 'supervisor'>('supervisor');
   const [formAttractions, setFormAttractions] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -108,6 +109,7 @@ export default function UsersPage() {
   function startEdit(user: UserRole) {
     setEditing(user);
     setFormEmail(user.email);
+    setFormPassword('');
     setFormRole(user.role);
     setFormAttractions(user.allowed_attractions || []);
     setFormError('');
@@ -117,6 +119,7 @@ export default function UsersPage() {
   function startAdd() {
     setEditing(null);
     setFormEmail('');
+    setFormPassword('');
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
@@ -126,6 +129,7 @@ export default function UsersPage() {
   function cancelForm() {
     setEditing(null);
     setFormEmail('');
+    setFormPassword('');
     setFormRole('supervisor');
     setFormAttractions([]);
     setFormError('');
@@ -143,11 +147,21 @@ export default function UsersPage() {
       setFormError('Email is required.');
       return;
     }
+    if (!editing && !formPassword.trim()) {
+      setFormError('Password is required for new users.');
+      return;
+    }
+    if (!editing && formPassword.trim().length < 6) {
+      setFormError('Password must be at least 6 characters.');
+      return;
+    }
     setSaving(true);
     setFormError('');
 
+    const email = formEmail.trim().toLowerCase();
+
     const payload = {
-      email: formEmail.trim().toLowerCase(),
+      email,
       role: formRole,
       allowed_attractions: formRole === 'admin' ? null : formAttractions.length > 0 ? formAttractions : null,
       updated_at: new Date().toISOString(),
@@ -164,6 +178,28 @@ export default function UsersPage() {
         return;
       }
     } else {
+      // Create Supabase Auth user first
+      if (!supabaseAdmin) {
+        setFormError('Admin client not configured. Service role key missing.');
+        setSaving(false);
+        return;
+      }
+
+      const { error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: formPassword.trim(),
+        email_confirm: true,
+      });
+
+      if (authError) {
+        setFormError(authError.message.includes('already been registered')
+          ? 'An auth account with this email already exists.'
+          : authError.message);
+        setSaving(false);
+        return;
+      }
+
+      // Then create the user_roles record
       const { error } = await supabase
         .from('user_roles')
         .insert({ ...payload, created_at: new Date().toISOString() });
@@ -175,12 +211,26 @@ export default function UsersPage() {
     }
 
     await fetchUsers();
-    cancelForm(); // this also sets showForm to false
+    cancelForm();
     setSaving(false);
   }
 
   async function handleDelete() {
     if (!deleteTarget) return;
+
+    // Delete the Supabase Auth user first
+    if (supabaseAdmin) {
+      // Look up the auth user by email
+      const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+      const authUser = authList?.users?.find(
+        (u) => u.email?.toLowerCase() === deleteTarget.email.toLowerCase()
+      );
+      if (authUser) {
+        await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+      }
+    }
+
+    // Then delete the user_roles record
     await supabase.from('user_roles').delete().eq('id', deleteTarget.id);
     setDeleteTarget(null);
     await fetchUsers();
@@ -218,12 +268,12 @@ export default function UsersPage() {
       />
 
       {/* User list */}
-      <div className="panel rounded-xl p-4 sm:p-6 mb-6">
+      <div className="panel p-4 sm:p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[#888] text-xs font-medium uppercase tracking-wider">Users</h2>
           <button
             onClick={startAdd}
-            className="px-3 py-1.5 bg-white text-black text-xs font-semibold rounded-lg
+            className="px-3 py-1.5 bg-white text-black text-xs font-semibold rounded-md
                        hover:bg-[#e0e0e0] transition-colors"
           >
             + Add User
@@ -291,7 +341,7 @@ export default function UsersPage() {
 
       {/* Add / Edit form */}
       {showForm && (
-        <div className="panel rounded-xl p-4 sm:p-6">
+        <div className="panel p-4 sm:p-6">
           <h2 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">
             {editing ? 'Edit User' : 'Add User'}
           </h2>
@@ -307,11 +357,27 @@ export default function UsersPage() {
                 onChange={(e) => setFormEmail(e.target.value)}
                 disabled={!!editing}
                 placeholder="user@example.com"
-                className="w-full px-3 py-2.5 bg-transparent border border-[#444] rounded text-white text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#888] transition-colors
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
                            disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
+
+            {!editing && (
+              <div>
+                <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={formPassword}
+                  onChange={(e) => setFormPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                  className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                             placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
@@ -320,8 +386,8 @@ export default function UsersPage() {
               <select
                 value={formRole}
                 onChange={(e) => setFormRole(e.target.value as 'admin' | 'supervisor')}
-                className="w-full px-3 py-2.5 bg-black border border-[#444] rounded text-white text-sm
-                           focus:outline-none focus:border-[#888] transition-colors"
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                           focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
               >
                 <option value="admin">Admin</option>
                 <option value="supervisor">Supervisor</option>
@@ -342,7 +408,7 @@ export default function UsersPage() {
                     return (
                       <label
                         key={a.id}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-colors
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors
                           ${checked ? 'bg-white/[0.05] border border-white/20' : 'border border-[#333] hover:border-[#555]'}`}
                       >
                         <input
@@ -367,7 +433,7 @@ export default function UsersPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-lg
+                className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-md
                            hover:bg-[#e0e0e0] transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving...' : editing ? 'Update User' : 'Add User'}
@@ -375,14 +441,14 @@ export default function UsersPage() {
               <button
                 onClick={cancelForm}
                 className="px-5 py-2.5 bg-transparent border border-[#333] text-white text-sm
-                           hover:border-[#555] rounded-lg transition-colors"
+                           hover:border-[#555] rounded-md transition-colors"
               >
                 Cancel
               </button>
             </div>
 
             <p className="text-[#666] text-xs mt-2">
-              Users must have a Supabase Auth account to log in. This page manages their role and permissions only.
+              Adding a user creates their login account and role. Deleting a user removes both.
             </p>
           </div>
         </div>

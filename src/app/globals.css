@@ -6,14 +6,16 @@
   --color-border-hover: #555555;
   --color-text-secondary: #888888;
   --color-text-muted: #666666;
-  --color-surface: #0a0a0a;
-  --color-surface-hover: #111111;
+  --color-surface: #111111;
+  --color-surface-hover: #1a1a1a;
+  --color-input: #1a1a1a;
   --color-status-open: #22C55E;
   --color-status-closed: #dc3545;
   --color-status-delayed: #f0ad4e;
   --color-status-capacity: #F59E0B;
   --color-success: #22C55E;
-  --font-body: 'Inter', sans-serif;
+  --color-danger: #d43518;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 * {
@@ -24,9 +26,10 @@
 
 body {
   background: #000000;
-  color: #ffffff;
+  color: #e0e0e0;
   font-family: var(--font-body);
   overflow-x: hidden;
+  line-height: 1.6;
 }
 
 @keyframes fadeInSave {
@@ -49,15 +52,19 @@ body {
   animation: pulseBorder 2s ease-in-out infinite;
 }
 
-/* Panel styling */
+/* Panel / Section styling */
 .panel {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #2a2a2a;
-  border-radius: 12px;
-  transition: border-color 0.2s ease;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
 }
-.panel:hover {
-  border-color: #3a3a3a;
+
+/* Button styles */
+.btn-quick {
+  transition: all 0.15s ease;
+}
+.btn-quick:active {
+  transform: scale(0.95);
 }
 
 /* Scrollbar styling */
@@ -73,14 +80,6 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #555555;
-}
-
-/* Button styles */
-.btn-quick {
-  transition: all 0.15s ease;
-}
-.btn-quick:active {
-  transform: scale(0.95);
 }
 
 /* TV Grid — orientation-responsive layout */

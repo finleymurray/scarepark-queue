@@ -483,8 +483,8 @@ export default function AnalyticsPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 bg-transparent border border-[#444] rounded-lg text-white text-sm
-                       focus:outline-none focus:border-[#888] transition-colors
+            className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                       focus:outline-none focus:border-[#6ea8fe] transition-colors
                        [color-scheme:dark]"
           />
         </div>
@@ -497,8 +497,8 @@ export default function AnalyticsPage() {
               type="date"
               value={exportStartDate}
               onChange={(e) => setExportStartDate(e.target.value)}
-              className="px-3 py-2 bg-transparent border border-[#444] rounded-lg text-white text-sm
-                         focus:outline-none focus:border-[#888] transition-colors
+              className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                         focus:outline-none focus:border-[#6ea8fe] transition-colors
                          [color-scheme:dark]"
             />
           </div>
@@ -508,8 +508,8 @@ export default function AnalyticsPage() {
               type="date"
               value={exportEndDate}
               onChange={(e) => setExportEndDate(e.target.value)}
-              className="px-3 py-2 bg-transparent border border-[#444] rounded-lg text-white text-sm
-                         focus:outline-none focus:border-[#888] transition-colors
+              className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                         focus:outline-none focus:border-[#6ea8fe] transition-colors
                          [color-scheme:dark]"
             />
           </div>
@@ -517,7 +517,7 @@ export default function AnalyticsPage() {
             onClick={handleExportExcel}
             disabled={exporting || exportStartDate > exportEndDate}
             className="px-4 py-2 bg-white text-black text-sm font-semibold
-                       rounded-lg transition-colors hover:bg-[#e0e0e0] disabled:opacity-30 disabled:cursor-not-allowed
+                       rounded-md transition-colors hover:bg-[#e0e0e0] disabled:opacity-30 disabled:cursor-not-allowed
                        whitespace-nowrap"
           >
             {exporting ? 'Exporting...' : 'Export Excel'}
@@ -527,13 +527,13 @@ export default function AnalyticsPage() {
 
       {/* Charts */}
       {loading ? (
-        <div className="panel rounded-xl p-12 text-center">
+        <div className="panel p-12 text-center">
           <p className="text-[#888] text-lg">Loading historical data...</p>
         </div>
       ) : (
         <>
           {chartData.length === 0 && throughputData.length === 0 ? (
-            <div className="panel rounded-xl p-12 text-center mb-6">
+            <div className="panel p-12 text-center mb-6">
               <p className="text-[#666] text-lg">No data recorded for this night.</p>
               <p className="text-[#444] text-sm mt-2">
                 Data is captured automatically when staff update queue times.
@@ -544,7 +544,7 @@ export default function AnalyticsPage() {
               {/* ── Wait Time Line Chart ── */}
               {chartData.length > 0 && (
                 <>
-                  <div className="panel rounded-xl p-4 sm:p-6 mb-6">
+                  <div className="panel p-4 sm:p-6 mb-6">
                     <h2 className="text-white text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
                     <ResponsiveContainer width="100%" height={500}>
                       <LineChart data={chartData}>
@@ -617,7 +617,7 @@ export default function AnalyticsPage() {
                   </div>
 
                   {/* Status timeline */}
-                  <div className="panel rounded-xl p-4 sm:p-6 mb-6">
+                  <div className="panel p-4 sm:p-6 mb-6">
                     <h2 className="text-white text-lg font-bold mb-4">Status Timeline</h2>
                     {statusPeriods.length === 0 ? (
                       <p className="text-[#666] text-sm">All attractions were open for the entire night.</p>
@@ -661,7 +661,7 @@ export default function AnalyticsPage() {
 
               {/* ── Throughput Bar Chart ── */}
               {throughputChartData.length > 0 && (
-                <div className="panel rounded-xl p-4 sm:p-6 mb-6">
+                <div className="panel p-4 sm:p-6 mb-6">
                   <h2 className="text-white text-lg font-bold mb-4">Guest Throughput — {selectedDate}</h2>
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={throughputChartData}>
@@ -702,7 +702,7 @@ export default function AnalyticsPage() {
 
               {/* ── Combined Wait Time + Throughput Chart ── */}
               {combinedChartData.length > 0 && combinedAttractionNames.length > 0 && (
-                <div className="panel rounded-xl p-4 sm:p-6 mb-6">
+                <div className="panel p-4 sm:p-6 mb-6">
                   <h2 className="text-white text-lg font-bold mb-2">Wait Time vs Throughput — {selectedDate}</h2>
                   <p className="text-[#888] text-xs mb-4">Lines show average wait time per slot. Bars show guest throughput.</p>
                   <ResponsiveContainer width="100%" height={450}>
@@ -771,7 +771,7 @@ export default function AnalyticsPage() {
               )}
 
               {/* ── Throughput Summary Table ── */}
-              <div className="panel rounded-xl p-4 sm:p-6">
+              <div className="panel p-4 sm:p-6">
                 <h2 className="text-white text-lg font-bold mb-4">Throughput Summary — {selectedDate}</h2>
                 {throughputData.length === 0 ? (
                   <p className="text-[#666] text-sm">No throughput data logged for this night.</p>

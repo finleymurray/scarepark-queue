@@ -97,7 +97,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="panel rounded-xl p-6">
+        <form onSubmit={handleSubmit} className="panel p-8">
           <h2 className="text-white text-lg font-semibold mb-6">Sign in</h2>
 
           <div className="space-y-4">
@@ -111,8 +111,8 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full px-3 py-2.5 bg-transparent border border-[#444] rounded-lg text-white text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#888] transition-colors"
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
               />
             </div>
             <div>
@@ -125,8 +125,8 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="Enter password"
-                className="w-full px-3 py-2.5 bg-transparent border border-[#444] rounded-lg text-white text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#888] transition-colors"
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
               />
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-6 px-4 py-2.5 bg-white text-black text-sm font-semibold rounded-lg
+            className="w-full mt-6 px-4 py-2.5 bg-white text-black text-sm font-semibold rounded-md
                        hover:bg-[#e0e0e0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Signing in...' : 'Sign in'}

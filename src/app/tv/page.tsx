@@ -292,14 +292,14 @@ export default function TVDisplay() {
       }}
     >
       {/* Header banner */}
-      <header className="bg-white/[0.03] border-b border-white/[0.06] py-4 px-10 rounded-xl flex-shrink-0 flex items-center justify-center">
-        <h1 className="text-white text-3xl font-black uppercase tracking-wider">
+      <header className="bg-[#111] border border-[#333] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
+        <h1 className="text-white text-4xl font-black uppercase tracking-[0.2em]">
           Queue Times
         </h1>
       </header>
 
       {/* Attraction list — fills available space */}
-      <main ref={mainRef} className="flex-1 overflow-hidden py-3">
+      <main ref={mainRef} className="flex-1 overflow-hidden">
         <div
           className="h-full flex flex-col transition-opacity duration-400"
           style={{
@@ -319,7 +319,7 @@ export default function TVDisplay() {
       </main>
 
       {/* Footer bar — Park closing time + page indicator */}
-      <footer className="bg-white/[0.03] border-t border-white/[0.06] py-4 px-10 rounded-xl flex-shrink-0">
+      <footer className="bg-[#111] border border-[#333] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
         <div className="flex items-center justify-between">
           {/* Page dots (left) */}
           <div className="flex items-center gap-2 min-w-[80px]">
@@ -335,9 +335,9 @@ export default function TVDisplay() {
             }
           </div>
 
-          {/* Closing time (center) */}
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-[#888] text-lg font-semibold uppercase tracking-wider">
+          {/* Closing time (center) — blue highlight */}
+          <div className="flex items-center justify-center gap-4 bg-[#1a3a5c] border border-[#3B82F6]/40 rounded-md px-6 py-2">
+            <span className="text-[#6ea8fe] text-lg font-semibold uppercase tracking-wider">
               Park Closes
             </span>
             <span className="text-white text-2xl font-black tabular-nums">

@@ -26,8 +26,8 @@ export default function AdminNav({
 
   return (
     <div className="mb-6">
-      {/* Header row */}
-      <div className="flex items-center justify-between py-4 px-1">
+      {/* Header bar */}
+      <div className="bg-[#111] border-b border-[#333] rounded-t-lg px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image
             src="/logo.png"
@@ -42,32 +42,32 @@ export default function AdminNav({
 
         <div className="flex items-center gap-3">
           {userEmail && (
-            <span className="text-[#666] text-xs truncate max-w-[200px]" title={userEmail}>
+            <span className="text-[#aaa] text-[13px] truncate max-w-[200px]" title={userEmail}>
               {userEmail}
             </span>
           )}
           <button
             onClick={onLogout}
-            className="px-3 py-1.5 bg-white/5 border border-white/10 text-[#999] hover:text-white
-                       hover:bg-white/10 rounded-lg text-xs font-medium transition-all"
+            className="px-3 py-1 border border-[#555] text-[#aaa] hover:border-[#888] hover:text-white
+                       rounded text-xs font-medium transition-colors"
           >
             Logout
           </button>
         </div>
       </div>
 
-      {/* Tab bar — pill style */}
-      <div className="flex gap-1 bg-white/[0.03] border border-white/[0.06] rounded-xl p-1">
+      {/* Nav bar */}
+      <div className="bg-[#111] border-b border-[#333] rounded-b-lg px-5 py-2 flex items-center gap-2">
         {TABS.map((tab) => {
           const active = isActive(tab.href);
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex-1 text-center px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors
                 ${active
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-[#888] hover:text-white hover:bg-white/[0.06]'
+                  ? 'bg-[#222] text-white'
+                  : 'text-[#aaa] hover:bg-[#222] hover:text-white'
                 }`}
             >
               {tab.label}

@@ -103,14 +103,14 @@ function NumericKeypad({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#0a0a0a] border border-[#333] p-6 space-y-4">
+      <div className="w-full max-w-sm rounded-lg bg-[#111] border border-[#333] p-6 space-y-4">
         <div className="text-center">
           <p className="text-white/50 text-xs uppercase tracking-wider font-medium">{slotLabel}</p>
           <p className="text-white text-sm mt-1">Enter guest count</p>
         </div>
 
         {/* Display */}
-        <div className="bg-black border border-[#333] rounded-xl px-4 py-5 text-center">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-5 text-center">
           <span className="text-white text-5xl font-bold tabular-nums">
             {display || '0'}
           </span>
@@ -122,7 +122,7 @@ function NumericKeypad({
             <button
               key={k}
               onClick={() => handleKey(k)}
-              className="py-4 text-2xl font-bold text-white bg-[#111] rounded-xl
+              className="py-4 text-2xl font-bold text-white bg-[#1a1a1a] rounded-md
                          active:bg-[#222] transition-colors touch-manipulation"
             >
               {k}
@@ -130,21 +130,21 @@ function NumericKeypad({
           ))}
           <button
             onClick={() => handleKey('clear')}
-            className="py-4 text-lg font-bold text-red-400 bg-[#111] rounded-xl
+            className="py-4 text-lg font-bold text-red-400 bg-[#1a1a1a] rounded-md
                        active:bg-red-900/30 transition-colors touch-manipulation"
           >
             CLR
           </button>
           <button
             onClick={() => handleKey('0')}
-            className="py-4 text-2xl font-bold text-white bg-[#111] rounded-xl
+            className="py-4 text-2xl font-bold text-white bg-[#1a1a1a] rounded-md
                        active:bg-[#222] transition-colors touch-manipulation"
           >
             0
           </button>
           <button
             onClick={() => handleKey('back')}
-            className="py-4 text-lg font-bold text-yellow-400 bg-[#111] rounded-xl
+            className="py-4 text-lg font-bold text-yellow-400 bg-[#1a1a1a] rounded-md
                        active:bg-yellow-900/30 transition-colors touch-manipulation"
           >
             DEL
@@ -155,14 +155,14 @@ function NumericKeypad({
         <div className="flex gap-3 pt-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-4 text-lg font-bold text-white/60 bg-[#111] rounded-xl
+            className="flex-1 py-4 text-lg font-bold text-white/60 bg-[#111] rounded-md
                        active:bg-[#222] transition-colors touch-manipulation"
           >
             Cancel
           </button>
           <button
             onClick={() => onConfirm(parseInt(display, 10) || 0)}
-            className="flex-1 py-4 text-lg font-bold text-black bg-white rounded-xl
+            className="flex-1 py-4 text-lg font-bold text-black bg-white rounded-md
                        active:bg-white/80 transition-colors touch-manipulation"
           >
             Confirm
@@ -444,7 +444,7 @@ export default function SupervisorDashboard() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#111] border-b border-[#333] flex-shrink-0">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="Immersive Core" width={100} height={30} priority />
           <span className="text-white/30 text-lg font-light">|</span>
@@ -454,7 +454,7 @@ export default function SupervisorDashboard() {
           {userEmail && <span className="text-[#888] text-xs truncate max-w-[150px]">{userEmail}</span>}
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 bg-transparent border border-[#333] text-[#888] hover:text-white hover:border-[#555] rounded text-xs transition-colors"
+            className="px-3 py-1.5 border border-[#555] text-[#aaa] hover:border-[#888] hover:text-white rounded text-xs transition-colors"
           >
             Logout
           </button>
@@ -474,10 +474,10 @@ export default function SupervisorDashboard() {
             <button
               key={a.id}
               onClick={() => setSelectedId(a.id)}
-              className={`flex-shrink-0 px-5 py-3 rounded-xl text-sm font-bold transition-all touch-manipulation
+              className={`flex-shrink-0 px-5 py-3 rounded-md text-sm font-bold transition-all touch-manipulation
                 ${isSelected
                   ? 'bg-white text-black'
-                  : 'bg-[#111] text-white/50 border border-[#333] active:bg-[#1a1a1a]'
+                  : 'bg-[#1a1a1a] text-white/50 border border-[#333] active:bg-[#1a1a1a]'
                 }`}
             >
               {a.name}
@@ -497,7 +497,7 @@ export default function SupervisorDashboard() {
                 <h2 className="text-white/60 text-xs uppercase tracking-wider font-semibold">Queue Time</h2>
               </div>
 
-              <div className="bg-[#0a0a0a] border border-[#333] rounded-2xl p-5">
+              <div className="bg-[#111] border border-[#333] rounded-lg p-5">
                 {/* Current wait display */}
                 <div className="text-center mb-5">
                   <div className={`text-6xl font-black tabular-nums ${
@@ -531,7 +531,7 @@ export default function SupervisorDashboard() {
                       <button
                         onClick={() => handleWaitTimeUpdate(-5)}
                         disabled={selected.wait_time <= 0}
-                        className="py-5 text-2xl font-black bg-[#111] rounded-xl text-red-400
+                        className="py-5 text-2xl font-black bg-[#1a1a1a] rounded-md text-red-400
                                    active:bg-red-900/20 transition-colors touch-manipulation
                                    disabled:opacity-20 disabled:cursor-not-allowed"
                       >
@@ -539,7 +539,7 @@ export default function SupervisorDashboard() {
                       </button>
                       <button
                         onClick={() => handleWaitTimeUpdate(5)}
-                        className="py-5 text-2xl font-black bg-[#111] rounded-xl text-[#22C55E]
+                        className="py-5 text-2xl font-black bg-[#1a1a1a] rounded-md text-[#22C55E]
                                    active:bg-green-900/20 transition-colors touch-manipulation"
                       >
                         +5
@@ -555,15 +555,15 @@ export default function SupervisorDashboard() {
                         placeholder="Custom minutes"
                         min={0}
                         max={180}
-                        className="flex-1 px-4 py-4 bg-[#111] border border-[#333] rounded-xl text-white text-lg
-                                   placeholder-white/20 focus:outline-none focus:border-white/50 transition-colors
+                        className="flex-1 px-4 py-4 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-lg
+                                   placeholder-white/20 focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
                                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                                    [&::-webkit-outer-spin-button]:appearance-none touch-manipulation"
                       />
                       <button
                         onClick={handleSetCustomWait}
                         disabled={!customWait}
-                        className="px-6 py-4 bg-white text-black font-bold text-lg rounded-xl
+                        className="px-6 py-4 bg-white text-black font-bold text-lg rounded-md
                                    active:bg-white/80 transition-colors touch-manipulation
                                    disabled:opacity-20 disabled:cursor-not-allowed"
                       >
@@ -583,7 +583,7 @@ export default function SupervisorDashboard() {
               </div>
 
               {slots.length === 0 ? (
-                <div className="bg-[#0a0a0a] border border-[#333] rounded-2xl p-6 text-center">
+                <div className="bg-[#111] border border-[#333] rounded-lg p-6 text-center">
                   <p className="text-white/30 text-sm">Operating hours not set.</p>
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
@@ -603,12 +603,12 @@ export default function SupervisorDashboard() {
                           if (isCurrent || isPast) openKeypadForSlot(slot);
                         }}
                         disabled={isFuture}
-                        className={`w-full flex items-center justify-between px-5 py-4 rounded-xl transition-all touch-manipulation
+                        className={`w-full flex items-center justify-between px-5 py-4 rounded-md transition-all touch-manipulation
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
                             : isPast
-                              ? 'bg-[#0a0a0a] border border-[#333] active:bg-[#111]'
-                              : 'bg-[#0a0a0a] border border-[#222] opacity-40 cursor-not-allowed'
+                              ? 'bg-[#1a1a1a] border border-[#333] active:bg-[#222]'
+                              : 'bg-[#1a1a1a] border border-[#222] opacity-40 cursor-not-allowed'
                           }`}
                       >
                         <div className="text-left">
@@ -642,7 +642,7 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* ── Footer: Guests Tonight ── */}
-      <footer className="flex-shrink-0 border-t border-[#333] bg-[#0a0a0a] px-4 py-3">
+      <footer className="flex-shrink-0 border-t border-[#333] bg-[#111] px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-white/40 text-xs uppercase tracking-wider font-medium">
