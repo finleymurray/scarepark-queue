@@ -435,62 +435,13 @@ export default function SupervisorDashboard() {
         onCancel={() => setKeypadOpen(false)}
       />
 
-      {/* Header — matches people.immersivecore.network */}
-      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0', flexShrink: 0 }}>
-        <div style={{ padding: '0 20px', display: 'flex', alignItems: 'center' }}>
-          <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-            <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
-            <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
-          </a>
-        </div>
-      </div>
-
-      {/* Nav / Attraction Tab Bar — matches people.immersivecore.network */}
-      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-        <div
-          ref={tabBarRef}
-          className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          style={{ display: 'flex', gap: 4, padding: '0 20px', overflowX: 'auto', flex: 1 }}
-        >
-          {rides.map((a) => {
-            const isSelected = a.id === selectedId;
-            return (
-              <button
-                key={a.id}
-                onClick={() => setSelectedId(a.id)}
-                style={{
-                  flexShrink: 0,
-                  color: isSelected ? '#fff' : '#aaa',
-                  fontSize: 14,
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  background: isSelected ? '#222' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s, color 0.2s',
-                  touchAction: 'manipulation',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = '#222';
-                    e.currentTarget.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#aaa';
-                  }
-                }}
-              >
-                {a.name}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* User info — pushed right */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 20px', flexShrink: 0, fontSize: 13, color: '#aaa' }}>
+      {/* Header — logo, user info & sign out */}
+      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+          <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
+          <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
+        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
           {userEmail && <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</span>}
           <button
             onClick={handleLogout}
@@ -516,6 +467,49 @@ export default function SupervisorDashboard() {
             Sign out
           </button>
         </div>
+      </div>
+
+      {/* Attraction Tab Bar — full width, horizontally scrollable */}
+      <div
+        ref={tabBarRef}
+        className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 20px', flexShrink: 0, display: 'flex', gap: 4, overflowX: 'auto' }}
+      >
+        {rides.map((a) => {
+          const isSelected = a.id === selectedId;
+          return (
+            <button
+              key={a.id}
+              onClick={() => setSelectedId(a.id)}
+              style={{
+                flexShrink: 0,
+                color: isSelected ? '#fff' : '#aaa',
+                fontSize: 14,
+                padding: '6px 12px',
+                borderRadius: 6,
+                background: isSelected ? '#222' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.2s, color 0.2s',
+                touchAction: 'manipulation',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.background = '#222';
+                  e.currentTarget.style.color = '#fff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#aaa';
+                }
+              }}
+            >
+              {a.name}
+            </button>
+          );
+        })}
       </div>
 
       {/* Main Content — Scrollable */}
