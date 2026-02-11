@@ -34,7 +34,7 @@ const headerTitleStyle: React.CSSProperties = {
   fontWeight: 900,
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
-  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%)',
+  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.85) 100%)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.15))',

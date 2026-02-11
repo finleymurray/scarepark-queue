@@ -53,7 +53,7 @@ const headerTitleStyle: React.CSSProperties = {
   fontWeight: 900,
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
-  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%)',
+  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.85) 100%)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.15))',
@@ -180,7 +180,7 @@ export default function TV3ShowTimes() {
         paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
         paddingTop: isEmbedded ? 0 : '2%',
         paddingBottom: isEmbedded ? 0 : '2%',
-        gap: 16,
+        gap: isEmbedded ? 0 : 16,
       }}
     >
       {/* Header */}
@@ -191,14 +191,17 @@ export default function TV3ShowTimes() {
       )}
 
       {/* Show Cards Grid */}
-      <main className="flex-1 flex items-center justify-center overflow-hidden">
+      <main className="flex-1 flex items-center justify-center" style={{ overflow: 'hidden', minHeight: 0 }}>
         {shows.length === 0 ? (
           <p className="text-white/30 text-2xl">No shows configured</p>
         ) : (
           <div
-            className="w-full h-full grid gap-6 items-stretch"
+            className="w-full grid items-stretch"
             style={{
               gridTemplateColumns: `repeat(${shows.length}, 1fr)`,
+              gap: isEmbedded ? '0.8vw' : '1.5rem',
+              height: '100%',
+              maxHeight: '100%',
             }}
           >
             {shows.map((show) => {
