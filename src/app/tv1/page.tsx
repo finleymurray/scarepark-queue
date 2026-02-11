@@ -97,6 +97,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
 
   return (
     <div
+      className="tv1-ride-row"
       style={{
         ...rideRowStyle,
         flex: 1,
@@ -111,6 +112,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
     >
       {/* Name */}
       <span
+        className="tv1-ride-name"
         style={{
           fontSize: '1.6vw',
           fontWeight: 800,
@@ -128,6 +130,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
         {status === 'CLOSED' && (
           <span
+            className="tv1-status-pill"
             style={{
               background: 'rgba(220, 53, 69, 0.15)',
               border: '1px solid rgba(220, 53, 69, 0.3)',
@@ -145,6 +148,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         )}
         {status === 'DELAYED' && (
           <span
+            className="tv1-status-pill"
             style={{
               background: 'rgba(240, 173, 78, 0.15)',
               border: '1px solid rgba(240, 173, 78, 0.3)',
@@ -162,6 +166,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         )}
         {status === 'AT CAPACITY' && (
           <span
+            className="tv1-status-pill"
             style={{
               background: 'rgba(245, 158, 11, 0.15)',
               border: '1px solid rgba(245, 158, 11, 0.3)',
@@ -180,6 +185,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         {status === 'OPEN' && (
           <>
             <span
+              className="tv1-wait-time"
               style={{
                 fontSize: '2.2vw',
                 fontWeight: 900,
@@ -191,6 +197,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
               {attraction.wait_time}
             </span>
             <span
+              className="tv1-wait-label"
               style={{
                 fontSize: '0.9vw',
                 fontWeight: 600,
@@ -215,6 +222,7 @@ function ShowCard({ show }: { show: Attraction }) {
 
   return (
     <div
+      className="tv1-show-card"
       style={{
         ...showCardStyle,
         display: 'flex',
@@ -228,6 +236,7 @@ function ShowCard({ show }: { show: Attraction }) {
     >
       {/* Show Name */}
       <div
+        className="tv1-show-name"
         style={{
           fontSize: '1.6vw',
           fontWeight: 900,
@@ -242,6 +251,7 @@ function ShowCard({ show }: { show: Attraction }) {
 
       {/* Badge */}
       <div
+        className="tv1-show-badge"
         style={{
           fontSize: '0.55vw',
           fontWeight: 700,
@@ -262,6 +272,7 @@ function ShowCard({ show }: { show: Attraction }) {
       {/* Status / Next Show */}
       {status === 'CLOSED' ? (
         <span
+          className="tv1-show-status"
           style={{
             background: 'rgba(220, 53, 69, 0.15)',
             border: '1px solid rgba(220, 53, 69, 0.3)',
@@ -277,6 +288,7 @@ function ShowCard({ show }: { show: Attraction }) {
         </span>
       ) : status === 'DELAYED' ? (
         <span
+          className="tv1-show-status"
           style={{
             color: '#f0ad4e',
             fontSize: '1.4vw',
@@ -289,6 +301,7 @@ function ShowCard({ show }: { show: Attraction }) {
       ) : nextShow ? (
         <>
           <div
+            className="tv1-show-next-label"
             style={{
               fontSize: '0.8vw',
               fontWeight: 600,
@@ -301,6 +314,7 @@ function ShowCard({ show }: { show: Attraction }) {
             Next Show
           </div>
           <div
+            className="tv1-show-time"
             style={{
               fontSize: '2.4vw',
               fontWeight: 900,
@@ -315,6 +329,7 @@ function ShowCard({ show }: { show: Attraction }) {
         </>
       ) : (
         <div
+          className="tv1-show-status"
           style={{
             fontSize: '1.1vw',
             fontWeight: 700,
@@ -436,6 +451,7 @@ export default function TVDisplay() {
 
   return (
     <div
+      className="tv1-root"
       style={{
         height: '100vh',
         background: '#000',
@@ -450,9 +466,65 @@ export default function TVDisplay() {
         color: '#fff',
       }}
     >
+      {/* Portrait orientation overrides */}
+      <style>{`
+        @media (orientation: portrait) {
+          .tv1-root .tv1-header-title {
+            font-size: 4vw !important;
+          }
+          .tv1-root .tv1-rides-list {
+            flex: 0 0 auto !important;
+            gap: 4px !important;
+          }
+          .tv1-root .tv1-ride-row {
+            flex: 0 0 auto !important;
+            height: 7vh !important;
+            min-height: 44px !important;
+          }
+          .tv1-root .tv1-ride-name {
+            font-size: 2.8vw !important;
+          }
+          .tv1-root .tv1-wait-time {
+            font-size: 4vw !important;
+          }
+          .tv1-root .tv1-wait-label {
+            font-size: 1.6vw !important;
+          }
+          .tv1-root .tv1-status-pill {
+            font-size: 2vw !important;
+          }
+          .tv1-root .tv1-divider-label {
+            font-size: 1.6vw !important;
+          }
+          .tv1-root .tv1-show-card {
+            padding: 1.2vh 2% !important;
+          }
+          .tv1-root .tv1-show-name {
+            font-size: 2.8vw !important;
+          }
+          .tv1-root .tv1-show-badge {
+            font-size: 1vw !important;
+          }
+          .tv1-root .tv1-show-next-label {
+            font-size: 1.4vw !important;
+          }
+          .tv1-root .tv1-show-time {
+            font-size: 4.5vw !important;
+          }
+          .tv1-root .tv1-show-status {
+            font-size: 2vw !important;
+          }
+          .tv1-root .tv1-footer-label {
+            font-size: 2.5vw !important;
+          }
+          .tv1-root .tv1-footer-time {
+            font-size: 3.5vw !important;
+          }
+        }
+      `}</style>
       {/* Header */}
       <header style={headerStyle}>
-        <h1 style={headerTitleStyle}>Queue Times</h1>
+        <h1 className="tv1-header-title" style={headerTitleStyle}>Queue Times</h1>
       </header>
 
       {/* Content */}
@@ -477,6 +549,7 @@ export default function TVDisplay() {
             }}
           />
           <span
+            className="tv1-divider-label"
             style={{
               fontSize: '0.85vw',
               fontWeight: 700,
@@ -498,7 +571,7 @@ export default function TVDisplay() {
         </div>
 
         {/* Rides list */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
+        <div className="tv1-rides-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
           {sortedRides.map((ride) => (
             <RideRow key={ride.id} attraction={ride} />
           ))}
@@ -524,6 +597,7 @@ export default function TVDisplay() {
             }}
           />
           <span
+            className="tv1-divider-label"
             style={{
               fontSize: '0.85vw',
               fontWeight: 700,
@@ -563,6 +637,7 @@ export default function TVDisplay() {
       {/* Footer */}
       <footer style={footerStyle}>
         <span
+          className="tv1-footer-label"
           style={{
             fontSize: '1.4vw',
             fontWeight: 600,
@@ -574,6 +649,7 @@ export default function TVDisplay() {
           Park Closes
         </span>
         <span
+          className="tv1-footer-time"
           style={{
             fontSize: '1.8vw',
             fontWeight: 900,
