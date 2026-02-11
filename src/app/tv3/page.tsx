@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getAttractionBg } from '@/lib/logos';
+import { getAttractionLogo, getAttractionBg, getLogoGlow } from '@/lib/logos';
 import type { Attraction, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -206,6 +206,7 @@ export default function TV3ShowTimes() {
               const nextShow = getNextShowTime(show.show_times);
               const logo = getAttractionLogo(show.slug);
               const bg = getAttractionBg(show.slug);
+              const glow = getLogoGlow(show.slug, 'strong');
 
               return (
                 <div
@@ -244,12 +245,12 @@ export default function TV3ShowTimes() {
                         decoding="async"
                         className="object-contain"
                         style={{
-                          width: '90%',
-                          maxWidth: 500,
+                          width: '95%',
+                          maxWidth: 550,
                           height: 'auto',
-                          maxHeight: '60%',
+                          maxHeight: '70%',
                           flexShrink: 1,
-                          mixBlendMode: 'screen',
+                          filter: glow || undefined,
                         }}
                       />
                     ) : (
