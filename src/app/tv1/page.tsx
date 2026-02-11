@@ -222,7 +222,7 @@ function ShowCard({ show }: { show: Attraction }) {
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 16,
-        padding: '1% 2%',
+        padding: '0.6vw 2%',
         textAlign: 'center',
       }}
     >
@@ -231,9 +231,10 @@ function ShowCard({ show }: { show: Attraction }) {
         style={{
           fontSize: '1.6vw',
           fontWeight: 900,
-          marginBottom: '0.3vw',
+          marginBottom: '0.15vw',
           color: '#fff',
           textShadow: '0 0 12px rgba(168, 85, 247, 0.5), 0 0 30px rgba(168, 85, 247, 0.2)',
+          lineHeight: 1.1,
         }}
       >
         {show.name}
@@ -244,7 +245,7 @@ function ShowCard({ show }: { show: Attraction }) {
         style={{
           fontSize: '0.55vw',
           fontWeight: 700,
-          padding: '3px 8px',
+          padding: '2px 8px',
           borderRadius: 20,
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
@@ -252,7 +253,7 @@ function ShowCard({ show }: { show: Attraction }) {
           border: '1px solid rgba(168, 85, 247, 0.4)',
           color: 'rgba(200, 170, 255, 0.9)',
           textShadow: '0 0 6px rgba(168, 85, 247, 0.5)',
-          marginBottom: '0.5vw',
+          marginBottom: '0.3vw',
         }}
       >
         Live Show
@@ -294,7 +295,7 @@ function ShowCard({ show }: { show: Attraction }) {
               textTransform: 'uppercase',
               letterSpacing: '0.15em',
               color: 'rgba(255,255,255,0.45)',
-              marginBottom: '0.3vw',
+              marginBottom: '0.1vw',
             }}
           >
             Next Show
@@ -304,6 +305,7 @@ function ShowCard({ show }: { show: Attraction }) {
               fontSize: '2.4vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
+              lineHeight: 1,
               color: '#fff',
               textShadow: '0 0 15px rgba(168, 85, 247, 0.5), 0 0 35px rgba(168, 85, 247, 0.2)',
             }}
