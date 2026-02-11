@@ -53,10 +53,8 @@ const headerTitleStyle: React.CSSProperties = {
   fontWeight: 900,
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
-  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.85) 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.15))',
+  color: '#fff',
+  textShadow: '0 0 10px rgba(255,255,255,0.15), 0 0 25px rgba(255,255,255,0.08)',
   margin: 0,
 };
 
@@ -213,7 +211,7 @@ export default function TV3ShowTimes() {
                 <div
                   key={show.id}
                   className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 overflow-hidden"
-                  style={{ padding: '5% 4%', background: bg ? undefined : 'rgba(88, 28, 135, 0.4)' }}
+                  style={{ padding: '3% 4%', background: bg ? undefined : 'rgba(88, 28, 135, 0.4)', minHeight: 0 }}
                 >
                   {/* Background art */}
                   {bg && (
@@ -230,7 +228,7 @@ export default function TV3ShowTimes() {
                   )}
 
                   {/* Logo + Show Time grouped together, centered */}
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-[1vw]">
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-[0.5vw]" style={{ minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
                     {/* Show Name / Logo */}
                     {logo ? (
                       <img
@@ -240,10 +238,11 @@ export default function TV3ShowTimes() {
                         decoding="async"
                         className="object-contain"
                         style={{
-                          width: '95%',
+                          width: '90%',
                           maxWidth: 500,
                           height: 'auto',
-                          maxHeight: '80%',
+                          maxHeight: '60%',
+                          flexShrink: 1,
                           filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.8)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 80px rgba(168, 85, 247, 0.3))',
                         }}
                       />
@@ -262,7 +261,7 @@ export default function TV3ShowTimes() {
                           <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
                             Next Show
                           </p>
-                          <p className="text-white text-[5vw] font-black tabular-nums leading-none">
+                          <p className="text-white text-[4vw] font-black tabular-nums leading-none">
                             {formatTime12h(nextShow)}
                           </p>
                         </>
