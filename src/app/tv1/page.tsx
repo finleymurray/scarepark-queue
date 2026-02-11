@@ -102,8 +102,8 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         flex: 1,
         minHeight: 0,
         borderRadius: 14,
-        paddingLeft: '3%',
-        paddingRight: '3%',
+        paddingLeft: '4%',
+        paddingRight: '4%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -125,7 +125,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
       </span>
 
       {/* Status */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, minWidth: '12vw' }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
         {status === 'CLOSED' && (
           <span
             style={{
