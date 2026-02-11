@@ -472,6 +472,12 @@ export default function TVDisplay() {
           .tv1-root .tv1-header-title {
             font-size: 4vw !important;
           }
+          .tv1-root .tv1-ride-row {
+            flex: 0 0 auto !important;
+            min-height: 0 !important;
+            padding-top: 2.5vw !important;
+            padding-bottom: 2.5vw !important;
+          }
           .tv1-root .tv1-ride-name {
             font-size: 2.8vw !important;
           }
@@ -507,6 +513,14 @@ export default function TVDisplay() {
           }
           .tv1-root .tv1-footer-time {
             font-size: 3.5vw !important;
+          }
+          .tv1-root .tv1-rides-list {
+            flex: 0 1 auto !important;
+            overflow: visible !important;
+          }
+          .tv1-root .tv1-content {
+            flex: 1 1 auto !important;
+            overflow: auto !important;
           }
         }
       `}</style>
