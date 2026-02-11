@@ -170,8 +170,9 @@ export default function TV3ShowTimes() {
                     </>
                   )}
 
-                  {/* Show Name / Logo */}
-                  <div className="relative z-10 flex-1 flex items-center justify-center w-full">
+                  {/* Logo + Show Time grouped together, centered */}
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-[1vw]">
+                    {/* Show Name / Logo */}
                     {logo ? (
                       <img
                         src={logo}
@@ -192,24 +193,24 @@ export default function TV3ShowTimes() {
                         {show.name}
                       </h2>
                     )}
-                  </div>
 
-                  {/* "Next Show" label */}
-                  <div className="text-center relative z-10 flex-shrink-0">
-                    {show.status === 'DELAYED' ? (
-                      <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
-                    ) : nextShow ? (
-                      <>
-                        <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
-                          Next Show
-                        </p>
-                        <p className="text-white text-[5vw] font-black tabular-nums leading-none">
-                          {formatTime12h(nextShow)}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-white/30 text-[2.5vw] font-bold">No More Shows</p>
-                    )}
+                    {/* "Next Show" label */}
+                    <div className="text-center">
+                      {show.status === 'DELAYED' ? (
+                        <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
+                      ) : nextShow ? (
+                        <>
+                          <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
+                            Next Show
+                          </p>
+                          <p className="text-white text-[5vw] font-black tabular-nums leading-none">
+                            {formatTime12h(nextShow)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-white/30 text-[2.5vw] font-bold">No More Shows</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -219,12 +220,12 @@ export default function TV3ShowTimes() {
       </main>
 
       {/* Footer — Park closing time */}
-      <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-8">
+      <footer className="bg-[#0a0a0a] border border-[#222] py-6 px-10 rounded-lg flex-shrink-0 mt-4">
         <div className="flex items-center justify-center gap-4">
-          <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
+          <span className="text-white/50 text-[1.8vw] font-semibold uppercase tracking-wider">
             Park Closes
           </span>
-          <span className="text-white text-2xl font-black tabular-nums">
+          <span className="text-white text-[2.5vw] font-black tabular-nums">
             {formatTime12h(closingTime)}
           </span>
         </div>
