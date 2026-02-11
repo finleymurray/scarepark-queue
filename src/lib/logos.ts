@@ -53,6 +53,11 @@ const LOGO_GLOW_COLORS: Record<string, string> = {
   'shadows-unleashed': '168, 85, 247',         // purple
 };
 
+/** Returns the raw RGB string for a slug's glow color, or null. */
+export function getGlowRgb(slug: string): string | null {
+  return LOGO_GLOW_COLORS[slug] ?? null;
+}
+
 /** Returns a CSS filter drop-shadow string for the logo glow, or empty string.
  *  Use intensity 'strong' for TV2 banner overlays, 'normal' (default) elsewhere. */
 export function getLogoGlow(slug: string, intensity: 'normal' | 'strong' = 'normal'): string {

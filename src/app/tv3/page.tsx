@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getAttractionBg, getLogoGlow } from '@/lib/logos';
+import { getAttractionLogo, getAttractionBg, getGlowRgb } from '@/lib/logos';
 import type { Attraction, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -206,7 +206,7 @@ export default function TV3ShowTimes() {
               const nextShow = getNextShowTime(show.show_times);
               const logo = getAttractionLogo(show.slug);
               const bg = getAttractionBg(show.slug);
-              const glow = getLogoGlow(show.slug, 'strong');
+              const glowRgb = getGlowRgb(show.slug);
 
               return (
                 <div
@@ -238,21 +238,32 @@ export default function TV3ShowTimes() {
                   <div className="relative z-10 flex flex-col items-center justify-center gap-[0.5vw]" style={{ minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
                     {/* Show Name / Logo */}
                     {logo ? (
-                      <img
-                        src={logo}
-                        alt={show.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="object-contain"
-                        style={{
-                          width: '95%',
-                          maxWidth: 550,
-                          height: 'auto',
-                          maxHeight: '70%',
-                          flexShrink: 1,
-                          filter: glow || undefined,
-                        }}
-                      />
+                      <div className="relative flex items-center justify-center" style={{ width: '95%', maxWidth: 550, maxHeight: '70%', flexShrink: 1 }}>
+                        {/* Radial glow behind logo */}
+                        {glowRgb && (
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              background: `radial-gradient(ellipse at center, rgba(${glowRgb}, 0.5) 0%, rgba(${glowRgb}, 0.2) 40%, transparent 70%)`,
+                              transform: 'scale(1.5)',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                        )}
+                        <img
+                          src={logo}
+                          alt={show.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="object-contain"
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            maxHeight: '100%',
+                            mixBlendMode: 'screen',
+                          }}
+                        />
+                      </div>
                     ) : (
                       <h2 className="text-white text-[4vw] font-black text-center leading-tight">
                         {show.name}
