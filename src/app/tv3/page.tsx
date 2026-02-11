@@ -213,18 +213,12 @@ export default function TV3ShowTimes() {
                   className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 overflow-hidden"
                   style={{ padding: '3% 4%', background: bg ? undefined : 'rgba(88, 28, 135, 0.4)', minHeight: 0 }}
                 >
-                  {/* Background art — scaled up to crop edges/watermarks */}
+                  {/* Background art */}
                   {bg && (
                     <>
                       <div
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `url(${bg})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          opacity: 0.3,
-                          transform: 'scale(1.4)',
-                        }}
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${bg})`, opacity: 0.45 }}
                       />
                       <div
                         className="absolute inset-0"
