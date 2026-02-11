@@ -218,11 +218,11 @@ export default function TV3ShowTimes() {
                     <>
                       <div
                         className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${bg})`, opacity: 0.3 }}
+                        style={{ backgroundImage: `url(${bg})`, opacity: 0.55 }}
                       />
                       <div
                         className="absolute inset-0"
-                        style={{ background: 'rgba(30, 10, 50, 0.6)' }}
+                        style={{ background: 'rgba(30, 10, 50, 0.45)' }}
                       />
                     </>
                   )}
@@ -243,6 +243,7 @@ export default function TV3ShowTimes() {
                           height: 'auto',
                           maxHeight: '60%',
                           flexShrink: 1,
+                          mixBlendMode: 'screen',
                           filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.8)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 80px rgba(168, 85, 247, 0.3))',
                         }}
                       />

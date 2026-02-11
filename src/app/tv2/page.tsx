@@ -108,6 +108,7 @@ const pillBaseStyle: React.CSSProperties = {
   border: '1px solid rgba(255,255,255,0.12)',
   borderRadius: 14,
   padding: '10px 28px',
+  minWidth: '8vw',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
