@@ -217,8 +217,8 @@ export default function TV3ShowTimes() {
                   {bg && (
                     <>
                       <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${bg})`, opacity: 0.45 }}
+                        className="absolute bg-cover bg-center"
+                        style={{ backgroundImage: `url(${bg})`, opacity: 0.45, inset: '-20%' }}
                       />
                       <div
                         className="absolute inset-0"
