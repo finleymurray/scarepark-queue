@@ -582,7 +582,7 @@ export default function SupervisorDashboard() {
               {(() => {
                 const logo = getAttractionLogo(a.slug);
                 return logo ? (
-                  <Image src={logo} alt="" width={20} height={20} className="inline-block rounded object-contain" style={{ width: 20, height: 20, marginRight: 6, verticalAlign: 'middle' }} />
+                  <img src={logo} alt="" width={20} height={20} loading="lazy" decoding="async" className="inline-block rounded object-contain" style={{ width: 20, height: 20, marginRight: 6, verticalAlign: 'middle' }} />
                 ) : null;
               })()}
               {a.name}
@@ -600,7 +600,7 @@ export default function SupervisorDashboard() {
               const logo = getAttractionLogo(selected.slug);
               return logo ? (
                 <div className="flex justify-center mb-6">
-                  <Image src={logo} alt={selected.name} width={120} height={120} className="object-contain" style={{ width: 120, height: 'auto', maxHeight: 80 }} />
+                  <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100 }} />
                 </div>
               ) : null;
             })()}

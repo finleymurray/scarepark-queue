@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
@@ -421,7 +420,7 @@ const RideControl = React.memo(function RideControl({
           {(() => {
             const logo = getAttractionLogo(attraction.slug);
             return logo ? (
-              <Image src={logo} alt="" width={36} height={36} className="rounded object-contain flex-shrink-0" style={{ width: 36, height: 36 }} />
+              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48 }} />
             ) : null;
           })()}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -594,7 +593,7 @@ const ShowControl = React.memo(function ShowControl({
           {(() => {
             const logo = getAttractionLogo(attraction.slug);
             return logo ? (
-              <Image src={logo} alt="" width={36} height={36} className="rounded object-contain flex-shrink-0" style={{ width: 36, height: 36 }} />
+              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48 }} />
             ) : null;
           })()}
           <div style={{ flex: 1, minWidth: 0 }}>
