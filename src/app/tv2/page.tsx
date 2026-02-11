@@ -107,8 +107,7 @@ const pillBaseStyle: React.CSSProperties = {
   background: 'rgba(0, 0, 0, 0.55)',
   border: '1px solid rgba(255,255,255,0.12)',
   borderRadius: 14,
-  padding: '10px 0',
-  width: '8vw',
+  padding: '10px 28px',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -117,6 +116,12 @@ const pillBaseStyle: React.CSSProperties = {
   WebkitBackdropFilter: 'blur(8px)',
   boxShadow:
     'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.5)',
+};
+
+const pillOpenStyle: React.CSSProperties = {
+  ...pillBaseStyle,
+  padding: '10px 0',
+  width: '8vw',
 };
 
 const pillClosedStyle: React.CSSProperties = {
@@ -205,7 +210,7 @@ const BannerRow = React.memo(function BannerRow({
       {/* Status pill */}
       <div style={statusOverlayStyle}>
         {status === 'OPEN' && (
-          <div style={pillBaseStyle}>
+          <div style={pillOpenStyle}>
             <span
               style={{
                 fontSize: '4.5vw',
