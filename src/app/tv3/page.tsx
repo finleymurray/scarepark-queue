@@ -217,8 +217,8 @@ export default function TV3ShowTimes() {
                   {bg && (
                     <>
                       <div
-                        className="absolute bg-cover bg-center"
-                        style={{ backgroundImage: `url(${bg})`, opacity: 0.45, inset: '-20%' }}
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${bg})`, opacity: 0.3, transform: 'scale(1.4)' }}
                       />
                       <div
                         className="absolute inset-0"
@@ -228,7 +228,7 @@ export default function TV3ShowTimes() {
                   )}
 
                   {/* Logo + Show Time grouped together, centered */}
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-[1vw]">
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-[1vw]" style={{ minHeight: 0, maxHeight: '100%' }}>
                     {/* Show Name / Logo */}
                     {logo ? (
                       <img
