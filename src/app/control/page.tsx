@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { getAttractionLogo } from '@/lib/logos';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
 
 /* ── Helpers ── */
@@ -578,6 +579,12 @@ export default function SupervisorDashboard() {
                 }
               }}
             >
+              {(() => {
+                const logo = getAttractionLogo(a.slug);
+                return logo ? (
+                  <Image src={logo} alt="" width={20} height={20} className="inline-block rounded object-contain" style={{ width: 20, height: 20, marginRight: 6, verticalAlign: 'middle' }} />
+                ) : null;
+              })()}
               {a.name}
             </button>
           );
@@ -588,6 +595,16 @@ export default function SupervisorDashboard() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }}>
         {selected && (
           <>
+            {/* ── Attraction Logo ── */}
+            {(() => {
+              const logo = getAttractionLogo(selected.slug);
+              return logo ? (
+                <div className="flex justify-center mb-6">
+                  <Image src={logo} alt={selected.name} width={120} height={120} className="object-contain" style={{ width: 120, height: 'auto', maxHeight: 80 }} />
+                </div>
+              ) : null;
+            })()}
+
             {/* ── Queue Time Control ── */}
             <section style={{ marginBottom: 48 }}>
               <div className="flex items-center gap-2.5 mb-5">

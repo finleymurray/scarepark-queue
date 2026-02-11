@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { logAudit } from '@/lib/audit';
+import { getAttractionLogo } from '@/lib/logos';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
@@ -413,16 +415,24 @@ const RideControl = React.memo(function RideControl({
     <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
-      {/* Header: name + status badge */}
+      {/* Header: logo + name + status badge */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <EditableName
-            name={attraction.name}
-            onSave={(newName) => {
-              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              handleUpdate({ name: newName, slug: newSlug });
-            }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          {(() => {
+            const logo = getAttractionLogo(attraction.slug);
+            return logo ? (
+              <Image src={logo} alt="" width={36} height={36} className="rounded object-contain flex-shrink-0" style={{ width: 36, height: 36 }} />
+            ) : null;
+          })()}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <EditableName
+              name={attraction.name}
+              onSave={(newName) => {
+                const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                handleUpdate({ name: newName, slug: newSlug });
+              }}
+            />
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
@@ -580,14 +590,22 @@ const ShowControl = React.memo(function ShowControl({
       <SaveFeedback show={showSaved} />
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <EditableName
-            name={attraction.name}
-            onSave={(newName) => {
-              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              handleUpdate({ name: newName, slug: newSlug });
-            }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          {(() => {
+            const logo = getAttractionLogo(attraction.slug);
+            return logo ? (
+              <Image src={logo} alt="" width={36} height={36} className="rounded object-contain flex-shrink-0" style={{ width: 36, height: 36 }} />
+            ) : null;
+          })()}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <EditableName
+              name={attraction.name}
+              onSave={(newName) => {
+                const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                handleUpdate({ name: newName, slug: newSlug });
+              }}
+            />
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
