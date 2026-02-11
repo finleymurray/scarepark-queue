@@ -469,27 +469,8 @@ export default function TVDisplay() {
       {/* Portrait orientation overrides */}
       <style>{`
         @media (orientation: portrait) {
-          .tv1-root {
-            height: auto !important;
-            min-height: 100vh !important;
-            overflow: visible !important;
-            justify-content: flex-start !important;
-          }
-          .tv1-root .tv1-content {
-            flex: 0 0 auto !important;
-            overflow: visible !important;
-          }
           .tv1-root .tv1-header-title {
             font-size: 4vw !important;
-          }
-          .tv1-root .tv1-rides-list {
-            flex: 0 0 auto !important;
-            gap: 6px !important;
-          }
-          .tv1-root .tv1-ride-row {
-            flex: 0 0 auto !important;
-            height: 7vh !important;
-            min-height: 44px !important;
           }
           .tv1-root .tv1-ride-name {
             font-size: 2.8vw !important;
@@ -505,9 +486,6 @@ export default function TVDisplay() {
           }
           .tv1-root .tv1-divider-label {
             font-size: 1.6vw !important;
-          }
-          .tv1-root .tv1-show-card {
-            padding: 1.5vh 2% !important;
           }
           .tv1-root .tv1-show-name {
             font-size: 2.8vw !important;
