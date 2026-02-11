@@ -150,27 +150,40 @@ export default function TV3ShowTimes() {
               return (
                 <div
                   key={show.id}
-                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 bg-purple-950/40"
-                  style={{ padding: '5% 4%' }}
+                  className="grid rounded-2xl border-2 border-purple-500/30 bg-purple-950/40"
+                  style={{
+                    padding: '5% 4%',
+                    gridTemplateRows: '1fr auto auto',
+                  }}
                 >
-                  {/* Show Name */}
-                  <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-auto">
-                    {show.name}
-                  </h2>
+                  {/* Show Name — vertically centered in its row */}
+                  <div className="flex items-end justify-center pb-[4%]">
+                    <h2 className="text-white text-[4vw] font-black text-center leading-tight">
+                      {show.name}
+                    </h2>
+                  </div>
 
-                  {/* Next Show Time */}
-                  <div className="text-center mt-auto">
+                  {/* "Next Show" label — fixed row */}
+                  <div className="flex items-center justify-center py-[1%]">
                     {show.status === 'DELAYED' ? (
                       <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
                     ) : nextShow ? (
-                      <>
-                        <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider mb-2">
-                          Next Show
-                        </p>
-                        <p className="text-white text-[5vw] font-black tabular-nums leading-none">
-                          {formatTime12h(nextShow)}
-                        </p>
-                      </>
+                      <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider">
+                        Next Show
+                      </p>
+                    ) : (
+                      <p className="text-white/30 text-[1.5vw] font-semibold uppercase tracking-wider">
+                        &nbsp;
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Time — fixed row */}
+                  <div className="flex items-start justify-center pt-[1%]">
+                    {show.status === 'DELAYED' ? null : nextShow ? (
+                      <p className="text-white text-[5vw] font-black tabular-nums leading-none">
+                        {formatTime12h(nextShow)}
+                      </p>
                     ) : (
                       <p className="text-white/30 text-[2.5vw] font-bold">No More Shows</p>
                     )}
@@ -183,7 +196,7 @@ export default function TV3ShowTimes() {
       </main>
 
       {/* Footer — Park closing time */}
-      <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
+      <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-8">
         <div className="flex items-center justify-center gap-4">
           <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
             Park Closes
