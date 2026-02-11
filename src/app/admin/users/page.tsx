@@ -358,28 +358,12 @@ export default function UsersPage() {
         {users.length === 0 ? (
           <p className="text-[#666] text-sm px-5 pb-5">No users configured yet.</p>
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                  Email
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                  Display Name
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                  Role
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                  Attractions
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
+          (() => {
+            const admins = users.filter((u) => u.role === 'admin');
+            const supervisors = users.filter((u) => u.role === 'supervisor');
+
+            const renderRows = (group: UserRole[]) =>
+              group.map((user) => (
                 <tr key={user.id} className="border-b border-[#222] hover:bg-[#1a1a1a] transition-colors">
                   <td className="px-4 py-3 text-sm text-[#e0e0e0]">
                     {user.email}
@@ -389,17 +373,6 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-[#888]">
                     {user.display_name || '\u2014'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.role === 'admin' ? (
-                      <span className="inline-block px-2.5 py-0.5 bg-[#0a3d1f] text-[#4caf50] text-xs font-semibold rounded-full">
-                        admin
-                      </span>
-                    ) : (
-                      <span className="inline-block px-2.5 py-0.5 bg-[#3d3000] text-[#ffc107] text-xs font-semibold rounded-full">
-                        supervisor
-                      </span>
-                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#888]">
                     {user.role === 'admin' ? 'All' : getAttractionNames(user.allowed_attractions)}
@@ -425,9 +398,62 @@ export default function UsersPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              ));
+
+            const groupHeader = (label: string, count: number, badge: React.ReactNode) => (
+              <tr key={`header-${label}`}>
+                <td colSpan={4} className="px-4 py-2.5 bg-[#0d0d0d] border-b border-[#333]">
+                  <div className="flex items-center gap-2">
+                    {badge}
+                    <span className="text-[#888] text-xs font-medium">{count} {label}{count !== 1 ? 's' : ''}</span>
+                  </div>
+                </td>
+              </tr>
+            );
+
+            return (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                      Email
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                      Display Name
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                      Attractions
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {admins.length > 0 && (
+                    <>
+                      {groupHeader('Admin', admins.length,
+                        <span className="inline-block px-2.5 py-0.5 bg-[#0a3d1f] text-[#4caf50] text-xs font-semibold rounded-full">
+                          admin
+                        </span>
+                      )}
+                      {renderRows(admins)}
+                    </>
+                  )}
+                  {supervisors.length > 0 && (
+                    <>
+                      {groupHeader('Supervisor', supervisors.length,
+                        <span className="inline-block px-2.5 py-0.5 bg-[#3d3000] text-[#ffc107] text-xs font-semibold rounded-full">
+                          supervisor
+                        </span>
+                      )}
+                      {renderRows(supervisors)}
+                    </>
+                  )}
+                </tbody>
+              </table>
+            );
+          })()
         )}
       </div>
         <div style={{ marginTop: 24, textAlign: 'center' }}>
