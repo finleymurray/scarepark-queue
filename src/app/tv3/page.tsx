@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo } from '@/lib/logos';
+import { getAttractionLogo, getAttractionBg } from '@/lib/logos';
 import type { Attraction, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -148,31 +148,54 @@ export default function TV3ShowTimes() {
             {shows.map((show) => {
               const nextShow = getNextShowTime(show.show_times);
               const logo = getAttractionLogo(show.slug);
+              const bg = getAttractionBg(show.slug);
 
               return (
                 <div
                   key={show.id}
-                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 bg-purple-950/40"
-                  style={{ padding: '5% 4%' }}
+                  className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 overflow-hidden"
+                  style={{ padding: '5% 4%', background: bg ? undefined : 'rgba(88, 28, 135, 0.4)' }}
                 >
-                  {/* Show Name / Logo */}
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={show.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="object-contain mb-[3%]"
-                      style={{ width: '85%', maxWidth: 440, height: 'auto', maxHeight: '45%' }}
-                    />
-                  ) : (
-                    <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
-                      {show.name}
-                    </h2>
+                  {/* Background art */}
+                  {bg && (
+                    <>
+                      <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${bg})`, opacity: 0.3 }}
+                      />
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: 'rgba(30, 10, 50, 0.6)' }}
+                      />
+                    </>
                   )}
 
+                  {/* Show Name / Logo */}
+                  <div className="relative z-10">
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={show.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="object-contain mb-[3%]"
+                        style={{
+                          width: '95%',
+                          maxWidth: 500,
+                          height: 'auto',
+                          maxHeight: '50%',
+                          filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.8)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 80px rgba(168, 85, 247, 0.3))',
+                        }}
+                      />
+                    ) : (
+                      <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
+                        {show.name}
+                      </h2>
+                    )}
+                  </div>
+
                   {/* "Next Show" label */}
-                  <div className="text-center">
+                  <div className="text-center relative z-10">
                     {show.status === 'DELAYED' ? (
                       <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
                     ) : nextShow ? (

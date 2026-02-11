@@ -18,3 +18,18 @@ export function getAttractionLogo(slug: string): string | null {
   }
   return null;
 }
+
+/** Known attraction slugs that have background art in /public/logos/ */
+const BG_SLUGS = new Set([
+  'the-summoning',
+  'nightmare-realm',
+  'shadows-unleashed',
+]);
+
+/** Returns the background art path for an attraction slug, or null if none exists. */
+export function getAttractionBg(slug: string): string | null {
+  if (BG_SLUGS.has(slug)) {
+    return `/logos/${slug}-bg.webp`;
+  }
+  return null;
+}
