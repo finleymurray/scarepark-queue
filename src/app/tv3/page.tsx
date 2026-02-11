@@ -176,10 +176,10 @@ export default function TV3ShowTimes() {
     <div
       className="h-screen bg-black flex flex-col overflow-hidden"
       style={{
-        paddingLeft: TV_SAFE_PADDING,
-        paddingRight: TV_SAFE_PADDING,
-        paddingTop: '2%',
-        paddingBottom: '2%',
+        paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
+        paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
+        paddingTop: isEmbedded ? 0 : '2%',
+        paddingBottom: isEmbedded ? 0 : '2%',
         gap: 16,
       }}
     >
