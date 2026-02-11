@@ -15,9 +15,9 @@ import { useEffect, useState, useRef } from 'react';
  */
 
 const VIEWS = [
-  { path: '/tv', duration: 30000 },
+  { path: '/tv', duration: 15000 },
   { path: '/tv2', duration: 30000 },
-  { path: '/tv3', duration: 30000 },
+  { path: '/tv3', duration: 15000 },
 ];
 
 const FADE_MS = 600;

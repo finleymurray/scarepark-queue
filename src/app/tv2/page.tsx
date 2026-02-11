@@ -150,8 +150,13 @@ export default function TV2Display() {
   const [currentPage, setCurrentPage] = useState(0);
   const [fading, setFading] = useState(false);
   const [mainHeight, setMainHeight] = useState(0);
+  const [isEmbedded, setIsEmbedded] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
   const perPage = 2;
+
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top);
+  }, []);
 
   const measureHeight = useCallback(() => {
     if (!mainRef.current) return;
@@ -333,8 +338,8 @@ export default function TV2Display() {
         ))}
       </main>
 
-      {/* Page dots — below attraction boxes */}
-      {totalPages > 1 && (
+      {/* Page dots — below attraction boxes (hidden when embedded in iframe e.g. tv4) */}
+      {totalPages > 1 && !isEmbedded && (
         <div
           style={{
             display: 'flex',
