@@ -21,6 +21,12 @@ export function getAttractionLogo(slug: string): string | null {
 
 /** Known attraction slugs that have background art in /public/logos/ */
 const BG_SLUGS = new Set([
+  'westlake-witch-trials',
+  'the-bunker',
+  'drowned',
+  'strings-of-control',
+  'night-terrors',
+  'signal-loss',
   'the-summoning',
   'nightmare-realm',
   'shadows-unleashed',
@@ -47,9 +53,13 @@ const LOGO_GLOW_COLORS: Record<string, string> = {
   'shadows-unleashed': '168, 85, 247',         // purple
 };
 
-/** Returns a CSS filter drop-shadow string for the logo glow, or empty string. */
-export function getLogoGlow(slug: string): string {
+/** Returns a CSS filter drop-shadow string for the logo glow, or empty string.
+ *  Use intensity 'strong' for TV2 banner overlays, 'normal' (default) elsewhere. */
+export function getLogoGlow(slug: string, intensity: 'normal' | 'strong' = 'normal'): string {
   const rgb = LOGO_GLOW_COLORS[slug];
   if (!rgb) return '';
+  if (intensity === 'strong') {
+    return `drop-shadow(0 0 15px rgba(${rgb}, 1)) drop-shadow(0 0 35px rgba(${rgb}, 0.7)) drop-shadow(0 0 70px rgba(${rgb}, 0.4))`;
+  }
   return `drop-shadow(0 0 8px rgba(${rgb}, 0.7)) drop-shadow(0 0 20px rgba(${rgb}, 0.4))`;
 }

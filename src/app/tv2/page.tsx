@@ -2,143 +2,313 @@
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getAttractionLogo, getAttractionBg, getLogoGlow } from '@/lib/logos';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
-/** Cache-bust version — bump when images change */
-const IMG_V = '2';
+function formatTime12h(time: string): string {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${hour12}:${m} ${ampm}`;
+}
 
-/** Map attraction slug to banner image path */
-const BANNER_IMAGES: Record<string, string> = {
-  'the-bunker': `/Queue Board Images/the-bunker.webp?v=${IMG_V}`,
-  'night-terrors': `/Queue Board Images/night-terrors.webp?v=${IMG_V}`,
-  'westlake-witch-trials': `/Queue Board Images/westlake-witch-trials.webp?v=${IMG_V}`,
-  'drowned': `/Queue Board Images/drowned.webp?v=${IMG_V}`,
-  'strings-of-control': `/Queue Board Images/strings-of-control.webp?v=${IMG_V}`,
-  'signal-loss': `/Queue Board Images/signal-loss.webp?v=${IMG_V}`,
+/* ── Static styles ── */
+
+const headerStyle: React.CSSProperties = {
+  background:
+    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 12,
+  padding: '18px 40px',
+  textAlign: 'center' as const,
+  marginBottom: 12,
+  flexShrink: 0,
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
 };
 
-// Static style objects — defined once, never recreated
-const imgStyle: React.CSSProperties = {
+const headerTitleStyle: React.CSSProperties = {
+  fontSize: '2.2vw',
+  fontWeight: 900,
+  textTransform: 'uppercase',
+  letterSpacing: '0.2em',
+  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.15))',
+  margin: 0,
+};
+
+const footerStyle: React.CSSProperties = {
+  background:
+    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 12,
+  padding: '14px 40px',
+  marginTop: 12,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 16,
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+};
+
+const bgImgStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
   width: '100%',
   height: '100%',
   objectFit: 'cover',
-  objectPosition: 'left center',
+  objectPosition: 'center center',
 };
-const fallbackBgStyle: React.CSSProperties = {
+
+const darkenStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
-  backgroundColor: 'rgba(34, 197, 94, 0.06)',
-  border: '1px solid rgba(34, 197, 94, 0.15)',
-  borderRadius: '1rem',
+  background: 'rgba(0, 0, 0, 0.15)',
+  zIndex: 2,
 };
+
 const gradientStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
-  background: 'linear-gradient(to right, transparent 65%, rgba(0,0,0,0.85) 100%)',
-  zIndex: 5,
+  background:
+    'linear-gradient(to right, transparent 40%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.88) 85%, rgba(0,0,0,0.97) 100%), linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.2) 100%)',
+  zIndex: 3,
 };
+
+const logoStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: '3%',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  zIndex: 6,
+  height: '85%',
+  width: 'auto',
+  maxWidth: '55%',
+  objectFit: 'contain',
+};
+
 const statusOverlayStyle: React.CSSProperties = {
-  position: 'relative',
+  position: 'absolute',
+  inset: 0,
   zIndex: 10,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
-  height: '100%',
-  paddingRight: '5%',
+  paddingRight: '4%',
   paddingLeft: '3%',
 };
-const closedStyle: React.CSSProperties = {
-  color: '#dc3545',
-  fontSize: '2.5rem',
-  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-  letterSpacing: '0.05em',
-};
-const delayedStyle: React.CSSProperties = {
-  color: '#f0ad4e',
-  fontSize: '2rem',
-  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-  letterSpacing: '0.05em',
-};
-const capacityStyle: React.CSSProperties = {
-  color: '#F59E0B',
-  fontSize: '2.2rem',
-  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-  letterSpacing: '0.05em',
-};
-const openWrapStyle: React.CSSProperties = {
+
+/* Pill styles */
+const pillBaseStyle: React.CSSProperties = {
+  background: 'rgba(0, 0, 0, 0.55)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 14,
+  padding: '10px 28px',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  color: 'white',
-  textShadow: '0 2px 12px rgba(0,0,0,0.9)',
-  lineHeight: 1,
+  justifyContent: 'center',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.5)',
 };
-const waitTimeStyle: React.CSSProperties = { fontSize: '4rem' };
-const minsStyle: React.CSSProperties = { fontSize: '0.9rem', opacity: 0.7, marginTop: '2px' };
-const fallbackNameStyle: React.CSSProperties = { flex: 1, minWidth: 0, marginRight: '1.5rem' };
 
-const BannerRow = React.memo(function BannerRow({ attraction, style }: { attraction: Attraction; style?: React.CSSProperties }) {
+const pillClosedStyle: React.CSSProperties = {
+  ...pillBaseStyle,
+  background: 'rgba(220, 53, 69, 0.15)',
+  border: '1px solid rgba(220, 53, 69, 0.3)',
+  boxShadow:
+    'inset 0 1px 0 rgba(220, 53, 69, 0.15), 0 0 10px rgba(220, 53, 69, 0.1), 0 0 25px rgba(220, 53, 69, 0.05), 0 4px 16px rgba(0,0,0,0.5)',
+};
+
+const pillDelayedStyle: React.CSSProperties = {
+  ...pillBaseStyle,
+  background: 'rgba(240, 173, 78, 0.12)',
+  border: '1px solid rgba(240, 173, 78, 0.3)',
+  boxShadow:
+    'inset 0 1px 0 rgba(240, 173, 78, 0.15), 0 0 10px rgba(240, 173, 78, 0.1), 0 0 25px rgba(240, 173, 78, 0.05), 0 4px 16px rgba(0,0,0,0.5)',
+};
+
+const pillCapacityStyle: React.CSSProperties = {
+  ...pillBaseStyle,
+  background: 'rgba(245, 158, 11, 0.12)',
+  border: '1px solid rgba(245, 158, 11, 0.3)',
+  boxShadow:
+    'inset 0 1px 0 rgba(245, 158, 11, 0.15), 0 0 10px rgba(245, 158, 11, 0.1), 0 0 25px rgba(245, 158, 11, 0.05), 0 4px 16px rgba(0,0,0,0.5)',
+};
+
+/* Fallback when no background art exists */
+const fallbackBgStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(135deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.95) 100%)',
+};
+
+/* ── BannerRow Component ── */
+
+const BannerRow = React.memo(function BannerRow({
+  attraction,
+  style,
+}: {
+  attraction: Attraction;
+  style?: React.CSSProperties;
+}) {
   const status = attraction.status as AttractionStatus;
-  const bannerSrc = BANNER_IMAGES[attraction.slug];
+  const bgSrc = getAttractionBg(attraction.slug);
+  const logoSrc = getAttractionLogo(attraction.slug);
+  const glow = getLogoGlow(attraction.slug, 'strong');
 
-  const rowStyle = useMemo<React.CSSProperties>(() => ({
-    ...style,
-    position: 'relative',
-    borderRadius: '1rem',
-    overflow: 'hidden',
-    border: '1px solid rgba(255,255,255,0.08)',
-  }), [style]);
+  const rowStyle = useMemo<React.CSSProperties>(
+    () => ({
+      ...style,
+      position: 'relative',
+      borderRadius: '1rem',
+      overflow: 'hidden',
+      minHeight: 0,
+      border: '1px solid rgba(255,255,255,0.12)',
+      boxShadow:
+        'inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.02)',
+    }),
+    [style],
+  );
+
+  const logoImgStyle = useMemo<React.CSSProperties>(
+    () => ({
+      ...logoStyle,
+      filter: glow || undefined,
+    }),
+    [glow],
+  );
 
   return (
     <div style={rowStyle}>
-      {bannerSrc && (
-        <img src={bannerSrc} alt={attraction.name} style={imgStyle} />
+      {/* Background art */}
+      {bgSrc ? (
+        <img src={bgSrc} alt="" style={bgImgStyle} />
+      ) : (
+        <div style={fallbackBgStyle} />
       )}
-      {!bannerSrc && <div style={fallbackBgStyle} />}
-      {bannerSrc && <div style={gradientStyle} />}
+      <div style={darkenStyle} />
+      <div style={gradientStyle} />
 
+      {/* Logo overlay */}
+      {logoSrc && (
+        <img src={logoSrc} alt={attraction.name} style={logoImgStyle} />
+      )}
+
+      {/* Status pill */}
       <div style={statusOverlayStyle}>
-        {!bannerSrc && (
-          <div style={fallbackNameStyle}>
-            <h3 className="text-white text-2xl font-bold truncate">
-              {attraction.name}
-            </h3>
+        {status === 'OPEN' && (
+          <div style={pillBaseStyle}>
+            <span
+              style={{
+                fontSize: '4.5vw',
+                fontWeight: 900,
+                fontVariantNumeric: 'tabular-nums',
+                lineHeight: 1,
+                textShadow: '0 0 12px rgba(255,255,255,0.3), 0 0 30px rgba(255,255,255,0.12)',
+              }}
+            >
+              {attraction.wait_time}
+            </span>
+            <span
+              style={{
+                fontSize: '0.9vw',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+                color: 'rgba(255,255,255,0.5)',
+                marginTop: 2,
+              }}
+            >
+              Mins
+            </span>
+          </div>
+        )}
+        {status === 'CLOSED' && (
+          <div style={pillClosedStyle}>
+            <span
+              style={{
+                fontSize: '2vw',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: '#f87171',
+                textShadow: '0 0 10px rgba(220, 53, 69, 0.5), 0 0 25px rgba(220, 53, 69, 0.25)',
+              }}
+            >
+              Closed
+            </span>
+          </div>
+        )}
+        {status === 'DELAYED' && (
+          <div style={pillDelayedStyle}>
+            <span
+              style={{
+                fontSize: '1.6vw',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: '#f0ad4e',
+                textShadow: '0 0 10px rgba(240, 173, 78, 0.5), 0 0 25px rgba(240, 173, 78, 0.25)',
+              }}
+            >
+              Technical Delay
+            </span>
+          </div>
+        )}
+        {status === 'AT CAPACITY' && (
+          <div style={pillCapacityStyle}>
+            <span
+              style={{
+                fontSize: '1.6vw',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: '#F59E0B',
+                textShadow: '0 0 10px rgba(245, 158, 11, 0.5), 0 0 25px rgba(245, 158, 11, 0.25)',
+              }}
+            >
+              At Capacity
+            </span>
           </div>
         )}
 
-        <div className="flex-shrink-0 text-right">
-          {status === 'CLOSED' && (
-            <span className="font-black uppercase tracking-wider" style={closedStyle}>
-              Closed
+        {/* Fallback: show name if no logo */}
+        {!logoSrc && (
+          <div
+            style={{
+              position: 'absolute',
+              left: '3%',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 6,
+            }}
+          >
+            <span
+              style={{
+                fontSize: '2.5vw',
+                fontWeight: 900,
+                textShadow: '0 0 12px rgba(255,255,255,0.3)',
+              }}
+            >
+              {attraction.name}
             </span>
-          )}
-          {status === 'DELAYED' && (
-            <span className="font-black uppercase tracking-wider" style={delayedStyle}>
-              Technical Delay
-            </span>
-          )}
-          {status === 'AT CAPACITY' && (
-            <span className="font-black uppercase tracking-wider" style={capacityStyle}>
-              At Capacity
-            </span>
-          )}
-          {status === 'OPEN' && (
-            <div style={openWrapStyle}>
-              <span className="font-black tabular-nums" style={waitTimeStyle}>
-                {attraction.wait_time}
-              </span>
-              <span className="font-bold uppercase tracking-widest" style={minsStyle}>
-                Mins
-              </span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 });
+
+/* ── Main page ── */
 
 const PAGE_INTERVAL = 10000;
 const TV_SAFE_PADDING = '3.5%';
@@ -146,6 +316,7 @@ const TV_SAFE_PADDING = '3.5%';
 export default function TV2Display() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [autoSort, setAutoSort] = useState(false);
+  const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [fading, setFading] = useState(false);
@@ -165,9 +336,13 @@ export default function TV2Display() {
 
   useEffect(() => {
     async function fetchData() {
-      const [attractionsRes, autoSortRes] = await Promise.all([
-        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+      const [attractionsRes, autoSortRes, closingRes] = await Promise.all([
+        supabase
+          .from('attractions')
+          .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at')
+          .order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
+        supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
       ]);
 
       if (!attractionsRes.error) {
@@ -175,6 +350,9 @@ export default function TV2Display() {
       }
       if (autoSortRes.data) {
         setAutoSort(autoSortRes.data.value === 'true');
+      }
+      if (closingRes.data) {
+        setClosingTime(closingRes.data.value);
       }
       setLoading(false);
     }
@@ -190,19 +368,19 @@ export default function TV2Display() {
           if (payload.eventType === 'UPDATE') {
             setAttractions((prev) =>
               prev.map((a) =>
-                a.id === (payload.new as Attraction).id ? (payload.new as Attraction) : a
-              )
+                a.id === (payload.new as Attraction).id ? (payload.new as Attraction) : a,
+              ),
             );
           } else if (payload.eventType === 'INSERT') {
             setAttractions((prev) =>
-              [...prev, payload.new as Attraction].sort((a, b) => a.sort_order - b.sort_order)
+              [...prev, payload.new as Attraction].sort((a, b) => a.sort_order - b.sort_order),
             );
           } else if (payload.eventType === 'DELETE') {
             setAttractions((prev) =>
-              prev.filter((a) => a.id !== (payload.old as Attraction).id)
+              prev.filter((a) => a.id !== (payload.old as Attraction).id),
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -216,7 +394,10 @@ export default function TV2Display() {
           if (setting.key === 'auto_sort_by_wait') {
             setAutoSort(setting.value === 'true');
           }
-        }
+          if (setting.key === 'closing_time') {
+            setClosingTime(setting.value);
+          }
+        },
       )
       .subscribe();
 
@@ -313,7 +494,55 @@ export default function TV2Display() {
         paddingBottom: '2%',
       }}
     >
-      {/* Ride list — all pages stay mounted, only active page visible */}
+      {/* Header */}
+      {!isEmbedded && (
+        <div style={headerStyle}>
+          <h1 style={headerTitleStyle}>Queue Times</h1>
+        </div>
+      )}
+
+      {/* Section divider */}
+      {!isEmbedded && (
+        <div
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '4px 8px',
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              height: 1,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
+            }}
+          />
+          <span
+            style={{
+              fontSize: '0.85vw',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              flexShrink: 0,
+              color: 'rgba(255,255,255,0.35)',
+            }}
+          >
+            Attractions
+          </span>
+          <div
+            style={{
+              flex: 1,
+              height: 1,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Ride banners — all pages stay mounted, only active page visible */}
       <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
         {pages.map((pageRides, pageIndex) => (
           <div
@@ -338,15 +567,15 @@ export default function TV2Display() {
         ))}
       </main>
 
-      {/* Page dots — below attraction boxes (hidden when embedded in iframe e.g. tv4) */}
+      {/* Page dots */}
       {totalPages > 1 && !isEmbedded && (
         <div
           style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: '8px',
-            paddingTop: '12px',
+            gap: 10,
+            paddingTop: 12,
             flexShrink: 0,
           }}
         >
@@ -354,14 +583,50 @@ export default function TV2Display() {
             <div
               key={i}
               style={{
-                width: '10px',
-                height: '10px',
+                width: 10,
+                height: 10,
                 borderRadius: '50%',
-                backgroundColor: i === currentPage ? 'white' : 'rgba(255,255,255,0.4)',
-                transition: 'background-color 0.3s',
+                background:
+                  i === currentPage ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)',
+                border:
+                  i === currentPage
+                    ? '1px solid rgba(255,255,255,0.5)'
+                    : '1px solid rgba(255,255,255,0.1)',
+                boxShadow:
+                  i === currentPage
+                    ? '0 0 6px rgba(255,255,255,0.5), 0 0 14px rgba(255,255,255,0.2)'
+                    : 'none',
+                transition: 'all 0.3s',
               }}
             />
           ))}
+        </div>
+      )}
+
+      {/* Footer */}
+      {!isEmbedded && (
+        <div style={footerStyle}>
+          <span
+            style={{
+              fontSize: '1.4vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              color: 'rgba(255,255,255,0.45)',
+            }}
+          >
+            Park Closes
+          </span>
+          <span
+            style={{
+              fontSize: '1.8vw',
+              fontWeight: 900,
+              fontVariantNumeric: 'tabular-nums',
+              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+            }}
+          >
+            {formatTime12h(closingTime)}
+          </span>
         </div>
       )}
     </div>
