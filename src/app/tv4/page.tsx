@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from 'react';
  * Sequence:
  *   /tv2  (ride banners, paginated)  — 30s  (tv2 handles its own 10s page cycling)
  *   /tv3  (show times grid)          — 15s
- *   /tv   (queue + show times list)  — 15s
+ *   /tv1  (queue + show times list)  — 15s
  *
  * Each iframe stays mounted so realtime subscriptions stay alive.
  * Only the active iframe is visible; transitions use a fade effect.
@@ -17,7 +17,7 @@ import { useEffect, useState, useRef } from 'react';
 const VIEWS = [
   { path: '/tv2', duration: 30000 },
   { path: '/tv3', duration: 15000 },
-  { path: '/tv', duration: 15000 },
+  { path: '/tv1', duration: 15000 },
 ];
 
 const FADE_MS = 600;
