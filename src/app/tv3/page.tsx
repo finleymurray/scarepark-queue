@@ -178,7 +178,7 @@ export default function TV3ShowTimes() {
         paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
         paddingTop: isEmbedded ? 0 : '2%',
         paddingBottom: isEmbedded ? 0 : '2%',
-        gap: isEmbedded ? 0 : 16,
+        gap: 0,
       }}
     >
       {/* Header */}
@@ -189,45 +189,43 @@ export default function TV3ShowTimes() {
       )}
 
       {/* Section divider */}
-      {!isEmbedded && (
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '4px 8px',
+          marginBottom: 8,
+        }}
+      >
         <div
           style={{
+            flex: 1,
+            height: 1,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
+          }}
+        />
+        <span
+          style={{
+            fontSize: '0.85vw',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '4px 8px',
-            marginBottom: 8,
+            color: 'rgba(255,255,255,0.35)',
           }}
         >
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
-            }}
-          />
-          <span
-            style={{
-              fontSize: '0.85vw',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              flexShrink: 0,
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            Live Shows
-          </span>
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
-            }}
-          />
-        </div>
-      )}
+          Live Shows
+        </span>
+        <div
+          style={{
+            flex: 1,
+            height: 1,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
+          }}
+        />
+      </div>
 
       {/* Show Cards Grid */}
       <main className="flex-1 flex items-center justify-center" style={{ overflow: 'hidden', minHeight: 0 }}>

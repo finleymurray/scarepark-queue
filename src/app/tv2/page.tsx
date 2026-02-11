@@ -506,45 +506,43 @@ export default function TV2Display() {
       )}
 
       {/* Section divider */}
-      {!isEmbedded && (
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '4px 8px',
+          marginBottom: 8,
+        }}
+      >
         <div
           style={{
+            flex: 1,
+            height: 1,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
+          }}
+        />
+        <span
+          style={{
+            fontSize: '0.85vw',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '4px 8px',
-            marginBottom: 8,
+            color: 'rgba(255,255,255,0.35)',
           }}
         >
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
-            }}
-          />
-          <span
-            style={{
-              fontSize: '0.85vw',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              flexShrink: 0,
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            Attractions
-          </span>
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
-            }}
-          />
-        </div>
-      )}
+          Attractions
+        </span>
+        <div
+          style={{
+            flex: 1,
+            height: 1,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
+          }}
+        />
+      </div>
 
       {/* Ride banners — all pages stay mounted, only active page visible */}
       <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
