@@ -614,7 +614,7 @@ export default function TVDisplay() {
               color: 'rgba(168, 85, 247, 0.6)',
             }}
           >
-            Live Shows
+            Shows
           </span>
           <div
             style={{

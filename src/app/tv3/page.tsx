@@ -216,7 +216,7 @@ export default function TV3ShowTimes() {
             color: 'rgba(255,255,255,0.35)',
           }}
         >
-          Live Shows
+          Shows
         </span>
         <div
           style={{
