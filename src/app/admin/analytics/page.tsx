@@ -270,6 +270,12 @@ export default function AnalyticsPage() {
       new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
     ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
 
+    // Build a lookup map for O(1) throughput log access
+    const logMap = new Map<string, ThroughputLog>();
+    for (const l of throughputData) {
+      logMap.set(`${l.attraction_id}|${l.slot_start}|${l.slot_end}`, l);
+    }
+
     // Build chart data: one row per slot, one key per attraction name
     const data = allSlots.map((slot) => {
       const [start, end] = slot.split('|');
@@ -277,9 +283,7 @@ export default function AnalyticsPage() {
         slot: `${formatSlotTime(start)}–${formatSlotTime(end)}`,
       };
       attractionIds.forEach((id, idx) => {
-        const log = throughputData.find(
-          (l) => l.attraction_id === id && l.slot_start === start && l.slot_end === end
-        );
+        const log = logMap.get(`${id}|${start}|${end}`);
         row[names[idx]] = log?.guest_count || 0;
       });
       return row;
@@ -318,6 +322,24 @@ export default function AnalyticsPage() {
     const attractionIds = Array.from(new Set(throughputData.map((l) => l.attraction_id)));
     const names = attractionIds.map((id) => idToName.get(id) || id.slice(0, 8));
 
+    // Build lookup maps for O(1) access
+    const throughputMap = new Map<string, ThroughputLog>();
+    for (const l of throughputData) {
+      throughputMap.set(`${l.attraction_id}|${l.slot_start}|${l.slot_end}`, l);
+    }
+
+    // Group history by attraction name and pre-compute minute offsets
+    const historyByName = new Map<string, { min: number; wait_time: number }[]>();
+    for (const h of historyData) {
+      if (h.status !== 'OPEN') continue;
+      const recorded = new Date(h.recorded_at);
+      const recordedMin = recorded.getHours() * 60 + recorded.getMinutes();
+      if (!historyByName.has(h.attraction_name)) {
+        historyByName.set(h.attraction_name, []);
+      }
+      historyByName.get(h.attraction_name)!.push({ min: recordedMin, wait_time: h.wait_time });
+    }
+
     // For each slot, calculate avg wait time from history data
     const data = allSlots.map((slot) => {
       const [start, end] = slot.split('|');
@@ -325,7 +347,6 @@ export default function AnalyticsPage() {
         slot: `${formatSlotTime(start)}–${formatSlotTime(end)}`,
       };
 
-      // Parse slot times to filter history data
       const slotStartParts = start.split(':');
       const slotEndParts = end.split(':');
       const slotStartMin = parseInt(slotStartParts[0], 10) * 60 + parseInt(slotStartParts[1] || '0', 10);
@@ -334,25 +355,24 @@ export default function AnalyticsPage() {
       attractionIds.forEach((id, idx) => {
         const name = names[idx];
 
-        // Throughput bar
-        const log = throughputData.find(
-          (l) => l.attraction_id === id && l.slot_start === start && l.slot_end === end
-        );
+        // Throughput bar — O(1) lookup
+        const log = throughputMap.get(`${id}|${start}|${end}`);
         row[`${name} (guests)`] = log?.guest_count || 0;
 
-        // Average wait time from history during this slot
-        const slotHistory = historyData.filter((h) => {
-          if (h.attraction_name !== name || h.status !== 'OPEN') return false;
-          const recorded = new Date(h.recorded_at);
-          const recordedMin = recorded.getHours() * 60 + recorded.getMinutes();
-          return recordedMin >= slotStartMin && recordedMin < slotEndMin;
-        });
-
-        if (slotHistory.length > 0) {
-          const avgWait = Math.round(
-            slotHistory.reduce((sum, h) => sum + h.wait_time, 0) / slotHistory.length
-          );
-          row[`${name} (wait)`] = avgWait;
+        // Average wait time from pre-grouped history
+        const entries = historyByName.get(name);
+        if (entries) {
+          let sum = 0;
+          let count = 0;
+          for (const e of entries) {
+            if (e.min >= slotStartMin && e.min < slotEndMin) {
+              sum += e.wait_time;
+              count++;
+            }
+          }
+          if (count > 0) {
+            row[`${name} (wait)`] = Math.round(sum / count);
+          }
         }
       });
 
@@ -669,6 +689,23 @@ export default function AnalyticsPage() {
                   const attractionIds = Array.from(idToLogs.keys());
                   const parkTotal = throughputData.reduce((sum, l) => sum + l.guest_count, 0);
 
+                  // Build per-attraction lookup maps for O(1) slot access
+                  const logLookups = new Map<string, Map<string, ThroughputLog>>();
+                  for (const id of attractionIds) {
+                    const slotMap = new Map<string, ThroughputLog>();
+                    for (const l of idToLogs.get(id)!) {
+                      slotMap.set(`${l.slot_start}|${l.slot_end}`, l);
+                    }
+                    logLookups.set(id, slotMap);
+                  }
+
+                  // Pre-compute slot totals
+                  const slotTotals = new Map<string, number>();
+                  for (const l of throughputData) {
+                    const key = `${l.slot_start}|${l.slot_end}`;
+                    slotTotals.set(key, (slotTotals.get(key) || 0) + l.guest_count);
+                  }
+
                   return (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
@@ -692,6 +729,7 @@ export default function AnalyticsPage() {
                             const name = idToName.get(id) || id.slice(0, 8);
                             const total = logs.reduce((sum, l) => sum + l.guest_count, 0);
                             const nameColor = colorMap.get(name) || LINE_COLORS[attractionIds.indexOf(id) % LINE_COLORS.length];
+                            const slotMap = logLookups.get(id)!;
 
                             return (
                               <tr key={id} className="border-b border-[#222]">
@@ -702,8 +740,7 @@ export default function AnalyticsPage() {
                                   </div>
                                 </td>
                                 {allSlots.map((slot) => {
-                                  const [start, end] = slot.split('|');
-                                  const log = logs.find((l) => l.slot_start === start && l.slot_end === end);
+                                  const log = slotMap.get(slot);
                                   return (
                                     <td key={slot} className="text-center py-2 px-2">
                                       {log && log.guest_count > 0 ? (
@@ -727,13 +764,10 @@ export default function AnalyticsPage() {
                               <span className="text-[#888] font-semibold text-sm">Park Total</span>
                             </td>
                             {allSlots.map((slot) => {
-                              const [start, end] = slot.split('|');
-                              const slotTotal = throughputData
-                                .filter((l) => l.slot_start === start && l.slot_end === end)
-                                .reduce((sum, l) => sum + l.guest_count, 0);
+                              const total = slotTotals.get(slot) || 0;
                               return (
                                 <td key={slot} className="text-center py-3 px-2">
-                                  <span className="text-[#888] font-semibold">{slotTotal > 0 ? slotTotal : '—'}</span>
+                                  <span className="text-[#888] font-semibold">{total > 0 ? total : '—'}</span>
                                 </td>
                               );
                             })}

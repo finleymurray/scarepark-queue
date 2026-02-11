@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
@@ -290,14 +290,28 @@ export default function SupervisorDashboard() {
         )
         .subscribe();
 
-      // Realtime: throughput_logs
+      // Realtime: throughput_logs — use payload to avoid refetching all logs
       logsChannel = supabase
         .channel('control-logs')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'throughput_logs' },
-          () => {
-            fetchThroughputLogs();
+          (payload) => {
+            const today = getTodayDateStr();
+            if (payload.eventType === 'INSERT') {
+              const newLog = payload.new as ThroughputLog;
+              if (newLog.log_date === today) {
+                setThroughputLogs((prev) => [...prev, newLog]);
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = payload.new as ThroughputLog;
+              setThroughputLogs((prev) =>
+                prev.map((l) => (l.id === updated.id ? updated : l))
+              );
+            } else if (payload.eventType === 'DELETE') {
+              const deleted = payload.old as ThroughputLog;
+              setThroughputLogs((prev) => prev.filter((l) => l.id !== deleted.id));
+            }
           }
         )
         .subscribe();
@@ -332,7 +346,7 @@ export default function SupervisorDashboard() {
   }, [loading, fetchThroughputLogs]);
 
   // Only rides (not shows) for supervisor dashboard
-  const rides = attractions.filter((a) => a.attraction_type !== 'show');
+  const rides = useMemo(() => attractions.filter((a) => a.attraction_type !== 'show'), [attractions]);
 
   // Auto-select first ride if current selection is invalid
   useEffect(() => {
@@ -342,28 +356,43 @@ export default function SupervisorDashboard() {
   }, [rides, selectedId]);
 
   // Selected attraction
-  const selected = rides.find((a) => a.id === selectedId) || null;
+  const selected = useMemo(() => rides.find((a) => a.id === selectedId) || null, [rides, selectedId]);
 
   // Hourly slots
-  const slots = generateHourlySlots(openingTime, closingTime);
-  const currentSlotIdx = getCurrentSlotIndex(slots);
+  const slots = useMemo(() => generateHourlySlots(openingTime, closingTime), [openingTime, closingTime]);
+  const currentSlotIdx = useMemo(() => getCurrentSlotIndex(slots), [slots, now]);
+
+  // Build a lookup map for throughput logs keyed by "attractionId|slotStart|slotEnd"
+  const logsMap = useMemo(() => {
+    const map = new Map<string, ThroughputLog>();
+    for (const l of throughputLogs) {
+      map.set(`${l.attraction_id}|${l.slot_start}|${l.slot_end}`, l);
+    }
+    return map;
+  }, [throughputLogs]);
 
   // Throughput for selected attraction (already filtered to today by fetch)
   function getLogForSlot(slot: { start: string; end: string }): ThroughputLog | undefined {
     if (!selectedId) return undefined;
-    return throughputLogs.find(
-      (l) => l.attraction_id === selectedId && l.slot_start === slot.start && l.slot_end === slot.end
-    );
+    return logsMap.get(`${selectedId}|${slot.start}|${slot.end}`);
   }
 
   // Total guests tonight for selected attraction
-  const guestsTonight = throughputLogs
-    .filter((l) => selectedId && l.attraction_id === selectedId)
-    .reduce((sum, l) => sum + l.guest_count, 0);
+  const guestsTonight = useMemo(() => {
+    if (!selectedId) return 0;
+    let sum = 0;
+    for (const l of throughputLogs) {
+      if (l.attraction_id === selectedId) sum += l.guest_count;
+    }
+    return sum;
+  }, [throughputLogs, selectedId]);
 
   // Total guests across ALL attractions tonight
-  const totalGuestsAllAttractions = throughputLogs
-    .reduce((sum, l) => sum + l.guest_count, 0);
+  const totalGuestsAllAttractions = useMemo(() => {
+    let sum = 0;
+    for (const l of throughputLogs) sum += l.guest_count;
+    return sum;
+  }, [throughputLogs]);
 
   // Handle queue time update
   async function handleWaitTimeUpdate(delta: number) {
@@ -435,7 +464,6 @@ export default function SupervisorDashboard() {
       });
     }
 
-    await fetchThroughputLogs();
   }
 
   function openKeypadForSlot(slot: { start: string; end: string }) {
