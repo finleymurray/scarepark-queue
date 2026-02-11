@@ -171,31 +171,31 @@ export default function TV3ShowTimes() {
                   )}
 
                   {/* Show Name / Logo */}
-                  <div className="relative z-10">
+                  <div className="relative z-10 flex-1 flex items-center justify-center w-full">
                     {logo ? (
                       <img
                         src={logo}
                         alt={show.name}
                         loading="lazy"
                         decoding="async"
-                        className="object-contain mb-[3%]"
+                        className="object-contain"
                         style={{
                           width: '95%',
                           maxWidth: 500,
                           height: 'auto',
-                          maxHeight: '50%',
+                          maxHeight: '80%',
                           filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.8)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 80px rgba(168, 85, 247, 0.3))',
                         }}
                       />
                     ) : (
-                      <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
+                      <h2 className="text-white text-[4vw] font-black text-center leading-tight">
                         {show.name}
                       </h2>
                     )}
                   </div>
 
                   {/* "Next Show" label */}
-                  <div className="text-center relative z-10">
+                  <div className="text-center relative z-10 flex-shrink-0">
                     {show.status === 'DELAYED' ? (
                       <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
                     ) : nextShow ? (

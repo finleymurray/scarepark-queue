@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { logAudit } from '@/lib/audit';
-import { getAttractionLogo } from '@/lib/logos';
+import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
@@ -419,8 +419,9 @@ const RideControl = React.memo(function RideControl({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           {(() => {
             const logo = getAttractionLogo(attraction.slug);
+            const glow = getLogoGlow(attraction.slug);
             return logo ? (
-              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48 }} />
+              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48, filter: glow || undefined }} />
             ) : null;
           })()}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -592,8 +593,9 @@ const ShowControl = React.memo(function ShowControl({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           {(() => {
             const logo = getAttractionLogo(attraction.slug);
+            const glow = getLogoGlow(attraction.slug);
             return logo ? (
-              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48 }} />
+              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48, filter: glow || undefined }} />
             ) : null;
           })()}
           <div style={{ flex: 1, minWidth: 0 }}>

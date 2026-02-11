@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
-import { getAttractionLogo } from '@/lib/logos';
+import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
 
 /* ── Helpers ── */
@@ -581,8 +581,9 @@ export default function SupervisorDashboard() {
             >
               {(() => {
                 const logo = getAttractionLogo(a.slug);
+                const glow = getLogoGlow(a.slug);
                 return logo ? (
-                  <img src={logo} alt="" width={20} height={20} loading="lazy" decoding="async" className="inline-block rounded object-contain" style={{ width: 20, height: 20, marginRight: 6, verticalAlign: 'middle' }} />
+                  <img src={logo} alt="" width={20} height={20} loading="lazy" decoding="async" className="inline-block rounded object-contain" style={{ width: 20, height: 20, marginRight: 6, verticalAlign: 'middle', filter: glow || undefined }} />
                 ) : null;
               })()}
               {a.name}
@@ -598,9 +599,10 @@ export default function SupervisorDashboard() {
             {/* ── Attraction Logo ── */}
             {(() => {
               const logo = getAttractionLogo(selected.slug);
+              const glow = getLogoGlow(selected.slug);
               return logo ? (
                 <div className="flex justify-center mb-6">
-                  <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100 }} />
+                  <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
                 </div>
               ) : null;
             })()}
