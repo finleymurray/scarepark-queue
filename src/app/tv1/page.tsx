@@ -107,7 +107,6 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        overflow: 'hidden',
       }}
     >
       {/* Name */}
