@@ -4,15 +4,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
-function ClockIcon() {
-  return (
-    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
   const [h, m] = time.split(':');
@@ -43,74 +34,169 @@ function getNextShowTime(showTimes: string[] | null): string | null {
   return null;
 }
 
-function AttractionRow({ attraction, style, now }: { attraction: Attraction; style?: React.CSSProperties; now: number }) {
+/* ── Row styles matching concept ── */
+const rideRowStyle: React.CSSProperties = {
+  background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.18) 0%, rgba(34, 197, 94, 0.08) 100%)',
+  border: '1px solid rgba(34, 197, 94, 0.25)',
+  boxShadow: 'inset 0 1px 0 rgba(34, 197, 94, 0.12), 0 2px 8px rgba(0,0,0,0.3)',
+};
+
+const showRowStyle: React.CSSProperties = {
+  background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.4) 0%, rgba(88, 28, 135, 0.2) 100%)',
+  border: '1px solid rgba(168, 85, 247, 0.25)',
+  boxShadow: 'inset 0 1px 0 rgba(168, 85, 247, 0.1), 0 2px 8px rgba(0,0,0,0.3)',
+};
+
+function AttractionRow({ attraction, height }: { attraction: Attraction; height: number }) {
   const status = attraction.status as AttractionStatus;
   const isShow = attraction.attraction_type === 'show';
   const nextShow = isShow ? getNextShowTime(attraction.show_times) : null;
 
   return (
     <div
-      className={`flex items-center justify-between rounded-lg border ${
-        isShow
-          ? 'bg-purple-950/40 border-purple-500/30'
-          : 'border-[#22C55E]/15'
-      }`}
       style={{
-        ...style,
+        ...(isShow ? showRowStyle : rideRowStyle),
+        height: `${height}px`,
+        minHeight: 50,
+        borderRadius: 14,
         paddingLeft: '3%',
         paddingRight: '3%',
-        backgroundColor: isShow ? undefined : 'rgba(34, 197, 94, 0.06)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        overflow: 'hidden',
       }}
     >
-      {/* Left: Attraction name + type badge */}
-      <div className="flex-1 min-w-0 mr-6 flex items-center gap-4">
-        <h3 className="text-white text-2xl font-bold truncate">
+      {/* Left: Name + badge */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <span
+          style={{
+            fontSize: '1.6vw',
+            fontWeight: 800,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            color: '#fff',
+          }}
+        >
           {attraction.name}
-        </h3>
+        </span>
         {isShow && (
-          <span className="flex-shrink-0 bg-purple-700/60 border border-purple-400/30 text-purple-200 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          <span
+            style={{
+              flexShrink: 0,
+              fontSize: '0.65vw',
+              fontWeight: 700,
+              padding: '4px 10px',
+              borderRadius: 20,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              background: 'rgba(168, 85, 247, 0.3)',
+              border: '1px solid rgba(168, 85, 247, 0.4)',
+              color: 'rgba(200, 170, 255, 0.9)',
+            }}
+          >
             Live Show
           </span>
         )}
       </div>
 
-      {/* Right: Status / Time / Show time */}
-      <div className="flex-shrink-0 text-right">
+      {/* Right: Status */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
         {status === 'CLOSED' && (
-          <span className="text-[#dc3545] text-2xl font-bold italic">
+          <span
+            style={{
+              background: 'rgba(220, 53, 69, 0.15)',
+              border: '1px solid rgba(220, 53, 69, 0.3)',
+              color: '#f87171',
+              fontSize: '1.4vw',
+              fontWeight: 700,
+              padding: '6px 20px',
+              borderRadius: 8,
+            }}
+          >
             Closed
           </span>
         )}
         {status === 'DELAYED' && (
-          <span className="text-[#f0ad4e] text-2xl font-bold">
+          <span
+            style={{
+              background: 'rgba(240, 173, 78, 0.15)',
+              border: '1px solid rgba(240, 173, 78, 0.3)',
+              color: '#f0ad4e',
+              fontSize: '1.4vw',
+              fontWeight: 700,
+              padding: '6px 20px',
+              borderRadius: 8,
+            }}
+          >
             Technical Delay
           </span>
         )}
         {status === 'AT CAPACITY' && (
-          <span className="text-[#F59E0B] text-2xl font-bold">
+          <span
+            style={{
+              background: 'rgba(245, 158, 11, 0.15)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              color: '#F59E0B',
+              fontSize: '1.4vw',
+              fontWeight: 700,
+              padding: '6px 20px',
+              borderRadius: 8,
+            }}
+          >
             At Capacity
           </span>
         )}
         {status === 'OPEN' && isShow && (
-          <div className="flex items-center gap-3">
-            <span className="text-white/60 text-base font-semibold uppercase tracking-wider">
+          <>
+            <span
+              style={{
+                fontSize: '0.9vw',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: 'rgba(255,255,255,0.45)',
+              }}
+            >
               Next Show
             </span>
-            <span className="text-white text-3xl font-black tabular-nums">
+            <span
+              style={{
+                fontSize: '2.2vw',
+                fontWeight: 900,
+                fontVariantNumeric: 'tabular-nums',
+                color: '#fff',
+              }}
+            >
               {nextShow ? formatTime12h(nextShow) : 'No More Shows'}
             </span>
-          </div>
+          </>
         )}
         {status === 'OPEN' && !isShow && (
-          <div className="flex items-center gap-3 text-white">
-            <ClockIcon />
-            <span className="text-3xl font-black tabular-nums">
+          <>
+            <span
+              style={{
+                fontSize: '2.2vw',
+                fontWeight: 900,
+                fontVariantNumeric: 'tabular-nums',
+                color: '#fff',
+              }}
+            >
               {attraction.wait_time}
             </span>
-            <span className="text-base font-semibold uppercase tracking-wider text-white/60">
+            <span
+              style={{
+                fontSize: '0.9vw',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: 'rgba(255,255,255,0.45)',
+              }}
+            >
               Mins
             </span>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -233,7 +319,7 @@ export default function TVDisplay() {
     : attractions;
 
   const count = sortedAttractions.length;
-  const gap = 10;
+  const gap = 8;
   const totalGap = count > 1 ? (count - 1) * gap : 0;
   const rowHeight = count > 0 && mainHeight > 0
     ? Math.floor((mainHeight - totalGap) / count)
@@ -249,48 +335,107 @@ export default function TVDisplay() {
 
   return (
     <div
-      className="h-screen bg-black flex flex-col overflow-hidden"
       style={{
+        height: '100vh',
+        background: '#000',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
         paddingLeft: TV_SAFE_PADDING,
         paddingRight: TV_SAFE_PADDING,
         paddingTop: '2%',
         paddingBottom: '2%',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: '#fff',
       }}
     >
-      {/* Header banner */}
-      <header className="bg-[#0a0a0a] border border-[#222] py-5 px-10 rounded-lg flex-shrink-0 flex items-center justify-center mb-4">
-        <h1 className="text-white text-4xl font-black uppercase tracking-[0.2em]">
+      {/* Header */}
+      <header
+        style={{
+          background: 'linear-gradient(135deg, rgba(20,20,20,0.9), rgba(10,10,10,0.95))',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          padding: '18px 40px',
+          textAlign: 'center',
+          marginBottom: 12,
+          flexShrink: 0,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: '2.2vw',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            margin: 0,
+          }}
+        >
           Queue Times
         </h1>
       </header>
 
-      {/* Attraction list — all items on one screen */}
-      <main ref={mainRef} className="flex-1 overflow-hidden">
+      {/* Rows */}
+      <main
+        ref={mainRef}
+        style={{ flex: 1, overflow: 'hidden' }}
+      >
         <div
-          className="h-full flex flex-col"
-          style={{ gap: `${gap}px` }}
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: `${gap}px`,
+          }}
         >
           {sortedAttractions.map((attraction) => (
             <AttractionRow
               key={attraction.id}
               attraction={attraction}
-              style={{ height: `${rowHeight}px`, minHeight: '50px' }}
-              now={now}
+              height={rowHeight}
             />
           ))}
         </div>
       </main>
 
-      {/* Footer bar — Park closing time */}
-      <footer className="bg-[#0a0a0a] border border-[#222] py-4 px-10 rounded-lg flex-shrink-0 mt-4">
-        <div className="flex items-center justify-center gap-4">
-          <span className="text-white/50 text-lg font-semibold uppercase tracking-wider">
-            Park Closes
-          </span>
-          <span className="text-white text-2xl font-black tabular-nums">
-            {formatTime12h(closingTime)}
-          </span>
-        </div>
+      {/* Footer */}
+      <footer
+        style={{
+          background: 'linear-gradient(135deg, rgba(20,20,20,0.9), rgba(10,10,10,0.95))',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          padding: '14px 40px',
+          marginTop: 8,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+        }}
+      >
+        <span
+          style={{
+            fontSize: '1.4vw',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.15em',
+            color: 'rgba(255,255,255,0.45)',
+          }}
+        >
+          Park Closes
+        </span>
+        <span
+          style={{
+            fontSize: '1.8vw',
+            fontWeight: 900,
+            fontVariantNumeric: 'tabular-nums',
+            color: '#fff',
+          }}
+        >
+          {formatTime12h(closingTime)}
+        </span>
       </footer>
     </div>
   );
