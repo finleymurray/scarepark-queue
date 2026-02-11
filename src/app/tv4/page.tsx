@@ -6,18 +6,18 @@ import { useEffect, useState, useRef } from 'react';
  * TV4 — Carousel that cycles through all TV views via iframes.
  *
  * Sequence:
- *   /tv   (queue + show times list)  — 30s
  *   /tv2  (ride banners, paginated)  — 30s  (tv2 handles its own 10s page cycling)
- *   /tv3  (show times grid)          — 30s
+ *   /tv3  (show times grid)          — 15s
+ *   /tv   (queue + show times list)  — 15s
  *
  * Each iframe stays mounted so realtime subscriptions stay alive.
  * Only the active iframe is visible; transitions use a fade effect.
  */
 
 const VIEWS = [
-  { path: '/tv', duration: 15000 },
   { path: '/tv2', duration: 30000 },
   { path: '/tv3', duration: 15000 },
+  { path: '/tv', duration: 15000 },
 ];
 
 const FADE_MS = 600;
