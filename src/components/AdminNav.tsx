@@ -9,7 +9,11 @@ const TABS = [
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Users', href: '/admin/users' },
   { label: 'Logs', href: '/admin/logs' },
+];
+
+const EXTERNAL_LINKS = [
   { label: 'Field Control', href: '/control' },
+  { label: 'TV Screens', href: '/tv' },
 ];
 
 export default function AdminNav({
@@ -116,6 +120,45 @@ export default function AdminNav({
               </Link>
             );
           })}
+
+          {/* Separator */}
+          <div style={{ width: 1, height: 20, background: '#333', margin: '0 8px', flexShrink: 0 }} />
+
+          {EXTERNAL_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#aaa',
+                textDecoration: 'none',
+                fontSize: 14,
+                padding: '6px 12px',
+                borderRadius: 6,
+                background: 'transparent',
+                transition: 'background 0.2s, color 0.2s',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#222';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#aaa';
+              }}
+            >
+              {link.label}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.5 }}>
+                <path d="M3.5 1.5H10.5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10.5 1.5L1.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
+          ))}
         </div>
       </div>
     </>
