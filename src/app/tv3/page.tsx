@@ -150,40 +150,27 @@ export default function TV3ShowTimes() {
               return (
                 <div
                   key={show.id}
-                  className="grid rounded-2xl border-2 border-purple-500/30 bg-purple-950/40"
-                  style={{
-                    padding: '5% 4%',
-                    gridTemplateRows: '1fr auto auto',
-                  }}
+                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 bg-purple-950/40"
+                  style={{ padding: '5% 4%' }}
                 >
-                  {/* Show Name — vertically centered in its row */}
-                  <div className="flex items-end justify-center pb-[4%]">
-                    <h2 className="text-white text-[4vw] font-black text-center leading-tight">
-                      {show.name}
-                    </h2>
-                  </div>
+                  {/* Show Name */}
+                  <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
+                    {show.name}
+                  </h2>
 
-                  {/* "Next Show" label — fixed row */}
-                  <div className="flex items-center justify-center py-[1%]">
+                  {/* "Next Show" label */}
+                  <div className="text-center">
                     {show.status === 'DELAYED' ? (
                       <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
                     ) : nextShow ? (
-                      <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider">
-                        Next Show
-                      </p>
-                    ) : (
-                      <p className="text-white/30 text-[1.5vw] font-semibold uppercase tracking-wider">
-                        &nbsp;
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Time — fixed row */}
-                  <div className="flex items-start justify-center pt-[1%]">
-                    {show.status === 'DELAYED' ? null : nextShow ? (
-                      <p className="text-white text-[5vw] font-black tabular-nums leading-none">
-                        {formatTime12h(nextShow)}
-                      </p>
+                      <>
+                        <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
+                          Next Show
+                        </p>
+                        <p className="text-white text-[5vw] font-black tabular-nums leading-none">
+                          {formatTime12h(nextShow)}
+                        </p>
+                      </>
                     ) : (
                       <p className="text-white/30 text-[2.5vw] font-bold">No More Shows</p>
                     )}
