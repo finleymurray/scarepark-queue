@@ -109,9 +109,9 @@ function AttractionRow({ attraction, height }: { attraction: Attraction; height:
               background: 'rgba(220, 53, 69, 0.15)',
               border: '1px solid rgba(220, 53, 69, 0.3)',
               color: '#f87171',
-              fontSize: '1.4vw',
+              fontSize: '1.1vw',
               fontWeight: 700,
-              padding: '6px 20px',
+              padding: '4px 16px',
               borderRadius: 8,
             }}
           >
@@ -124,9 +124,9 @@ function AttractionRow({ attraction, height }: { attraction: Attraction; height:
               background: 'rgba(240, 173, 78, 0.15)',
               border: '1px solid rgba(240, 173, 78, 0.3)',
               color: '#f0ad4e',
-              fontSize: '1.4vw',
+              fontSize: '1.1vw',
               fontWeight: 700,
-              padding: '6px 20px',
+              padding: '4px 16px',
               borderRadius: 8,
             }}
           >
@@ -139,9 +139,9 @@ function AttractionRow({ attraction, height }: { attraction: Attraction; height:
               background: 'rgba(245, 158, 11, 0.15)',
               border: '1px solid rgba(245, 158, 11, 0.3)',
               color: '#F59E0B',
-              fontSize: '1.4vw',
+              fontSize: '1.1vw',
               fontWeight: 700,
-              padding: '6px 20px',
+              padding: '4px 16px',
               borderRadius: 8,
             }}
           >

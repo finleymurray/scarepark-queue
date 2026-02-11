@@ -220,7 +220,7 @@ export default function TV3ShowTimes() {
       </main>
 
       {/* Footer — Park closing time */}
-      <footer className="bg-[#0a0a0a] border border-[#222] py-6 px-10 rounded-lg flex-shrink-0 mt-4">
+      <footer className="bg-[#0a0a0a] border border-[#222] py-6 px-10 rounded-lg flex-shrink-0 mt-6">
         <div className="flex items-center justify-center gap-4">
           <span className="text-white/50 text-[1.8vw] font-semibold uppercase tracking-wider">
             Park Closes
