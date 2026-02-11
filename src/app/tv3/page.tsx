@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getAttractionLogo } from '@/lib/logos';
 import type { Attraction, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -146,6 +147,7 @@ export default function TV3ShowTimes() {
           >
             {shows.map((show) => {
               const nextShow = getNextShowTime(show.show_times);
+              const logo = getAttractionLogo(show.slug);
 
               return (
                 <div
@@ -153,10 +155,21 @@ export default function TV3ShowTimes() {
                   className="flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 bg-purple-950/40"
                   style={{ padding: '5% 4%' }}
                 >
-                  {/* Show Name */}
-                  <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
-                    {show.name}
-                  </h2>
+                  {/* Show Name / Logo */}
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={show.name}
+                      loading="lazy"
+                      decoding="async"
+                      className="object-contain mb-[3%]"
+                      style={{ width: '60%', maxWidth: 280, height: 'auto', maxHeight: '35%' }}
+                    />
+                  ) : (
+                    <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
+                      {show.name}
+                    </h2>
+                  )}
 
                   {/* "Next Show" label */}
                   <div className="text-center">

@@ -6,6 +6,9 @@ const LOGO_SLUGS = new Set([
   'strings-of-control',
   'night-terrors',
   'signal-loss',
+  'the-summoning',
+  'nightmare-realm',
+  'shadows-unleashed',
 ]);
 
 /** Returns the logo path for an attraction slug, or null if no logo exists. */
