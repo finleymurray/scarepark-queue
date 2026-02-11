@@ -163,7 +163,7 @@ export default function TV3ShowTimes() {
                       loading="lazy"
                       decoding="async"
                       className="object-contain mb-[3%]"
-                      style={{ width: '75%', maxWidth: 360, height: 'auto', maxHeight: '40%' }}
+                      style={{ width: '85%', maxWidth: 440, height: 'auto', maxHeight: '45%' }}
                     />
                   ) : (
                     <h2 className="text-white text-[4vw] font-black text-center leading-tight mb-[3%]">
