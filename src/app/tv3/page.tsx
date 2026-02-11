@@ -234,7 +234,7 @@ export default function TV3ShowTimes() {
                   )}
 
                   {/* Logo + Show Time grouped together, centered */}
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-[0.5vw]" style={{ minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-[1vw]">
                     {/* Show Name / Logo */}
                     {logo ? (
                       <img
