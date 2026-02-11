@@ -351,6 +351,11 @@ export default function TVDisplay() {
   const [autoSort, setAutoSort] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [isEmbedded, setIsEmbedded] = useState(false);
+
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top);
+  }, []);
 
   // Tick every 30s so show times auto-advance
   useEffect(() => {
@@ -525,9 +530,11 @@ export default function TVDisplay() {
         }
       `}</style>
       {/* Header */}
-      <header style={headerStyle}>
-        <h1 className="tv1-header-title" style={headerTitleStyle}>Queue Times</h1>
-      </header>
+      {!isEmbedded && (
+        <header style={headerStyle}>
+          <h1 className="tv1-header-title" style={headerTitleStyle}>Live Times</h1>
+        </header>
+      )}
 
       {/* Content */}
       <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
@@ -637,32 +644,34 @@ export default function TVDisplay() {
       </div>
 
       {/* Footer */}
-      <footer style={footerStyle}>
-        <span
-          className="tv1-footer-label"
-          style={{
-            fontSize: '1.4vw',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            color: 'rgba(255,255,255,0.45)',
-          }}
-        >
-          Park Closes
-        </span>
-        <span
-          className="tv1-footer-time"
-          style={{
-            fontSize: '1.8vw',
-            fontWeight: 900,
-            fontVariantNumeric: 'tabular-nums',
-            color: '#fff',
-            textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
-          }}
-        >
-          {formatTime12h(closingTime)}
-        </span>
-      </footer>
+      {!isEmbedded && (
+        <footer style={footerStyle}>
+          <span
+            className="tv1-footer-label"
+            style={{
+              fontSize: '1.4vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              color: 'rgba(255,255,255,0.45)',
+            }}
+          >
+            Park Closes
+          </span>
+          <span
+            className="tv1-footer-time"
+            style={{
+              fontSize: '1.8vw',
+              fontWeight: 900,
+              fontVariantNumeric: 'tabular-nums',
+              color: '#fff',
+              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+            }}
+          >
+            {formatTime12h(closingTime)}
+          </span>
+        </footer>
+      )}
     </div>
   );
 }

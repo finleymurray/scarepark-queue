@@ -33,6 +33,49 @@ function getNextShowTime(showTimes: string[] | null): string | null {
   return null;
 }
 
+/* ── Styles matching TV1/TV2 ── */
+
+const headerStyle: React.CSSProperties = {
+  background:
+    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 12,
+  padding: '18px 40px',
+  textAlign: 'center' as const,
+  marginBottom: 12,
+  flexShrink: 0,
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+};
+
+const headerTitleStyle: React.CSSProperties = {
+  fontSize: '2.2vw',
+  fontWeight: 900,
+  textTransform: 'uppercase',
+  letterSpacing: '0.2em',
+  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.15))',
+  margin: 0,
+};
+
+const footerStyle: React.CSSProperties = {
+  background:
+    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 12,
+  padding: '14px 40px',
+  marginTop: 12,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 16,
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+};
+
 const TV_SAFE_PADDING = '3.5%';
 
 export default function TV3ShowTimes() {
@@ -40,6 +83,11 @@ export default function TV3ShowTimes() {
   const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [isEmbedded, setIsEmbedded] = useState(false);
+
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top);
+  }, []);
 
   // Tick every 30s so show times auto-advance
   useEffect(() => {
@@ -135,6 +183,13 @@ export default function TV3ShowTimes() {
         gap: 16,
       }}
     >
+      {/* Header */}
+      {!isEmbedded && (
+        <div style={headerStyle}>
+          <h1 style={headerTitleStyle}>Live Times</h1>
+        </div>
+      )}
+
       {/* Show Cards Grid */}
       <main className="flex-1 flex items-center justify-center overflow-hidden">
         {shows.length === 0 ? (
@@ -220,17 +275,33 @@ export default function TV3ShowTimes() {
         )}
       </main>
 
-      {/* Footer — Park closing time */}
-      <footer className="bg-[#0a0a0a] border border-[#222] py-6 px-10 rounded-lg flex-shrink-0">
-        <div className="flex items-center justify-center gap-4">
-          <span className="text-white/50 text-[1.8vw] font-semibold uppercase tracking-wider">
+      {/* Footer */}
+      {!isEmbedded && (
+        <footer style={footerStyle}>
+          <span
+            style={{
+              fontSize: '1.4vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              color: 'rgba(255,255,255,0.45)',
+            }}
+          >
             Park Closes
           </span>
-          <span className="text-white text-[2.5vw] font-black tabular-nums">
+          <span
+            style={{
+              fontSize: '1.8vw',
+              fontWeight: 900,
+              fontVariantNumeric: 'tabular-nums',
+              color: '#fff',
+              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+            }}
+          >
             {formatTime12h(closingTime)}
           </span>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

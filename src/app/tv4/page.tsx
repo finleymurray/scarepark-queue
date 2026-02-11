@@ -1,6 +1,17 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { ParkSetting } from '@/types/database';
+
+function formatTime12h(time: string): string {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${hour12}:${m} ${ampm}`;
+}
 
 /**
  * TV4 — Carousel that cycles through all TV views via iframes.
@@ -12,6 +23,10 @@ import { useEffect, useState, useRef } from 'react';
  *
  * Each iframe stays mounted so realtime subscriptions stay alive.
  * Only the active iframe is visible; transitions use a fade effect.
+ *
+ * TV4 renders its own persistent header + footer so they never jump
+ * between page transitions. The embedded TV1/TV2/TV3 iframes hide
+ * their own headers and footers via isEmbedded detection.
  */
 
 const VIEWS = [
@@ -21,12 +36,90 @@ const VIEWS = [
 ];
 
 const FADE_MS = 600;
+const TV_SAFE_PADDING = '3.5%';
+
+/* ── Styles matching TV1/TV2/TV3 exactly ── */
+
+const headerStyle: React.CSSProperties = {
+  background:
+    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 12,
+  padding: '18px 40px',
+  textAlign: 'center' as const,
+  marginBottom: 12,
+  flexShrink: 0,
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+};
+
+const headerTitleStyle: React.CSSProperties = {
+  fontSize: '2.2vw',
+  fontWeight: 900,
+  textTransform: 'uppercase',
+  letterSpacing: '0.2em',
+  background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.15))',
+  margin: 0,
+};
+
+const footerStyle: React.CSSProperties = {
+  background:
+    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 12,
+  padding: '14px 40px',
+  marginTop: 12,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 16,
+  boxShadow:
+    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+};
 
 export default function TV4Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [fading, setFading] = useState(false);
+  const [closingTime, setClosingTime] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* Fetch closing time + subscribe to changes */
+  useEffect(() => {
+    async function fetchClosingTime() {
+      const { data } = await supabase
+        .from('park_settings')
+        .select('key,value')
+        .eq('key', 'closing_time')
+        .single();
+      if (data) setClosingTime(data.value);
+    }
+
+    fetchClosingTime();
+
+    const channel = supabase
+      .channel('tv4-settings')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'park_settings' },
+        (payload) => {
+          const setting = payload.new as ParkSetting;
+          if (setting.key === 'closing_time') {
+            setClosingTime(setting.value);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  /* Carousel timer */
   useEffect(() => {
     function scheduleNext() {
       const current = VIEWS[activeIndex];
@@ -35,7 +128,6 @@ export default function TV4Carousel() {
         setTimeout(() => {
           setActiveIndex((prev) => (prev + 1) % VIEWS.length);
           setFading(false);
-          // scheduleNext is called via the activeIndex effect below
         }, FADE_MS);
       }, current.duration);
     }
@@ -48,38 +140,64 @@ export default function TV4Carousel() {
   }, [activeIndex]);
 
   return (
-    <div className="h-screen w-screen bg-black relative overflow-hidden">
-      {VIEWS.map((view, i) => (
-        <iframe
-          key={view.path}
-          src={view.path}
-          title={`TV View ${view.path}`}
-          className="absolute inset-0 w-full h-full border-0 transition-opacity"
-          style={{
-            opacity: i === activeIndex && !fading ? 1 : 0,
-            pointerEvents: i === activeIndex ? 'auto' : 'none',
-            transitionDuration: `${FADE_MS}ms`,
-          }}
-        />
-      ))}
+    <div
+      className="h-screen w-screen bg-black flex flex-col overflow-hidden"
+      style={{
+        paddingLeft: TV_SAFE_PADDING,
+        paddingRight: TV_SAFE_PADDING,
+        paddingTop: '2%',
+        paddingBottom: '2%',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: '#fff',
+      }}
+    >
+      {/* Header */}
+      <div style={headerStyle}>
+        <h1 style={headerTitleStyle}>Live Times</h1>
+      </div>
 
-      {/* View indicator dots */}
-      <div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-50"
-        style={{ pointerEvents: 'none' }}
-      >
+      {/* Iframe carousel */}
+      <div className="flex-1 relative overflow-hidden">
         {VIEWS.map((view, i) => (
-          <div
+          <iframe
             key={view.path}
-            className="rounded-full transition-colors duration-300"
+            src={view.path}
+            title={`TV View ${view.path}`}
+            className="absolute inset-0 w-full h-full border-0 transition-opacity"
             style={{
-              width: 8,
-              height: 8,
-              backgroundColor: i === activeIndex ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.25)',
+              opacity: i === activeIndex && !fading ? 1 : 0,
+              pointerEvents: i === activeIndex ? 'auto' : 'none',
+              transitionDuration: `${FADE_MS}ms`,
             }}
           />
         ))}
       </div>
+
+      {/* Footer */}
+      <footer style={footerStyle}>
+        <span
+          style={{
+            fontSize: '1.4vw',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.15em',
+            color: 'rgba(255,255,255,0.45)',
+          }}
+        >
+          Park Closes
+        </span>
+        <span
+          style={{
+            fontSize: '1.8vw',
+            fontWeight: 900,
+            fontVariantNumeric: 'tabular-nums',
+            color: '#fff',
+            textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+          }}
+        >
+          {formatTime12h(closingTime)}
+        </span>
+      </footer>
     </div>
   );
 }

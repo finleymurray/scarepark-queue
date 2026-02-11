@@ -497,7 +497,7 @@ export default function TV2Display() {
       {/* Header */}
       {!isEmbedded && (
         <div style={headerStyle}>
-          <h1 style={headerTitleStyle}>Queue Times</h1>
+          <h1 style={headerTitleStyle}>Live Times</h1>
         </div>
       )}
 
