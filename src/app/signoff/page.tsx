@@ -543,7 +543,7 @@ export default function SignoffPage() {
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex gap-4" style={{ marginBottom: 24 }}>
+              <div className="inline-flex bg-[#1a1a1a] border border-[#333] rounded-[10px] p-1" style={{ marginBottom: 24 }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -558,24 +558,24 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`px-5 py-2.5 rounded-[8px] text-sm font-medium capitalize transition-colors touch-manipulation
+                      className={`flex items-center gap-2 px-6 py-3 rounded-[8px] text-sm font-semibold capitalize transition-colors touch-manipulation
                         ${closingLocked
-                          ? 'text-[#555] bg-transparent cursor-not-allowed'
+                          ? 'text-[#555] cursor-not-allowed'
                           : active
-                            ? 'bg-[#222] text-white'
-                            : 'text-[#aaa] hover:bg-[#222] hover:text-white'
+                            ? 'bg-white text-black'
+                            : 'text-[#888] hover:text-white'
                         }`}
                     >
                       {closingLocked && (
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="inline-block mr-1.5 -mt-0.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                           <rect x="2" y="5.5" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                           <path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
                         </svg>
                       )}
                       {p}
                       {pSections.length > 0 && !closingLocked && (
-                        <span className="ml-3 text-xs opacity-60">
-                          {allDone ? '\u2713' : ` ${pCompleted}/${pSections.length}`}
+                        <span className={`text-xs ${active ? 'opacity-50' : 'opacity-60'}`}>
+                          {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
                         </span>
                       )}
                     </button>

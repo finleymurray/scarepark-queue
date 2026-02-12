@@ -370,11 +370,11 @@ export default function SignoffConfigPage() {
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 28px' }}>
         <h2 className="text-white text-2xl font-bold mb-10">Sign-Off</h2>
 
-        <div className="flex gap-2 mb-12">
+        <div className="inline-flex bg-[#1a1a1a] border border-[#333] rounded-[10px] p-1 mb-12">
           {([{ key: 'config' as AdminTab, label: 'Configuration' }, { key: 'history' as AdminTab, label: 'History & Status' }]).map((tab) => {
             const isActive = activeTab === tab.key;
             return (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-5 py-2.5 rounded-[6px] text-sm font-medium transition-colors ${isActive ? 'bg-[#222] text-white' : 'text-[#aaa] hover:bg-[#222] hover:text-white'}`}>
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-6 py-3 rounded-[8px] text-sm font-semibold transition-colors touch-manipulation ${isActive ? 'bg-white text-black' : 'text-[#888] hover:text-white'}`}>
                 {tab.label}
               </button>
             );
