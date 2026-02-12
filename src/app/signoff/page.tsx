@@ -12,7 +12,7 @@ import {
   SIGNOFF_ROLE_LABELS,
   getTodayDateStr,
 } from '@/lib/signoff';
-import { getAttractionLogo, getLogoGlow, getAttractionBg, getGlowRgb } from '@/lib/logos';
+import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import type {
   Attraction,
   SignoffSection,
@@ -395,7 +395,7 @@ export default function SignoffPage() {
       />
 
       {/* Header */}
-      <div className="bg-[#111] border-b border-[#333] px-5 py-3 flex items-center justify-between shrink-0">
+      <div className="bg-[#111] border-b border-[#333] px-6 py-4 flex items-center justify-between shrink-0">
         <a href="/signoff" className="flex items-center gap-3 no-underline">
           <Image src="/logo.png" alt="Immersive Core" width={36} height={36} priority style={{ width: 36, height: 'auto' }} />
           <h1 className="text-white text-lg font-semibold m-0">Sign-Off</h1>
@@ -409,13 +409,12 @@ export default function SignoffPage() {
         {/* Attraction Grid (no attraction selected)      */}
         {/* ────────────────────────────────────────────── */}
         {!selectedAttractionId && (
-          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
-            <p className="text-[#888] text-sm text-center mb-6">Select an attraction to begin sign-off</p>
+          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '32px 24px' }}>
+            <p className="text-[#888] text-sm text-center mb-8">Select an attraction to begin sign-off</p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
               {attractions.map((a) => {
                 const logo = getAttractionLogo(a.slug);
-                const bg = getAttractionBg(a.slug);
                 const glow = getLogoGlow(a.slug);
                 const glowRgb = getGlowRgb(a.slug);
 
@@ -423,32 +422,24 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden rounded-[8px] border border-[#333] bg-[#111]
+                    className="relative overflow-hidden rounded-[12px] border border-[#333] bg-[#111]
                                transition-all duration-200 touch-manipulation
                                hover:border-[#555] active:scale-[0.97]
                                focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)]"
                     style={{ aspectRatio: '1' }}
                   >
-                    {/* Background image */}
-                    {bg && (
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-20"
-                        style={{ backgroundImage: `url(${bg})` }}
-                      />
-                    )}
-
-                    {/* Glow radial gradient overlay */}
+                    {/* Subtle glow radial gradient */}
                     {glowRgb && (
                       <div
-                        className="absolute inset-0 opacity-15"
+                        className="absolute inset-0"
                         style={{
-                          background: `radial-gradient(circle at center, rgba(${glowRgb}, 0.4) 0%, transparent 70%)`,
+                          background: `radial-gradient(circle at center, rgba(${glowRgb}, 0.12) 0%, transparent 70%)`,
                         }}
                       />
                     )}
 
                     {/* Logo + Name */}
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full px-3 py-4 gap-3">
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 py-6 gap-4">
                       {logo ? (
                         <img
                           src={logo}
@@ -456,21 +447,21 @@ export default function SignoffPage() {
                           loading="lazy"
                           decoding="async"
                           className="object-contain"
-                          style={{ width: '70%', maxWidth: 120, height: 'auto', maxHeight: '55%', filter: glow || undefined }}
+                          style={{ width: '75%', maxWidth: 140, height: 'auto', maxHeight: '55%', filter: glow || undefined }}
                         />
                       ) : (
                         <div className="w-16 h-16 rounded-full bg-[#222] flex items-center justify-center">
                           <span className="text-[#888] text-2xl font-bold">{a.name.charAt(0)}</span>
                         </div>
                       )}
-                      <span className="text-white text-[13px] font-semibold text-center leading-tight">{a.name}</span>
+                      <span className="text-white text-sm font-semibold text-center leading-tight">{a.name}</span>
                     </div>
                   </button>
                 );
               })}
             </div>
 
-            <div className="text-center pt-8 pb-6">
+            <div className="text-center pt-10 pb-8">
               <Link href="/privacy" className="text-[#555] text-[11px] no-underline hover:text-[#888]">
                 Privacy Policy
               </Link>
@@ -482,11 +473,11 @@ export default function SignoffPage() {
         {/* Sign-Off View (attraction selected)           */}
         {/* ────────────────────────────────────────────── */}
         {selectedAttraction && (
-          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '32px 24px' }}>
             {/* Back button */}
             <button
               onClick={goBackToGrid}
-              className="flex items-center gap-2 text-[#aaa] text-sm font-medium mb-5
+              className="flex items-center gap-2 text-[#aaa] text-sm font-medium mb-6
                          hover:text-white transition-colors touch-manipulation"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -500,16 +491,16 @@ export default function SignoffPage() {
               const logo = getAttractionLogo(selectedAttraction.slug);
               const glow = getLogoGlow(selectedAttraction.slug);
               return logo ? (
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-8">
                   <img src={logo} alt={selectedAttraction.name} loading="lazy" decoding="async"
-                       className="object-contain w-[100px] sm:w-[160px]"
-                       style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
+                       className="object-contain w-[120px] sm:w-[180px]"
+                       style={{ height: 'auto', maxHeight: 120, filter: glow || undefined }} />
                 </div>
               ) : null;
             })()}
 
             {/* ── Sign-Off Status Badge ── */}
-            <div className="mb-8 flex flex-col items-center gap-1">
+            <div className="mb-10 flex flex-col items-center gap-2">
               {fullySignedOff ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -526,14 +517,14 @@ export default function SignoffPage() {
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
-              <legend className="text-base font-semibold text-white px-2 flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-7 h-7 bg-white text-black rounded-full text-sm font-bold">1</span>
+            <fieldset className="border border-[#333] rounded-[12px] p-6 sm:p-8 mb-8 bg-[#111]">
+              <legend className="text-base font-semibold text-white px-3 flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-white text-black rounded-full text-sm font-bold">1</span>
                 Sign-Off Sections
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex gap-2 mb-5">
+              <div className="flex gap-3 mb-6">
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -548,7 +539,7 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`px-3 py-1.5 rounded-[6px] text-sm font-medium capitalize transition-colors touch-manipulation
+                      className={`px-4 py-2 rounded-[6px] text-sm font-medium capitalize transition-colors touch-manipulation
                         ${closingLocked
                           ? 'text-[#555] bg-transparent cursor-not-allowed'
                           : active
@@ -575,7 +566,7 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div className="bg-[#1a1a1a] border border-[#333] rounded-[6px] px-4 py-3 mb-5">
+                <div className="bg-[#1a1a1a] border border-[#333] rounded-[8px] px-5 py-4 mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[#888] text-[13px]">
                       {completedSections}/{totalSections} sections signed off
@@ -605,7 +596,7 @@ export default function SignoffPage() {
               )}
 
               {/* Section cards */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {phaseSections.map((section, idx) => {
                   const completion = completions.get(section.id);
                   const isCompleted = !!completion;
@@ -616,25 +607,25 @@ export default function SignoffPage() {
                   return (
                     <div
                       key={section.id}
-                      className={`bg-[#1a1a1a] border rounded-[6px] overflow-hidden transition-colors
+                      className={`bg-[#1a1a1a] border rounded-[8px] overflow-hidden transition-colors
                         ${isCompleted ? 'border-[#4caf50]/30' : isActive ? 'border-[#555]' : 'border-[#333]'}`}
                     >
                       {/* Section header — clickable if not completed */}
                       <button
                         onClick={() => !isCompleted && openSection(section.id)}
                         disabled={isCompleted}
-                        className="w-full text-left px-4 py-3 flex items-center justify-between touch-manipulation bg-transparent border-none"
+                        className="w-full text-left px-5 py-4 flex items-center justify-between touch-manipulation bg-transparent border-none"
                         style={{ cursor: isCompleted ? 'default' : 'pointer' }}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           {isCompleted ? (
-                            <div className="w-7 h-7 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                 <path d="M3 7L6 10L11 4" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
                           ) : (
-                            <span className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center shrink-0 text-sm font-bold">
+                            <span className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0 text-sm font-bold">
                               {idx + 1}
                             </span>
                           )}
@@ -665,25 +656,29 @@ export default function SignoffPage() {
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div className="px-4 pb-4 border-t border-[#333]">
+                        <div className="px-5 pb-5 border-t border-[#333]">
                           {sectionItems.length === 0 ? (
-                            <p className="text-[#666] text-sm py-4">No checklist items for this section.</p>
+                            <p className="text-[#666] text-sm py-6">No checklist items for this section.</p>
                           ) : (
-                            <div className="py-3 flex flex-col gap-1.5">
+                            <div className="py-4 flex flex-col gap-2.5">
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-3 px-3 py-2.5 bg-[#1a1a1a] border rounded-[6px] cursor-pointer
+                                    className={`flex items-center gap-4 px-4 py-3.5 bg-[#1a1a1a] border rounded-[8px] cursor-pointer
                                       transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#333] hover:border-[#555]'}`}
                                   >
-                                    <div className={`w-[36px] h-[36px] rounded-[6px] flex items-center justify-center shrink-0 transition-colors
+                                    <div className={`w-9 h-9 rounded-[6px] flex items-center justify-center shrink-0 transition-colors
                                       ${checked ? 'bg-[#0a3d1f] border-2 border-[#4caf50]' : 'bg-[#222] border-2 border-[#555]'}`}>
                                       {checked ? (
-                                        <span className="text-[#4caf50] text-[22px] font-bold leading-none">&check;</span>
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                          <path d="M3.5 8L6.5 11L12.5 5" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
                                       ) : (
-                                        <span className="text-[#ef4444] text-[22px] font-bold leading-none">&times;</span>
+                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                          <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+                                        </svg>
                                       )}
                                     </div>
                                     <input
@@ -705,7 +700,7 @@ export default function SignoffPage() {
                           <button
                             onClick={() => handleSignOffClick(section.id)}
                             disabled={!allChecked && sectionItems.length > 0}
-                            className="w-full mt-2 py-3 text-sm font-semibold rounded-[6px] transition-colors touch-manipulation
+                            className="w-full mt-4 py-3.5 text-sm font-semibold rounded-[8px] transition-colors touch-manipulation
                                        flex items-center justify-center gap-2
                                        disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-[#ddd]"
                           >

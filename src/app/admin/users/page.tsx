@@ -28,7 +28,7 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="bg-[#111] border border-[#333] rounded-[12px] p-6 w-full max-w-[400px]">
+      <div className="bg-[#111] border border-[#333] rounded-[12px] p-8 w-full max-w-[400px]">
         <p className="text-[#e0e0e0] text-sm font-semibold mb-2">{title}</p>
         <p className="text-[#888] text-sm mb-5">{message}</p>
         <div className="flex gap-3">
@@ -179,7 +179,7 @@ function UserFormModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <div className="px-6 py-6 space-y-6" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {formError && (
             <div className="bg-[#2a1010] border border-[#d43518] rounded-[6px] p-3">
               <p className="text-[#f0a0a0] text-sm">{formError}</p>
@@ -204,47 +204,47 @@ function UserFormModal({
           )}
 
           {/* Section 1: Basic info */}
-          <fieldset className="border border-[#333] rounded-[8px] p-4 mb-4 bg-[#111]">
+          <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
             <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">1</span>
               Basic Info
             </legend>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {!formPinOnly && (
                 <div>
-                  <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Email</label>
+                  <label className="block text-[#ccc] text-[13px] font-medium mb-2">Email</label>
                   <input
                     type="email"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     disabled={!!editing}
                     placeholder="user@example.com"
-                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
+                    className="w-full px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
                                placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
                                disabled:opacity-40"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Display Name</label>
+                <label className="block text-[#ccc] text-[13px] font-medium mb-2">Display Name</label>
                 <input
                   type="text"
                   value={formDisplayName}
                   onChange={(e) => setFormDisplayName(e.target.value)}
                   placeholder="e.g. John S."
-                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
+                  className="w-full px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
                              placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
                 />
               </div>
               {!formPinOnly && (
                 <div>
-                  <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Role</label>
+                  <label className="block text-[#ccc] text-[13px] font-medium mb-2">Role</label>
                   <div className="flex gap-2">
                     {(['supervisor', 'admin'] as const).map((r) => (
                       <button
                         key={r}
                         onClick={() => setFormRole(r)}
-                        className={`flex-1 py-3 rounded-[6px] text-sm font-semibold capitalize transition-colors border
+                        className={`flex-1 py-3.5 rounded-[6px] text-sm font-semibold capitalize transition-colors border
                           ${formRole === r
                             ? r === 'admin'
                               ? 'bg-[#0a3d1f] border-[#0a3d1f] text-[#4caf50]'
@@ -262,14 +262,14 @@ function UserFormModal({
           </fieldset>
 
           {/* Section 2: Sign-off */}
-          <fieldset className="border border-[#333] rounded-[8px] p-4 mb-4 bg-[#111]">
+          <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
             <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">2</span>
               Sign-Off
             </legend>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">4-Digit PIN</label>
+                <label className="block text-[#ccc] text-[13px] font-medium mb-2">4-Digit PIN</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -279,7 +279,7 @@ function UserFormModal({
                     value={formPin}
                     onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="0000"
-                    className="flex-1 px-4 py-3 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
+                    className="flex-1 px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
                                placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
                                tracking-[0.4em] font-mono text-center text-lg"
                   />
@@ -289,7 +289,7 @@ function UserFormModal({
                       const pin = String(Math.floor(1000 + Math.random() * 9000));
                       setFormPin(pin);
                     }}
-                    className="px-4 py-3 border border-[#555] rounded-[6px] text-[#ccc] text-xs font-semibold
+                    className="px-4 py-3.5 border border-[#555] rounded-[6px] text-[#ccc] text-xs font-semibold
                                hover:border-[#888] hover:text-white transition-colors whitespace-nowrap"
                   >
                     Generate
@@ -305,7 +305,7 @@ function UserFormModal({
                       <button
                         key={role}
                         onClick={() => toggleSignoffRole(role)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-[6px] text-left transition-colors border
+                        className={`flex items-center gap-3 px-5 py-4 rounded-[6px] text-left transition-colors border
                           ${checked ? 'bg-[#0a3d1f] border-[#4caf50] text-[#4caf50]' : 'bg-[#1a1a1a] border-[#333] text-[#888]'}`}
                       >
                         <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
@@ -327,7 +327,7 @@ function UserFormModal({
 
           {/* Section 3: Allowed attractions (supervisors only) */}
           {(formRole === 'supervisor' || formPinOnly) && (
-            <fieldset className="border border-[#333] rounded-[8px] p-4 mb-4 bg-[#111]">
+            <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
               <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
                 <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">3</span>
                 Allowed Attractions
@@ -340,7 +340,7 @@ function UserFormModal({
                     <button
                       key={a.id}
                       onClick={() => toggleAttraction(a.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-[6px] text-left transition-colors border
+                      className={`flex items-center gap-3 px-5 py-4 rounded-[6px] text-left transition-colors border
                         ${checked ? 'bg-[#1a1a1a] border-[#555] text-[#e0e0e0]' : 'bg-[#111] border-[#333] text-[#666]'}`}
                     >
                       <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
@@ -361,10 +361,10 @@ function UserFormModal({
         </div>
 
         {/* Modal footer */}
-        <div className="flex gap-3 px-6 py-4 border-t border-[#333]">
+        <div className="flex gap-3 px-6 py-5 border-t border-[#333]">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 border border-[#555] text-[#ccc] text-sm font-semibold
+            className="flex-1 py-3.5 border border-[#555] text-[#ccc] text-sm font-semibold
                        rounded-[6px] hover:border-[#888] hover:text-white transition-colors"
           >
             Cancel
@@ -372,7 +372,7 @@ function UserFormModal({
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 py-3 bg-white text-black text-sm font-bold rounded-[6px]
+            className="flex-1 py-3.5 bg-white text-black text-sm font-bold rounded-[6px]
                        hover:bg-[#ddd] transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
@@ -571,10 +571,10 @@ export default function UsersPage() {
     return (
       <div
         key={user.id}
-        className="bg-[#111] border border-[#333] rounded-[8px] p-5 transition-colors hover:border-[#555]"
+        className="bg-[#111] border border-[#333] rounded-[8px] p-6 transition-colors hover:border-[#555]"
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
               ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
@@ -615,7 +615,7 @@ export default function UsersPage() {
         </div>
 
         {/* Info row */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {/* Role badge */}
           <span className={`text-[10px] px-2 py-1 rounded-[12px] font-semibold uppercase
             ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
@@ -639,7 +639,7 @@ export default function UsersPage() {
 
         {/* Sign-off roles */}
         {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#333]">
+          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-[#333]">
             {pin.signoff_roles.map((r) => (
               <span key={r} className="text-[10px] px-2 py-1 bg-[#0a3d1f] text-[#4caf50] rounded-[12px] font-medium">
                 {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
@@ -654,15 +654,15 @@ export default function UsersPage() {
   function renderGroup(label: string, groupUsers: UserRole[], badgeColor: string, badgeTextColor: string) {
     if (groupUsers.length === 0) return null;
     return (
-      <div className="mb-8">
-        <div className="flex items-center gap-2.5 mb-4">
+      <div className="mb-10">
+        <div className="flex items-center gap-2.5 mb-5">
           <span className="text-[10px] px-2.5 py-1 rounded-[12px] font-bold uppercase"
                 style={{ background: badgeColor, color: badgeTextColor }}>
             {label}
           </span>
           <span className="text-[#666] text-xs">{groupUsers.length}</span>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groupUsers.map(renderUserCard)}
         </div>
       </div>
@@ -692,13 +692,13 @@ export default function UsersPage() {
         isPinOnlyUser={isPinOnlyUser}
       />
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
         {/* Page header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <h2 className="text-[#e0e0e0] text-2xl font-bold">Users</h2>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-[6px]
+            className="flex items-center gap-2 px-6 py-3.5 bg-white text-black text-sm font-bold rounded-[6px]
                        hover:bg-[#ddd] transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -709,7 +709,7 @@ export default function UsersPage() {
         </div>
 
         {users.length === 0 ? (
-          <div className="bg-[#111] border border-[#333] rounded-[8px] p-12 text-center">
+          <div className="bg-[#111] border border-[#333] rounded-[8px] p-16 text-center">
             <p className="text-[#666] text-sm">No users configured yet.</p>
             <p className="text-[#444] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
           </div>
@@ -721,7 +721,7 @@ export default function UsersPage() {
           </>
         )}
 
-        <div className="mt-6 text-center">
+        <div className="mt-10 text-center">
           <Link href="/privacy" className="text-[#333] text-[11px] no-underline hover:text-[#555]">
             Privacy Policy
           </Link>
