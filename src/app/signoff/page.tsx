@@ -578,8 +578,8 @@ export default function SignoffPage() {
                       )}
                       {p}
                       {pSections.length > 0 && !closingLocked && (
-                        <span className="ml-2 text-xs opacity-60">
-                          {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
+                        <span className="ml-3 text-xs opacity-60">
+                          {allDone ? '\u2713' : ` ${pCompleted}/${pSections.length}`}
                         </span>
                       )}
                     </button>
@@ -697,13 +697,13 @@ export default function SignoffPage() {
                           {sectionItems.length === 0 ? (
                             <p className="text-[#666] text-sm py-6">No checklist items for this section.</p>
                           ) : (
-                            <div className="py-5 flex flex-col gap-4">
+                            <div className="py-4 flex flex-col gap-3">
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-5 px-5 py-5 bg-[#1a1a1a] border rounded-[10px] cursor-pointer
+                                    className={`flex items-center gap-4 px-5 py-4 bg-[#1a1a1a] border rounded-[10px] cursor-pointer
                                       transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#333] hover:border-[#555]'}`}
                                   >
                                     <div className={`w-10 h-10 rounded-[8px] flex items-center justify-center shrink-0 transition-colors

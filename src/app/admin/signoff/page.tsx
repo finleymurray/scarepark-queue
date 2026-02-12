@@ -439,7 +439,7 @@ export default function SignoffConfigPage() {
                       const sectionItems = getItemsForSection(section.id);
                       return (
                         <div key={section.id} className="bg-[#1a1a1a] border border-[#333] rounded-[6px] overflow-hidden">
-                          <div className="flex items-center justify-between px-7 py-6">
+                          <div className="flex items-center justify-between px-7 py-5 border-b border-[#333]">
                             {editingSectionId === section.id ? (
                               <div className="flex-1 flex items-center gap-3 flex-wrap">
                                 <input type="text" value={editingSectionName} onChange={(e) => setEditingSectionName(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveSectionEdit(); if (e.key === 'Escape') setEditingSectionId(null); }} className="flex-1 min-w-[140px] px-3 py-1.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors" />
@@ -480,10 +480,10 @@ export default function SignoffConfigPage() {
                             )}
                           </div>
 
-                          <div className="px-7 pb-6 space-y-4">
+                          <div className="px-7 pb-7 pt-2 space-y-4">
                             {sectionItems.length === 0 && (<p className="text-[#666] text-xs py-1">No checklist items yet.</p>)}
                             {sectionItems.map((item) => (
-                              <div key={item.id} className="bg-[#111] border border-[#333] rounded-[6px] px-6 py-5 flex items-center gap-3">
+                              <div key={item.id} className="bg-[#111] border border-[#333] rounded-[8px] px-6 py-5 flex items-center gap-4">
                                 <div className="w-5 h-5 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0"><GreenCheckIcon size={11} /></div>
                                 {editingItemId === item.id ? (
                                   <div className="flex-1 flex items-center gap-2">

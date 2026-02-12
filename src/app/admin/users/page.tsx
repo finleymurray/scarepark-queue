@@ -573,7 +573,7 @@ export default function UsersPage() {
         key={user.id}
         className="bg-[#111] border border-[#333] rounded-[12px] p-7 transition-colors hover:border-[#555]"
       >
-        <div className="flex items-start justify-between mb-5">
+        <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-5">
             {/* Avatar */}
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
@@ -615,7 +615,7 @@ export default function UsersPage() {
         </div>
 
         {/* Info row */}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           {/* Role badge */}
           <span className={`text-[10px] px-2 py-1 rounded-[12px] font-semibold uppercase
             ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
