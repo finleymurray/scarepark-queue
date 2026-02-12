@@ -319,7 +319,6 @@ export default function TV2Display() {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
   const pageRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
-  const animFrameRef = useRef<number>(0);
   const perPage = 2;
 
   useEffect(() => {
@@ -450,7 +449,7 @@ export default function TV2Display() {
       : 100;
   }, [sortedRides.length, mainHeight]);
 
-  // JS-driven fade animation — no reliance on CSS transitions
+  // Fade via inline CSS transition + setTimeout (GPU-composited, no per-frame JS)
   useEffect(() => {
     if (totalPages <= 1) {
       setCurrentPage(0);
@@ -462,34 +461,24 @@ export default function TV2Display() {
         const oldPage = prev;
         const newPage = (prev + 1) % totalPages;
 
-        // Animate: fade out old, fade in new
         const oldEl = pageRefsMap.current.get(oldPage);
         const newEl = pageRefsMap.current.get(newPage);
-        if (oldEl) oldEl.style.opacity = '1';
-        if (newEl) { newEl.style.opacity = '0'; newEl.style.pointerEvents = 'auto'; }
 
-        const startTime = performance.now();
-        function animate(now: number) {
-          const progress = Math.min((now - startTime) / FADE_DURATION, 1);
-          if (oldEl) oldEl.style.opacity = String(1 - progress);
-          if (newEl) newEl.style.opacity = String(progress);
-          if (progress < 1) {
-            animFrameRef.current = requestAnimationFrame(animate);
-          } else {
-            if (oldEl) { oldEl.style.opacity = '0'; oldEl.style.pointerEvents = 'none'; }
-            if (newEl) { newEl.style.opacity = '1'; newEl.style.pointerEvents = 'auto'; }
-          }
-        }
-        animFrameRef.current = requestAnimationFrame(animate);
+        // Trigger CSS transition: fade out old, fade in new
+        if (oldEl) oldEl.style.opacity = '0';
+        if (newEl) newEl.style.opacity = '1';
+
+        // After transition completes, update pointerEvents
+        setTimeout(() => {
+          if (oldEl) oldEl.style.pointerEvents = 'none';
+          if (newEl) newEl.style.pointerEvents = 'auto';
+        }, FADE_DURATION);
 
         return newPage;
       });
     }, PAGE_INTERVAL);
 
-    return () => {
-      clearInterval(interval);
-      cancelAnimationFrame(animFrameRef.current);
-    };
+    return () => clearInterval(interval);
   }, [totalPages]);
 
   useEffect(() => {
@@ -578,6 +567,7 @@ export default function TV2Display() {
               opacity: pageIndex === currentPage ? 1 : 0,
               pointerEvents: pageIndex === currentPage ? 'auto' : 'none',
               gap: `${gap}px`,
+              transition: `opacity ${FADE_DURATION}ms ease`,
             }}
           >
             {pageRides.map((attraction) => (

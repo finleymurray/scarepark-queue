@@ -320,10 +320,9 @@ export default function TV25Display() {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Scroll state — use refs for animation to avoid React re-render issues on TV browsers
+  // Scroll state — use refs to avoid React re-render issues on TV browsers
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollIndexRef = useRef(0);
-  const animFrameRef = useRef<number>(0);
 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top);
@@ -455,52 +454,33 @@ export default function TV25Display() {
     }
   }, [totalRides]);
 
-  // JS-driven scroll animation — no reliance on CSS transitionend
+  // Scroll via CSS transition + setTimeout (GPU-composited, no per-frame JS)
   useEffect(() => {
     if (totalRides <= VISIBLE_COUNT || stepSize <= 0) return;
 
     const interval = setInterval(() => {
-      const startY = -(scrollIndexRef.current * stepSize);
+      const el = scrollRef.current;
+      if (!el) return;
+
       const nextIndex = scrollIndexRef.current + 1;
-      const endY = -(nextIndex * stepSize);
-      const startTime = performance.now();
 
-      function easeOutCubic(t: number) {
-        return 1 - Math.pow(1 - t, 3);
-      }
+      // Enable CSS transition and move to next position
+      el.style.transition = `transform ${ANIM_DURATION}ms ease-out`;
+      el.style.transform = `translateY(${-(nextIndex * stepSize)}px)`;
 
-      function animate(now: number) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / ANIM_DURATION, 1);
-        const eased = easeOutCubic(progress);
-        const currentY = startY + (endY - startY) * eased;
-
-        if (scrollRef.current) {
-          scrollRef.current.style.transform = `translateY(${currentY}px)`;
+      // After transition completes, check if we need to snap back
+      setTimeout(() => {
+        scrollIndexRef.current = nextIndex;
+        if (scrollIndexRef.current >= totalRides) {
+          scrollIndexRef.current = 0;
+          // Instant snap back — disable transition, reset position
+          el.style.transition = 'none';
+          el.style.transform = 'translateY(0px)';
         }
-
-        if (progress < 1) {
-          animFrameRef.current = requestAnimationFrame(animate);
-        } else {
-          // Animation complete — check if we need to snap back
-          scrollIndexRef.current = nextIndex;
-          if (scrollIndexRef.current >= totalRides) {
-            scrollIndexRef.current = 0;
-            // Instant snap back to start (visually identical due to duplicated list)
-            if (scrollRef.current) {
-              scrollRef.current.style.transform = 'translateY(0px)';
-            }
-          }
-        }
-      }
-
-      animFrameRef.current = requestAnimationFrame(animate);
+      }, ANIM_DURATION + 50);
     }, SCROLL_INTERVAL);
 
-    return () => {
-      clearInterval(interval);
-      cancelAnimationFrame(animFrameRef.current);
-    };
+    return () => clearInterval(interval);
   }, [totalRides, stepSize]);
 
   // Build the display list: original rides + just enough duplicates for seamless wrap

@@ -84,7 +84,6 @@ export default function TV4Carousel() {
   const [closingTime, setClosingTime] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const iframeRefsMap = useRef<Map<number, HTMLIFrameElement>>(new Map());
-  const animFrameRef = useRef<number>(0);
 
   /* Fetch closing time + subscribe to changes */
   useEffect(() => {
@@ -118,7 +117,7 @@ export default function TV4Carousel() {
     };
   }, []);
 
-  /* Carousel timer — JS-driven fade animation */
+  /* Carousel timer — CSS transition + setTimeout (GPU-composited, no per-frame JS) */
   useEffect(() => {
     function scheduleNext() {
       const current = VIEWS[activeIndex];
@@ -129,22 +128,16 @@ export default function TV4Carousel() {
 
           const oldEl = iframeRefsMap.current.get(oldIdx);
           const newEl = iframeRefsMap.current.get(newIdx);
-          if (oldEl) oldEl.style.opacity = '1';
-          if (newEl) { newEl.style.opacity = '0'; newEl.style.pointerEvents = 'auto'; }
 
-          const startTime = performance.now();
-          function animate(now: number) {
-            const progress = Math.min((now - startTime) / FADE_MS, 1);
-            if (oldEl) oldEl.style.opacity = String(1 - progress);
-            if (newEl) newEl.style.opacity = String(progress);
-            if (progress < 1) {
-              animFrameRef.current = requestAnimationFrame(animate);
-            } else {
-              if (oldEl) { oldEl.style.opacity = '0'; oldEl.style.pointerEvents = 'none'; }
-              if (newEl) { newEl.style.opacity = '1'; newEl.style.pointerEvents = 'auto'; }
-            }
-          }
-          animFrameRef.current = requestAnimationFrame(animate);
+          // Trigger CSS transition: fade out old, fade in new
+          if (oldEl) oldEl.style.opacity = '0';
+          if (newEl) newEl.style.opacity = '1';
+
+          // After transition completes, update pointerEvents
+          setTimeout(() => {
+            if (oldEl) oldEl.style.pointerEvents = 'none';
+            if (newEl) newEl.style.pointerEvents = 'auto';
+          }, FADE_MS);
 
           return newIdx;
         });
@@ -155,7 +148,6 @@ export default function TV4Carousel() {
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      cancelAnimationFrame(animFrameRef.current);
     };
   }, [activeIndex]);
 
@@ -191,6 +183,7 @@ export default function TV4Carousel() {
             style={{
               opacity: i === activeIndex ? 1 : 0,
               pointerEvents: i === activeIndex ? 'auto' : 'none',
+              transition: `opacity ${FADE_MS}ms ease`,
             }}
           />
         ))}
