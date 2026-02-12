@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
@@ -38,15 +37,15 @@ export default function AdminNav({
     <>
       {/* Header bar — logo, user info & sign out */}
       <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <a href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
             <Image
               src="/logo.png"
               alt="Immersive Core"
-              width={32}
-              height={32}
+              width={36}
+              height={36}
               priority
-              style={{ width: 32, height: 'auto' }}
+              style={{ width: 36, height: 'auto' }}
             />
             <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Admin</h1>
           </a>
@@ -88,11 +87,11 @@ export default function AdminNav({
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', overflowX: 'auto' }}
       >
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
           {TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
-              <Link
+              <a
                 key={tab.href}
                 href={tab.href}
                 style={{
@@ -119,12 +118,12 @@ export default function AdminNav({
                 }}
               >
                 {tab.label}
-              </Link>
+              </a>
             );
           })}
 
           {/* Separator */}
-          <div style={{ width: 1, height: 20, background: '#333', margin: '0 8px', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 20, background: '#333', margin: '0 4px', flexShrink: 0 }} />
 
           {EXTERNAL_LINKS.map((link) => (
             <a

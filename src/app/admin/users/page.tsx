@@ -28,20 +28,20 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg p-6 w-full max-w-[400px]">
+      <div className="bg-[#111] border border-[#333] rounded-[12px] p-6 w-full max-w-[400px]">
         <p className="text-[#e0e0e0] text-sm font-semibold mb-2">{title}</p>
-        <p className="text-[#777] text-sm mb-5">{message}</p>
+        <p className="text-[#888] text-sm mb-5">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-5 py-2.5 border border-[#3a3a3a] text-[#ccc] hover:border-[#555] hover:text-white
-                       rounded-lg text-sm font-semibold transition-colors"
+            className="flex-1 px-5 py-2.5 border border-[#555] text-[#ccc] hover:border-[#888] hover:text-white
+                       rounded-[6px] text-sm font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white rounded-lg
+            className="flex-1 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white rounded-[6px]
                        text-sm font-semibold transition-colors"
           >
             {confirmLabel}
@@ -166,13 +166,13 @@ function UserFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" style={{ overflowY: 'auto' }}>
-      <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg w-full max-w-lg my-8" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#111] border border-[#333] rounded-[12px] w-full max-w-lg my-8" onClick={(e) => e.stopPropagation()}>
         {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a2a]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#333]">
           <h3 className="text-[#e0e0e0] text-base font-semibold">
             {editing ? 'Edit User' : 'Add User'}
           </h3>
-          <button onClick={onCancel} className="text-[#555] hover:text-[#e0e0e0] transition-colors p-1">
+          <button onClick={onCancel} className="text-[#666] hover:text-[#e0e0e0] transition-colors p-1">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
@@ -181,74 +181,75 @@ function UserFormModal({
 
         <div className="px-6 py-5 space-y-5" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {formError && (
-            <div className="bg-[#2a1010] border border-[#d43518]/30 rounded-lg p-3">
+            <div className="bg-[#2a1010] border border-[#d43518] rounded-[6px] p-3">
               <p className="text-[#f0a0a0] text-sm">{formError}</p>
             </div>
           )}
 
           {/* PIN-only toggle */}
           {!editing && (
-            <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg">
+            <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-[6px]">
               <input
                 type="checkbox"
                 checked={formPinOnly}
                 onChange={(e) => setFormPinOnly(e.target.checked)}
-                className="accent-[#4caf50] w-4 h-4"
+                className="w-4 h-4"
+                style={{ accentColor: '#6ea8fe' }}
               />
               <div>
                 <span className="text-[#e0e0e0] text-sm font-medium">PIN-only user</span>
-                <p className="text-[#555] text-xs mt-0.5">No email/password login — sign-off only</p>
+                <p className="text-[#888] text-xs mt-0.5">No email/password login — sign-off only</p>
               </div>
             </label>
           )}
 
           {/* Section 1: Basic info */}
-          <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-6 h-6 rounded-full bg-[#1a3a1a] flex items-center justify-center text-[#4caf50] text-[10px] font-bold">1</div>
-              <span className="text-[#777] text-xs uppercase tracking-wider font-semibold">Basic Info</span>
-            </div>
+          <fieldset className="border border-[#333] rounded-[8px] p-4 mb-4 bg-[#111]">
+            <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">1</span>
+              Basic Info
+            </legend>
             <div className="space-y-3">
               {!formPinOnly && (
                 <div>
-                  <label className="block text-[#777] text-xs font-medium mb-1.5">Email</label>
+                  <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Email</label>
                   <input
                     type="email"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     disabled={!!editing}
                     placeholder="user@example.com"
-                    className="w-full px-4 py-3 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg text-[#e0e0e0] text-sm
-                               placeholder-[#555] focus:outline-none focus:border-[#3a3a3a] transition-colors
+                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
+                               placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
                                disabled:opacity-40"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-[#777] text-xs font-medium mb-1.5">Display Name</label>
+                <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Display Name</label>
                 <input
                   type="text"
                   value={formDisplayName}
                   onChange={(e) => setFormDisplayName(e.target.value)}
                   placeholder="e.g. John S."
-                  className="w-full px-4 py-3 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg text-[#e0e0e0] text-sm
-                             placeholder-[#555] focus:outline-none focus:border-[#3a3a3a] transition-colors"
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
+                             placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
                 />
               </div>
               {!formPinOnly && (
                 <div>
-                  <label className="block text-[#777] text-xs font-medium mb-1.5">Role</label>
+                  <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Role</label>
                   <div className="flex gap-2">
                     {(['supervisor', 'admin'] as const).map((r) => (
                       <button
                         key={r}
                         onClick={() => setFormRole(r)}
-                        className={`flex-1 py-3 rounded-lg text-sm font-semibold capitalize transition-colors border
+                        className={`flex-1 py-3 rounded-[6px] text-sm font-semibold capitalize transition-colors border
                           ${formRole === r
                             ? r === 'admin'
-                              ? 'bg-[#1a3a1a] border-[#1a3a1a] text-[#4caf50]'
-                              : 'bg-[#1c1c1c] border-[#3a3a3a] text-[#e0e0e0]'
-                            : 'bg-[#161616] border-[#2a2a2a] text-[#555]'
+                              ? 'bg-[#0a3d1f] border-[#0a3d1f] text-[#4caf50]'
+                              : 'bg-[#1a1a1a] border-[#555] text-[#e0e0e0]'
+                            : 'bg-[#111] border-[#333] text-[#666]'
                           }`}
                       >
                         {r}
@@ -258,17 +259,17 @@ function UserFormModal({
                 </div>
               )}
             </div>
-          </div>
+          </fieldset>
 
           {/* Section 2: Sign-off */}
-          <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-6 h-6 rounded-full bg-[#1a3a1a] flex items-center justify-center text-[#4caf50] text-[10px] font-bold">2</div>
-              <span className="text-[#777] text-xs uppercase tracking-wider font-semibold">Sign-Off</span>
-            </div>
+          <fieldset className="border border-[#333] rounded-[8px] p-4 mb-4 bg-[#111]">
+            <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">2</span>
+              Sign-Off
+            </legend>
             <div className="space-y-3">
               <div>
-                <label className="block text-[#777] text-xs font-medium mb-1.5">4-Digit PIN</label>
+                <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">4-Digit PIN</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -278,8 +279,8 @@ function UserFormModal({
                     value={formPin}
                     onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="0000"
-                    className="flex-1 px-4 py-3 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg text-[#e0e0e0] text-sm
-                               placeholder-[#555] focus:outline-none focus:border-[#3a3a3a] transition-colors
+                    className="flex-1 px-4 py-3 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
+                               placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
                                tracking-[0.4em] font-mono text-center text-lg"
                   />
                   <button
@@ -288,15 +289,15 @@ function UserFormModal({
                       const pin = String(Math.floor(1000 + Math.random() * 9000));
                       setFormPin(pin);
                     }}
-                    className="px-4 py-3 border border-[#3a3a3a] rounded-lg text-[#ccc] text-xs font-semibold
-                               hover:border-[#555] hover:text-white transition-colors whitespace-nowrap"
+                    className="px-4 py-3 border border-[#555] rounded-[6px] text-[#ccc] text-xs font-semibold
+                               hover:border-[#888] hover:text-white transition-colors whitespace-nowrap"
                   >
                     Generate
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-[#777] text-xs font-medium mb-2">Roles</label>
+                <label className="block text-[#ccc] text-[13px] font-medium mb-2">Roles</label>
                 <div className="grid grid-cols-1 gap-2">
                   {ALL_SIGNOFF_ROLES.map((role) => {
                     const checked = formSignoffRoles.includes(role);
@@ -304,11 +305,11 @@ function UserFormModal({
                       <button
                         key={role}
                         onClick={() => toggleSignoffRole(role)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors border
-                          ${checked ? 'bg-[#1a3a1a] border-[#1a3a1a] text-[#4caf50]' : 'bg-[#1c1c1c] border-[#2a2a2a] text-[#777]'}`}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-[6px] text-left transition-colors border
+                          ${checked ? 'bg-[#0a3d1f] border-[#4caf50] text-[#4caf50]' : 'bg-[#1a1a1a] border-[#333] text-[#888]'}`}
                       >
                         <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
-                          ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#3a3a3a]'}`}>
+                          ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#555]'}`}>
                           {checked && (
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                               <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -322,16 +323,16 @@ function UserFormModal({
                 </div>
               </div>
             </div>
-          </div>
+          </fieldset>
 
           {/* Section 3: Allowed attractions (supervisors only) */}
           {(formRole === 'supervisor' || formPinOnly) && (
-            <div>
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-6 h-6 rounded-full bg-[#1a3a1a] flex items-center justify-center text-[#4caf50] text-[10px] font-bold">3</div>
-                <span className="text-[#777] text-xs uppercase tracking-wider font-semibold">Allowed Attractions</span>
-              </div>
-              <p className="text-[#555] text-xs mb-2">Leave empty for all attractions.</p>
+            <fieldset className="border border-[#333] rounded-[8px] p-4 mb-4 bg-[#111]">
+              <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">3</span>
+                Allowed Attractions
+              </legend>
+              <p className="text-[#888] text-xs mb-2">Leave empty for all attractions.</p>
               <div className="grid grid-cols-1 gap-2">
                 {rides.map((a) => {
                   const checked = formAttractions.includes(a.id);
@@ -339,11 +340,11 @@ function UserFormModal({
                     <button
                       key={a.id}
                       onClick={() => toggleAttraction(a.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors border
-                        ${checked ? 'bg-[#1c1c1c] border-[#3a3a3a] text-[#e0e0e0]' : 'bg-[#161616] border-[#2a2a2a] text-[#555]'}`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-[6px] text-left transition-colors border
+                        ${checked ? 'bg-[#1a1a1a] border-[#555] text-[#e0e0e0]' : 'bg-[#111] border-[#333] text-[#666]'}`}
                     >
                       <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
-                        ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#3a3a3a]'}`}>
+                        ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#555]'}`}>
                         {checked && (
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                             <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -355,24 +356,24 @@ function UserFormModal({
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
           )}
         </div>
 
         {/* Modal footer */}
-        <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a]">
+        <div className="flex gap-3 px-6 py-4 border-t border-[#333]">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 border border-[#3a3a3a] text-[#ccc] text-sm font-semibold
-                       rounded-lg hover:border-[#555] hover:text-white transition-colors"
+            className="flex-1 py-3 border border-[#555] text-[#ccc] text-sm font-semibold
+                       rounded-[6px] hover:border-[#888] hover:text-white transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 py-3 bg-[#4caf50] text-white text-sm font-bold rounded-lg
-                       hover:bg-[#43a047] transition-colors disabled:opacity-50"
+            className="flex-1 py-3 bg-white text-black text-sm font-bold rounded-[6px]
+                       hover:bg-[#ddd] transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
           </button>
@@ -556,8 +557,8 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0d0d0d]">
-        <div className="text-[#777] text-sm">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-black">
+        <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
   }
@@ -570,13 +571,13 @@ export default function UsersPage() {
     return (
       <div
         key={user.id}
-        className="bg-[#161616] border border-[#2a2a2a] rounded-lg p-5 transition-colors hover:border-[#3a3a3a]"
+        className="bg-[#111] border border-[#333] rounded-[8px] p-5 transition-colors hover:border-[#555]"
       >
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             {/* Avatar */}
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
-              ${user.role === 'admin' ? 'bg-[#1a3a1a] text-[#4caf50]' : pinOnly ? 'bg-[#1a2a3a] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
+              ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
               {(user.display_name || user.email).charAt(0).toUpperCase()}
             </div>
             <div>
@@ -585,26 +586,26 @@ export default function UsersPage() {
                   {user.display_name || (pinOnly ? 'PIN User' : user.email.split('@')[0])}
                 </span>
                 {isYou && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#1c1c1c] text-[#555] rounded font-medium">you</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#222] text-[#888] rounded font-medium">you</span>
                 )}
               </div>
               {!pinOnly && (
-                <p className="text-[#555] text-xs mt-0.5">{user.email}</p>
+                <p className="text-[#666] text-xs mt-0.5">{user.email}</p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => startEdit(user)}
-              className="px-3 py-1.5 border border-[#2a2a2a] text-[#777] text-xs font-medium rounded-lg
-                         hover:border-[#3a3a3a] hover:text-[#e0e0e0] transition-colors"
+              className="px-3 py-1.5 border border-[#333] text-[#888] text-xs font-medium rounded-[6px]
+                         hover:border-[#555] hover:text-[#e0e0e0] transition-colors"
             >
               Edit
             </button>
             {!isYou && (
               <button
                 onClick={() => setDeleteTarget(user)}
-                className="px-3 py-1.5 bg-[#2a1010] text-[#d43518] text-xs font-semibold rounded-lg
+                className="px-3 py-1.5 bg-[#2a1010] text-[#d43518] text-xs font-semibold rounded-[6px]
                            hover:bg-[#3a1515] transition-colors"
               >
                 Delete
@@ -616,21 +617,21 @@ export default function UsersPage() {
         {/* Info row */}
         <div className="flex flex-wrap gap-2">
           {/* Role badge */}
-          <span className={`text-[10px] px-2 py-1 rounded-lg font-semibold uppercase
-            ${user.role === 'admin' ? 'bg-[#1a3a1a] text-[#4caf50]' : pinOnly ? 'bg-[#1a2a3a] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
+          <span className={`text-[10px] px-2 py-1 rounded-[12px] font-semibold uppercase
+            ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
             {pinOnly ? 'PIN only' : user.role}
           </span>
 
           {/* PIN display */}
           {pin?.pin ? (
-            <span className="text-[10px] px-2 py-1 rounded-lg font-mono font-semibold bg-[#1c1c1c] text-[#777] tracking-widest border border-[#2a2a2a]">
+            <span className="text-[10px] px-2 py-1 rounded-[12px] font-mono font-semibold bg-[#1a1a1a] text-[#888] tracking-widest border border-[#333]">
               PIN: {pin.pin}
             </span>
           ) : null}
 
           {/* Attraction access */}
           {user.role !== 'admin' && (
-            <span className="text-[10px] px-2 py-1 rounded-lg font-medium bg-[#1c1c1c] text-[#555] border border-[#2a2a2a]">
+            <span className="text-[10px] px-2 py-1 rounded-[12px] font-medium bg-[#1a1a1a] text-[#666] border border-[#333]">
               {getAttractionNames(user.allowed_attractions)}
             </span>
           )}
@@ -638,9 +639,9 @@ export default function UsersPage() {
 
         {/* Sign-off roles */}
         {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#2a2a2a]">
+          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#333]">
             {pin.signoff_roles.map((r) => (
-              <span key={r} className="text-[10px] px-2 py-1 bg-[#1a3a1a] text-[#4caf50] rounded-lg font-medium">
+              <span key={r} className="text-[10px] px-2 py-1 bg-[#0a3d1f] text-[#4caf50] rounded-[12px] font-medium">
                 {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
               </span>
             ))}
@@ -655,11 +656,11 @@ export default function UsersPage() {
     return (
       <div className="mb-8">
         <div className="flex items-center gap-2.5 mb-4">
-          <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase"
+          <span className="text-[10px] px-2.5 py-1 rounded-[12px] font-bold uppercase"
                 style={{ background: badgeColor, color: badgeTextColor }}>
             {label}
           </span>
-          <span className="text-[#555] text-xs">{groupUsers.length}</span>
+          <span className="text-[#666] text-xs">{groupUsers.length}</span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {groupUsers.map(renderUserCard)}
@@ -669,7 +670,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
+    <div className="min-h-screen bg-black">
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <ConfirmModal
@@ -697,8 +698,8 @@ export default function UsersPage() {
           <h2 className="text-[#e0e0e0] text-2xl font-bold">Users</h2>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-5 py-3 bg-[#4caf50] text-white text-sm font-bold rounded-lg
-                       hover:bg-[#43a047] transition-colors"
+            className="flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-[6px]
+                       hover:bg-[#ddd] transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -708,15 +709,15 @@ export default function UsersPage() {
         </div>
 
         {users.length === 0 ? (
-          <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg p-12 text-center">
-            <p className="text-[#555] text-sm">No users configured yet.</p>
+          <div className="bg-[#111] border border-[#333] rounded-[8px] p-12 text-center">
+            <p className="text-[#666] text-sm">No users configured yet.</p>
             <p className="text-[#444] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
           </div>
         ) : (
           <>
-            {renderGroup('Admins', admins, '#1a3a1a', '#4caf50')}
+            {renderGroup('Admins', admins, '#0a3d1f', '#4caf50')}
             {renderGroup('Supervisors', supervisors, '#3d3000', '#ffc107')}
-            {renderGroup('PIN-Only', pinOnlyUsers, '#1a2a3a', '#6ea8fe')}
+            {renderGroup('PIN-Only', pinOnlyUsers, '#0d2f5e', '#6ea8fe')}
           </>
         )}
 

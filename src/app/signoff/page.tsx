@@ -12,7 +12,7 @@ import {
   SIGNOFF_ROLE_LABELS,
   getTodayDateStr,
 } from '@/lib/signoff';
-import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
+import { getAttractionLogo, getLogoGlow, getAttractionBg, getGlowRgb } from '@/lib/logos';
 import type {
   Attraction,
   SignoffSection,
@@ -94,26 +94,28 @@ function PinPadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm rounded-lg bg-[#161616] border border-[#2a2a2a] p-6">
-        <p className="text-[#e0e0e0] text-center text-sm font-semibold mb-1">Enter Your PIN</p>
-        <p className="text-[#777] text-center text-xs mb-5">
+      <div className="w-full max-w-sm bg-[#111] border border-[#333] rounded-[12px] p-8">
+        <p className="text-white text-center text-base font-semibold mb-1">Enter Your PIN</p>
+        <p className="text-[#888] text-center text-[13px] mb-6">
           Requires: {SIGNOFF_ROLE_LABELS[requiredRole]}
         </p>
 
         {/* Dots */}
-        <div className="flex justify-center gap-4 mb-5">
+        <div className="flex justify-center gap-4 mb-6">
           {dots.map((filled, i) => (
             <div
               key={i}
               className={`w-4 h-4 rounded-full border-2 transition-colors ${
-                filled ? 'bg-[#4caf50] border-[#4caf50]' : 'border-[#3a3a3a] bg-transparent'
+                filled ? 'bg-[#6ea8fe] border-[#6ea8fe]' : 'border-[#444] bg-transparent'
               }`}
             />
           ))}
         </div>
 
         {error && (
-          <p className="text-[#d43518] text-xs text-center mb-3">{error}</p>
+          <div className="bg-[#2a1010] border border-[#d43518] rounded-[6px] px-3 py-2 mb-4">
+            <p className="text-[#f0a0a0] text-[13px] text-center">{error}</p>
+          </div>
         )}
 
         {/* Keypad */}
@@ -122,31 +124,31 @@ function PinPadModal({
             <button
               key={d}
               onClick={() => handleDigit(d)}
-              className="py-4 text-2xl font-bold text-[#e0e0e0] bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg
-                         active:bg-[#252525] transition-colors touch-manipulation"
+              className="py-4 text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[6px]
+                         active:bg-[#222] transition-colors touch-manipulation"
             >
               {d}
             </button>
           ))}
           <button
             onClick={handleBackspace}
-            className="py-4 text-lg font-bold text-[#f0ad4e] bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg
-                       active:bg-[#252525] transition-colors touch-manipulation"
+            className="py-4 text-lg font-bold text-[#ffc107] bg-[#1a1a1a] border border-[#333] rounded-[6px]
+                       active:bg-[#222] transition-colors touch-manipulation"
           >
             DEL
           </button>
           <button
             onClick={() => handleDigit('0')}
-            className="py-4 text-2xl font-bold text-[#e0e0e0] bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg
-                       active:bg-[#252525] transition-colors touch-manipulation"
+            className="py-4 text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[6px]
+                       active:bg-[#222] transition-colors touch-manipulation"
           >
             0
           </button>
           <button
             onClick={handleSubmit}
             disabled={pin.length < 4 || verifying}
-            className="py-4 text-lg font-bold text-[#0d0d0d] bg-[#4caf50] rounded-lg
-                       active:bg-[#43a047] transition-colors touch-manipulation disabled:opacity-40"
+            className="py-4 text-lg font-bold text-black bg-white rounded-[6px]
+                       active:bg-[#ddd] transition-colors touch-manipulation disabled:opacity-50"
           >
             {verifying ? '...' : '\u2713'}
           </button>
@@ -154,8 +156,8 @@ function PinPadModal({
 
         <button
           onClick={handleClose}
-          className="w-full py-3 text-[#777] text-sm font-medium border border-[#2a2a2a] rounded-lg
-                     active:bg-[#1c1c1c] transition-colors touch-manipulation"
+          className="w-full py-3 text-[#ccc] text-sm font-medium border border-[#555] rounded-[6px]
+                     hover:border-[#888] hover:text-white transition-colors touch-manipulation"
         >
           Cancel
         </button>
@@ -172,7 +174,6 @@ export default function SignoffPage() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [selectedAttractionId, setSelectedAttractionId] = useState<string>('');
   const [phase, setPhase] = useState<'opening' | 'closing'>('opening');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Sections + items + completions
   const [sections, setSections] = useState<SignoffSection[]>([]);
@@ -250,7 +251,7 @@ export default function SignoffPage() {
 
       if (attractionsData && attractionsData.length > 0) {
         setAttractions(attractionsData);
-        setSelectedAttractionId(attractionsData[0].id);
+        // Do NOT auto-select — show attraction grid first
       }
 
       setLoading(false);
@@ -285,6 +286,22 @@ export default function SignoffPage() {
       supabase.removeChannel(channel);
     };
   }, [selectedAttractionId, fetchData]);
+
+  function selectAttraction(id: string) {
+    setSelectedAttractionId(id);
+    setPhase('opening');
+    setActiveSectionId(null);
+    setCheckedItems(new Set());
+  }
+
+  function goBackToGrid() {
+    setSelectedAttractionId('');
+    setSections([]);
+    setItems(new Map());
+    setCompletions(new Map());
+    setActiveSectionId(null);
+    setCheckedItems(new Set());
+  }
 
   function openSection(sectionId: string) {
     if (completions.has(sectionId)) return;
@@ -347,10 +364,10 @@ export default function SignoffPage() {
     await fetchData(selectedAttractionId);
   }
 
+  const selectedAttraction = attractions.find((a) => a.id === selectedAttractionId);
   const phaseSections = sections.filter((s) => s.phase === phase);
   const totalSections = phaseSections.length;
   const completedSections = phaseSections.filter((s) => completions.has(s.id)).length;
-  const selectedAttraction = attractions.find((a) => a.id === selectedAttractionId);
 
   // Overall status for badge display
   const allOpeningSections = sections.filter((s) => s.phase === 'opening');
@@ -361,14 +378,14 @@ export default function SignoffPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0d0d0d]">
-        <div className="text-[#777] text-sm animate-pulse">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-black">
+        <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#0d0d0d] text-[#e0e0e0] overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-black text-[#e0e0e0] overflow-hidden" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* PIN Pad */}
       <PinPadModal
         open={showPinPad}
@@ -378,80 +395,106 @@ export default function SignoffPage() {
       />
 
       {/* Header */}
-      <div className="bg-[#141414] border-b border-[#2a2a2a] px-5 py-3 flex items-center justify-between shrink-0">
+      <div className="bg-[#111] border-b border-[#333] px-5 py-3 flex items-center justify-between shrink-0">
         <a href="/signoff" className="flex items-center gap-3 no-underline">
-          <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
-          <h1 className="text-[#e0e0e0] text-lg font-semibold m-0">Sign-Off</h1>
+          <Image src="/logo.png" alt="Immersive Core" width={36} height={36} priority style={{ width: 36, height: 'auto' }} />
+          <h1 className="text-white text-lg font-semibold m-0">Sign-Off</h1>
         </a>
-        <span className="text-[#555] text-xs">{userEmail}</span>
+        <span className="text-[#aaa] text-[13px]">{userEmail}</span>
       </div>
 
-      {/* Attraction selector — dropdown trigger */}
-      <div className="bg-[#141414] border-b border-[#2a2a2a] px-5 py-2 shrink-0 relative">
-        <button
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg
-                     active:bg-[#222] transition-colors touch-manipulation"
-        >
-          <div className="flex items-center gap-3">
-            {selectedAttraction && (() => {
-              const logo = getAttractionLogo(selectedAttraction.slug);
-              const glow = getLogoGlow(selectedAttraction.slug);
-              return logo ? (
-                <img src={logo} alt="" width={24} height={24} loading="lazy" decoding="async"
-                     className="rounded object-contain" style={{ width: 24, height: 24, filter: glow || undefined }} />
-              ) : null;
-            })()}
-            <span className="text-[#e0e0e0] text-sm font-semibold">
-              {selectedAttraction?.name || 'Select attraction'}
-            </span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}>
-            <path d="M4 6L8 10L12 6" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+      {/* Main Content — Scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        {/* ────────────────────────────────────────────── */}
+        {/* Attraction Grid (no attraction selected)      */}
+        {/* ────────────────────────────────────────────── */}
+        {!selectedAttractionId && (
+          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
+            <p className="text-[#888] text-sm text-center mb-6">Select an attraction to begin sign-off</p>
 
-        {/* Dropdown */}
-        {dropdownOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-            <div className="absolute left-5 right-5 top-full mt-1 z-50 bg-[#161616] border border-[#2a2a2a] rounded-lg overflow-hidden shadow-2xl"
-                 style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {attractions.map((a) => {
-                const active = a.id === selectedAttractionId;
                 const logo = getAttractionLogo(a.slug);
+                const bg = getAttractionBg(a.slug);
                 const glow = getLogoGlow(a.slug);
+                const glowRgb = getGlowRgb(a.slug);
+
                 return (
                   <button
                     key={a.id}
-                    onClick={() => { setSelectedAttractionId(a.id); setDropdownOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors touch-manipulation border-b border-[#1e1e1e] last:border-0
-                      ${active ? 'bg-[#1c1c1c] text-[#e0e0e0]' : 'text-[#777] active:bg-[#1c1c1c]'}`}
+                    onClick={() => selectAttraction(a.id)}
+                    className="relative overflow-hidden rounded-[8px] border border-[#333] bg-[#111]
+                               transition-all duration-200 touch-manipulation
+                               hover:border-[#555] active:scale-[0.97]
+                               focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)]"
+                    style={{ aspectRatio: '1' }}
                   >
-                    {logo ? (
-                      <img src={logo} alt="" width={28} height={28} loading="lazy" decoding="async"
-                           className="rounded object-contain" style={{ width: 28, height: 28, filter: glow || undefined }} />
-                    ) : (
-                      <div className="w-7 h-7 rounded bg-[#1c1c1c]" />
+                    {/* Background image */}
+                    {bg && (
+                      <div
+                        className="absolute inset-0 bg-cover bg-center opacity-20"
+                        style={{ backgroundImage: `url(${bg})` }}
+                      />
                     )}
-                    <span className="text-sm font-medium">{a.name}</span>
-                    {active && (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto shrink-0">
-                        <path d="M3 7L6 10L11 4" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+
+                    {/* Glow radial gradient overlay */}
+                    {glowRgb && (
+                      <div
+                        className="absolute inset-0 opacity-15"
+                        style={{
+                          background: `radial-gradient(circle at center, rgba(${glowRgb}, 0.4) 0%, transparent 70%)`,
+                        }}
+                      />
                     )}
+
+                    {/* Logo + Name */}
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full px-3 py-4 gap-3">
+                      {logo ? (
+                        <img
+                          src={logo}
+                          alt={a.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="object-contain"
+                          style={{ width: '70%', maxWidth: 120, height: 'auto', maxHeight: '55%', filter: glow || undefined }}
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-[#222] flex items-center justify-center">
+                          <span className="text-[#888] text-2xl font-bold">{a.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <span className="text-white text-[13px] font-semibold text-center leading-tight">{a.name}</span>
+                    </div>
                   </button>
                 );
               })}
             </div>
-          </>
-        )}
-      </div>
 
-      {/* Main Content — Scrollable */}
-      <div className="flex-1 overflow-y-auto px-5 py-8">
+            <div className="text-center pt-8 pb-6">
+              <Link href="/privacy" className="text-[#555] text-[11px] no-underline hover:text-[#888]">
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ────────────────────────────────────────────── */}
+        {/* Sign-Off View (attraction selected)           */}
+        {/* ────────────────────────────────────────────── */}
         {selectedAttraction && (
-          <>
+          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
+            {/* Back button */}
+            <button
+              onClick={goBackToGrid}
+              className="flex items-center gap-2 text-[#aaa] text-sm font-medium mb-5
+                         hover:text-white transition-colors touch-manipulation"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              All Attractions
+            </button>
+
             {/* ── Attraction Logo (centered, large) ── */}
             {(() => {
               const logo = getAttractionLogo(selectedAttraction.slug);
@@ -468,29 +511,29 @@ export default function SignoffPage() {
             {/* ── Sign-Off Status Badge ── */}
             <div className="mb-8 flex flex-col items-center gap-1">
               {fullySignedOff ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#1a3a1a] text-[#4caf50]">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   SIGNED OFF
                 </span>
               ) : allOpeningSections.length > 0 ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d1010] text-[#d43518]">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#3d1010] text-[#ef4444]">
                   NOT SIGNED OFF
                 </span>
               ) : null}
-              <p className="text-[#555] text-xs">
+              <p className="text-[#888] text-[13px]">
                 {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
 
-            {/* ── Section 1: Sign-Off Sections ── */}
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-7 h-7 rounded-full bg-[#1a3a1a] flex items-center justify-center text-[#4caf50] text-xs font-bold shrink-0">1</div>
-                <h2 className="text-[#e0e0e0] text-base font-bold">Sign-Off Sections</h2>
-              </div>
+            {/* ── Sign-Off Sections ── */}
+            <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
+              <legend className="text-base font-semibold text-white px-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-7 h-7 bg-white text-black rounded-full text-sm font-bold">1</span>
+                Sign-Off Sections
+              </legend>
 
-              {/* Phase tabs — text-link style */}
-              <div className="flex gap-6 mb-5 border-b border-[#2a2a2a] pb-3">
+              {/* Phase tabs */}
+              <div className="flex gap-2 mb-5">
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -505,14 +548,12 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`text-sm font-semibold capitalize transition-colors pb-1 touch-manipulation
+                      className={`px-3 py-1.5 rounded-[6px] text-sm font-medium capitalize transition-colors touch-manipulation
                         ${closingLocked
-                          ? 'text-[#333] cursor-not-allowed'
+                          ? 'text-[#555] bg-transparent cursor-not-allowed'
                           : active
-                            ? allDone
-                              ? 'text-[#4caf50] border-b-2 border-[#4caf50] -mb-[13px] pb-[11px]'
-                              : 'text-[#e0e0e0] border-b-2 border-[#e0e0e0] -mb-[13px] pb-[11px]'
-                            : 'text-[#777] hover:text-[#ccc]'
+                            ? 'bg-[#222] text-white'
+                            : 'text-[#aaa] hover:bg-[#222] hover:text-white'
                         }`}
                     >
                       {closingLocked && (
@@ -534,16 +575,16 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg px-5 py-4 mb-5">
+                <div className="bg-[#1a1a1a] border border-[#333] rounded-[6px] px-4 py-3 mb-5">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[#777] text-xs">
+                    <span className="text-[#888] text-[13px]">
                       {completedSections}/{totalSections} sections signed off
                     </span>
                     {completedSections === totalSections && (
-                      <span className="text-[#4caf50] text-xs font-semibold">COMPLETE</span>
+                      <span className="text-[12px] font-semibold px-2.5 py-0.5 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">COMPLETE</span>
                     )}
                   </div>
-                  <div className="w-full h-2 bg-[#1c1c1c] rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-[#222] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -557,14 +598,14 @@ export default function SignoffPage() {
 
               {/* No sections message */}
               {totalSections === 0 && (
-                <div className="bg-[#161616] border border-[#2a2a2a] rounded-lg p-10 text-center">
-                  <p className="text-[#555] text-sm">No {phase} sections configured for {selectedAttraction?.name || 'this attraction'}.</p>
-                  <p className="text-[#444] text-xs mt-2">Ask an admin to configure sign-off sections.</p>
+                <div className="text-center py-8">
+                  <p className="text-[#666] text-sm">No {phase} sections configured for {selectedAttraction?.name || 'this attraction'}.</p>
+                  <p className="text-[#555] text-[13px] mt-2">Ask an admin to configure sign-off sections.</p>
                 </div>
               )}
 
               {/* Section cards */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {phaseSections.map((section, idx) => {
                   const completion = completions.get(section.id);
                   const isCompleted = !!completion;
@@ -575,40 +616,40 @@ export default function SignoffPage() {
                   return (
                     <div
                       key={section.id}
-                      className={`bg-[#161616] border rounded-lg overflow-hidden transition-colors
-                        ${isCompleted ? 'border-[#1a3a1a]' : isActive ? 'border-[#3a3a3a]' : 'border-[#2a2a2a]'}`}
+                      className={`bg-[#1a1a1a] border rounded-[6px] overflow-hidden transition-colors
+                        ${isCompleted ? 'border-[#4caf50]/30' : isActive ? 'border-[#555]' : 'border-[#333]'}`}
                     >
                       {/* Section header — clickable if not completed */}
                       <button
                         onClick={() => !isCompleted && openSection(section.id)}
                         disabled={isCompleted}
-                        className="w-full text-left px-5 py-4 flex items-center justify-between touch-manipulation bg-transparent border-none"
+                        className="w-full text-left px-4 py-3 flex items-center justify-between touch-manipulation bg-transparent border-none"
                         style={{ cursor: isCompleted ? 'default' : 'pointer' }}
                       >
                         <div className="flex items-center gap-3">
                           {isCompleted ? (
-                            <div className="w-8 h-8 rounded-full bg-[#1a3a1a] flex items-center justify-center shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                 <path d="M3 7L6 10L11 4" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-[#1a3a1a] flex items-center justify-center shrink-0 text-[#4caf50] text-xs font-bold">
+                            <span className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center shrink-0 text-sm font-bold">
                               {idx + 1}
-                            </div>
+                            </span>
                           )}
 
                           <div>
-                            <span className={`text-sm font-semibold ${isCompleted ? 'text-[#4caf50]' : 'text-[#e0e0e0]'}`}>
+                            <span className={`text-sm font-medium ${isCompleted ? 'text-[#4caf50]' : 'text-[#e0e0e0]'}`}>
                               {section.name}
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] px-1.5 py-0.5 bg-[#1c1c1c] text-[#777] rounded font-medium">
+                              <span className="text-[11px] text-[#888] font-medium">
                                 {SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}
                               </span>
                               {isCompleted && completion && (
-                                <span className="text-[#555] text-[11px]">
-                                  {completion.signed_by_name} &middot; {new Date(completion.signed_at).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                <span className="text-[#888] text-[11px]">
+                                  &middot; {completion.signed_by_name} &middot; {new Date(completion.signed_at).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                 </span>
                               )}
                             </div>
@@ -617,32 +658,32 @@ export default function SignoffPage() {
 
                         {!isCompleted && (
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform shrink-0 ${isActive ? 'rotate-180' : ''}`}>
-                            <path d="M4 6L8 10L12 6" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M4 6L8 10L12 6" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </button>
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div className="px-5 pb-5 border-t border-[#2a2a2a]">
+                        <div className="px-4 pb-4 border-t border-[#333]">
                           {sectionItems.length === 0 ? (
-                            <p className="text-[#555] text-sm py-4">No checklist items for this section.</p>
+                            <p className="text-[#666] text-sm py-4">No checklist items for this section.</p>
                           ) : (
-                            <div className="py-3 flex flex-col gap-2">
+                            <div className="py-3 flex flex-col gap-1.5">
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-3 px-4 py-3.5 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg cursor-pointer
-                                      transition-colors touch-manipulation ${checked ? 'border-[#1a3a1a]' : ''}`}
+                                    className={`flex items-center gap-3 px-3 py-2.5 bg-[#1a1a1a] border rounded-[6px] cursor-pointer
+                                      transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#333] hover:border-[#555]'}`}
                                   >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
-                                      ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#3a3a3a]'}`}>
-                                      {checked && (
-                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
+                                    <div className={`w-[36px] h-[36px] rounded-[6px] flex items-center justify-center shrink-0 transition-colors
+                                      ${checked ? 'bg-[#0a3d1f] border-2 border-[#4caf50]' : 'bg-[#222] border-2 border-[#555]'}`}>
+                                      {checked ? (
+                                        <span className="text-[#4caf50] text-[22px] font-bold leading-none">&check;</span>
+                                      ) : (
+                                        <span className="text-[#ef4444] text-[22px] font-bold leading-none">&times;</span>
                                       )}
                                     </div>
                                     <input
@@ -651,7 +692,7 @@ export default function SignoffPage() {
                                       onChange={() => toggleItem(item.id)}
                                       className="hidden"
                                     />
-                                    <span className={`text-sm ${checked ? 'text-[#555] line-through' : 'text-[#e0e0e0]'}`}>
+                                    <span className={`text-sm ${checked ? 'text-[#e0e0e0]' : 'text-[#e0e0e0]'}`}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -664,13 +705,9 @@ export default function SignoffPage() {
                           <button
                             onClick={() => handleSignOffClick(section.id)}
                             disabled={!allChecked && sectionItems.length > 0}
-                            className="w-full mt-2 py-4 text-sm font-bold rounded-lg transition-colors touch-manipulation
+                            className="w-full mt-2 py-3 text-sm font-semibold rounded-[6px] transition-colors touch-manipulation
                                        flex items-center justify-center gap-2
-                                       disabled:opacity-30 disabled:cursor-not-allowed"
-                            style={{
-                              background: allChecked || sectionItems.length === 0 ? '#4caf50' : '#2a2a2a',
-                              color: allChecked || sectionItems.length === 0 ? '#fff' : '#555',
-                            }}
+                                       disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-[#ddd]"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                               <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -683,15 +720,15 @@ export default function SignoffPage() {
                   );
                 })}
               </div>
-            </section>
-          </>
-        )}
+            </fieldset>
 
-        <div className="text-center pb-6">
-          <Link href="/privacy" className="text-[#333] text-[11px] no-underline hover:text-[#555]">
-            Privacy Policy
-          </Link>
-        </div>
+            <div className="text-center pb-6">
+              <Link href="/privacy" className="text-[#555] text-[11px] no-underline hover:text-[#888]">
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
