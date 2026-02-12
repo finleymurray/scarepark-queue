@@ -438,23 +438,20 @@ export default function SignoffPage() {
                       />
                     )}
 
-                    {/* Logo + Name */}
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 py-6 gap-4">
+                    {/* Logo */}
+                    <div className="relative z-10 flex items-center justify-center h-full p-3">
                       {logo ? (
                         <img
                           src={logo}
                           alt={a.name}
                           loading="lazy"
                           decoding="async"
-                          className="object-contain"
-                          style={{ width: '75%', maxWidth: 140, height: 'auto', maxHeight: '55%', filter: glow || undefined }}
+                          className="object-contain w-full h-full"
+                          style={{ filter: glow || undefined }}
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-[#222] flex items-center justify-center">
-                          <span className="text-[#888] text-2xl font-bold">{a.name.charAt(0)}</span>
-                        </div>
+                        <span className="text-[#888] text-3xl font-bold">{a.name.charAt(0)}</span>
                       )}
-                      <span className="text-white text-sm font-semibold text-center leading-tight">{a.name}</span>
                     </div>
                   </button>
                 );
