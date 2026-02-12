@@ -681,7 +681,7 @@ export default function SupervisorDashboard() {
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-bold rounded-lg transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#555] text-[#ccc] text-xs font-semibold rounded-[8px] hover:border-[#888] hover:text-white transition-colors"
                     >
                       Complete Sign Offs
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -696,7 +696,7 @@ export default function SupervisorDashboard() {
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-bold rounded-lg transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#555] text-[#ccc] text-xs font-semibold rounded-[8px] hover:border-[#888] hover:text-white transition-colors"
                     >
                       Complete Sign Offs
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
