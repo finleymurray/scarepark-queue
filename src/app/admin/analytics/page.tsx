@@ -85,6 +85,8 @@ export default function AnalyticsPage() {
   const [throughputData, setThroughputData] = useState<ThroughputLog[]>([]);
   const [statusLogs, setStatusLogs] = useState<AttractionStatusLog[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [fromTime, setFromTime] = useState('00:00');
+  const [toTime, setToTime] = useState('23:59');
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -156,14 +158,45 @@ export default function AnalyticsPage() {
     fetchData();
   }, [authenticated, selectedDate, openingTime]);
 
+  // Filter data by selected time window
+  const filteredHistory = useMemo(() => {
+    const fromMin = (() => { const [h, m] = fromTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    const toMin = (() => { const [h, m] = toTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    return historyData.filter((r) => {
+      const d = new Date(r.recorded_at);
+      const min = d.getHours() * 60 + d.getMinutes();
+      return min >= fromMin && min <= toMin;
+    });
+  }, [historyData, fromTime, toTime]);
+
+  const filteredStatusLogs = useMemo(() => {
+    const fromMin = (() => { const [h, m] = fromTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    const toMin = (() => { const [h, m] = toTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    return statusLogs.filter((r) => {
+      const d = new Date(r.changed_at);
+      const min = d.getHours() * 60 + d.getMinutes();
+      return min >= fromMin && min <= toMin;
+    });
+  }, [statusLogs, fromTime, toTime]);
+
+  const filteredThroughput = useMemo(() => {
+    const fromMin = (() => { const [h, m] = fromTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    const toMin = (() => { const [h, m] = toTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    return throughputData.filter((r) => {
+      const [h, m] = r.slot_start.split(':');
+      const min = parseInt(h, 10) * 60 + parseInt(m || '0', 10);
+      return min >= fromMin && min <= toMin;
+    });
+  }, [throughputData, fromTime, toTime]);
+
   // Transform data for wait time line chart
   const { chartData, attractionNames, statusPeriods, colorMap } = useMemo(() => {
-    if (historyData.length === 0) {
+    if (filteredHistory.length === 0) {
       return { chartData: [], attractionNames: [], statusPeriods: [], colorMap: new Map() };
     }
 
     const namesSet = new Set<string>();
-    historyData.forEach((r) => namesSet.add(r.attraction_name));
+    filteredHistory.forEach((r) => namesSet.add(r.attraction_name));
     const names = Array.from(namesSet);
 
     const cMap = new Map<string, string>();
@@ -171,7 +204,7 @@ export default function AnalyticsPage() {
 
     const timeMap = new Map<number, Record<string, number | string | null>>();
 
-    for (const record of historyData) {
+    for (const record of filteredHistory) {
       const time = new Date(record.recorded_at).getTime();
 
       if (!timeMap.has(time)) {
@@ -201,7 +234,7 @@ export default function AnalyticsPage() {
     const periods: StatusPeriod[] = [];
     const openStatus: Record<string, { status: string; start: number } | null> = {};
 
-    for (const record of historyData) {
+    for (const record of filteredHistory) {
       const time = new Date(record.recorded_at).getTime();
       const name = record.attraction_name;
       const prevPeriod = openStatus[name];
@@ -246,11 +279,11 @@ export default function AnalyticsPage() {
     }
 
     return { chartData: sorted, attractionNames: names, statusPeriods: periods, colorMap: cMap };
-  }, [historyData]);
+  }, [filteredHistory]);
 
   // Transform throughput data for BarChart
   const { throughputChartData, throughputAttractionNames } = useMemo(() => {
-    if (throughputData.length === 0) {
+    if (filteredThroughput.length === 0) {
       return { throughputChartData: [], throughputAttractionNames: [] };
     }
 
@@ -259,24 +292,24 @@ export default function AnalyticsPage() {
     for (const a of attractions) {
       idToName.set(a.id, a.name);
     }
-    for (const h of historyData) {
+    for (const h of filteredHistory) {
       if (!idToName.has(h.attraction_id)) {
         idToName.set(h.attraction_id, h.attraction_name);
       }
     }
 
     // Get unique attraction IDs and names
-    const attractionIds = Array.from(new Set(throughputData.map((l) => l.attraction_id)));
+    const attractionIds = Array.from(new Set(filteredThroughput.map((l) => l.attraction_id)));
     const names = attractionIds.map((id) => idToName.get(id) || id.slice(0, 8));
 
     // Get all unique time slots, sorted
     const allSlots = Array.from(
-      new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
+      new Set(filteredThroughput.map((l) => `${l.slot_start}|${l.slot_end}`))
     ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
 
     // Build a lookup map for O(1) throughput log access
     const logMap = new Map<string, ThroughputLog>();
-    for (const l of throughputData) {
+    for (const l of filteredThroughput) {
       logMap.set(`${l.attraction_id}|${l.slot_start}|${l.slot_end}`, l);
     }
 
@@ -294,11 +327,11 @@ export default function AnalyticsPage() {
     });
 
     return { throughputChartData: data, throughputAttractionNames: names };
-  }, [throughputData, attractions, historyData]);
+  }, [filteredThroughput, attractions, filteredHistory]);
 
   // Transform data for combined ComposedChart (wait time + throughput by slot)
   const { combinedChartData, combinedAttractionNames } = useMemo(() => {
-    if (throughputData.length === 0 && historyData.length === 0) {
+    if (filteredThroughput.length === 0 && filteredHistory.length === 0) {
       return { combinedChartData: [], combinedAttractionNames: [] };
     }
 
@@ -307,7 +340,7 @@ export default function AnalyticsPage() {
     for (const a of attractions) {
       idToName.set(a.id, a.name);
     }
-    for (const h of historyData) {
+    for (const h of filteredHistory) {
       if (!idToName.has(h.attraction_id)) {
         idToName.set(h.attraction_id, h.attraction_name);
       }
@@ -315,7 +348,7 @@ export default function AnalyticsPage() {
 
     // Get all unique time slots from throughput data
     const allSlots = Array.from(
-      new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
+      new Set(filteredThroughput.map((l) => `${l.slot_start}|${l.slot_end}`))
     ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
 
     if (allSlots.length === 0) {
@@ -323,18 +356,18 @@ export default function AnalyticsPage() {
     }
 
     // Get unique attraction IDs from throughput
-    const attractionIds = Array.from(new Set(throughputData.map((l) => l.attraction_id)));
+    const attractionIds = Array.from(new Set(filteredThroughput.map((l) => l.attraction_id)));
     const names = attractionIds.map((id) => idToName.get(id) || id.slice(0, 8));
 
     // Build lookup maps for O(1) access
     const throughputMap = new Map<string, ThroughputLog>();
-    for (const l of throughputData) {
+    for (const l of filteredThroughput) {
       throughputMap.set(`${l.attraction_id}|${l.slot_start}|${l.slot_end}`, l);
     }
 
     // Group history by attraction name and pre-compute minute offsets
     const historyByName = new Map<string, { min: number; wait_time: number }[]>();
-    for (const h of historyData) {
+    for (const h of filteredHistory) {
       if (h.status !== 'OPEN') continue;
       const recorded = new Date(h.recorded_at);
       const recordedMin = recorded.getHours() * 60 + recorded.getMinutes();
@@ -384,17 +417,17 @@ export default function AnalyticsPage() {
     });
 
     return { combinedChartData: data, combinedAttractionNames: names };
-  }, [throughputData, historyData, attractions]);
+  }, [filteredThroughput, filteredHistory, attractions]);
 
   // Compute structured status log summary
   const statusLogSummary = useMemo(() => {
-    if (statusLogs.length === 0) return null;
+    if (filteredStatusLogs.length === 0) return null;
 
     const idToName = new Map<string, string>();
     for (const a of attractions) idToName.set(a.id, a.name);
 
     const byAttraction = new Map<string, AttractionStatusLog[]>();
-    for (const log of statusLogs) {
+    for (const log of filteredStatusLogs) {
       if (!byAttraction.has(log.attraction_id)) byAttraction.set(log.attraction_id, []);
       byAttraction.get(log.attraction_id)!.push(log);
     }
@@ -430,7 +463,7 @@ export default function AnalyticsPage() {
           : 0,
       };
     });
-  }, [statusLogs, attractions]);
+  }, [filteredStatusLogs, attractions]);
 
   const tooltipStyle = {
     backgroundColor: '#0a0a0a',
@@ -452,9 +485,9 @@ export default function AnalyticsPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
-      {/* Date picker */}
-      <div className="flex items-center gap-4 mb-6">
-        <label className="text-[#888] text-sm font-medium">Select Night:</label>
+      {/* Date + time range picker */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <label className="text-[#888] text-sm font-medium">Date:</label>
         <input
           type="date"
           value={selectedDate}
@@ -463,6 +496,28 @@ export default function AnalyticsPage() {
                      focus:outline-none focus:border-[#6ea8fe] transition-colors
                      [color-scheme:dark]"
         />
+        <div className="flex items-center gap-2">
+          <label className="text-[#888] text-sm font-medium">From:</label>
+          <input
+            type="time"
+            value={fromTime}
+            onChange={(e) => setFromTime(e.target.value)}
+            className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                       focus:outline-none focus:border-[#6ea8fe] transition-colors
+                       [color-scheme:dark]"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-[#888] text-sm font-medium">To:</label>
+          <input
+            type="time"
+            value={toTime}
+            onChange={(e) => setToTime(e.target.value)}
+            className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+                       focus:outline-none focus:border-[#6ea8fe] transition-colors
+                       [color-scheme:dark]"
+          />
+        </div>
       </div>
 
       {/* Charts */}
@@ -472,7 +527,7 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <>
-          {chartData.length === 0 && throughputData.length === 0 ? (
+          {chartData.length === 0 && filteredThroughput.length === 0 ? (
             <div className="panel p-12 text-center mb-6">
               <p className="text-[#666] text-lg">No data recorded for this night.</p>
               <p className="text-[#444] text-sm mt-2">
@@ -600,7 +655,7 @@ export default function AnalyticsPage() {
               )}
 
               {/* ── Structured Status Change Log ── */}
-              {statusLogs.length > 0 && statusLogSummary && (
+              {filteredStatusLogs.length > 0 && statusLogSummary && (
                 <div className="panel p-4 sm:p-6 mb-6">
                   <h2 className="text-white text-lg font-bold mb-4">
                     Status Change Log — {selectedDate}
@@ -634,11 +689,11 @@ export default function AnalyticsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {statusLogs.map((log, i) => {
+                        {filteredStatusLogs.map((log, i) => {
                           const idToName = new Map<string, string>();
                           for (const a of attractions) idToName.set(a.id, a.name);
                           const name = idToName.get(log.attraction_id) || log.attraction_id.slice(0, 8);
-                          const nextLog = statusLogs.slice(i + 1).find(
+                          const nextLog = filteredStatusLogs.slice(i + 1).find(
                             (l) => l.attraction_id === log.attraction_id,
                           );
                           const durationMs = nextLog
@@ -797,11 +852,11 @@ export default function AnalyticsPage() {
               {/* ── Throughput Summary Table ── */}
               <div className="panel p-4 sm:p-6">
                 <h2 className="text-white text-lg font-bold mb-4">Throughput Summary — {selectedDate}</h2>
-                {throughputData.length === 0 ? (
+                {filteredThroughput.length === 0 ? (
                   <p className="text-[#666] text-sm">No throughput data logged for this night.</p>
                 ) : (() => {
                   const idToLogs = new Map<string, ThroughputLog[]>();
-                  for (const log of throughputData) {
+                  for (const log of filteredThroughput) {
                     if (!idToLogs.has(log.attraction_id)) idToLogs.set(log.attraction_id, []);
                     idToLogs.get(log.attraction_id)!.push(log);
                   }
@@ -810,18 +865,18 @@ export default function AnalyticsPage() {
                   for (const a of attractions) {
                     idToName.set(a.id, a.name);
                   }
-                  for (const h of historyData) {
+                  for (const h of filteredHistory) {
                     if (!idToName.has(h.attraction_id)) {
                       idToName.set(h.attraction_id, h.attraction_name);
                     }
                   }
 
                   const allSlots = Array.from(
-                    new Set(throughputData.map((l) => `${l.slot_start}|${l.slot_end}`))
+                    new Set(filteredThroughput.map((l) => `${l.slot_start}|${l.slot_end}`))
                   ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
 
                   const attractionIds = Array.from(idToLogs.keys());
-                  const parkTotal = throughputData.reduce((sum, l) => sum + l.guest_count, 0);
+                  const parkTotal = filteredThroughput.reduce((sum, l) => sum + l.guest_count, 0);
 
                   // Build per-attraction lookup maps for O(1) slot access
                   const logLookups = new Map<string, Map<string, ThroughputLog>>();
@@ -835,7 +890,7 @@ export default function AnalyticsPage() {
 
                   // Pre-compute slot totals
                   const slotTotals = new Map<string, number>();
-                  for (const l of throughputData) {
+                  for (const l of filteredThroughput) {
                     const key = `${l.slot_start}|${l.slot_end}`;
                     slotTotals.set(key, (slotTotals.get(key) || 0) + l.guest_count);
                   }
