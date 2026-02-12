@@ -18,6 +18,7 @@ const ACTION_LABELS: Record<string, string> = {
   show_time_change: 'Show Time',
   attraction_created: 'Created',
   attraction_deleted: 'Deleted',
+  signoff_completion: 'Sign-Off',
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -29,6 +30,7 @@ const ACTION_COLORS: Record<string, string> = {
   show_time_change: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   attraction_created: 'bg-green-500/20 text-green-400 border-green-500/30',
   attraction_deleted: 'bg-red-500/20 text-red-400 border-red-500/30',
+  signoff_completion: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
 };
 
 function formatTimestamp(ts: string): string {
@@ -169,6 +171,7 @@ export default function LogsPage() {
             <option value="show_time_removed">Time Removed</option>
             <option value="attraction_created">Created</option>
             <option value="attraction_deleted">Deleted</option>
+            <option value="signoff_completion">Sign-Off</option>
           </select>
         </div>
 

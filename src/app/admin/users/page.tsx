@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
-import type { Attraction, UserRole } from '@/types/database';
+import { ALL_SIGNOFF_ROLES, SIGNOFF_ROLE_LABELS } from '@/lib/signoff';
+import type { Attraction, UserRole, SignoffPin, SignoffRoleKey } from '@/types/database';
 
 /* ── Confirm Modal ── */
 function ConfirmModal({
@@ -61,12 +62,17 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserRole[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
 
+  // PIN data per user (loaded alongside users)
+  const [pinData, setPinData] = useState<Map<string, SignoffPin>>(new Map());
+
   // Form state
   const [editing, setEditing] = useState<UserRole | null>(null);
   const [formEmail, setFormEmail] = useState('');
   const [formDisplayName, setFormDisplayName] = useState('');
   const [formRole, setFormRole] = useState<'admin' | 'supervisor'>('supervisor');
   const [formAttractions, setFormAttractions] = useState<string[]>([]);
+  const [formPin, setFormPin] = useState('');
+  const [formSignoffRoles, setFormSignoffRoles] = useState<SignoffRoleKey[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -77,11 +83,16 @@ export default function UsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<UserRole | null>(null);
 
   const fetchUsers = useCallback(async () => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (data) setUsers(data);
+    const [usersRes, pinsRes] = await Promise.all([
+      supabase.from('user_roles').select('*').order('created_at', { ascending: true }),
+      supabase.from('signoff_pins').select('*'),
+    ]);
+    if (usersRes.data) setUsers(usersRes.data);
+    if (pinsRes.data) {
+      const map = new Map<string, SignoffPin>();
+      for (const p of pinsRes.data) map.set(p.user_id, p);
+      setPinData(map);
+    }
   }, []);
 
   useEffect(() => {
@@ -94,13 +105,19 @@ export default function UsersPage() {
       setUserEmail(auth.email || '');
       setDisplayName(auth.displayName || '');
 
-      const [usersRes, attractionsRes] = await Promise.all([
+      const [usersRes, attractionsRes, pinsRes] = await Promise.all([
         supabase.from('user_roles').select('*').order('created_at', { ascending: true }),
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
+        supabase.from('signoff_pins').select('*'),
       ]);
 
       if (usersRes.data) setUsers(usersRes.data);
       if (attractionsRes.data) setAttractions(attractionsRes.data);
+      if (pinsRes.data) {
+        const map = new Map<string, SignoffPin>();
+        for (const p of pinsRes.data) map.set(p.user_id, p);
+        setPinData(map);
+      }
       setLoading(false);
     }
     init();
@@ -117,6 +134,9 @@ export default function UsersPage() {
     setFormDisplayName(user.display_name || '');
     setFormRole(user.role);
     setFormAttractions(user.allowed_attractions || []);
+    const existingPin = pinData.get(user.id);
+    setFormPin(existingPin?.pin || '');
+    setFormSignoffRoles(existingPin?.signoff_roles || []);
     setFormError('');
     setShowForm(true);
   }
@@ -127,6 +147,8 @@ export default function UsersPage() {
     setFormDisplayName('');
     setFormRole('supervisor');
     setFormAttractions([]);
+    setFormPin('');
+    setFormSignoffRoles([]);
     setFormError('');
     setShowForm(true);
   }
@@ -137,6 +159,8 @@ export default function UsersPage() {
     setFormDisplayName('');
     setFormRole('supervisor');
     setFormAttractions([]);
+    setFormPin('');
+    setFormSignoffRoles([]);
     setFormError('');
     setShowForm(false);
   }
@@ -144,6 +168,12 @@ export default function UsersPage() {
   function toggleAttraction(id: string) {
     setFormAttractions((prev) =>
       prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+    );
+  }
+
+  function toggleSignoffRole(role: SignoffRoleKey) {
+    setFormSignoffRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
     );
   }
 
@@ -188,7 +218,46 @@ export default function UsersPage() {
       }
     }
 
-    await fetchUsers();
+    // Re-fetch to get latest user list (needed for new user ID)
+    const { data: freshUsers } = await supabase
+      .from('user_roles')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (freshUsers) setUsers(freshUsers);
+
+    // Upsert PIN data — find the user ID for this email
+    const targetUser = (freshUsers || []).find(
+      (u: UserRole) => u.email === email
+    );
+
+    if (targetUser) {
+      const trimmedPin = formPin.trim();
+      if (trimmedPin || formSignoffRoles.length > 0) {
+        // Upsert pin record
+        await supabase.from('signoff_pins').upsert(
+          {
+            user_id: targetUser.id,
+            pin: trimmedPin,
+            signoff_roles: formSignoffRoles,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+      } else {
+        // No PIN and no roles — remove pin record if it existed
+        await supabase.from('signoff_pins').delete().eq('user_id', targetUser.id);
+      }
+    }
+
+    // Refresh pins
+    const { data: freshPins } = await supabase.from('signoff_pins').select('*');
+    if (freshPins) {
+      const map = new Map<string, SignoffPin>();
+      for (const p of freshPins) map.set(p.user_id, p);
+      setPinData(map);
+    }
+
     cancelForm();
     setSaving(false);
   }
@@ -295,6 +364,54 @@ export default function UsersPage() {
               <option value="admin">Admin</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-[#ccc] text-[13px] font-medium mb-1">
+              Sign-Off PIN
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={formPin}
+              onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="4-6 digit PIN"
+              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                         placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
+                         tracking-[0.3em] font-mono"
+            />
+          </div>
+        </div>
+
+        {/* Sign-off roles */}
+        <div className="mb-4">
+          <label className="block text-[#ccc] text-[13px] font-medium mb-2">
+            Sign-Off Roles
+          </label>
+          <p className="text-[#888] text-[13px] mb-3">
+            Which sign-off sections can this user complete?
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {ALL_SIGNOFF_ROLES.map((role) => {
+              const checked = formSignoffRoles.includes(role);
+              return (
+                <label
+                  key={role}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer border transition-colors
+                    ${checked ? 'bg-[#1a1a1a] border-[#555]' : 'border-[#333] hover:border-[#555]'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleSignoffRole(role)}
+                    className="accent-[#6ea8fe] w-4 h-4"
+                  />
+                  <span className="text-[#ccc] text-[13px]">{SIGNOFF_ROLE_LABELS[role]}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         {formRole === 'supervisor' && (
@@ -377,6 +494,28 @@ export default function UsersPage() {
                   <td className="px-4 py-3 text-sm text-[#888]">
                     {user.role === 'admin' ? 'All' : getAttractionNames(user.allowed_attractions)}
                   </td>
+                  <td className="px-4 py-3 text-sm">
+                    {pinData.get(user.id)?.pin ? (
+                      <span className="text-[#4caf50] text-xs font-medium">Set</span>
+                    ) : (
+                      <span className="text-[#666] text-xs">&mdash;</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#888]">
+                    {(() => {
+                      const roles = pinData.get(user.id)?.signoff_roles;
+                      if (!roles || roles.length === 0) return <span className="text-[#666] text-xs">&mdash;</span>;
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {roles.map((r) => (
+                            <span key={r} className="inline-block px-1.5 py-0.5 bg-[#1a2a3a] text-[#6ea8fe] text-[10px] font-medium rounded">
+                              {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -402,7 +541,7 @@ export default function UsersPage() {
 
             const groupHeader = (label: string, count: number, badge: React.ReactNode) => (
               <tr key={`header-${label}`}>
-                <td colSpan={4} className="px-4 py-2.5 bg-[#0d0d0d] border-b border-[#333]">
+                <td colSpan={6} className="px-4 py-2.5 bg-[#0d0d0d] border-b border-[#333]">
                   <div className="flex items-center gap-2">
                     {badge}
                     <span className="text-[#888] text-xs font-medium">{count} {label}{count !== 1 ? 's' : ''}</span>
@@ -423,6 +562,12 @@ export default function UsersPage() {
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
                       Attractions
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                      PIN
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
+                      Sign-Off Roles
                     </th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
                       Actions

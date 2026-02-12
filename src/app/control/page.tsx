@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
+import { getSignoffStatus } from '@/lib/signoff';
+import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
 
 /* ── Helpers ── */
@@ -195,6 +197,7 @@ export default function SupervisorDashboard() {
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [signoffStatus, setSignoffStatus] = useState<AttractionSignoffStatus | null>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
@@ -326,6 +329,32 @@ export default function SupervisorDashboard() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  // Fetch signoff status for selected attraction
+  useEffect(() => {
+    if (!selectedId) { setSignoffStatus(null); return; }
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function fetch() {
+      const status = await getSignoffStatus(selectedId!);
+      setSignoffStatus(status);
+    }
+    fetch();
+
+    channel = supabase
+      .channel(`control-signoff-${selectedId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'signoff_completions', filter: `attraction_id=eq.${selectedId}` },
+        () => { fetch(); }
+      )
+      .subscribe();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [selectedId]);
 
   // Fetch throughput logs for today
   const fetchThroughputLogs = useCallback(async () => {
@@ -634,6 +663,22 @@ export default function SupervisorDashboard() {
                 </div>
               ) : null;
             })()}
+
+            {/* ── Sign-Off Status ── */}
+            {signoffStatus && signoffStatus.openingTotal > 0 && (
+              <div className="mb-6 flex justify-center">
+                {signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#0a3d1f] text-[#4caf50]">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    SIGNED OFF
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d3000] text-[#f0ad4e]">
+                    {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* ── Queue Time Control ── */}
             <section style={{ marginBottom: 48 }}>

@@ -52,7 +52,7 @@ export interface UserRole {
   updated_at: string;
 }
 
-export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_added' | 'show_time_removed' | 'attraction_created' | 'attraction_deleted';
+export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_added' | 'show_time_removed' | 'attraction_created' | 'attraction_deleted' | 'signoff_completion';
 
 export interface AuditLog {
   id: string;
@@ -64,4 +64,44 @@ export interface AuditLog {
   new_value: string | null;
   details: string | null;
   created_at: string;
+}
+
+/* ── Sign-Off System ── */
+
+export type SignoffRoleKey = 'supervisor' | 'show_captain' | 'construction' | 'tech' | 'manager';
+
+export interface SignoffPin {
+  id: string;
+  user_id: string;
+  pin: string;
+  signoff_roles: SignoffRoleKey[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SignoffSection {
+  id: string;
+  attraction_id: string;
+  name: string;
+  role_key: SignoffRoleKey;
+  phase: 'opening' | 'closing';
+  sort_order: number;
+  created_at: string;
+}
+
+export interface SignoffChecklistItem {
+  id: string;
+  section_id: string;
+  label: string;
+  sort_order: number;
+}
+
+export interface SignoffCompletion {
+  id: string;
+  section_id: string;
+  attraction_id: string;
+  sign_date: string;
+  signed_by_name: string;
+  signed_by_email: string;
+  signed_at: string;
 }

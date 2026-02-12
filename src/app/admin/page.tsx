@@ -7,6 +7,8 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
+import { getAllSignoffStatuses, getTodayDateStr } from '@/lib/signoff';
+import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
@@ -375,6 +377,7 @@ const RideControl = React.memo(function RideControl({
   onMove,
   isFirst,
   isLast,
+  signoffStatus,
 }: {
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
@@ -382,6 +385,7 @@ const RideControl = React.memo(function RideControl({
   onMove?: (dir: 'up' | 'down') => void;
   isFirst: boolean;
   isLast: boolean;
+  signoffStatus?: AttractionSignoffStatus;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -441,6 +445,21 @@ const RideControl = React.memo(function RideControl({
           </span>
         </div>
       </div>
+
+      {/* Sign-off badge */}
+      {signoffStatus && signoffStatus.openingTotal > 0 && (
+        <div className="mb-3">
+          {signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
+            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
+              SIGNED OFF
+            </span>
+          ) : (
+            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
+              {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Status select */}
       <div style={{ marginBottom: 16 }}>
@@ -543,6 +562,7 @@ const ShowControl = React.memo(function ShowControl({
   onMove,
   isFirst,
   isLast,
+  signoffStatus,
 }: {
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
@@ -550,6 +570,7 @@ const ShowControl = React.memo(function ShowControl({
   onMove?: (dir: 'up' | 'down') => void;
   isFirst: boolean;
   isLast: boolean;
+  signoffStatus?: AttractionSignoffStatus;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -618,6 +639,21 @@ const ShowControl = React.memo(function ShowControl({
           </span>
         </div>
       </div>
+
+      {/* Sign-off badge */}
+      {signoffStatus && signoffStatus.openingTotal > 0 && (
+        <div className="mb-3">
+          {signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
+            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
+              SIGNED OFF
+            </span>
+          ) : (
+            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
+              {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mb-4">
         <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">Status</label>
@@ -723,6 +759,7 @@ export default function AdminDashboard() {
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [autoSort, setAutoSort] = useState(false);
+  const [signoffStatuses, setSignoffStatuses] = useState<Map<string, AttractionSignoffStatus>>(new Map());
   const attractionsRef = useRef<Attraction[]>([]);
   const userEmailRef = useRef('');
   const displayNameRef = useRef('');
@@ -735,6 +772,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
     let settingsChannel: ReturnType<typeof supabase.channel> | null = null;
+    let signoffChannel: ReturnType<typeof supabase.channel> | null = null;
 
     async function init() {
       const auth = await checkAuth();
@@ -764,6 +802,14 @@ export default function AdminDashboard() {
       if (autoSortRes.data) {
         setAutoSort(autoSortRes.data.value === 'true');
       }
+
+      // Fetch signoff statuses
+      if (attractionsRes.data && attractionsRes.data.length > 0) {
+        const ids = attractionsRes.data.map((a: Attraction) => a.id);
+        const statuses = await getAllSignoffStatuses(ids);
+        setSignoffStatuses(statuses);
+      }
+
       setLoading(false);
 
       attractionsChannel = supabase
@@ -808,6 +854,23 @@ export default function AdminDashboard() {
           }
         )
         .subscribe();
+
+      // Signoff completions realtime
+      signoffChannel = supabase
+        .channel('admin-signoff')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'signoff_completions' },
+          async () => {
+            const currentAttractions = attractionsRef.current;
+            if (currentAttractions.length > 0) {
+              const ids = currentAttractions.map((a) => a.id);
+              const statuses = await getAllSignoffStatuses(ids);
+              setSignoffStatuses(statuses);
+            }
+          }
+        )
+        .subscribe();
     }
 
     init();
@@ -815,6 +878,7 @@ export default function AdminDashboard() {
     return () => {
       if (attractionsChannel) supabase.removeChannel(attractionsChannel);
       if (settingsChannel) supabase.removeChannel(settingsChannel);
+      if (signoffChannel) supabase.removeChannel(signoffChannel);
     };
   }, [router]);
 
@@ -1159,6 +1223,7 @@ export default function AdminDashboard() {
               onMove={!autoSort ? (dir) => handleMoveAttraction(attraction.id, dir) : undefined}
               isFirst={idx === 0}
               isLast={idx === attractions.length - 1}
+              signoffStatus={signoffStatuses.get(attraction.id)}
             />
           ) : (
             <RideControl
@@ -1169,6 +1234,7 @@ export default function AdminDashboard() {
               onMove={!autoSort ? (dir) => handleMoveAttraction(attraction.id, dir) : undefined}
               isFirst={idx === 0}
               isLast={idx === attractions.length - 1}
+              signoffStatus={signoffStatuses.get(attraction.id)}
             />
           )
         )}

@@ -8,11 +8,13 @@ const TABS = [
   { label: 'Attractions', href: '/admin' },
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Users', href: '/admin/users' },
+  { label: 'Sign-Off', href: '/admin/signoff' },
   { label: 'Logs', href: '/admin/logs' },
 ];
 
 const EXTERNAL_LINKS = [
   { label: 'Field Control', href: '/control' },
+  { label: 'Sign-Off', href: '/signoff' },
   { label: 'TV Screens', href: '/tv' },
 ];
 
