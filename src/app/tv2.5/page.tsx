@@ -26,7 +26,7 @@ const headerStyle: React.CSSProperties = {
   marginBottom: 12,
   flexShrink: 0,
   boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+    '0 4px 12px rgba(0,0,0,0.4)',
 };
 
 const headerTitleStyle: React.CSSProperties = {
@@ -52,7 +52,7 @@ const footerStyle: React.CSSProperties = {
   justifyContent: 'center',
   gap: 16,
   boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+    '0 4px 12px rgba(0,0,0,0.4)',
 };
 
 const bgImgStyle: React.CSSProperties = {
@@ -104,7 +104,7 @@ const statusOverlayStyle: React.CSSProperties = {
 
 /* Pill styles */
 const pillBaseStyle: React.CSSProperties = {
-  background: 'rgba(0, 0, 0, 0.55)',
+  background: 'rgba(0, 0, 0, 0.75)',
   border: '1px solid rgba(255,255,255,0.12)',
   borderRadius: 14,
   padding: '10px 28px',
@@ -112,10 +112,7 @@ const pillBaseStyle: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.5)',
+  boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
 };
 
 const pillOpenStyle: React.CSSProperties = {
@@ -126,26 +123,20 @@ const pillOpenStyle: React.CSSProperties = {
 
 const pillClosedStyle: React.CSSProperties = {
   ...pillBaseStyle,
-  background: 'rgba(220, 53, 69, 0.15)',
+  background: 'rgba(220, 53, 69, 0.2)',
   border: '1px solid rgba(220, 53, 69, 0.3)',
-  boxShadow:
-    'inset 0 1px 0 rgba(220, 53, 69, 0.15), 0 0 10px rgba(220, 53, 69, 0.1), 0 0 25px rgba(220, 53, 69, 0.05), 0 4px 16px rgba(0,0,0,0.5)',
 };
 
 const pillDelayedStyle: React.CSSProperties = {
   ...pillBaseStyle,
-  background: 'rgba(240, 173, 78, 0.12)',
+  background: 'rgba(240, 173, 78, 0.18)',
   border: '1px solid rgba(240, 173, 78, 0.3)',
-  boxShadow:
-    'inset 0 1px 0 rgba(240, 173, 78, 0.15), 0 0 10px rgba(240, 173, 78, 0.1), 0 0 25px rgba(240, 173, 78, 0.05), 0 4px 16px rgba(0,0,0,0.5)',
 };
 
 const pillCapacityStyle: React.CSSProperties = {
   ...pillBaseStyle,
-  background: 'rgba(245, 158, 11, 0.12)',
+  background: 'rgba(245, 158, 11, 0.18)',
   border: '1px solid rgba(245, 158, 11, 0.3)',
-  boxShadow:
-    'inset 0 1px 0 rgba(245, 158, 11, 0.15), 0 0 10px rgba(245, 158, 11, 0.1), 0 0 25px rgba(245, 158, 11, 0.05), 0 4px 16px rgba(0,0,0,0.5)',
 };
 
 /* Fallback when no background art exists */
@@ -178,7 +169,7 @@ const BannerRow = React.memo(function BannerRow({
       minHeight: 0,
       border: '1px solid rgba(255,255,255,0.12)',
       boxShadow:
-        'inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.02)',
+        '0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)',
     }),
     [style],
   );
@@ -512,11 +503,11 @@ export default function TV25Display() {
     };
   }, [totalRides, stepSize]);
 
-  // Build the display list: original rides + enough duplicates for seamless wrap
+  // Build the display list: original rides + just enough duplicates for seamless wrap
   const displayRides = useMemo(() => {
     if (totalRides === 0) return [];
-    // Append a copy so the scroll can wrap seamlessly
-    return [...sortedRides, ...sortedRides];
+    // Only duplicate enough cards to fill the viewport during the wrap transition
+    return [...sortedRides, ...sortedRides.slice(0, VISIBLE_COUNT)];
   }, [sortedRides, totalRides]);
 
   if (loading) {
@@ -591,7 +582,6 @@ export default function TV25Display() {
             display: 'flex',
             flexDirection: 'column',
             gap: `${GAP}px`,
-            willChange: 'transform',
           }}
         >
           {displayRides.map((attraction, idx) => (

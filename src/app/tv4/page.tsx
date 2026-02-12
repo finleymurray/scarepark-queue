@@ -191,7 +191,6 @@ export default function TV4Carousel() {
             style={{
               opacity: i === activeIndex ? 1 : 0,
               pointerEvents: i === activeIndex ? 'auto' : 'none',
-              willChange: 'opacity',
             }}
           />
         ))}
