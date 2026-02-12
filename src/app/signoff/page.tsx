@@ -303,29 +303,21 @@ export default function SignoffPage() {
     setCheckedItems(new Set());
   }
 
-  /** Check if a section is locked (preceding sections in same phase not yet completed). */
+  /** Check if a section is locked (requires_all_complete and not all other sections done). */
   function isSectionLocked(sectionId: string): boolean {
     const section = sections.find((s) => s.id === sectionId);
-    if (!section) return false;
-    const samePhaseSections = sections.filter((s) => s.phase === section.phase);
-    for (const s of samePhaseSections) {
-      if (s.sort_order >= section.sort_order) break;
-      if (!completions.has(s.id)) return true;
-    }
-    return false;
+    if (!section || !section.requires_all_complete) return false;
+    const otherSections = sections.filter((s) => s.phase === section.phase && s.id !== sectionId);
+    return otherSections.some((s) => !completions.has(s.id));
   }
 
-  /** Get names of incomplete preceding sections that are blocking this one. */
+  /** Get names of incomplete sections that are blocking this one. */
   function getBlockingSections(sectionId: string): string[] {
     const section = sections.find((s) => s.id === sectionId);
-    if (!section) return [];
-    const samePhaseSections = sections.filter((s) => s.phase === section.phase);
-    const blocking: string[] = [];
-    for (const s of samePhaseSections) {
-      if (s.sort_order >= section.sort_order) break;
-      if (!completions.has(s.id)) blocking.push(s.name);
-    }
-    return blocking;
+    if (!section || !section.requires_all_complete) return [];
+    return sections
+      .filter((s) => s.phase === section.phase && s.id !== sectionId && !completions.has(s.id))
+      .map((s) => s.name);
   }
 
   function openSection(sectionId: string) {

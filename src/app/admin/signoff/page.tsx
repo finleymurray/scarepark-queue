@@ -264,7 +264,7 @@ export default function SignoffConfigPage() {
     if (!addingSectionPhase || !newSectionName.trim() || !selectedAttractionId) return;
     const phaseSections = sections.filter((s) => s.phase === addingSectionPhase);
     const maxOrder = phaseSections.length > 0 ? Math.max(...phaseSections.map((s) => s.sort_order)) : -1;
-    await supabase.from('signoff_sections').insert({ attraction_id: selectedAttractionId, name: newSectionName.trim(), role_key: newSectionRole, phase: addingSectionPhase, sort_order: maxOrder + 1 });
+    await supabase.from('signoff_sections').insert({ attraction_id: selectedAttractionId, name: newSectionName.trim(), role_key: newSectionRole, phase: addingSectionPhase, sort_order: maxOrder + 1, requires_all_complete: false });
     setAddingSectionPhase(null); setNewSectionName(''); setNewSectionRole('supervisor');
     await fetchSections(selectedAttractionId);
   }
@@ -306,11 +306,17 @@ export default function SignoffConfigPage() {
     if (direction === 'down' && idx >= phaseSections.length - 1) return;
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
     const swapSection = phaseSections[swapIdx];
-    // Swap sort_order values
     await Promise.all([
       supabase.from('signoff_sections').update({ sort_order: swapSection.sort_order }).eq('id', section.id),
       supabase.from('signoff_sections').update({ sort_order: section.sort_order }).eq('id', swapSection.id),
     ]);
+    await fetchSections(selectedAttractionId);
+  }
+
+  async function handleToggleRequiresAll(sectionId: string) {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    await supabase.from('signoff_sections').update({ requires_all_complete: !section.requires_all_complete }).eq('id', sectionId);
     await fetchSections(selectedAttractionId);
   }
 
@@ -399,18 +405,6 @@ export default function SignoffConfigPage() {
                     <button onClick={() => { setAddingSectionPhase(phase); setNewSectionName(''); setNewSectionRole('supervisor'); }} className="px-4 py-2 bg-white text-black text-xs font-semibold rounded-[6px] hover:bg-[#ddd] transition-colors ml-auto">+ Add Section</button>
                   </legend>
 
-                  {/* Dependency info */}
-                  <div className="bg-[#0d2f5e]/30 border border-[#0d2f5e] rounded-[6px] px-5 py-3 mb-6">
-                    <p className="text-[#6ea8fe] text-xs">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="inline-block mr-1.5 -mt-0.5">
-                        <circle cx="6" cy="6" r="5" stroke="#6ea8fe" strokeWidth="1.2" fill="none"/>
-                        <path d="M6 3.5V6.5" stroke="#6ea8fe" strokeWidth="1.2" strokeLinecap="round"/>
-                        <circle cx="6" cy="8.5" r="0.5" fill="#6ea8fe"/>
-                      </svg>
-                      Sections must be signed off in order. Staff cannot sign a section until all sections above it are completed.
-                    </p>
-                  </div>
-
                   {addingSectionPhase === phase && (
                     <div className="bg-[#1a1a1a] border border-[#333] rounded-[6px] p-8 mb-8">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
@@ -451,12 +445,31 @@ export default function SignoffConfigPage() {
                               </div>
                             ) : (
                               <>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-wrap">
                                   <span className="w-6 h-6 rounded-full bg-white text-black text-[11px] font-bold flex items-center justify-center shrink-0">{sectionIdx + 1}</span>
                                   <span className="text-[#e0e0e0] text-sm font-medium">{section.name}</span>
                                   <span className="inline-block px-2 py-0.5 bg-[#0d2f5e] text-[#6ea8fe] text-[10px] font-medium rounded-[12px]">{SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}</span>
+                                  {section.requires_all_complete && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#3d3000] text-[#ffc107] text-[10px] font-medium rounded-[12px]">
+                                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><rect x="2" y="5.5" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/><path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/></svg>
+                                      Requires all checks
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleToggleRequiresAll(section.id)}
+                                    className={`px-2 py-1 text-xs font-medium transition-colors ${section.requires_all_complete ? 'text-[#ffc107] hover:text-[#ffca28]' : 'text-[#888] hover:text-white'}`}
+                                    title={section.requires_all_complete ? 'Remove lock (currently requires all other checks)' : 'Lock until all other checks are complete'}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                                      {section.requires_all_complete
+                                        ? <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+                                        : <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+                                      }
+                                    </svg>
+                                  </button>
                                   <button
                                     onClick={() => handleMoveSection(section.id, 'up')}
                                     disabled={sectionIdx === 0}

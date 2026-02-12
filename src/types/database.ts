@@ -86,6 +86,7 @@ export interface SignoffSection {
   role_key: SignoffRoleKey;
   phase: 'opening' | 'closing';
   sort_order: number;
+  requires_all_complete: boolean;
   created_at: string;
 }
 
