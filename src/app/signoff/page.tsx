@@ -543,7 +543,7 @@ export default function SignoffPage() {
               </legend>
 
               {/* Phase tabs */}
-              <div className="inline-flex bg-[#1a1a1a] border border-[#333] rounded-[10px] p-1" style={{ marginBottom: 24 }}>
+              <div className="flex" style={{ gap: 12, marginBottom: 28 }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -558,16 +558,17 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`flex items-center gap-2 px-6 py-3 rounded-[8px] text-sm font-semibold capitalize transition-colors touch-manipulation
+                      className={`flex items-center gap-2.5 rounded-[10px] text-sm font-semibold capitalize transition-colors touch-manipulation border
                         ${closingLocked
-                          ? 'text-[#555] cursor-not-allowed'
+                          ? 'text-[#555] border-[#333] bg-[#111] cursor-not-allowed'
                           : active
-                            ? 'bg-white text-black'
-                            : 'text-[#888] hover:text-white'
+                            ? 'bg-white text-black border-white'
+                            : 'text-[#aaa] border-[#444] bg-[#1a1a1a] hover:border-[#666] hover:text-white'
                         }`}
+                      style={{ padding: '14px 24px', minWidth: 130 }}
                     >
                       {closingLocked && (
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
                           <rect x="2" y="5.5" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                           <path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
                         </svg>

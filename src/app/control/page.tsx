@@ -731,7 +731,11 @@ export default function SupervisorDashboard() {
                     }`}>
                       {selected.status}
                     </div>
-                    <p className="text-white/30 text-xs mt-2">Queue time changes are locked while the attraction is {selected.status.toLowerCase()}</p>
+                    <p className="text-white/30 text-xs mt-2">
+                      {selected.status === 'CLOSED'
+                        ? 'Contact control to open your attraction'
+                        : 'Contact control to re-open your attraction'}
+                    </p>
                   </div>
                 ) : (
                   <>
