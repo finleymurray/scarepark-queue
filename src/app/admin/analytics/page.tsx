@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
       setLoading(true);
       const { start, end } = getTimeRange(selectedDate);
 
-      const [historyRes, throughputRes] = await Promise.all([
+      const [historyRes, throughputRes, logs] = await Promise.all([
         supabase
           .from('attraction_history')
           .select('id,attraction_id,attraction_name,status,wait_time,recorded_at')
@@ -136,6 +136,7 @@ export default function AnalyticsPage() {
           .from('throughput_logs')
           .select('id,attraction_id,slot_start,slot_end,guest_count,logged_by,log_date,created_at,updated_at')
           .eq('log_date', selectedDate),
+        getAllStatusLogs(selectedDate),
       ]);
 
       if (historyRes.error) {
@@ -149,14 +150,13 @@ export default function AnalyticsPage() {
         setThroughputData(throughputRes.data || []);
       }
 
-      // Fetch structured status logs
-      const logs = await getAllStatusLogs(selectedDate);
       setStatusLogs(logs);
 
       setLoading(false);
     }
     fetchData();
-  }, [authenticated, selectedDate, openingTime]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, selectedDate]);
 
   // Filter data by selected time window
   const filteredHistory = useMemo(() => {

@@ -876,6 +876,7 @@ export default function AdminDashboard() {
   const attractionsRef = useRef<Attraction[]>([]);
   const userEmailRef = useRef('');
   const displayNameRef = useRef('');
+  const signoffDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep refs in sync for stable callbacks
   attractionsRef.current = attractions;
@@ -968,19 +969,22 @@ export default function AdminDashboard() {
         )
         .subscribe();
 
-      // Signoff completions realtime
+      // Signoff completions realtime (debounced to batch rapid updates)
       signoffChannel = supabase
         .channel('admin-signoff')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'signoff_completions' },
-          async () => {
-            const currentAttractions = attractionsRef.current;
-            if (currentAttractions.length > 0) {
-              const ids = currentAttractions.map((a) => a.id);
-              const statuses = await getAllSignoffStatuses(ids);
-              setSignoffStatuses(statuses);
-            }
+          () => {
+            if (signoffDebounceRef.current) clearTimeout(signoffDebounceRef.current);
+            signoffDebounceRef.current = setTimeout(async () => {
+              const currentAttractions = attractionsRef.current;
+              if (currentAttractions.length > 0) {
+                const ids = currentAttractions.map((a) => a.id);
+                const statuses = await getAllSignoffStatuses(ids);
+                setSignoffStatuses(statuses);
+              }
+            }, 2000);
           }
         )
         .subscribe();

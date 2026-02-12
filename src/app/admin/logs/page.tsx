@@ -89,56 +89,32 @@ function ClearDataModal({
   async function handleClear() {
     if (!canConfirm) return;
     setClearing(true);
-    const results: { table: string; deleted: number }[] = [];
 
-    for (const table of CLEAR_DATA_TABLES) {
-      if (!selectedTables.has(table.key)) continue;
+    const tablesToClear = CLEAR_DATA_TABLES.filter((t) => selectedTables.has(t.key));
+    const start = `${clearDate}T00:00:00`;
+    const end = `${clearDate}T23:59:59`;
 
-      let countQuery;
-      if (table.isTimestamp) {
-        const start = `${clearDate}T00:00:00`;
-        const end = `${clearDate}T23:59:59`;
-        countQuery = supabase
-          .from(table.key)
-          .select('id', { count: 'exact', head: true })
-          .gte(table.dateCol, start)
-          .lte(table.dateCol, end);
-      } else {
-        countQuery = supabase
-          .from(table.key)
-          .select('id', { count: 'exact', head: true })
-          .eq(table.dateCol, clearDate);
-      }
+    // Count all tables in parallel
+    const counts = await Promise.all(
+      tablesToClear.map((table) => {
+        const query = table.isTimestamp
+          ? supabase.from(table.key).select('id', { count: 'exact', head: true }).gte(table.dateCol, start).lte(table.dateCol, end)
+          : supabase.from(table.key).select('id', { count: 'exact', head: true }).eq(table.dateCol, clearDate);
+        return query.then(({ count }) => ({ table, rowCount: count ?? 0 }));
+      })
+    );
 
-      const { count } = await countQuery;
-      const rowCount = count ?? 0;
-
-      if (rowCount > 0) {
-        let deleteQuery;
-        if (table.isTimestamp) {
-          const start = `${clearDate}T00:00:00`;
-          const end = `${clearDate}T23:59:59`;
-          deleteQuery = supabase
-            .from(table.key)
-            .delete()
-            .gte(table.dateCol, start)
-            .lte(table.dateCol, end);
-        } else {
-          deleteQuery = supabase
-            .from(table.key)
-            .delete()
-            .eq(table.dateCol, clearDate);
-        }
-
+    // Delete all tables in parallel
+    const results = await Promise.all(
+      counts.map(async ({ table, rowCount }) => {
+        if (rowCount === 0) return { table: table.label, deleted: 0 };
+        const deleteQuery = table.isTimestamp
+          ? supabase.from(table.key).delete().gte(table.dateCol, start).lte(table.dateCol, end)
+          : supabase.from(table.key).delete().eq(table.dateCol, clearDate);
         const { error } = await deleteQuery;
-        results.push({
-          table: table.label,
-          deleted: error ? -1 : rowCount,
-        });
-      } else {
-        results.push({ table: table.label, deleted: 0 });
-      }
-    }
+        return { table: table.label, deleted: error ? -1 : rowCount };
+      })
+    );
 
     setResult(results);
     setClearing(false);
