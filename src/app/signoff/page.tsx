@@ -543,7 +543,7 @@ export default function SignoffPage() {
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex" style={{ gap: 12, marginBottom: 28 }}>
+              <div className="flex border-b border-[#333]" style={{ marginBottom: 28 }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -558,14 +558,14 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`flex items-center gap-2.5 rounded-[10px] text-sm font-semibold capitalize transition-colors touch-manipulation border
+                      className={`flex items-center gap-2.5 text-sm font-semibold capitalize transition-colors touch-manipulation relative
                         ${closingLocked
-                          ? 'text-[#555] border-[#333] bg-[#111] cursor-not-allowed'
+                          ? 'text-[#444] cursor-not-allowed'
                           : active
-                            ? 'bg-white text-black border-white'
-                            : 'text-[#aaa] border-[#444] bg-[#1a1a1a] hover:border-[#666] hover:text-white'
+                            ? 'text-white'
+                            : 'text-[#888] hover:text-white'
                         }`}
-                      style={{ padding: '14px 24px', minWidth: 130 }}
+                      style={{ padding: '14px 24px' }}
                     >
                       {closingLocked && (
                         <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
@@ -579,6 +579,7 @@ export default function SignoffPage() {
                           {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
                         </span>
                       )}
+                      {active && <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-white rounded-full" />}
                     </button>
                   );
                 })}
