@@ -269,18 +269,31 @@ function UserFormModal({
             <div className="space-y-3">
               <div>
                 <label className="block text-white/50 text-xs font-medium mb-1.5">4-Digit PIN</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  value={formPin}
-                  onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  placeholder="0000"
-                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm
-                             placeholder-white/20 focus:outline-none focus:border-[#555] transition-colors
-                             tracking-[0.4em] font-mono text-center text-lg"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    value={formPin}
+                    onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="0000"
+                    className="flex-1 px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm
+                               placeholder-white/20 focus:outline-none focus:border-[#555] transition-colors
+                               tracking-[0.4em] font-mono text-center text-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const pin = String(Math.floor(1000 + Math.random() * 9000));
+                      setFormPin(pin);
+                    }}
+                    className="px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl text-white/50 text-xs font-semibold
+                               hover:border-[#555] hover:text-white transition-colors whitespace-nowrap"
+                  >
+                    Generate
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-white/50 text-xs font-medium mb-2">Roles</label>
@@ -608,10 +621,10 @@ export default function UsersPage() {
             {pinOnly ? 'PIN only' : user.role}
           </span>
 
-          {/* PIN indicator */}
+          {/* PIN display */}
           {pin?.pin ? (
-            <span className="text-[10px] px-2 py-1 rounded-lg font-medium bg-[#1a1a1a] text-white/40">
-              PIN set
+            <span className="text-[10px] px-2 py-1 rounded-lg font-mono font-semibold bg-[#1a1a1a] text-white/60 tracking-widest">
+              PIN: {pin.pin}
             </span>
           ) : null}
 
