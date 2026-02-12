@@ -35,7 +35,6 @@ const VIEWS = [
   { path: '/tv1', duration: 15000 },
 ];
 
-const FADE_MS = 600;
 const TV_SAFE_PADDING = '3.5%';
 
 /* ── Styles matching TV1/TV2/TV3 exactly ── */
@@ -83,7 +82,6 @@ export default function TV4Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [closingTime, setClosingTime] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const iframeRefsMap = useRef<Map<number, HTMLIFrameElement>>(new Map());
 
   /* Fetch closing time + subscribe to changes */
   useEffect(() => {
@@ -117,34 +115,12 @@ export default function TV4Carousel() {
     };
   }, []);
 
-  /* Carousel timer — CSS transition + setTimeout (GPU-composited, no per-frame JS) */
+  /* Carousel timer — instant swap (fading iframes is too heavy for TV hardware) */
   useEffect(() => {
-    function scheduleNext() {
-      const current = VIEWS[activeIndex];
-      timerRef.current = setTimeout(() => {
-        setActiveIndex((prev) => {
-          const oldIdx = prev;
-          const newIdx = (prev + 1) % VIEWS.length;
-
-          const oldEl = iframeRefsMap.current.get(oldIdx);
-          const newEl = iframeRefsMap.current.get(newIdx);
-
-          // Trigger CSS transition: fade out old, fade in new
-          if (oldEl) oldEl.style.opacity = '0';
-          if (newEl) newEl.style.opacity = '1';
-
-          // After transition completes, update pointerEvents
-          setTimeout(() => {
-            if (oldEl) oldEl.style.pointerEvents = 'none';
-            if (newEl) newEl.style.pointerEvents = 'auto';
-          }, FADE_MS);
-
-          return newIdx;
-        });
-      }, current.duration);
-    }
-
-    scheduleNext();
+    const current = VIEWS[activeIndex];
+    timerRef.current = setTimeout(() => {
+      setActiveIndex((prev) => (prev + 1) % VIEWS.length);
+    }, current.duration);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -168,22 +144,17 @@ export default function TV4Carousel() {
         <h1 style={headerTitleStyle}>Live Times</h1>
       </div>
 
-      {/* Iframe carousel */}
+      {/* Iframe carousel — instant swap, no fade (too heavy for TV hardware) */}
       <div className="flex-1 relative overflow-hidden">
         {VIEWS.map((view, i) => (
           <iframe
             key={view.path}
-            ref={(el) => {
-              if (el) iframeRefsMap.current.set(i, el);
-              else iframeRefsMap.current.delete(i);
-            }}
             src={view.path}
             title={`TV View ${view.path}`}
             className="absolute inset-0 w-full h-full border-0"
             style={{
-              opacity: i === activeIndex ? 1 : 0,
+              visibility: i === activeIndex ? 'visible' : 'hidden',
               pointerEvents: i === activeIndex ? 'auto' : 'none',
-              transition: `opacity ${FADE_MS}ms ease`,
             }}
           />
         ))}

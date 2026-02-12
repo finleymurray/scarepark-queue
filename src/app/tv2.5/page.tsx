@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getAttractionBg, getLogoGlow } from '@/lib/logos';
+import { getAttractionLogo, getAttractionBg } from '@/lib/logos';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -112,7 +112,6 @@ const pillBaseStyle: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
 };
 
 const pillOpenStyle: React.CSSProperties = {
@@ -158,7 +157,6 @@ const BannerRow = React.memo(function BannerRow({
   const status = attraction.status as AttractionStatus;
   const bgSrc = getAttractionBg(attraction.slug);
   const logoSrc = getAttractionLogo(attraction.slug);
-  const glow = getLogoGlow(attraction.slug, 'strong');
 
   const rowStyle = useMemo<React.CSSProperties>(
     () => ({
@@ -168,19 +166,12 @@ const BannerRow = React.memo(function BannerRow({
       overflow: 'hidden',
       minHeight: 0,
       border: '1px solid rgba(255,255,255,0.12)',
-      boxShadow:
-        '0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)',
     }),
     [style],
   );
 
-  const logoImgStyle = useMemo<React.CSSProperties>(
-    () => ({
-      ...logoStyle,
-      filter: glow || undefined,
-    }),
-    [glow],
-  );
+  // No glow filter on TV2.5 — drop-shadow filters are too expensive during scroll animation
+  const logoImgStyle = logoStyle;
 
   return (
     <div style={rowStyle}>
@@ -208,7 +199,6 @@ const BannerRow = React.memo(function BannerRow({
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
-                textShadow: '0 0 12px rgba(255,255,255,0.3), 0 0 30px rgba(255,255,255,0.12)',
               }}
             >
               {attraction.wait_time}
@@ -236,7 +226,6 @@ const BannerRow = React.memo(function BannerRow({
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 color: '#f87171',
-                textShadow: '0 0 10px rgba(220, 53, 69, 0.5), 0 0 25px rgba(220, 53, 69, 0.25)',
               }}
             >
               Closed
@@ -252,7 +241,6 @@ const BannerRow = React.memo(function BannerRow({
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 color: '#f0ad4e',
-                textShadow: '0 0 10px rgba(240, 173, 78, 0.5), 0 0 25px rgba(240, 173, 78, 0.25)',
               }}
             >
               Technical Delay
@@ -268,7 +256,6 @@ const BannerRow = React.memo(function BannerRow({
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 color: '#F59E0B',
-                textShadow: '0 0 10px rgba(245, 158, 11, 0.5), 0 0 25px rgba(245, 158, 11, 0.25)',
               }}
             >
               At Capacity
@@ -291,7 +278,6 @@ const BannerRow = React.memo(function BannerRow({
               style={{
                 fontSize: '2.5vw',
                 fontWeight: 900,
-                textShadow: '0 0 12px rgba(255,255,255,0.3)',
               }}
             >
               {attraction.name}
