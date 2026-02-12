@@ -406,6 +406,17 @@ export default function TV25Display() {
     };
   }, [loading, measureHeight]);
 
+  // Preload all attraction images so they don't pop in when scrolling
+  useEffect(() => {
+    if (attractions.length === 0) return;
+    attractions.forEach((a) => {
+      const bg = getAttractionBg(a.slug);
+      const logo = getAttractionLogo(a.slug);
+      if (bg) { const img = new Image(); img.src = bg; }
+      if (logo) { const img = new Image(); img.src = logo; }
+    });
+  }, [attractions]);
+
   // Filter to rides only, then sort if enabled
   const sortedRides = useMemo(() => {
     const rides = attractions.filter((a) => a.attraction_type !== 'show');

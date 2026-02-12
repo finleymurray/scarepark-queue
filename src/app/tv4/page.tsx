@@ -17,9 +17,9 @@ function formatTime12h(time: string): string {
  * TV4 — Carousel that cycles through all TV views via iframes.
  *
  * Sequence:
- *   /tv2  (ride banners, paginated)  — 30s  (tv2 handles its own 10s page cycling)
- *   /tv3  (show times grid)          — 15s
- *   /tv1  (queue + show times list)  — 15s
+ *   /tv2.5  (ride banners, scrolling ticker)  — 30s
+ *   /tv3    (show times grid)                 — 15s
+ *   /tv1    (queue + show times list)         — 15s
  *
  * Each iframe stays mounted so realtime subscriptions stay alive.
  * Only the active iframe is visible; transitions use a fade effect.
@@ -30,7 +30,7 @@ function formatTime12h(time: string): string {
  */
 
 const VIEWS = [
-  { path: '/tv2', duration: 30000 },
+  { path: '/tv2.5', duration: 30000 },
   { path: '/tv3', duration: 15000 },
   { path: '/tv1', duration: 15000 },
 ];
