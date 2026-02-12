@@ -315,7 +315,7 @@ const BannerRow = React.memo(function BannerRow({
 /* ── Main page ── */
 
 const SCROLL_INTERVAL = 5000;
-const TRANSITION_DURATION = 600;
+const ANIM_DURATION = 600;
 const VISIBLE_COUNT = 2;
 const GAP = 20;
 const TV_SAFE_PADDING = '3.5%';
@@ -329,10 +329,10 @@ export default function TV25Display() {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Scroll state
-  const [scrollIndex, setScrollIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const scrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Scroll state — use refs for animation to avoid React re-render issues on TV browsers
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollIndexRef = useRef(0);
+  const animFrameRef = useRef<number>(0);
 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top);
@@ -458,36 +458,64 @@ export default function TV25Display() {
 
   // Reset scroll index when rides change
   useEffect(() => {
-    setScrollIndex(0);
-    setIsTransitioning(false);
+    scrollIndexRef.current = 0;
+    if (scrollRef.current) {
+      scrollRef.current.style.transform = 'translateY(0px)';
+    }
   }, [totalRides]);
 
-  // Auto-scroll every SCROLL_INTERVAL
+  // JS-driven scroll animation — no reliance on CSS transitionend
   useEffect(() => {
-    if (totalRides <= VISIBLE_COUNT) return;
+    if (totalRides <= VISIBLE_COUNT || stepSize <= 0) return;
 
-    scrollTimerRef.current = setInterval(() => {
-      setIsTransitioning(true);
-      setScrollIndex((prev) => prev + 1);
+    const interval = setInterval(() => {
+      const startY = -(scrollIndexRef.current * stepSize);
+      const nextIndex = scrollIndexRef.current + 1;
+      const endY = -(nextIndex * stepSize);
+      const startTime = performance.now();
+
+      function easeOutCubic(t: number) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function animate(now: number) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / ANIM_DURATION, 1);
+        const eased = easeOutCubic(progress);
+        const currentY = startY + (endY - startY) * eased;
+
+        if (scrollRef.current) {
+          scrollRef.current.style.transform = `translateY(${currentY}px)`;
+        }
+
+        if (progress < 1) {
+          animFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          // Animation complete — check if we need to snap back
+          scrollIndexRef.current = nextIndex;
+          if (scrollIndexRef.current >= totalRides) {
+            scrollIndexRef.current = 0;
+            // Instant snap back to start (visually identical due to duplicated list)
+            if (scrollRef.current) {
+              scrollRef.current.style.transform = 'translateY(0px)';
+            }
+          }
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(animate);
     }, SCROLL_INTERVAL);
 
     return () => {
-      if (scrollTimerRef.current) clearInterval(scrollTimerRef.current);
+      clearInterval(interval);
+      cancelAnimationFrame(animFrameRef.current);
     };
-  }, [totalRides]);
-
-  // Handle seamless wrap: when transition ends on the duplicate set, snap back
-  const handleTransitionEnd = useCallback(() => {
-    if (scrollIndex >= totalRides) {
-      setIsTransitioning(false);
-      setScrollIndex(scrollIndex % totalRides);
-    }
-  }, [scrollIndex, totalRides]);
+  }, [totalRides, stepSize]);
 
   // Build the display list: original rides + enough duplicates for seamless wrap
   const displayRides = useMemo(() => {
     if (totalRides === 0) return [];
-    // Append a copy of all rides so the scroll can wrap seamlessly
+    // Append a copy so the scroll can wrap seamlessly
     return [...sortedRides, ...sortedRides];
   }, [sortedRides, totalRides]);
 
@@ -498,8 +526,6 @@ export default function TV25Display() {
       </div>
     );
   }
-
-  const translateY = -(scrollIndex * stepSize);
 
   return (
     <div
@@ -560,16 +586,13 @@ export default function TV25Display() {
       {/* Scrolling ride banners */}
       <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
         <div
+          ref={scrollRef}
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: `${GAP}px`,
-            transform: `translateY(${translateY}px)`,
-            transition: isTransitioning
-              ? `transform ${TRANSITION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1)`
-              : 'none',
+            willChange: 'transform',
           }}
-          onTransitionEnd={handleTransitionEnd}
         >
           {displayRides.map((attraction, idx) => (
             <BannerRow

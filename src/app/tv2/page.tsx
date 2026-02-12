@@ -315,6 +315,7 @@ const BannerRow = React.memo(function BannerRow({
 /* ── Main page ── */
 
 const PAGE_INTERVAL = 10000;
+const FADE_DURATION = 400;
 const TV_SAFE_PADDING = '3.5%';
 
 export default function TV2Display() {
@@ -323,10 +324,11 @@ export default function TV2Display() {
   const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [fading, setFading] = useState(false);
   const [mainHeight, setMainHeight] = useState(0);
   const [isEmbedded, setIsEmbedded] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
+  const pageRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
+  const animFrameRef = useRef<number>(0);
   const perPage = 2;
 
   useEffect(() => {
@@ -457,6 +459,7 @@ export default function TV2Display() {
       : 100;
   }, [sortedRides.length, mainHeight]);
 
+  // JS-driven fade animation — no reliance on CSS transitions
   useEffect(() => {
     if (totalPages <= 1) {
       setCurrentPage(0);
@@ -464,14 +467,38 @@ export default function TV2Display() {
     }
 
     const interval = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setCurrentPage((prev) => (prev + 1) % totalPages);
-        setFading(false);
-      }, 400);
+      setCurrentPage((prev) => {
+        const oldPage = prev;
+        const newPage = (prev + 1) % totalPages;
+
+        // Animate: fade out old, fade in new
+        const oldEl = pageRefsMap.current.get(oldPage);
+        const newEl = pageRefsMap.current.get(newPage);
+        if (oldEl) oldEl.style.opacity = '1';
+        if (newEl) { newEl.style.opacity = '0'; newEl.style.pointerEvents = 'auto'; }
+
+        const startTime = performance.now();
+        function animate(now: number) {
+          const progress = Math.min((now - startTime) / FADE_DURATION, 1);
+          if (oldEl) oldEl.style.opacity = String(1 - progress);
+          if (newEl) newEl.style.opacity = String(progress);
+          if (progress < 1) {
+            animFrameRef.current = requestAnimationFrame(animate);
+          } else {
+            if (oldEl) { oldEl.style.opacity = '0'; oldEl.style.pointerEvents = 'none'; }
+            if (newEl) { newEl.style.opacity = '1'; newEl.style.pointerEvents = 'auto'; }
+          }
+        }
+        animFrameRef.current = requestAnimationFrame(animate);
+
+        return newPage;
+      });
     }, PAGE_INTERVAL);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      cancelAnimationFrame(animFrameRef.current);
+    };
   }, [totalPages]);
 
   useEffect(() => {
@@ -549,13 +576,18 @@ export default function TV2Display() {
         {pages.map((pageRides, pageIndex) => (
           <div
             key={pageIndex}
-            className="flex flex-col transition-opacity duration-400"
+            ref={(el) => {
+              if (el) pageRefsMap.current.set(pageIndex, el);
+              else pageRefsMap.current.delete(pageIndex);
+            }}
+            className="flex flex-col"
             style={{
               position: 'absolute',
               inset: 0,
-              opacity: pageIndex === currentPage && !fading ? 1 : 0,
+              opacity: pageIndex === currentPage ? 1 : 0,
               pointerEvents: pageIndex === currentPage ? 'auto' : 'none',
               gap: `${gap}px`,
+              willChange: 'opacity',
             }}
           >
             {pageRides.map((attraction) => (

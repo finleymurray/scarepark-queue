@@ -81,9 +81,10 @@ const footerStyle: React.CSSProperties = {
 
 export default function TV4Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [fading, setFading] = useState(false);
   const [closingTime, setClosingTime] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const iframeRefsMap = useRef<Map<number, HTMLIFrameElement>>(new Map());
+  const animFrameRef = useRef<number>(0);
 
   /* Fetch closing time + subscribe to changes */
   useEffect(() => {
@@ -117,16 +118,36 @@ export default function TV4Carousel() {
     };
   }, []);
 
-  /* Carousel timer */
+  /* Carousel timer — JS-driven fade animation */
   useEffect(() => {
     function scheduleNext() {
       const current = VIEWS[activeIndex];
       timerRef.current = setTimeout(() => {
-        setFading(true);
-        setTimeout(() => {
-          setActiveIndex((prev) => (prev + 1) % VIEWS.length);
-          setFading(false);
-        }, FADE_MS);
+        setActiveIndex((prev) => {
+          const oldIdx = prev;
+          const newIdx = (prev + 1) % VIEWS.length;
+
+          const oldEl = iframeRefsMap.current.get(oldIdx);
+          const newEl = iframeRefsMap.current.get(newIdx);
+          if (oldEl) oldEl.style.opacity = '1';
+          if (newEl) { newEl.style.opacity = '0'; newEl.style.pointerEvents = 'auto'; }
+
+          const startTime = performance.now();
+          function animate(now: number) {
+            const progress = Math.min((now - startTime) / FADE_MS, 1);
+            if (oldEl) oldEl.style.opacity = String(1 - progress);
+            if (newEl) newEl.style.opacity = String(progress);
+            if (progress < 1) {
+              animFrameRef.current = requestAnimationFrame(animate);
+            } else {
+              if (oldEl) { oldEl.style.opacity = '0'; oldEl.style.pointerEvents = 'none'; }
+              if (newEl) { newEl.style.opacity = '1'; newEl.style.pointerEvents = 'auto'; }
+            }
+          }
+          animFrameRef.current = requestAnimationFrame(animate);
+
+          return newIdx;
+        });
       }, current.duration);
     }
 
@@ -134,6 +155,7 @@ export default function TV4Carousel() {
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      cancelAnimationFrame(animFrameRef.current);
     };
   }, [activeIndex]);
 
@@ -159,13 +181,17 @@ export default function TV4Carousel() {
         {VIEWS.map((view, i) => (
           <iframe
             key={view.path}
+            ref={(el) => {
+              if (el) iframeRefsMap.current.set(i, el);
+              else iframeRefsMap.current.delete(i);
+            }}
             src={view.path}
             title={`TV View ${view.path}`}
-            className="absolute inset-0 w-full h-full border-0 transition-opacity"
+            className="absolute inset-0 w-full h-full border-0"
             style={{
-              opacity: i === activeIndex && !fading ? 1 : 0,
+              opacity: i === activeIndex ? 1 : 0,
               pointerEvents: i === activeIndex ? 'auto' : 'none',
-              transitionDuration: `${FADE_MS}ms`,
+              willChange: 'opacity',
             }}
           />
         ))}
