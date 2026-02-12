@@ -73,6 +73,7 @@ export default function UsersPage() {
   const [formAttractions, setFormAttractions] = useState<string[]>([]);
   const [formPin, setFormPin] = useState('');
   const [formSignoffRoles, setFormSignoffRoles] = useState<SignoffRoleKey[]>([]);
+  const [formPinOnly, setFormPinOnly] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -128,9 +129,15 @@ export default function UsersPage() {
     router.push('/login');
   }
 
+  function isPinOnlyUser(user: UserRole): boolean {
+    return user.email.endsWith('@signoff.local');
+  }
+
   function startEdit(user: UserRole) {
     setEditing(user);
-    setFormEmail(user.email);
+    const pinOnly = isPinOnlyUser(user);
+    setFormPinOnly(pinOnly);
+    setFormEmail(pinOnly ? '' : user.email);
     setFormDisplayName(user.display_name || '');
     setFormRole(user.role);
     setFormAttractions(user.allowed_attractions || []);
@@ -149,6 +156,7 @@ export default function UsersPage() {
     setFormAttractions([]);
     setFormPin('');
     setFormSignoffRoles([]);
+    setFormPinOnly(false);
     setFormError('');
     setShowForm(true);
   }
@@ -161,6 +169,7 @@ export default function UsersPage() {
     setFormAttractions([]);
     setFormPin('');
     setFormSignoffRoles([]);
+    setFormPinOnly(false);
     setFormError('');
     setShowForm(false);
   }
@@ -178,20 +187,44 @@ export default function UsersPage() {
   }
 
   async function handleSave() {
-    if (!formEmail.trim()) {
+    if (!formPinOnly && !formEmail.trim()) {
       setFormError('Email is required.');
+      return;
+    }
+    if (formPinOnly && !formDisplayName.trim()) {
+      setFormError('Display Name is required for PIN-only users.');
+      return;
+    }
+    if (formPinOnly && !formPin.trim()) {
+      setFormError('PIN is required for PIN-only users.');
+      return;
+    }
+    if (formPinOnly && formPin.trim().length < 4) {
+      setFormError('PIN must be at least 4 digits.');
       return;
     }
     setSaving(true);
     setFormError('');
 
-    const email = formEmail.trim().toLowerCase();
+    // For PIN-only users, generate a unique placeholder email
+    let email: string;
+    if (formPinOnly) {
+      if (editing && isPinOnlyUser(editing)) {
+        // Keep the existing placeholder email
+        email = editing.email;
+      } else {
+        // Generate new placeholder: pin-{random}@signoff.local
+        email = `pin-${crypto.randomUUID().slice(0, 8)}@signoff.local`;
+      }
+    } else {
+      email = formEmail.trim().toLowerCase();
+    }
 
     const payload = {
       email,
       display_name: formDisplayName.trim() || null,
-      role: formRole,
-      allowed_attractions: formRole === 'admin' ? null : formAttractions.length > 0 ? formAttractions : null,
+      role: formPinOnly ? ('supervisor' as const) : formRole,
+      allowed_attractions: formRole === 'admin' && !formPinOnly ? null : formAttractions.length > 0 ? formAttractions : null,
       updated_at: new Date().toISOString(),
     };
 
@@ -206,8 +239,6 @@ export default function UsersPage() {
         return;
       }
     } else {
-      // Insert user_roles record — the auth account must be created
-      // separately via Supabase Dashboard (Authentication > Users > Add user)
       const { error } = await supabase
         .from('user_roles')
         .insert({ ...payload, created_at: new Date().toISOString() });
@@ -296,7 +327,7 @@ export default function UsersPage() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title={`Remove "${deleteTarget?.email}"?`}
+        title={`Remove "${deleteTarget && isPinOnlyUser(deleteTarget) ? (deleteTarget.display_name || 'PIN user') : deleteTarget?.email}"?`}
         message="This user will lose all access. This cannot be undone."
         confirmLabel="Delete"
         onConfirm={handleDelete}
@@ -320,27 +351,47 @@ export default function UsersPage() {
           </div>
         )}
 
+        {/* PIN-only toggle */}
+        {!editing && (
+          <div className="mb-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formPinOnly}
+                onChange={(e) => setFormPinOnly(e.target.checked)}
+                className="accent-[#6ea8fe] w-4 h-4"
+              />
+              <div>
+                <span className="text-[#ccc] text-[13px] font-medium">PIN-only user</span>
+                <span className="text-[#888] text-[12px] ml-2">No email/password login — sign-off only</span>
+              </div>
+            </label>
+          </div>
+        )}
+
         {/* 2-column form grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-              Email <span className="text-[#d43518]">*</span>
-            </label>
-            <input
-              type="email"
-              value={formEmail}
-              onChange={(e) => setFormEmail(e.target.value)}
-              disabled={!!editing}
-              placeholder="user@example.com"
-              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                         placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
-                         disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-          </div>
+          {!formPinOnly && (
+            <div>
+              <label className="block text-[#ccc] text-[13px] font-medium mb-1">
+                Email <span className="text-[#d43518]">*</span>
+              </label>
+              <input
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                disabled={!!editing}
+                placeholder="user@example.com"
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-              Display Name
+              Display Name {formPinOnly && <span className="text-[#d43518]">*</span>}
             </label>
             <input
               type="text"
@@ -352,22 +403,24 @@ export default function UsersPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-[#ccc] text-[13px] font-medium mb-1">Role</label>
-            <select
-              value={formRole}
-              onChange={(e) => setFormRole(e.target.value as 'admin' | 'supervisor')}
-              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                         focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
-            >
-              <option value="supervisor">Supervisor</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          {!formPinOnly && (
+            <div>
+              <label className="block text-[#ccc] text-[13px] font-medium mb-1">Role</label>
+              <select
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value as 'admin' | 'supervisor')}
+                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
+                           focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+              >
+                <option value="supervisor">Supervisor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-              Sign-Off PIN
+              Sign-Off PIN {formPinOnly && <span className="text-[#d43518]">*</span>}
             </label>
             <input
               type="text"
@@ -476,16 +529,25 @@ export default function UsersPage() {
           <p className="text-[#666] text-sm px-5 pb-5">No users configured yet.</p>
         ) : (
           (() => {
-            const admins = users.filter((u) => u.role === 'admin');
-            const supervisors = users.filter((u) => u.role === 'supervisor');
+            const admins = users.filter((u) => u.role === 'admin' && !isPinOnlyUser(u));
+            const supervisors = users.filter((u) => u.role === 'supervisor' && !isPinOnlyUser(u));
+            const pinOnlyUsers = users.filter((u) => isPinOnlyUser(u));
 
             const renderRows = (group: UserRole[]) =>
               group.map((user) => (
                 <tr key={user.id} className="border-b border-[#222] hover:bg-[#1a1a1a] transition-colors">
                   <td className="px-4 py-3 text-sm text-[#e0e0e0]">
-                    {user.email}
-                    {user.email === userEmail && (
-                      <span className="text-[#888] text-xs ml-2">(you)</span>
+                    {isPinOnlyUser(user) ? (
+                      <span className="inline-block px-2 py-0.5 bg-[#1a2a3a] text-[#6ea8fe] text-[11px] font-medium rounded">
+                        PIN only
+                      </span>
+                    ) : (
+                      <>
+                        {user.email}
+                        {user.email === userEmail && (
+                          <span className="text-[#888] text-xs ml-2">(you)</span>
+                        )}
+                      </>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#888]">
@@ -593,6 +655,16 @@ export default function UsersPage() {
                         </span>
                       )}
                       {renderRows(supervisors)}
+                    </>
+                  )}
+                  {pinOnlyUsers.length > 0 && (
+                    <>
+                      {groupHeader('PIN-Only User', pinOnlyUsers.length,
+                        <span className="inline-block px-2.5 py-0.5 bg-[#1a2a3a] text-[#6ea8fe] text-xs font-semibold rounded-full">
+                          pin only
+                        </span>
+                      )}
+                      {renderRows(pinOnlyUsers)}
                     </>
                   )}
                 </tbody>

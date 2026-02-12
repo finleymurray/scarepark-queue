@@ -665,17 +665,43 @@ export default function SupervisorDashboard() {
             })()}
 
             {/* ── Sign-Off Status ── */}
-            {signoffStatus && signoffStatus.openingTotal > 0 && (
-              <div className="mb-6 flex justify-center">
-                {signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
+            {signoffStatus && (
+              <div className="mb-6 flex flex-col items-center gap-2">
+                {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#0a3d1f] text-[#4caf50]">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     SIGNED OFF
                   </span>
+                ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
+                  <>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d3000] text-[#f0ad4e]">
+                      {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+                    </span>
+                    <a
+                      href="/signoff"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-bold rounded-lg transition-colors"
+                    >
+                      Complete Sign Offs
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </a>
+                  </>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d3000] text-[#f0ad4e]">
-                    {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
-                  </span>
+                  <>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d1010] text-[#d43518]">
+                      NOT SIGNED OFF
+                    </span>
+                    <a
+                      href="/signoff"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-bold rounded-lg transition-colors"
+                    >
+                      Complete Sign Offs
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </a>
+                  </>
                 )}
               </div>
             )}

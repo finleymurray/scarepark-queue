@@ -447,15 +447,19 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Sign-off badge */}
-      {signoffStatus && signoffStatus.openingTotal > 0 && (
+      {signoffStatus && (
         <div className="mb-3">
-          {signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
+          {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
             <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
               SIGNED OFF
             </span>
-          ) : (
+          ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
             <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
               {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+            </span>
+          ) : (
+            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d1010] text-[#d43518]">
+              NOT SIGNED OFF
             </span>
           )}
         </div>
@@ -641,15 +645,19 @@ const ShowControl = React.memo(function ShowControl({
       </div>
 
       {/* Sign-off badge */}
-      {signoffStatus && signoffStatus.openingTotal > 0 && (
+      {signoffStatus && (
         <div className="mb-3">
-          {signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
+          {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
             <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
               SIGNED OFF
             </span>
-          ) : (
+          ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
             <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
               {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+            </span>
+          ) : (
+            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d1010] text-[#d43518]">
+              NOT SIGNED OFF
             </span>
           )}
         </div>

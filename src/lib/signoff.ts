@@ -51,11 +51,12 @@ export async function verifyPin(pin: string): Promise<PinVerifyResult | PinVerif
 
   const row = data[0] as unknown as { signoff_roles: SignoffRoleKey[]; user_roles: { display_name: string | null; email: string } };
   const userRoles = row.user_roles;
+  const isPinOnly = userRoles.email.endsWith('@signoff.local');
 
   return {
     valid: true,
     userName: userRoles.display_name || userRoles.email,
-    userEmail: userRoles.email,
+    userEmail: isPinOnly ? (userRoles.display_name || 'PIN user') : userRoles.email,
     signoffRoles: row.signoff_roles,
   };
 }

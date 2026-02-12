@@ -13,6 +13,7 @@ import {
   SIGNOFF_ROLE_LABELS,
   getTodayDateStr,
 } from '@/lib/signoff';
+import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type {
   Attraction,
   SignoffSection,
@@ -394,8 +395,18 @@ export default function SignoffPage() {
                   transition: 'background 0.2s, color 0.2s',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
+                {(() => {
+                  const logo = getAttractionLogo(a.slug);
+                  const glow = getLogoGlow(a.slug);
+                  return logo ? (
+                    <img src={logo} alt="" width={20} height={20} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 20, height: 20, filter: glow || undefined }} />
+                  ) : null;
+                })()}
                 {a.name}
               </button>
             );
@@ -404,26 +415,51 @@ export default function SignoffPage() {
       </div>
 
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
+        {/* Attraction hero with logo */}
+        {selectedAttraction && (
+          <div className="flex items-center gap-4 mb-5">
+            {(() => {
+              const logo = getAttractionLogo(selectedAttraction.slug);
+              const glow = getLogoGlow(selectedAttraction.slug);
+              return logo ? (
+                <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async"
+                  className="rounded-lg object-contain"
+                  style={{ width: 48, height: 48, filter: glow || undefined }}
+                />
+              ) : null;
+            })()}
+            <div>
+              <h2 className="text-white text-xl font-bold leading-tight">{selectedAttraction.name}</h2>
+              <p className="text-[#888] text-xs mt-0.5">
+                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Phase toggle */}
         <div className="flex gap-2 mb-5">
           {(['opening', 'closing'] as const).map((p) => {
             const active = phase === p;
             const pSections = sections.filter((s) => s.phase === p);
             const pCompleted = pSections.filter((s) => completions.has(s.id)).length;
+            const allDone = pSections.length > 0 && pCompleted === pSections.length;
             return (
               <button
                 key={p}
                 onClick={() => { setPhase(p); setActiveSectionId(null); setCheckedItems(new Set()); }}
-                className={`flex-1 py-3 rounded-lg text-sm font-semibold capitalize transition-colors border ${
+                className={`flex-1 py-3.5 rounded-lg text-sm font-semibold capitalize transition-colors border ${
                   active
-                    ? 'bg-[#222] border-[#555] text-white'
+                    ? allDone
+                      ? 'bg-[#0a3d1f] border-[#1a4a1a] text-[#4caf50]'
+                      : 'bg-[#222] border-[#555] text-white'
                     : 'bg-transparent border-[#333] text-[#888] hover:border-[#555] hover:text-[#ccc]'
                 }`}
               >
                 {p}
                 {pSections.length > 0 && (
                   <span className="ml-2 text-xs opacity-70">
-                    {pCompleted}/{pSections.length}
+                    {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
                   </span>
                 )}
               </button>
@@ -559,10 +595,14 @@ export default function SignoffPage() {
                   <button
                     onClick={() => handleSignOffClick(section.id)}
                     disabled={!allChecked && sectionItems.length > 0}
-                    className="w-full mt-2 py-3 bg-[#1a6b1a] text-white text-sm font-semibold rounded-lg
-                               hover:bg-[#228b22] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-full mt-3 py-3.5 bg-[#1a6b1a] text-white text-sm font-bold rounded-lg
+                               hover:bg-[#228b22] transition-colors disabled:opacity-30 disabled:cursor-not-allowed
+                               flex items-center justify-center gap-2"
                   >
-                    Sign Off
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Sign Off with PIN
                   </button>
                 </div>
               )}
