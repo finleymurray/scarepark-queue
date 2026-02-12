@@ -223,6 +223,13 @@ export default function LogsPage() {
                       ) : (
                         <span className="text-white/20">—</span>
                       )}
+                      {log.action_type === 'status_change' && log.details?.includes('Reason:') && (
+                        <div className="mt-1">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#f0ad4e]/15 text-[#f0ad4e] border border-[#f0ad4e]/30">
+                            {log.details.split('Reason: ')[1]?.split('.')[0]}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-white/60 text-xs">
                       {log.performed_by}

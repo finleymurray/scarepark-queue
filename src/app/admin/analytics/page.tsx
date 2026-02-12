@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
-import type { Attraction, AttractionHistory, ThroughputLog } from '@/types/database';
+import { getAllStatusLogs } from '@/lib/statusLog';
+import type { Attraction, AttractionHistory, ThroughputLog, AttractionStatusLog } from '@/types/database';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceArea,
@@ -84,6 +85,7 @@ export default function AnalyticsPage() {
   );
   const [openingTime, setOpeningTime] = useState('');
   const [throughputData, setThroughputData] = useState<ThroughputLog[]>([]);
+  const [statusLogs, setStatusLogs] = useState<AttractionStatusLog[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
 
   async function handleLogout() {
@@ -146,6 +148,10 @@ export default function AnalyticsPage() {
       if (!throughputRes.error) {
         setThroughputData(throughputRes.data || []);
       }
+
+      // Fetch structured status logs
+      const logs = await getAllStatusLogs(selectedDate, openingTime || undefined);
+      setStatusLogs(logs);
 
       setLoading(false);
     }
@@ -382,6 +388,52 @@ export default function AnalyticsPage() {
     return { combinedChartData: data, combinedAttractionNames: names };
   }, [throughputData, historyData, attractions]);
 
+  // Compute structured status log summary
+  const statusLogSummary = useMemo(() => {
+    if (statusLogs.length === 0) return null;
+
+    const idToName = new Map<string, string>();
+    for (const a of attractions) idToName.set(a.id, a.name);
+
+    const byAttraction = new Map<string, AttractionStatusLog[]>();
+    for (const log of statusLogs) {
+      if (!byAttraction.has(log.attraction_id)) byAttraction.set(log.attraction_id, []);
+      byAttraction.get(log.attraction_id)!.push(log);
+    }
+
+    return Array.from(byAttraction.entries()).map(([id, logs]) => {
+      const name = idToName.get(id) || id.slice(0, 8);
+      const delayLogs = logs.filter((l) => l.status === 'DELAYED');
+      const resolvedDelays = delayLogs.filter((l) => l.resolved_at);
+
+      let totalDowntimeMs = 0;
+      for (let i = 0; i < logs.length; i++) {
+        if (logs[i].status === 'CLOSED' || logs[i].status === 'DELAYED') {
+          const start = new Date(logs[i].changed_at).getTime();
+          const nextLog = logs[i + 1];
+          const end = nextLog ? new Date(nextLog.changed_at).getTime() : Date.now();
+          totalDowntimeMs += end - start;
+        }
+      }
+
+      let totalDelayMs = 0;
+      for (const dl of resolvedDelays) {
+        totalDelayMs += new Date(dl.resolved_at!).getTime() - new Date(dl.changed_at).getTime();
+      }
+
+      return {
+        attractionId: id,
+        name,
+        logs,
+        totalDowntimeMinutes: Math.round(totalDowntimeMs / 60000),
+        delayCount: delayLogs.length,
+        avgDelayMinutes: resolvedDelays.length > 0
+          ? Math.round(totalDelayMs / resolvedDelays.length / 60000)
+          : 0,
+      };
+    });
+  }, [statusLogs, attractions]);
+
   const tooltipStyle = {
     backgroundColor: '#0a0a0a',
     border: '1px solid #333',
@@ -547,6 +599,90 @@ export default function AnalyticsPage() {
                     )}
                   </div>
                 </>
+              )}
+
+              {/* ── Structured Status Change Log ── */}
+              {statusLogs.length > 0 && statusLogSummary && (
+                <div className="panel p-4 sm:p-6 mb-6">
+                  <h2 className="text-white text-lg font-bold mb-4">
+                    Status Change Log — {selectedDate}
+                  </h2>
+
+                  {/* Summary stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+                    {statusLogSummary.map((s) => (
+                      <div key={s.attractionId} style={{ background: '#0a0a0a', borderRadius: 6, padding: 12 }}>
+                        <div className="text-white text-sm font-semibold mb-2">{s.name}</div>
+                        <div className="text-[#888] text-xs space-y-1">
+                          <div>Delays: <span className="text-[#f0ad4e] font-medium">{s.delayCount}</span></div>
+                          <div>Avg delay: <span className="text-white font-medium">{s.avgDelayMinutes} min</span></div>
+                          <div>Total downtime: <span className="text-[#dc3545] font-medium">{s.totalDowntimeMinutes} min</span></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Detailed log table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-[#333] text-white/50 text-xs uppercase tracking-wider">
+                          <th className="text-left px-3 py-2 font-medium">Time</th>
+                          <th className="text-left px-3 py-2 font-medium">Attraction</th>
+                          <th className="text-left px-3 py-2 font-medium">Transition</th>
+                          <th className="text-left px-3 py-2 font-medium">Reason</th>
+                          <th className="text-left px-3 py-2 font-medium">Duration</th>
+                          <th className="text-left px-3 py-2 font-medium">Changed By</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {statusLogs.map((log, i) => {
+                          const idToName = new Map<string, string>();
+                          for (const a of attractions) idToName.set(a.id, a.name);
+                          const name = idToName.get(log.attraction_id) || log.attraction_id.slice(0, 8);
+                          const nextLog = statusLogs.slice(i + 1).find(
+                            (l) => l.attraction_id === log.attraction_id,
+                          );
+                          const durationMs = nextLog
+                            ? new Date(nextLog.changed_at).getTime() - new Date(log.changed_at).getTime()
+                            : null;
+                          const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null;
+
+                          return (
+                            <tr key={log.id} className="border-b border-[#222]">
+                              <td className="px-3 py-2 text-white/60 tabular-nums text-xs whitespace-nowrap">
+                                {new Date(log.changed_at).toLocaleTimeString('en-GB', {
+                                  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                                })}
+                              </td>
+                              <td className="px-3 py-2 text-white font-medium">{name}</td>
+                              <td className="px-3 py-2">
+                                <span className="text-white/40">{log.previous_status || '?'}</span>
+                                <span className="text-white/20 mx-1">&rarr;</span>
+                                <span
+                                  className="font-medium"
+                                  style={{ color: STATUS_LABEL_COLORS[log.status] || '#fff' }}
+                                >
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-[#f0ad4e] text-xs">
+                                {log.reason || <span className="text-white/20">—</span>}
+                                {log.notes && (
+                                  <span className="text-white/40 ml-1" title={log.notes}>*</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-white/60 tabular-nums text-xs">
+                                {durationMin !== null ? `${durationMin} min` : <span className="text-white/20">—</span>}
+                              </td>
+                              <td className="px-3 py-2 text-white/40 text-xs">{log.changed_by}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
 
               {/* ── Throughput Bar Chart ── */}

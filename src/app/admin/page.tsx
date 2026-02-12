@@ -6,10 +6,11 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { logAudit } from '@/lib/audit';
+import { logStatusChange, resolveDelay, DELAY_REASONS } from '@/lib/statusLog';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import { getAllSignoffStatuses, getTodayDateStr } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
-import type { Attraction, AttractionStatus, AttractionType, ParkSetting } from '@/types/database';
+import type { Attraction, AttractionStatus, AttractionType, ParkSetting, DelayReason } from '@/types/database';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
 const SHOW_STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'DELAYED'];
@@ -75,6 +76,105 @@ function ConfirmModal({
                        transition-colors font-bold"
           >
             {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Delay Reason Modal ── */
+function DelayReasonModal({
+  open,
+  attractionName,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  attractionName: string;
+  onConfirm: (reason: DelayReason, notes: string) => void;
+  onCancel: () => void;
+}) {
+  const [selectedReason, setSelectedReason] = useState<DelayReason | null>(null);
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setSelectedReason(null);
+      setNotes('');
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: 8, padding: 24, maxWidth: 480, width: '100%' }}>
+        <h2 className="text-white text-lg font-bold mb-1">Delay Reason</h2>
+        <p className="text-[#888] text-sm mb-5">
+          Why is <span className="text-white font-medium">{attractionName}</span> being delayed?
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+          {DELAY_REASONS.map((reason) => (
+            <button
+              key={reason}
+              onClick={() => setSelectedReason(reason)}
+              style={{
+                padding: '12px 8px',
+                borderRadius: 6,
+                border: selectedReason === reason ? '2px solid #f0ad4e' : '1px solid #333',
+                background: selectedReason === reason ? '#f0ad4e15' : '#111',
+                color: selectedReason === reason ? '#f0ad4e' : '#ccc',
+                fontSize: 14,
+                fontWeight: selectedReason === reason ? 600 : 400,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {reason}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', color: '#888', fontSize: 12, marginBottom: 6 }}>
+            Notes (optional)
+          </label>
+          <input
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Additional details..."
+            className="w-full px-3 py-2.5 bg-[#111] border border-[#333] rounded-md text-white text-sm
+                       placeholder-white/30 focus:outline-none focus:border-[#f0ad4e] transition-colors"
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
+                       rounded-md transition-colors font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => selectedReason && onConfirm(selectedReason, notes)}
+            disabled={!selectedReason}
+            style={{
+              flex: 1,
+              padding: '12px 24px',
+              background: selectedReason ? '#f0ad4e' : '#333',
+              color: selectedReason ? '#000' : '#666',
+              fontWeight: 700,
+              borderRadius: 6,
+              border: 'none',
+              cursor: selectedReason ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s',
+            }}
+          >
+            Confirm Delay
           </button>
         </div>
       </div>
@@ -768,6 +868,11 @@ export default function AdminDashboard() {
   const [displayName, setDisplayName] = useState('');
   const [autoSort, setAutoSort] = useState(false);
   const [signoffStatuses, setSignoffStatuses] = useState<Map<string, AttractionSignoffStatus>>(new Map());
+  const [delayModal, setDelayModal] = useState<{
+    attractionId: string;
+    attractionName: string;
+    previousStatus: AttractionStatus;
+  } | null>(null);
   const attractionsRef = useRef<Attraction[]>([]);
   const userEmailRef = useRef('');
   const displayNameRef = useRef('');
@@ -893,6 +998,16 @@ export default function AdminDashboard() {
   const handleUpdate = useCallback(async (id: string, updates: Partial<Attraction>) => {
     const current = attractionsRef.current.find((a) => a.id === id);
 
+    // Intercept DELAYED transitions — show reason modal instead of immediate update
+    if (current && 'status' in updates && updates.status === 'DELAYED' && current.status !== 'DELAYED') {
+      setDelayModal({
+        attractionId: id,
+        attractionName: current.name,
+        previousStatus: current.status as AttractionStatus,
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('attractions')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -915,6 +1030,19 @@ export default function AdminDashboard() {
           newValue: updates.status!,
           details: `Status changed from ${current.status} to ${updates.status}`,
         });
+
+        // Structured status log
+        logStatusChange({
+          attractionId: id,
+          status: updates.status as AttractionStatus,
+          previousStatus: current.status as AttractionStatus,
+          changedBy: performer,
+        });
+
+        // Resolve previous delay if transitioning FROM DELAYED
+        if (current.status === 'DELAYED') {
+          resolveDelay(id);
+        }
       }
       if ('wait_time' in updates && updates.wait_time !== current.wait_time) {
         logAudit({
@@ -953,6 +1081,43 @@ export default function AdminDashboard() {
       }
     }
   }, []);
+
+  const handleDelayConfirm = useCallback(async (reason: DelayReason, notes: string) => {
+    if (!delayModal) return;
+    const { attractionId, attractionName, previousStatus } = delayModal;
+    setDelayModal(null);
+
+    const { error } = await supabase
+      .from('attractions')
+      .update({ status: 'DELAYED', updated_at: new Date().toISOString() })
+      .eq('id', attractionId);
+
+    if (error) {
+      console.error('Error updating attraction:', error);
+      return;
+    }
+
+    const performer = displayNameRef.current || userEmailRef.current;
+
+    logAudit({
+      actionType: 'status_change',
+      attractionId,
+      attractionName,
+      performedBy: performer,
+      oldValue: previousStatus,
+      newValue: 'DELAYED',
+      details: `Status changed from ${previousStatus} to DELAYED. Reason: ${reason}${notes ? '. ' + notes : ''}`,
+    });
+
+    logStatusChange({
+      attractionId,
+      status: 'DELAYED',
+      previousStatus,
+      reason,
+      notes: notes || null,
+      changedBy: performer,
+    });
+  }, [delayModal]);
 
   const handleOpeningTimeUpdate = useCallback(async (value: string) => {
     const { error } = await supabase
@@ -1054,6 +1219,15 @@ export default function AdminDashboard() {
           newValue: 'CLOSED',
           details: 'Bulk close all rides',
         });
+        logStatusChange({
+          attractionId: ride.id,
+          status: 'CLOSED',
+          previousStatus: ride.status as AttractionStatus,
+          changedBy: performer,
+        });
+        if (ride.status === 'DELAYED') {
+          resolveDelay(ride.id);
+        }
       }
     }
 
@@ -1094,6 +1268,15 @@ export default function AdminDashboard() {
           newValue: 'OPEN',
           details: 'Bulk open all attractions',
         });
+        logStatusChange({
+          attractionId: a.id,
+          status: 'OPEN',
+          previousStatus: a.status as AttractionStatus,
+          changedBy: performer,
+        });
+        if (a.status === 'DELAYED') {
+          resolveDelay(a.id);
+        }
       }
     }
     for (const ride of rides) {
@@ -1188,6 +1371,14 @@ export default function AdminDashboard() {
         confirmLabel="Yes, Remove"
         onConfirm={() => deleteTarget && handleDeleteAttraction(deleteTarget.id, deleteTarget.name)}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Delay Reason Modal */}
+      <DelayReasonModal
+        open={!!delayModal}
+        attractionName={delayModal?.attractionName || ''}
+        onConfirm={handleDelayConfirm}
+        onCancel={() => setDelayModal(null)}
       />
 
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />

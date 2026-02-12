@@ -106,3 +106,25 @@ export interface SignoffCompletion {
   signed_by_email: string;
   signed_at: string;
 }
+
+/* ── Status Timeline System ── */
+
+export type DelayReason =
+  | 'Technical Issue'
+  | 'Guest Action'
+  | 'E-Stop'
+  | 'Weather'
+  | 'Staffing'
+  | 'Other';
+
+export interface AttractionStatusLog {
+  id: string;
+  attraction_id: string;
+  status: AttractionStatus;
+  previous_status: AttractionStatus | null;
+  reason: DelayReason | null;
+  notes: string | null;
+  changed_by: string;
+  changed_at: string;
+  resolved_at: string | null;
+}
