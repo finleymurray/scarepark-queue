@@ -303,8 +303,34 @@ export default function SignoffPage() {
     setCheckedItems(new Set());
   }
 
+  /** Check if a section is locked (preceding sections in same phase not yet completed). */
+  function isSectionLocked(sectionId: string): boolean {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return false;
+    const samePhaseSections = sections.filter((s) => s.phase === section.phase);
+    for (const s of samePhaseSections) {
+      if (s.sort_order >= section.sort_order) break;
+      if (!completions.has(s.id)) return true;
+    }
+    return false;
+  }
+
+  /** Get names of incomplete preceding sections that are blocking this one. */
+  function getBlockingSections(sectionId: string): string[] {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return [];
+    const samePhaseSections = sections.filter((s) => s.phase === section.phase);
+    const blocking: string[] = [];
+    for (const s of samePhaseSections) {
+      if (s.sort_order >= section.sort_order) break;
+      if (!completions.has(s.id)) blocking.push(s.name);
+    }
+    return blocking;
+  }
+
   function openSection(sectionId: string) {
     if (completions.has(sectionId)) return;
+    if (isSectionLocked(sectionId)) return;
     setActiveSectionId(sectionId);
     setCheckedItems(new Set());
   }
@@ -600,25 +626,34 @@ export default function SignoffPage() {
                   const isActive = activeSectionId === section.id;
                   const sectionItems = items.get(section.id) || [];
                   const allChecked = sectionItems.length > 0 && sectionItems.every((i) => checkedItems.has(i.id));
+                  const locked = isSectionLocked(section.id);
+                  const blockingNames = locked ? getBlockingSections(section.id) : [];
 
                   return (
                     <div
                       key={section.id}
                       className={`bg-[#1a1a1a] border rounded-[12px] overflow-hidden transition-colors
-                        ${isCompleted ? 'border-[#4caf50]/30' : isActive ? 'border-[#555]' : 'border-[#333]'}`}
+                        ${isCompleted ? 'border-[#4caf50]/30' : locked ? 'border-[#333] opacity-60' : isActive ? 'border-[#555]' : 'border-[#333]'}`}
                     >
-                      {/* Section header — clickable if not completed */}
+                      {/* Section header — clickable if not completed and not locked */}
                       <button
-                        onClick={() => !isCompleted && openSection(section.id)}
-                        disabled={isCompleted}
+                        onClick={() => !isCompleted && !locked && openSection(section.id)}
+                        disabled={isCompleted || locked}
                         className="w-full text-left px-6 py-5 flex items-center justify-between touch-manipulation bg-transparent border-none"
-                        style={{ cursor: isCompleted ? 'default' : 'pointer' }}
+                        style={{ cursor: isCompleted || locked ? 'default' : 'pointer' }}
                       >
                         <div className="flex items-center gap-4">
                           {isCompleted ? (
                             <div className="w-10 h-10 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
                               <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
                                 <path d="M3 7L6 10L11 4" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                          ) : locked ? (
+                            <div className="w-10 h-10 rounded-full bg-[#1a1a1a] border-2 border-[#444] flex items-center justify-center shrink-0">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="#555" strokeWidth="1.5" fill="none"/>
+                                <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke="#555" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
                               </svg>
                             </div>
                           ) : (
@@ -628,7 +663,7 @@ export default function SignoffPage() {
                           )}
 
                           <div>
-                            <span className={`text-sm font-medium ${isCompleted ? 'text-[#4caf50]' : 'text-[#e0e0e0]'}`}>
+                            <span className={`text-sm font-medium ${isCompleted ? 'text-[#4caf50]' : locked ? 'text-[#666]' : 'text-[#e0e0e0]'}`}>
                               {section.name}
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -640,11 +675,16 @@ export default function SignoffPage() {
                                   &middot; {completion.signed_by_name} &middot; {new Date(completion.signed_at).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                 </span>
                               )}
+                              {locked && (
+                                <span className="text-[#ffc107] text-[11px]">
+                                  &middot; Waiting for {blockingNames.join(', ')}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
 
-                        {!isCompleted && (
+                        {!isCompleted && !locked && (
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform shrink-0 ${isActive ? 'rotate-180' : ''}`}>
                             <path d="M4 6L8 10L12 6" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>

@@ -297,6 +297,23 @@ export default function SignoffConfigPage() {
     await fetchSections(selectedAttractionId);
   }
 
+  async function handleMoveSection(sectionId: string, direction: 'up' | 'down') {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const phaseSections = sections.filter((s) => s.phase === section.phase);
+    const idx = phaseSections.findIndex((s) => s.id === sectionId);
+    if (direction === 'up' && idx <= 0) return;
+    if (direction === 'down' && idx >= phaseSections.length - 1) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    const swapSection = phaseSections[swapIdx];
+    // Swap sort_order values
+    await Promise.all([
+      supabase.from('signoff_sections').update({ sort_order: swapSection.sort_order }).eq('id', section.id),
+      supabase.from('signoff_sections').update({ sort_order: section.sort_order }).eq('id', swapSection.id),
+    ]);
+    await fetchSections(selectedAttractionId);
+  }
+
   async function handleCopy() {
     if (!copySourceId || !selectedAttractionId || copySourceId === selectedAttractionId) return;
     setCopying(true);
@@ -382,6 +399,18 @@ export default function SignoffConfigPage() {
                     <button onClick={() => { setAddingSectionPhase(phase); setNewSectionName(''); setNewSectionRole('supervisor'); }} className="px-4 py-2 bg-white text-black text-xs font-semibold rounded-[6px] hover:bg-[#ddd] transition-colors ml-auto">+ Add Section</button>
                   </legend>
 
+                  {/* Dependency info */}
+                  <div className="bg-[#0d2f5e]/30 border border-[#0d2f5e] rounded-[6px] px-5 py-3 mb-6">
+                    <p className="text-[#6ea8fe] text-xs">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="inline-block mr-1.5 -mt-0.5">
+                        <circle cx="6" cy="6" r="5" stroke="#6ea8fe" strokeWidth="1.2" fill="none"/>
+                        <path d="M6 3.5V6.5" stroke="#6ea8fe" strokeWidth="1.2" strokeLinecap="round"/>
+                        <circle cx="6" cy="8.5" r="0.5" fill="#6ea8fe"/>
+                      </svg>
+                      Sections must be signed off in order. Staff cannot sign a section until all sections above it are completed.
+                    </p>
+                  </div>
+
                   {addingSectionPhase === phase && (
                     <div className="bg-[#1a1a1a] border border-[#333] rounded-[6px] p-8 mb-8">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
@@ -427,7 +456,23 @@ export default function SignoffConfigPage() {
                                   <span className="text-[#e0e0e0] text-sm font-medium">{section.name}</span>
                                   <span className="inline-block px-2 py-0.5 bg-[#0d2f5e] text-[#6ea8fe] text-[10px] font-medium rounded-[12px]">{SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleMoveSection(section.id, 'up')}
+                                    disabled={sectionIdx === 0}
+                                    className="px-1.5 py-1 text-[#888] text-xs hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Move up"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 10V4M7 4L4 7M7 4L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleMoveSection(section.id, 'down')}
+                                    disabled={sectionIdx === phaseSections.length - 1}
+                                    className="px-1.5 py-1 text-[#888] text-xs hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Move down"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 4V10M7 10L4 7M7 10L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                  </button>
                                   <button onClick={() => { setEditingSectionId(section.id); setEditingSectionName(section.name); setEditingSectionRole(section.role_key as SignoffRoleKey); }} className="px-2 py-1 text-[#888] text-xs hover:text-white transition-colors">Edit</button>
                                   <button onClick={() => setDeleteTarget({ type: 'section', id: section.id, name: section.name })} className="px-2 py-1 text-[#888] text-xs hover:text-[#d43518] transition-colors">Remove</button>
                                 </div>
