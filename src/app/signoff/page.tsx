@@ -470,11 +470,11 @@ export default function SignoffPage() {
         {/* Sign-Off View (attraction selected)           */}
         {/* ────────────────────────────────────────────── */}
         {selectedAttraction && (
-          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '32px 24px' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '40px 28px' }}>
             {/* Back button */}
             <button
               onClick={goBackToGrid}
-              className="flex items-center gap-2 text-[#aaa] text-sm font-medium mb-6
+              className="flex items-center gap-2 text-[#aaa] text-sm font-medium mb-8
                          hover:text-white transition-colors touch-manipulation"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -488,7 +488,7 @@ export default function SignoffPage() {
               const logo = getAttractionLogo(selectedAttraction.slug);
               const glow = getLogoGlow(selectedAttraction.slug);
               return logo ? (
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center mb-10">
                   <img src={logo} alt={selectedAttraction.name} loading="lazy" decoding="async"
                        className="object-contain w-[120px] sm:w-[180px]"
                        style={{ height: 'auto', maxHeight: 120, filter: glow || undefined }} />
@@ -497,7 +497,7 @@ export default function SignoffPage() {
             })()}
 
             {/* ── Sign-Off Status Badge ── */}
-            <div className="mb-10 flex flex-col items-center gap-2">
+            <div className="mb-12 flex flex-col items-center gap-3">
               {fullySignedOff ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -514,14 +514,14 @@ export default function SignoffPage() {
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="border border-[#333] rounded-[12px] p-6 sm:p-8 mb-8 bg-[#111]">
-              <legend className="text-base font-semibold text-white px-3 flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-white text-black rounded-full text-sm font-bold">1</span>
+            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10 bg-[#111]">
+              <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
+                <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">1</span>
                 Sign-Off Sections
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-4 mb-8">
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -536,7 +536,7 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`px-4 py-2 rounded-[6px] text-sm font-medium capitalize transition-colors touch-manipulation
+                      className={`px-5 py-2.5 rounded-[8px] text-sm font-medium capitalize transition-colors touch-manipulation
                         ${closingLocked
                           ? 'text-[#555] bg-transparent cursor-not-allowed'
                           : active
@@ -563,7 +563,7 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div className="bg-[#1a1a1a] border border-[#333] rounded-[8px] px-5 py-4 mb-6">
+                <div className="bg-[#1a1a1a] border border-[#333] rounded-[10px] px-6 py-5 mb-8">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[#888] text-[13px]">
                       {completedSections}/{totalSections} sections signed off
@@ -593,7 +593,7 @@ export default function SignoffPage() {
               )}
 
               {/* Section cards */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-5">
                 {phaseSections.map((section, idx) => {
                   const completion = completions.get(section.id);
                   const isCompleted = !!completion;
@@ -604,25 +604,25 @@ export default function SignoffPage() {
                   return (
                     <div
                       key={section.id}
-                      className={`bg-[#1a1a1a] border rounded-[8px] overflow-hidden transition-colors
+                      className={`bg-[#1a1a1a] border rounded-[12px] overflow-hidden transition-colors
                         ${isCompleted ? 'border-[#4caf50]/30' : isActive ? 'border-[#555]' : 'border-[#333]'}`}
                     >
                       {/* Section header — clickable if not completed */}
                       <button
                         onClick={() => !isCompleted && openSection(section.id)}
                         disabled={isCompleted}
-                        className="w-full text-left px-5 py-4 flex items-center justify-between touch-manipulation bg-transparent border-none"
+                        className="w-full text-left px-6 py-5 flex items-center justify-between touch-manipulation bg-transparent border-none"
                         style={{ cursor: isCompleted ? 'default' : 'pointer' }}
                       >
                         <div className="flex items-center gap-4">
                           {isCompleted ? (
-                            <div className="w-8 h-8 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <div className="w-10 h-10 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
+                              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
                                 <path d="M3 7L6 10L11 4" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
                           ) : (
-                            <span className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0 text-sm font-bold">
+                            <span className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 text-sm font-bold">
                               {idx + 1}
                             </span>
                           )}
@@ -653,20 +653,20 @@ export default function SignoffPage() {
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div className="px-5 pb-5 border-t border-[#333]">
+                        <div className="px-6 pb-6 border-t border-[#333]">
                           {sectionItems.length === 0 ? (
                             <p className="text-[#666] text-sm py-6">No checklist items for this section.</p>
                           ) : (
-                            <div className="py-4 flex flex-col gap-2.5">
+                            <div className="py-5 flex flex-col gap-4">
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-4 px-4 py-3.5 bg-[#1a1a1a] border rounded-[8px] cursor-pointer
+                                    className={`flex items-center gap-5 px-5 py-5 bg-[#1a1a1a] border rounded-[10px] cursor-pointer
                                       transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#333] hover:border-[#555]'}`}
                                   >
-                                    <div className={`w-9 h-9 rounded-[6px] flex items-center justify-center shrink-0 transition-colors
+                                    <div className={`w-10 h-10 rounded-[8px] flex items-center justify-center shrink-0 transition-colors
                                       ${checked ? 'bg-[#0a3d1f] border-2 border-[#4caf50]' : 'bg-[#222] border-2 border-[#555]'}`}>
                                       {checked ? (
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -697,7 +697,7 @@ export default function SignoffPage() {
                           <button
                             onClick={() => handleSignOffClick(section.id)}
                             disabled={!allChecked && sectionItems.length > 0}
-                            className="w-full mt-4 py-3.5 text-sm font-semibold rounded-[8px] transition-colors touch-manipulation
+                            className="w-full mt-6 py-4 text-sm font-semibold rounded-[10px] transition-colors touch-manipulation
                                        flex items-center justify-center gap-2
                                        disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-[#ddd]"
                           >

@@ -571,10 +571,10 @@ export default function UsersPage() {
     return (
       <div
         key={user.id}
-        className="bg-[#111] border border-[#333] rounded-[8px] p-6 transition-colors hover:border-[#555]"
+        className="bg-[#111] border border-[#333] rounded-[12px] p-7 transition-colors hover:border-[#555]"
       >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-4">
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-center gap-5">
             {/* Avatar */}
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
               ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
@@ -615,7 +615,7 @@ export default function UsersPage() {
         </div>
 
         {/* Info row */}
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-3">
           {/* Role badge */}
           <span className={`text-[10px] px-2 py-1 rounded-[12px] font-semibold uppercase
             ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
@@ -639,7 +639,7 @@ export default function UsersPage() {
 
         {/* Sign-off roles */}
         {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-[#333]">
+          <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t border-[#333]">
             {pin.signoff_roles.map((r) => (
               <span key={r} className="text-[10px] px-2 py-1 bg-[#0a3d1f] text-[#4caf50] rounded-[12px] font-medium">
                 {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
@@ -654,15 +654,15 @@ export default function UsersPage() {
   function renderGroup(label: string, groupUsers: UserRole[], badgeColor: string, badgeTextColor: string) {
     if (groupUsers.length === 0) return null;
     return (
-      <div className="mb-10">
-        <div className="flex items-center gap-2.5 mb-5">
+      <div className="mb-14">
+        <div className="flex items-center gap-3 mb-6">
           <span className="text-[10px] px-2.5 py-1 rounded-[12px] font-bold uppercase"
                 style={{ background: badgeColor, color: badgeTextColor }}>
             {label}
           </span>
           <span className="text-[#666] text-xs">{groupUsers.length}</span>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {groupUsers.map(renderUserCard)}
         </div>
       </div>
@@ -692,13 +692,13 @@ export default function UsersPage() {
         isPinOnlyUser={isPinOnlyUser}
       />
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 28px' }}>
         {/* Page header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10">
           <h2 className="text-[#e0e0e0] text-2xl font-bold">Users</h2>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-6 py-3.5 bg-white text-black text-sm font-bold rounded-[6px]
+            className="flex items-center gap-2 px-7 py-4 bg-white text-black text-sm font-bold rounded-[6px]
                        hover:bg-[#ddd] transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -709,7 +709,7 @@ export default function UsersPage() {
         </div>
 
         {users.length === 0 ? (
-          <div className="bg-[#111] border border-[#333] rounded-[8px] p-16 text-center">
+          <div className="bg-[#111] border border-[#333] rounded-[8px] p-20 text-center">
             <p className="text-[#666] text-sm">No users configured yet.</p>
             <p className="text-[#444] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
           </div>
@@ -721,7 +721,7 @@ export default function UsersPage() {
           </>
         )}
 
-        <div className="mt-10 text-center">
+        <div className="mt-14 text-center">
           <Link href="/privacy" className="text-[#333] text-[11px] no-underline hover:text-[#555]">
             Privacy Policy
           </Link>
