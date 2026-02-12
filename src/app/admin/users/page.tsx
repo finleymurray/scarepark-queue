@@ -28,25 +28,340 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="bg-[#1a1a1a] border border-[#444] rounded-lg p-6 w-full max-w-[400px]">
-        <p className="text-[#ccc] text-sm mb-1">
-          <strong className="text-white">{title}</strong>
-        </p>
-        <p className="text-[#ccc] text-sm mb-5">{message}</p>
+      <div className="bg-[#1a1a1a] border border-[#444] rounded-xl p-6 w-full max-w-[400px]">
+        <p className="text-white text-base font-semibold mb-2">{title}</p>
+        <p className="text-white/50 text-sm mb-6">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-5 py-2.5 bg-transparent border border-[#555] text-[#ccc] hover:border-[#888] hover:text-white
-                       rounded-md text-sm font-semibold transition-colors"
+            className="flex-1 px-5 py-3 bg-[#1a1a1a] border border-[#444] text-white/60 hover:text-white
+                       rounded-xl text-sm font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white rounded-md
+            className="flex-1 px-5 py-3 bg-[#d43518] hover:bg-[#b52d14] text-white rounded-xl
                        text-sm font-semibold transition-colors"
           >
             {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── User Form Modal ── */
+function UserFormModal({
+  open,
+  editing,
+  attractions,
+  existingPin,
+  onSave,
+  onCancel,
+  isPinOnlyUser,
+}: {
+  open: boolean;
+  editing: UserRole | null;
+  attractions: Attraction[];
+  existingPin: SignoffPin | null;
+  onSave: (data: {
+    email: string;
+    displayName: string;
+    role: 'admin' | 'supervisor';
+    allowedAttractions: string[];
+    pin: string;
+    signoffRoles: SignoffRoleKey[];
+    pinOnly: boolean;
+  }) => Promise<string | null>;
+  onCancel: () => void;
+  isPinOnlyUser: (user: UserRole) => boolean;
+}) {
+  const [formEmail, setFormEmail] = useState('');
+  const [formDisplayName, setFormDisplayName] = useState('');
+  const [formRole, setFormRole] = useState<'admin' | 'supervisor'>('supervisor');
+  const [formAttractions, setFormAttractions] = useState<string[]>([]);
+  const [formPin, setFormPin] = useState('');
+  const [formSignoffRoles, setFormSignoffRoles] = useState<SignoffRoleKey[]>([]);
+  const [formPinOnly, setFormPinOnly] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  const rides = attractions.filter((a) => a.attraction_type !== 'show');
+
+  useEffect(() => {
+    if (!open) return;
+    if (editing) {
+      const pinOnly = isPinOnlyUser(editing);
+      setFormPinOnly(pinOnly);
+      setFormEmail(pinOnly ? '' : editing.email);
+      setFormDisplayName(editing.display_name || '');
+      setFormRole(editing.role);
+      setFormAttractions(editing.allowed_attractions || []);
+      setFormPin(existingPin?.pin || '');
+      setFormSignoffRoles(existingPin?.signoff_roles || []);
+    } else {
+      setFormPinOnly(false);
+      setFormEmail('');
+      setFormDisplayName('');
+      setFormRole('supervisor');
+      setFormAttractions([]);
+      setFormPin('');
+      setFormSignoffRoles([]);
+    }
+    setFormError('');
+    setSaving(false);
+  }, [open, editing, existingPin, isPinOnlyUser]);
+
+  if (!open) return null;
+
+  function toggleAttraction(id: string) {
+    setFormAttractions((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+    );
+  }
+
+  function toggleSignoffRole(role: SignoffRoleKey) {
+    setFormSignoffRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  }
+
+  async function handleSubmit() {
+    if (!formPinOnly && !formEmail.trim()) {
+      setFormError('Email is required.');
+      return;
+    }
+    if (formPinOnly && !formDisplayName.trim()) {
+      setFormError('Display Name is required for PIN-only users.');
+      return;
+    }
+    if (formPinOnly && !formPin.trim()) {
+      setFormError('PIN is required for PIN-only users.');
+      return;
+    }
+    if (formPin.trim() && formPin.trim().length !== 4) {
+      setFormError('PIN must be exactly 4 digits.');
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+
+    const err = await onSave({
+      email: formEmail,
+      displayName: formDisplayName,
+      role: formRole,
+      allowedAttractions: formAttractions,
+      pin: formPin,
+      signoffRoles: formSignoffRoles,
+      pinOnly: formPinOnly,
+    });
+
+    if (err) {
+      setFormError(err);
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" style={{ overflowY: 'auto' }}>
+      <div className="bg-[#111] border border-[#333] rounded-xl w-full max-w-lg my-8" onClick={(e) => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#222]">
+          <h3 className="text-white text-base font-semibold">
+            {editing ? 'Edit User' : 'Add User'}
+          </h3>
+          <button onClick={onCancel} className="text-white/30 hover:text-white transition-colors p-1">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          {formError && (
+            <div className="bg-[#2a1010] border border-[#d43518]/30 rounded-lg p-3">
+              <p className="text-[#f0a0a0] text-sm">{formError}</p>
+            </div>
+          )}
+
+          {/* PIN-only toggle */}
+          {!editing && (
+            <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl">
+              <input
+                type="checkbox"
+                checked={formPinOnly}
+                onChange={(e) => setFormPinOnly(e.target.checked)}
+                className="accent-[#6ea8fe] w-4 h-4"
+              />
+              <div>
+                <span className="text-white text-sm font-medium">PIN-only user</span>
+                <p className="text-white/30 text-xs mt-0.5">No email/password login — sign-off only</p>
+              </div>
+            </label>
+          )}
+
+          {/* Basic info */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">Basic Info</span>
+            </div>
+            <div className="space-y-3">
+              {!formPinOnly && (
+                <div>
+                  <label className="block text-white/50 text-xs font-medium mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    disabled={!!editing}
+                    placeholder="user@example.com"
+                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm
+                               placeholder-white/20 focus:outline-none focus:border-[#555] transition-colors
+                               disabled:opacity-40"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-white/50 text-xs font-medium mb-1.5">Display Name</label>
+                <input
+                  type="text"
+                  value={formDisplayName}
+                  onChange={(e) => setFormDisplayName(e.target.value)}
+                  placeholder="e.g. John S."
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm
+                             placeholder-white/20 focus:outline-none focus:border-[#555] transition-colors"
+                />
+              </div>
+              {!formPinOnly && (
+                <div>
+                  <label className="block text-white/50 text-xs font-medium mb-1.5">Role</label>
+                  <div className="flex gap-2">
+                    {(['supervisor', 'admin'] as const).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => setFormRole(r)}
+                        className={`flex-1 py-3 rounded-xl text-sm font-semibold capitalize transition-colors border
+                          ${formRole === r
+                            ? r === 'admin'
+                              ? 'bg-[#0a3d1f] border-[#1a4a1a] text-[#4caf50]'
+                              : 'bg-[#222] border-[#555] text-white'
+                            : 'bg-[#1a1a1a] border-[#333] text-white/30'
+                          }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sign-off section */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">Sign-Off</span>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-white/50 text-xs font-medium mb-1.5">4-Digit PIN</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={formPin}
+                  onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="0000"
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-xl text-white text-sm
+                             placeholder-white/20 focus:outline-none focus:border-[#555] transition-colors
+                             tracking-[0.4em] font-mono text-center text-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-white/50 text-xs font-medium mb-2">Roles</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {ALL_SIGNOFF_ROLES.map((role) => {
+                    const checked = formSignoffRoles.includes(role);
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => toggleSignoffRole(role)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors border
+                          ${checked ? 'bg-[#1a2a3a] border-[#2a4a6a] text-[#6ea8fe]' : 'bg-[#1a1a1a] border-[#333] text-white/40'}`}
+                      >
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors
+                          ${checked ? 'bg-[#6ea8fe] border-[#6ea8fe]' : 'border-[#444] bg-transparent'}`}>
+                          {checked && (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">{SIGNOFF_ROLE_LABELS[role]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Allowed attractions (supervisors only) */}
+          {(formRole === 'supervisor' || formPinOnly) && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">Allowed Attractions</span>
+              </div>
+              <p className="text-white/20 text-xs mb-2">Leave empty for all attractions.</p>
+              <div className="grid grid-cols-1 gap-2">
+                {rides.map((a) => {
+                  const checked = formAttractions.includes(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => toggleAttraction(a.id)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors border
+                        ${checked ? 'bg-[#222] border-[#555] text-white' : 'bg-[#1a1a1a] border-[#333] text-white/40'}`}
+                    >
+                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors
+                        ${checked ? 'bg-white border-white' : 'border-[#444] bg-transparent'}`}>
+                        {checked && (
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{a.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal footer */}
+        <div className="flex gap-3 px-6 py-4 border-t border-[#222]">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3 bg-[#1a1a1a] border border-[#333] text-white/50 text-sm font-semibold
+                       rounded-xl hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex-1 py-3 bg-white text-black text-sm font-bold rounded-xl
+                       hover:bg-white/90 transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
           </button>
         </div>
       </div>
@@ -61,26 +376,11 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserRole[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
-
-  // PIN data per user (loaded alongside users)
   const [pinData, setPinData] = useState<Map<string, SignoffPin>>(new Map());
 
-  // Form state
-  const [editing, setEditing] = useState<UserRole | null>(null);
-  const [formEmail, setFormEmail] = useState('');
-  const [formDisplayName, setFormDisplayName] = useState('');
-  const [formRole, setFormRole] = useState<'admin' | 'supervisor'>('supervisor');
-  const [formAttractions, setFormAttractions] = useState<string[]>([]);
-  const [formPin, setFormPin] = useState('');
-  const [formSignoffRoles, setFormSignoffRoles] = useState<SignoffRoleKey[]>([]);
-  const [formPinOnly, setFormPinOnly] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState('');
-
-  // Form visibility
+  // Modal state
   const [showForm, setShowForm] = useState(false);
-
-  // Delete confirmation
+  const [editing, setEditing] = useState<UserRole | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRole | null>(null);
 
   const fetchUsers = useCallback(async () => {
@@ -135,96 +435,39 @@ export default function UsersPage() {
 
   function startEdit(user: UserRole) {
     setEditing(user);
-    const pinOnly = isPinOnlyUser(user);
-    setFormPinOnly(pinOnly);
-    setFormEmail(pinOnly ? '' : user.email);
-    setFormDisplayName(user.display_name || '');
-    setFormRole(user.role);
-    setFormAttractions(user.allowed_attractions || []);
-    const existingPin = pinData.get(user.id);
-    setFormPin(existingPin?.pin || '');
-    setFormSignoffRoles(existingPin?.signoff_roles || []);
-    setFormError('');
     setShowForm(true);
   }
 
   function startAdd() {
     setEditing(null);
-    setFormEmail('');
-    setFormDisplayName('');
-    setFormRole('supervisor');
-    setFormAttractions([]);
-    setFormPin('');
-    setFormSignoffRoles([]);
-    setFormPinOnly(false);
-    setFormError('');
     setShowForm(true);
   }
 
-  function cancelForm() {
-    setEditing(null);
-    setFormEmail('');
-    setFormDisplayName('');
-    setFormRole('supervisor');
-    setFormAttractions([]);
-    setFormPin('');
-    setFormSignoffRoles([]);
-    setFormPinOnly(false);
-    setFormError('');
-    setShowForm(false);
-  }
-
-  function toggleAttraction(id: string) {
-    setFormAttractions((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
-    );
-  }
-
-  function toggleSignoffRole(role: SignoffRoleKey) {
-    setFormSignoffRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
-    );
-  }
-
-  async function handleSave() {
-    if (!formPinOnly && !formEmail.trim()) {
-      setFormError('Email is required.');
-      return;
-    }
-    if (formPinOnly && !formDisplayName.trim()) {
-      setFormError('Display Name is required for PIN-only users.');
-      return;
-    }
-    if (formPinOnly && !formPin.trim()) {
-      setFormError('PIN is required for PIN-only users.');
-      return;
-    }
-    if (formPinOnly && formPin.trim().length < 4) {
-      setFormError('PIN must be at least 4 digits.');
-      return;
-    }
-    setSaving(true);
-    setFormError('');
-
-    // For PIN-only users, generate a unique placeholder email
+  async function handleSave(data: {
+    email: string;
+    displayName: string;
+    role: 'admin' | 'supervisor';
+    allowedAttractions: string[];
+    pin: string;
+    signoffRoles: SignoffRoleKey[];
+    pinOnly: boolean;
+  }): Promise<string | null> {
     let email: string;
-    if (formPinOnly) {
+    if (data.pinOnly) {
       if (editing && isPinOnlyUser(editing)) {
-        // Keep the existing placeholder email
         email = editing.email;
       } else {
-        // Generate new placeholder: pin-{random}@signoff.local
         email = `pin-${crypto.randomUUID().slice(0, 8)}@signoff.local`;
       }
     } else {
-      email = formEmail.trim().toLowerCase();
+      email = data.email.trim().toLowerCase();
     }
 
     const payload = {
       email,
-      display_name: formDisplayName.trim() || null,
-      role: formPinOnly ? ('supervisor' as const) : formRole,
-      allowed_attractions: formRole === 'admin' && !formPinOnly ? null : formAttractions.length > 0 ? formAttractions : null,
+      display_name: data.displayName.trim() || null,
+      role: data.pinOnly ? ('supervisor' as const) : data.role,
+      allowed_attractions: data.role === 'admin' && !data.pinOnly ? null : data.allowedAttractions.length > 0 ? data.allowedAttractions : null,
       updated_at: new Date().toISOString(),
     };
 
@@ -233,23 +476,14 @@ export default function UsersPage() {
         .from('user_roles')
         .update(payload)
         .eq('id', editing.id);
-      if (error) {
-        setFormError(error.message);
-        setSaving(false);
-        return;
-      }
+      if (error) return error.message;
     } else {
       const { error } = await supabase
         .from('user_roles')
         .insert({ ...payload, created_at: new Date().toISOString() });
-      if (error) {
-        setFormError(error.message.includes('duplicate') ? 'A user with this email already exists.' : error.message);
-        setSaving(false);
-        return;
-      }
+      if (error) return error.message.includes('duplicate') ? 'A user with this email already exists.' : error.message;
     }
 
-    // Re-fetch to get latest user list (needed for new user ID)
     const { data: freshUsers } = await supabase
       .from('user_roles')
       .select('*')
@@ -257,31 +491,25 @@ export default function UsersPage() {
 
     if (freshUsers) setUsers(freshUsers);
 
-    // Upsert PIN data — find the user ID for this email
-    const targetUser = (freshUsers || []).find(
-      (u: UserRole) => u.email === email
-    );
+    const targetUser = (freshUsers || []).find((u: UserRole) => u.email === email);
 
     if (targetUser) {
-      const trimmedPin = formPin.trim();
-      if (trimmedPin || formSignoffRoles.length > 0) {
-        // Upsert pin record
+      const trimmedPin = data.pin.trim();
+      if (trimmedPin || data.signoffRoles.length > 0) {
         await supabase.from('signoff_pins').upsert(
           {
             user_id: targetUser.id,
             pin: trimmedPin,
-            signoff_roles: formSignoffRoles,
+            signoff_roles: data.signoffRoles,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id' }
         );
       } else {
-        // No PIN and no roles — remove pin record if it existed
         await supabase.from('signoff_pins').delete().eq('user_id', targetUser.id);
       }
     }
 
-    // Refresh pins
     const { data: freshPins } = await supabase.from('signoff_pins').select('*');
     if (freshPins) {
       const map = new Map<string, SignoffPin>();
@@ -289,34 +517,140 @@ export default function UsersPage() {
       setPinData(map);
     }
 
-    cancelForm();
-    setSaving(false);
+    setShowForm(false);
+    setEditing(null);
+    return null;
   }
 
   async function handleDelete() {
     if (!deleteTarget) return;
-
-    // Delete the user_roles record — the auth account should be removed
-    // separately via Supabase Dashboard (Authentication > Users)
     await supabase.from('user_roles').delete().eq('id', deleteTarget.id);
     setDeleteTarget(null);
     await fetchUsers();
   }
 
   function getAttractionNames(ids: string[] | null): string {
-    if (!ids || ids.length === 0) return 'All';
+    if (!ids || ids.length === 0) return 'All attractions';
     return ids
       .map((id) => attractions.find((a) => a.id === id)?.name || id.slice(0, 8))
       .join(', ');
   }
 
-  // Only show rides in the attraction picker (supervisors don't manage shows)
-  const rides = attractions.filter((a) => a.attraction_type !== 'show');
+  // Group users
+  const admins = users.filter((u) => u.role === 'admin' && !isPinOnlyUser(u));
+  const supervisors = users.filter((u) => u.role === 'supervisor' && !isPinOnlyUser(u));
+  const pinOnlyUsers = users.filter((u) => isPinOnlyUser(u));
 
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-[#888] text-sm">Loading...</div>
+        <div className="text-white/30 text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  function renderUserCard(user: UserRole) {
+    const pin = pinData.get(user.id);
+    const pinOnly = isPinOnlyUser(user);
+    const isYou = user.email === userEmail;
+
+    return (
+      <div
+        key={user.id}
+        className="bg-[#111] border border-[#333] rounded-xl p-5 transition-colors hover:border-[#444]"
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            {/* Avatar */}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
+              ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#1a2a3a] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
+              {(user.display_name || user.email).charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-sm font-semibold">
+                  {user.display_name || (pinOnly ? 'PIN User' : user.email.split('@')[0])}
+                </span>
+                {isYou && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#222] text-white/30 rounded font-medium">you</span>
+                )}
+              </div>
+              {!pinOnly && (
+                <p className="text-white/30 text-xs mt-0.5">{user.email}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => startEdit(user)}
+              className="px-3 py-1.5 border border-[#333] text-white/40 text-xs font-medium rounded-lg
+                         hover:border-[#555] hover:text-white transition-colors"
+            >
+              Edit
+            </button>
+            {!isYou && (
+              <button
+                onClick={() => setDeleteTarget(user)}
+                className="px-3 py-1.5 bg-[#2a1010] text-[#d43518] text-xs font-semibold rounded-lg
+                           hover:bg-[#3a1515] transition-colors"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Info row */}
+        <div className="flex flex-wrap gap-2">
+          {/* Role badge */}
+          <span className={`text-[10px] px-2 py-1 rounded-lg font-semibold uppercase
+            ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#1a2a3a] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
+            {pinOnly ? 'PIN only' : user.role}
+          </span>
+
+          {/* PIN indicator */}
+          {pin?.pin ? (
+            <span className="text-[10px] px-2 py-1 rounded-lg font-medium bg-[#1a1a1a] text-white/40">
+              PIN set
+            </span>
+          ) : null}
+
+          {/* Attraction access */}
+          {user.role !== 'admin' && (
+            <span className="text-[10px] px-2 py-1 rounded-lg font-medium bg-[#1a1a1a] text-white/30">
+              {getAttractionNames(user.allowed_attractions)}
+            </span>
+          )}
+        </div>
+
+        {/* Sign-off roles */}
+        {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[#222]">
+            {pin.signoff_roles.map((r) => (
+              <span key={r} className="text-[10px] px-2 py-1 bg-[#1a2a3a] text-[#6ea8fe] rounded-lg font-medium">
+                {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderGroup(label: string, groupUsers: UserRole[], badgeColor: string, badgeTextColor: string) {
+    if (groupUsers.length === 0) return null;
+    return (
+      <div className="mb-8">
+        <div className="flex items-center gap-2.5 mb-4">
+          <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase`}
+                style={{ background: badgeColor, color: badgeTextColor }}>
+            {label}
+          </span>
+          <span className="text-white/20 text-xs">{groupUsers.length}</span>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {groupUsers.map(renderUserCard)}
+        </div>
       </div>
     );
   }
@@ -334,347 +668,47 @@ export default function UsersPage() {
         onCancel={() => setDeleteTarget(null)}
       />
 
+      <UserFormModal
+        open={showForm}
+        editing={editing}
+        attractions={attractions}
+        existingPin={editing ? pinData.get(editing.id) || null : null}
+        onSave={handleSave}
+        onCancel={() => { setShowForm(false); setEditing(null); }}
+        isPinOnlyUser={isPinOnlyUser}
+      />
+
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
-      {/* Page header */}
-      <h2 style={{ color: '#fff', fontSize: 24, fontWeight: 700, marginBottom: 20 }}>Users</h2>
-
-      {/* Create New User — form section card */}
-      <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, marginBottom: 20 }}>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="inline-flex items-center justify-center w-7 h-7 bg-white text-black rounded-full text-sm font-bold">+</span>
-          <h3 className="text-white text-base font-semibold">{editing ? 'Edit User' : 'Create New User'}</h3>
-        </div>
-
-        {formError && (
-          <div className="bg-[#2a1010] border border-[#d43518] rounded-md p-3 mb-4">
-            <p className="text-[#f0a0a0] text-[13px]">{formError}</p>
-          </div>
-        )}
-
-        {/* PIN-only toggle */}
-        {!editing && (
-          <div className="mb-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formPinOnly}
-                onChange={(e) => setFormPinOnly(e.target.checked)}
-                className="accent-[#6ea8fe] w-4 h-4"
-              />
-              <div>
-                <span className="text-[#ccc] text-[13px] font-medium">PIN-only user</span>
-                <span className="text-[#888] text-[12px] ml-2">No email/password login — sign-off only</span>
-              </div>
-            </label>
-          </div>
-        )}
-
-        {/* 2-column form grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {!formPinOnly && (
-            <div>
-              <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-                Email <span className="text-[#d43518]">*</span>
-              </label>
-              <input
-                type="email"
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                disabled={!!editing}
-                placeholder="user@example.com"
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
-                           disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-              Display Name {formPinOnly && <span className="text-[#d43518]">*</span>}
-            </label>
-            <input
-              type="text"
-              value={formDisplayName}
-              onChange={(e) => setFormDisplayName(e.target.value)}
-              placeholder="e.g. John S."
-              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                         placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
-            />
-          </div>
-
-          {!formPinOnly && (
-            <div>
-              <label className="block text-[#ccc] text-[13px] font-medium mb-1">Role</label>
-              <select
-                value={formRole}
-                onChange={(e) => setFormRole(e.target.value as 'admin' | 'supervisor')}
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                           focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
-              >
-                <option value="supervisor">Supervisor</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-[#ccc] text-[13px] font-medium mb-1">
-              Sign-Off PIN {formPinOnly && <span className="text-[#d43518]">*</span>}
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              value={formPin}
-              onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="4-6 digit PIN"
-              className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-[#e0e0e0] text-sm
-                         placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
-                         tracking-[0.3em] font-mono"
-            />
-          </div>
-        </div>
-
-        {/* Sign-off roles */}
-        <div className="mb-4">
-          <label className="block text-[#ccc] text-[13px] font-medium mb-2">
-            Sign-Off Roles
-          </label>
-          <p className="text-[#888] text-[13px] mb-3">
-            Which sign-off sections can this user complete?
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {ALL_SIGNOFF_ROLES.map((role) => {
-              const checked = formSignoffRoles.includes(role);
-              return (
-                <label
-                  key={role}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer border transition-colors
-                    ${checked ? 'bg-[#1a1a1a] border-[#555]' : 'border-[#333] hover:border-[#555]'}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleSignoffRole(role)}
-                    className="accent-[#6ea8fe] w-4 h-4"
-                  />
-                  <span className="text-[#ccc] text-[13px]">{SIGNOFF_ROLE_LABELS[role]}</span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {formRole === 'supervisor' && (
-          <div className="mb-4">
-            <label className="block text-[#ccc] text-[13px] font-medium mb-2">
-              Allowed Attractions
-            </label>
-            <p className="text-[#888] text-[13px] mb-3">
-              Select which attractions this supervisor can access. Leave empty for all.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {rides.map((a) => {
-                const checked = formAttractions.includes(a.id);
-                return (
-                  <label
-                    key={a.id}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer border transition-colors
-                      ${checked ? 'bg-[#1a1a1a] border-[#555]' : 'border-[#333] hover:border-[#555]'}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleAttraction(a.id)}
-                      className="accent-[#6ea8fe] w-4 h-4"
-                    />
-                    <span className="text-[#ccc] text-[13px]">{a.name}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-3">
+        {/* Page header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-white text-2xl font-bold">Users</h2>
           <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-md
-                       hover:bg-[#ddd] transition-colors disabled:opacity-50"
+            onClick={startAdd}
+            className="flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl
+                       hover:bg-white/90 transition-colors"
           >
-            {saving ? 'Saving...' : editing ? 'Update user' : 'Create user'}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            Add User
           </button>
-          {showForm && editing && (
-            <button
-              onClick={cancelForm}
-              className="px-5 py-2.5 bg-transparent border border-[#555] text-[#ccc] text-sm font-semibold
-                         hover:border-[#888] hover:text-white rounded-md transition-colors"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* User list — data table card */}
-      <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ padding: '20px 20px 0' }}>
-          <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 600, marginBottom: 16 }}>All Users ({users.length})</h3>
         </div>
 
         {users.length === 0 ? (
-          <p className="text-[#666] text-sm px-5 pb-5">No users configured yet.</p>
+          <div className="bg-[#111] border border-[#333] rounded-xl p-12 text-center">
+            <p className="text-white/30 text-sm">No users configured yet.</p>
+            <p className="text-white/15 text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
+          </div>
         ) : (
-          (() => {
-            const admins = users.filter((u) => u.role === 'admin' && !isPinOnlyUser(u));
-            const supervisors = users.filter((u) => u.role === 'supervisor' && !isPinOnlyUser(u));
-            const pinOnlyUsers = users.filter((u) => isPinOnlyUser(u));
-
-            const renderRows = (group: UserRole[]) =>
-              group.map((user) => (
-                <tr key={user.id} className="border-b border-[#222] hover:bg-[#1a1a1a] transition-colors">
-                  <td className="px-4 py-3 text-sm text-[#e0e0e0]">
-                    {isPinOnlyUser(user) ? (
-                      <span className="inline-block px-2 py-0.5 bg-[#1a2a3a] text-[#6ea8fe] text-[11px] font-medium rounded">
-                        PIN only
-                      </span>
-                    ) : (
-                      <>
-                        {user.email}
-                        {user.email === userEmail && (
-                          <span className="text-[#888] text-xs ml-2">(you)</span>
-                        )}
-                      </>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#888]">
-                    {user.display_name || '\u2014'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#888]">
-                    {user.role === 'admin' ? 'All' : getAttractionNames(user.allowed_attractions)}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {pinData.get(user.id)?.pin ? (
-                      <span className="text-[#4caf50] text-xs font-medium">Set</span>
-                    ) : (
-                      <span className="text-[#666] text-xs">&mdash;</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#888]">
-                    {(() => {
-                      const roles = pinData.get(user.id)?.signoff_roles;
-                      if (!roles || roles.length === 0) return <span className="text-[#666] text-xs">&mdash;</span>;
-                      return (
-                        <div className="flex flex-wrap gap-1">
-                          {roles.map((r) => (
-                            <span key={r} className="inline-block px-1.5 py-0.5 bg-[#1a2a3a] text-[#6ea8fe] text-[10px] font-medium rounded">
-                              {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
-                            </span>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => startEdit(user)}
-                        className="px-2.5 py-1 border border-[#555] text-[#ccc] text-xs font-medium rounded
-                                   hover:border-[#888] hover:text-white transition-colors"
-                      >
-                        Edit
-                      </button>
-                      {user.email !== userEmail && (
-                        <button
-                          onClick={() => setDeleteTarget(user)}
-                          className="px-2.5 py-1 bg-[#d43518] text-white text-xs font-semibold rounded
-                                     hover:bg-[#b52d14] transition-colors"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ));
-
-            const groupHeader = (label: string, count: number, badge: React.ReactNode) => (
-              <tr key={`header-${label}`}>
-                <td colSpan={6} className="px-4 py-2.5 bg-[#0d0d0d] border-b border-[#333]">
-                  <div className="flex items-center gap-2">
-                    {badge}
-                    <span className="text-[#888] text-xs font-medium">{count} {label}{count !== 1 ? 's' : ''}</span>
-                  </div>
-                </td>
-              </tr>
-            );
-
-            return (
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                      Email
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                      Display Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                      Attractions
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                      PIN
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                      Sign-Off Roles
-                    </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider bg-[#1a1a1a] border-b border-[#333]">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {admins.length > 0 && (
-                    <>
-                      {groupHeader('Admin', admins.length,
-                        <span className="inline-block px-2.5 py-0.5 bg-[#0a3d1f] text-[#4caf50] text-xs font-semibold rounded-full">
-                          admin
-                        </span>
-                      )}
-                      {renderRows(admins)}
-                    </>
-                  )}
-                  {supervisors.length > 0 && (
-                    <>
-                      {groupHeader('Supervisor', supervisors.length,
-                        <span className="inline-block px-2.5 py-0.5 bg-[#3d3000] text-[#ffc107] text-xs font-semibold rounded-full">
-                          supervisor
-                        </span>
-                      )}
-                      {renderRows(supervisors)}
-                    </>
-                  )}
-                  {pinOnlyUsers.length > 0 && (
-                    <>
-                      {groupHeader('PIN-Only User', pinOnlyUsers.length,
-                        <span className="inline-block px-2.5 py-0.5 bg-[#1a2a3a] text-[#6ea8fe] text-xs font-semibold rounded-full">
-                          pin only
-                        </span>
-                      )}
-                      {renderRows(pinOnlyUsers)}
-                    </>
-                  )}
-                </tbody>
-              </table>
-            );
-          })()
+          <>
+            {renderGroup('Admins', admins, '#0a3d1f', '#4caf50')}
+            {renderGroup('Supervisors', supervisors, '#3d3000', '#ffc107')}
+            {renderGroup('PIN-Only', pinOnlyUsers, '#1a2a3a', '#6ea8fe')}
+          </>
         )}
-      </div>
+
         <div style={{ marginTop: 24, textAlign: 'center' }}>
-          <Link href="/privacy" style={{ color: '#555', fontSize: 11, textDecoration: 'none' }}>
+          <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, textDecoration: 'none' }}>
             Privacy Policy
           </Link>
         </div>
