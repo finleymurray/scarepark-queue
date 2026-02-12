@@ -64,12 +64,9 @@ export async function resolveDelay(attractionId: string): Promise<void> {
 
 export async function getAllStatusLogs(
   dateStr: string,
-  openTime?: string,
 ): Promise<AttractionStatusLog[]> {
-  const startHour = openTime || '17:00';
-  const start = new Date(`${dateStr}T${startHour}:00`);
-  const end = new Date(`${dateStr}T00:00:00`);
-  end.setDate(end.getDate() + 1);
+  const start = new Date(`${dateStr}T00:00:00`);
+  const end = new Date(`${dateStr}T23:59:59`);
 
   const { data, error } = await supabase
     .from('attraction_status_logs')

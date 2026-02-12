@@ -45,11 +45,9 @@ interface StatusPeriod {
   end: number;
 }
 
-function getTimeRange(dateStr: string, openTime?: string): { start: string; end: string } {
-  const startHour = openTime || '17:00';
-  const start = new Date(`${dateStr}T${startHour}:00`);
-  const end = new Date(`${dateStr}T00:00:00`);
-  end.setDate(end.getDate() + 1);
+function getTimeRange(dateStr: string): { start: string; end: string } {
+  const start = new Date(`${dateStr}T00:00:00`);
+  const end = new Date(`${dateStr}T23:59:59`);
   return {
     start: start.toISOString(),
     end: end.toISOString(),
@@ -123,7 +121,7 @@ export default function AnalyticsPage() {
     if (!authenticated) return;
     async function fetchData() {
       setLoading(true);
-      const { start, end } = getTimeRange(selectedDate, openingTime || undefined);
+      const { start, end } = getTimeRange(selectedDate);
 
       const [historyRes, throughputRes] = await Promise.all([
         supabase
@@ -150,7 +148,7 @@ export default function AnalyticsPage() {
       }
 
       // Fetch structured status logs
-      const logs = await getAllStatusLogs(selectedDate, openingTime || undefined);
+      const logs = await getAllStatusLogs(selectedDate);
       setStatusLogs(logs);
 
       setLoading(false);
