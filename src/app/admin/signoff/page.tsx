@@ -398,7 +398,7 @@ export default function SignoffConfigPage() {
             {PHASES.map((phase, phaseIndex) => {
               const phaseSections = sections.filter((s) => s.phase === phase);
               return (
-                <fieldset key={phase} className="border border-[#333] rounded-[16px] p-8 sm:p-10 mb-10 bg-[#111]">
+                <fieldset key={phase} className="border border-[#333] rounded-[16px] p-8 sm:p-10 bg-[#111]" style={{ marginBottom: 48 }}>
                   <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
                     <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">{phaseIndex + 1}</span>
                     {`${phase.charAt(0).toUpperCase() + phase.slice(1)} Sections`}
@@ -493,7 +493,7 @@ export default function SignoffConfigPage() {
                             )}
                           </div>
 
-                          <div className="px-7 pb-7 pt-4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div className="px-7 pb-7 pt-4" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {sectionItems.length === 0 && (<p className="text-[#666] text-xs py-1">No checklist items yet.</p>)}
                             {sectionItems.map((item) => (
                               <div key={item.id} className="bg-[#111] border border-[#333] rounded-[8px] px-6 py-5 flex items-center gap-4">

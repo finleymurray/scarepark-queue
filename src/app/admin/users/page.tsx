@@ -655,7 +655,7 @@ export default function UsersPage() {
   function renderGroup(label: string, groupUsers: UserRole[], badgeColor: string, badgeTextColor: string) {
     if (groupUsers.length === 0) return null;
     return (
-      <div className="mb-14">
+      <div style={{ marginBottom: 80 }}>
         <div className="flex items-center gap-3" style={{ marginBottom: 28 }}>
           <span className="text-[10px] px-2.5 py-1 rounded-[12px] font-bold uppercase"
                 style={{ background: badgeColor, color: badgeTextColor }}>
