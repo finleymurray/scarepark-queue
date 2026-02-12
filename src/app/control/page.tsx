@@ -724,6 +724,15 @@ export default function SupervisorDashboard() {
                       {selected.status}
                     </div>
                   </div>
+                ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
+                  <div className="text-center py-4">
+                    <div className={`text-4xl font-black ${
+                      selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
+                    }`}>
+                      {selected.status}
+                    </div>
+                    <p className="text-white/30 text-xs mt-2">Queue time changes are locked while the attraction is {selected.status.toLowerCase()}</p>
+                  </div>
                 ) : (
                   <>
                     {/* Inline stepper: [-5]  TIME  [+5] */}
@@ -742,16 +751,14 @@ export default function SupervisorDashboard() {
                       <div className="flex-1 text-center">
                         <div className={`text-5xl font-black tabular-nums ${
                           selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                          selected.status === 'CLOSED' ? 'text-[#dc3545]' :
-                          selected.status === 'DELAYED' ? 'text-[#f0ad4e]' :
-                          'text-[#F59E0B]'
+                          selected.status === 'AT CAPACITY' ? 'text-[#F59E0B]' :
+                          'text-[#f0ad4e]'
                         }`}>
                           {selected.wait_time}
                           <span className="text-xl text-white/30 ml-1">min</span>
                         </div>
                         <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
                           selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
-                          selected.status === 'CLOSED' ? 'text-[#dc3545]/50' :
                           'text-[#f0ad4e]/50'
                         }`}>
                           {selected.status}
