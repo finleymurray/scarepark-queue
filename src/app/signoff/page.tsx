@@ -521,6 +521,10 @@ export default function SignoffPage() {
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   SIGNED OFF
                 </span>
+              ) : openingDone && allClosingSections.length > 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#3d3000] text-[#ffc107]">
+                  OPENING SIGNED OFF
+                </span>
               ) : allOpeningSections.length > 0 ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#3d1010] text-[#ef4444]">
                   NOT SIGNED OFF
