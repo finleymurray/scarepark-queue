@@ -539,7 +539,7 @@ export default function SignoffPage() {
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex gap-4 mb-8">
+              <div className="flex gap-4" style={{ marginBottom: 24 }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -581,7 +581,7 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div className="bg-[#1a1a1a] border border-[#333] rounded-[10px] px-6 py-5 mb-8">
+                <div className="bg-[#1a1a1a] border border-[#333] rounded-[10px] px-6 py-5" style={{ marginBottom: 24 }}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[#888] text-[13px]">
                       {completedSections}/{totalSections} sections signed off
@@ -611,7 +611,7 @@ export default function SignoffPage() {
               )}
 
               {/* Section cards */}
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col" style={{ gap: 16 }}>
                 {phaseSections.map((section, idx) => {
                   const completion = completions.get(section.id);
                   const isCompleted = !!completion;

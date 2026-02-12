@@ -571,7 +571,8 @@ export default function UsersPage() {
     return (
       <div
         key={user.id}
-        className="bg-[#111] border border-[#333] rounded-[12px] p-7 transition-colors hover:border-[#555]"
+        className="bg-[#111] border border-[#333] rounded-[12px] transition-colors hover:border-[#555]"
+        style={{ padding: 32 }}
       >
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-5">
@@ -655,14 +656,14 @@ export default function UsersPage() {
     if (groupUsers.length === 0) return null;
     return (
       <div className="mb-14">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3" style={{ marginBottom: 28 }}>
           <span className="text-[10px] px-2.5 py-1 rounded-[12px] font-bold uppercase"
                 style={{ background: badgeColor, color: badgeTextColor }}>
             {label}
           </span>
           <span className="text-[#666] text-xs">{groupUsers.length}</span>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24 }}>
           {groupUsers.map(renderUserCard)}
         </div>
       </div>

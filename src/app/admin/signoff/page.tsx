@@ -428,7 +428,7 @@ export default function SignoffConfigPage() {
 
                   {phaseSections.length === 0 && addingSectionPhase !== phase && (<p className="text-[#666] text-sm">No {phase} sections configured. Click &quot;+ Add Section&quot; to create one.</p>)}
 
-                  <div className="space-y-5">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                     {phaseSections.map((section, sectionIdx) => {
                       const sectionItems = getItemsForSection(section.id);
                       return (
@@ -493,7 +493,7 @@ export default function SignoffConfigPage() {
                             )}
                           </div>
 
-                          <div className="px-7 pb-7 pt-2 space-y-4">
+                          <div className="px-7 pb-7 pt-4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                             {sectionItems.length === 0 && (<p className="text-[#666] text-xs py-1">No checklist items yet.</p>)}
                             {sectionItems.map((item) => (
                               <div key={item.id} className="bg-[#111] border border-[#333] rounded-[8px] px-6 py-5 flex items-center gap-4">
