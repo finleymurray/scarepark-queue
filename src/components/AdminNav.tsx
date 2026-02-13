@@ -43,6 +43,15 @@ export default function AdminNav({
   const moreIsActive = MORE_TABS.some((t) => isActive(t.href));
   const activeMoreLabel = MORE_TABS.find((t) => isActive(t.href))?.label;
 
+  // Detect standalone PWA mode (iOS + Android)
+  const [isStandalone, setIsStandalone] = useState(false);
+  useEffect(() => {
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true;
+    setIsStandalone(standalone);
+  }, []);
+
   // Close dropdown on outside click
   useEffect(() => {
     if (!moreOpen) return;
@@ -230,44 +239,48 @@ export default function AdminNav({
             )}
           </div>
 
-          {/* Separator */}
-          <div style={{ width: 1, height: 20, background: '#333', margin: '0 4px', flexShrink: 0 }} />
+          {/* External links — hidden in standalone PWA mode */}
+          {!isStandalone && (
+            <>
+              <div style={{ width: 1, height: 20, background: '#333', margin: '0 4px', flexShrink: 0 }} />
 
-          {EXTERNAL_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: '#aaa',
-                textDecoration: 'none',
-                fontSize: 14,
-                padding: '6px 12px',
-                borderRadius: 6,
-                background: 'transparent',
-                transition: 'background 0.2s, color 0.2s',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#222';
-                e.currentTarget.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#aaa';
-              }}
-            >
-              {link.label}
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.5 }}>
-                <path d="M3.5 1.5H10.5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M10.5 1.5L1.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </a>
-          ))}
+              {EXTERNAL_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#aaa',
+                    textDecoration: 'none',
+                    fontSize: 14,
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    background: 'transparent',
+                    transition: 'background 0.2s, color 0.2s',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#222';
+                    e.currentTarget.style.color = '#fff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#aaa';
+                  }}
+                >
+                  {link.label}
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.5 }}>
+                    <path d="M3.5 1.5H10.5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10.5 1.5L1.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              ))}
+            </>
+          )}
         </div>
       </div>
     </>
