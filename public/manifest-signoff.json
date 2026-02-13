@@ -1,0 +1,30 @@
+{
+  "id": "immersive-core-signoff",
+  "name": "Immersive Core Sign-Off",
+  "short_name": "IC Sign-Off",
+  "description": "Operator sign-off checklist for Immersive Core",
+  "start_url": "/signoff",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#111111",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/signoff-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/signoff-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/signoff-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
