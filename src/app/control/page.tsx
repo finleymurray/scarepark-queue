@@ -426,7 +426,7 @@ export default function SupervisorDashboard() {
   // Handle queue time update
   async function handleWaitTimeUpdate(delta: number) {
     if (!selected) return;
-    const oldTime = selected.wait_time;
+    const oldTime = selected.wait_time || 0;
     const newTime = Math.max(0, Math.min(180, oldTime + delta));
     if (newTime === oldTime) return;
     await supabase
