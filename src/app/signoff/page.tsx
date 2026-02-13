@@ -120,36 +120,40 @@ function PinPadModal({
         )}
 
         {/* Keypad */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid grid-cols-3 gap-3 mb-4">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
             <button
               key={d}
               onClick={() => handleDigit(d)}
-              className="py-4 text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[6px]
+              className="text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[10px]
                          active:bg-[#222] transition-colors touch-manipulation"
+              style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {d}
             </button>
           ))}
           <button
             onClick={handleBackspace}
-            className="py-4 text-lg font-bold text-[#ffc107] bg-[#1a1a1a] border border-[#333] rounded-[6px]
+            className="text-lg font-bold text-[#ffc107] bg-[#1a1a1a] border border-[#333] rounded-[10px]
                        active:bg-[#222] transition-colors touch-manipulation"
+            style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             DEL
           </button>
           <button
             onClick={() => handleDigit('0')}
-            className="py-4 text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[6px]
+            className="text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[10px]
                        active:bg-[#222] transition-colors touch-manipulation"
+            style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             0
           </button>
           <button
             onClick={handleSubmit}
             disabled={pin.length < 4 || verifying}
-            className="py-4 text-lg font-bold text-black bg-white rounded-[6px]
+            className="text-lg font-bold text-black bg-white rounded-[10px]
                        active:bg-[#ddd] transition-colors touch-manipulation disabled:opacity-50"
+            style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {verifying ? '...' : '\u2713'}
           </button>
