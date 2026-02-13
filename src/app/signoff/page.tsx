@@ -127,7 +127,7 @@ function PinPadModal({
               onClick={() => handleDigit(d)}
               className="text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[10px]
                          active:bg-[#222] transition-colors touch-manipulation"
-              style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {d}
             </button>
@@ -136,7 +136,7 @@ function PinPadModal({
             onClick={handleBackspace}
             className="text-lg font-bold text-[#ffc107] bg-[#1a1a1a] border border-[#333] rounded-[10px]
                        active:bg-[#222] transition-colors touch-manipulation"
-            style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             DEL
           </button>
@@ -144,7 +144,7 @@ function PinPadModal({
             onClick={() => handleDigit('0')}
             className="text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[10px]
                        active:bg-[#222] transition-colors touch-manipulation"
-            style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             0
           </button>
@@ -153,7 +153,7 @@ function PinPadModal({
             disabled={pin.length < 4 || verifying}
             className="text-lg font-bold text-black bg-white rounded-[10px]
                        active:bg-[#ddd] transition-colors touch-manipulation disabled:opacity-50"
-            style={{ aspectRatio: '1 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {verifying ? '...' : '\u2713'}
           </button>
