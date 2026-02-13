@@ -52,7 +52,7 @@ export interface UserRole {
   updated_at: string;
 }
 
-export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_added' | 'show_time_removed' | 'attraction_created' | 'attraction_deleted' | 'signoff_completion';
+export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_added' | 'show_time_removed' | 'attraction_created' | 'attraction_deleted' | 'signoff_completion' | 'show_report_submission';
 
 export interface AuditLog {
   id: string;
@@ -127,4 +127,37 @@ export interface AttractionStatusLog {
   changed_by: string;
   changed_at: string;
   resolved_at: string | null;
+}
+
+/* ── Show Report System ── */
+
+export interface HourlyThroughputSnapshot {
+  slot_start: string;
+  slot_end: string;
+  guest_count: number;
+}
+
+export interface DelaySnapshot {
+  reason: string | null;
+  notes: string | null;
+  started_at: string;
+  resolved_at: string | null;
+  duration_minutes: number | null;
+}
+
+export interface ShowReport {
+  id: string;
+  attraction_id: string;
+  report_date: string;
+  total_operating_minutes: number;
+  total_guests: number;
+  hourly_throughput: HourlyThroughputSnapshot[];
+  delays: DelaySnapshot[];
+  operational_report: string | null;
+  technical_report: string | null;
+  costume_report: string | null;
+  signature: string;
+  submitted_by_email: string;
+  submitted_by_name: string;
+  created_at: string;
 }

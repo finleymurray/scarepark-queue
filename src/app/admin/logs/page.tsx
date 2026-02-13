@@ -19,6 +19,7 @@ const ACTION_LABELS: Record<string, string> = {
   attraction_created: 'Created',
   attraction_deleted: 'Deleted',
   signoff_completion: 'Sign-Off',
+  show_report_submission: 'Show Report',
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -31,6 +32,7 @@ const ACTION_COLORS: Record<string, string> = {
   attraction_created: 'bg-green-500/20 text-green-400 border-green-500/30',
   attraction_deleted: 'bg-red-500/20 text-red-400 border-red-500/30',
   signoff_completion: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+  show_report_submission: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
 };
 
 /* ── Clear Test Data Modal ── */
@@ -40,6 +42,7 @@ const CLEAR_DATA_TABLES = [
   { key: 'attraction_status_logs', label: 'Status Change Logs', dateCol: 'changed_at', isTimestamp: true },
   { key: 'audit_logs', label: 'Audit Logs', dateCol: 'created_at', isTimestamp: true },
   { key: 'signoff_completions', label: 'Sign-Off Completions', dateCol: 'sign_date', isTimestamp: false },
+  { key: 'show_reports', label: 'Show Reports', dateCol: 'report_date', isTimestamp: false },
 ] as const;
 
 function ClearDataModal({
@@ -379,6 +382,7 @@ export default function LogsPage() {
             <option value="attraction_created">Created</option>
             <option value="attraction_deleted">Deleted</option>
             <option value="signoff_completion">Sign-Off</option>
+            <option value="show_report_submission">Show Report</option>
           </select>
         </div>
 
