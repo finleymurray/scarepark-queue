@@ -756,6 +756,13 @@ export default function SignoffPage() {
               </div>
             </fieldset>
 
+            {/* ── Separator ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '12px 0 22px' }}>
+              <div style={{ flex: 1, height: 1, background: '#333' }} />
+              <span style={{ color: '#555', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
+              <div style={{ flex: 1, height: 1, background: '#333' }} />
+            </div>
+
             {/* ── End of Night Report Button ── */}
             <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10 bg-[#111]">
               <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">

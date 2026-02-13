@@ -209,7 +209,7 @@ export default function SignoffConfigPage() {
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<AdminTab>('config');
+  const [activeTab, setActiveTab] = useState<AdminTab>('history');
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [selectedAttractionId, setSelectedAttractionId] = useState<string>('');
   const [sections, setSections] = useState<SignoffSection[]>([]);
@@ -371,7 +371,7 @@ export default function SignoffConfigPage() {
         <h2 className="text-white text-2xl font-bold mb-10">Sign-Off</h2>
 
         <div className="flex border-b border-[#333]" style={{ marginBottom: 48 }}>
-          {([{ key: 'config' as AdminTab, label: 'Configuration' }, { key: 'history' as AdminTab, label: 'History & Status' }]).map((tab) => {
+          {([{ key: 'history' as AdminTab, label: 'Status' }, { key: 'config' as AdminTab, label: 'Configuration' }]).map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button

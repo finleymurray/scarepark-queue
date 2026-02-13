@@ -42,6 +42,40 @@ function formatTimestamp(ts: string): string {
   return `${h12}:${m} ${ampm}`;
 }
 
+/* ── Draft helpers ── */
+
+function getDraftKey(attractionId: string, dateStr: string): string {
+  return `show-report-draft-${attractionId}-${dateStr}`;
+}
+
+interface DraftData {
+  operationalReport: string;
+  technicalReport: string;
+  costumeReport: string;
+  savedAt: string;
+}
+
+function saveDraftToStorage(attractionId: string, dateStr: string, draft: Omit<DraftData, 'savedAt'>): void {
+  try {
+    const data: DraftData = { ...draft, savedAt: new Date().toISOString() };
+    localStorage.setItem(getDraftKey(attractionId, dateStr), JSON.stringify(data));
+  } catch { /* localStorage might be unavailable */ }
+}
+
+function loadDraftFromStorage(attractionId: string, dateStr: string): DraftData | null {
+  try {
+    const raw = localStorage.getItem(getDraftKey(attractionId, dateStr));
+    if (!raw) return null;
+    return JSON.parse(raw) as DraftData;
+  } catch { return null; }
+}
+
+function clearDraftFromStorage(attractionId: string, dateStr: string): void {
+  try {
+    localStorage.removeItem(getDraftKey(attractionId, dateStr));
+  } catch { /* ignore */ }
+}
+
 export default function ShowReportModal({
   open,
   attractionId,
@@ -55,6 +89,7 @@ export default function ShowReportModal({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Auto-populated data
@@ -71,6 +106,8 @@ export default function ShowReportModal({
 
   // Existing report
   const [existingReport, setExistingReport] = useState<{ submittedBy: string; submittedAt: string } | null>(null);
+  // Draft info
+  const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -88,6 +125,7 @@ export default function ShowReportModal({
       setDelays(reportData.delays);
 
       if (existing) {
+        // Existing submitted report takes priority
         setOperationalReport(existing.operational_report || '');
         setTechnicalReport(existing.technical_report || '');
         setCostumeReport(existing.costume_report || '');
@@ -95,10 +133,21 @@ export default function ShowReportModal({
           submittedBy: existing.submitted_by_name || existing.submitted_by_email,
           submittedAt: existing.created_at,
         });
+        setDraftInfo(null);
       } else {
-        setOperationalReport('');
-        setTechnicalReport('');
-        setCostumeReport('');
+        // Check for local draft
+        const draft = loadDraftFromStorage(attractionId, dateStr);
+        if (draft) {
+          setOperationalReport(draft.operationalReport);
+          setTechnicalReport(draft.technicalReport);
+          setCostumeReport(draft.costumeReport);
+          setDraftInfo({ savedAt: draft.savedAt });
+        } else {
+          setOperationalReport('');
+          setTechnicalReport('');
+          setCostumeReport('');
+          setDraftInfo(null);
+        }
         setExistingReport(null);
       }
     } catch {
@@ -111,10 +160,22 @@ export default function ShowReportModal({
   useEffect(() => {
     if (open) {
       setSubmitted(false);
+      setDraftSaved(false);
       setSignature(null);
       loadData();
     }
   }, [open, loadData]);
+
+  const handleSaveDraft = () => {
+    saveDraftToStorage(attractionId, dateStr, {
+      operationalReport,
+      technicalReport,
+      costumeReport,
+    });
+    setDraftSaved(true);
+    setDraftInfo({ savedAt: new Date().toISOString() });
+    setTimeout(() => setDraftSaved(false), 2000);
+  };
 
   const handleSubmit = async () => {
     if (!signature) return;
@@ -143,6 +204,8 @@ export default function ShowReportModal({
     setSubmitting(false);
 
     if (result.success) {
+      // Clear the local draft on successful submit
+      clearDraftFromStorage(attractionId, dateStr);
       setSubmitted(true);
       setTimeout(() => {
         onSubmitted();
@@ -202,6 +265,17 @@ export default function ShowReportModal({
         {existingReport && (
           <div style={{ background: '#1a1a1a', border: '1px solid #f0ad4e33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#f0ad4e' }}>
             Previously submitted by {existingReport.submittedBy} at {formatTimestamp(existingReport.submittedAt)}
+          </div>
+        )}
+
+        {!existingReport && draftInfo && (
+          <div style={{ background: '#1a1a1a', border: '1px solid #6ea8fe33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#6ea8fe', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Draft saved at {formatTimestamp(draftInfo.savedAt)}
           </div>
         )}
 
@@ -330,35 +404,55 @@ export default function ShowReportModal({
               </div>
             )}
 
-            {/* ── Submit ── */}
-            <button
-              onClick={handleSubmit}
-              disabled={!signature || submitting || submitted}
-              style={{
-                width: '100%',
-                padding: '14px 24px',
-                borderRadius: 12,
-                border: 'none',
-                fontSize: 16,
-                fontWeight: 700,
-                cursor: !signature || submitting || submitted ? 'not-allowed' : 'pointer',
-                background: submitted
-                  ? '#22C55E'
-                  : !signature
-                    ? '#333'
-                    : '#dc3545',
-                color: submitted || signature ? '#fff' : '#666',
-                transition: 'background 0.2s, color 0.2s',
-              }}
-            >
-              {submitted
-                ? '✓ Report Submitted'
-                : submitting
-                  ? 'Submitting...'
-                  : existingReport
-                    ? 'Update Report'
-                    : 'Submit Report'}
-            </button>
+            {/* ── Action Buttons ── */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={handleSaveDraft}
+                disabled={submitting || submitted}
+                style={{
+                  flex: 1,
+                  padding: '14px 16px',
+                  borderRadius: 12,
+                  border: '1px solid #444',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: submitting || submitted ? 'not-allowed' : 'pointer',
+                  background: draftSaved ? '#1a3a2a' : '#1a1a1a',
+                  color: draftSaved ? '#22C55E' : '#ccc',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+              >
+                {draftSaved ? '✓ Draft Saved' : 'Save Draft'}
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!signature || submitting || submitted}
+                style={{
+                  flex: 2,
+                  padding: '14px 24px',
+                  borderRadius: 12,
+                  border: 'none',
+                  fontSize: 16,
+                  fontWeight: 700,
+                  cursor: !signature || submitting || submitted ? 'not-allowed' : 'pointer',
+                  background: submitted
+                    ? '#22C55E'
+                    : !signature
+                      ? '#333'
+                      : '#dc3545',
+                  color: submitted || signature ? '#fff' : '#666',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+              >
+                {submitted
+                  ? '✓ Report Submitted'
+                  : submitting
+                    ? 'Submitting...'
+                    : existingReport
+                      ? 'Update Report'
+                      : 'Submit Report'}
+              </button>
+            </div>
           </>
         )}
       </div>
