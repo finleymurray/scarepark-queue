@@ -116,7 +116,7 @@ export default function AdminNav({
       {/* Nav tabs — horizontally scrollable on mobile */}
       <div
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', overflowX: 'auto' }}
+        style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
       >
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
           {PRIMARY_TABS.map((tab) => {
