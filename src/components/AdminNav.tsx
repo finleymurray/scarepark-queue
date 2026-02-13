@@ -1,12 +1,16 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-const TABS = [
+const PRIMARY_TABS = [
   { label: 'Attractions', href: '/admin' },
   { label: 'Sign-Off', href: '/admin/signoff' },
   { label: 'Reports', href: '/admin/reports' },
+];
+
+const MORE_TABS = [
   { label: 'Users', href: '/admin/users' },
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Logs', href: '/admin/logs' },
@@ -28,11 +32,28 @@ export default function AdminNav({
   onLogout: () => void;
 }) {
   const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
     return pathname.startsWith(href);
   }
+
+  const moreIsActive = MORE_TABS.some((t) => isActive(t.href));
+  const activeMoreLabel = MORE_TABS.find((t) => isActive(t.href))?.label;
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!moreOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [moreOpen]);
 
   return (
     <>
@@ -89,7 +110,7 @@ export default function AdminNav({
         style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', overflowX: 'auto' }}
       >
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {TABS.map((tab) => {
+          {PRIMARY_TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
               <a
@@ -122,6 +143,92 @@ export default function AdminNav({
               </a>
             );
           })}
+
+          {/* More dropdown */}
+          <div ref={moreRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              style={{
+                color: moreIsActive ? '#fff' : '#aaa',
+                background: moreIsActive || moreOpen ? '#222' : 'transparent',
+                border: 'none',
+                fontSize: 14,
+                padding: '6px 12px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                transition: 'background 0.2s, color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                if (!moreIsActive && !moreOpen) {
+                  e.currentTarget.style.background = '#222';
+                  e.currentTarget.style.color = '#fff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!moreIsActive && !moreOpen) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#aaa';
+                }
+              }}
+            >
+              {activeMoreLabel || 'More'}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.6, transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {moreOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                left: 0,
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: 8,
+                padding: '4px 0',
+                minWidth: 150,
+                zIndex: 50,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              }}>
+                {MORE_TABS.map((tab) => {
+                  const active = isActive(tab.href);
+                  return (
+                    <a
+                      key={tab.href}
+                      href={tab.href}
+                      onClick={() => setMoreOpen(false)}
+                      style={{
+                        display: 'block',
+                        padding: '8px 16px',
+                        color: active ? '#fff' : '#aaa',
+                        background: active ? '#222' : 'transparent',
+                        textDecoration: 'none',
+                        fontSize: 14,
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.background = '#222';
+                          e.currentTarget.style.color = '#fff';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = '#aaa';
+                        }
+                      }}
+                    >
+                      {tab.label}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Separator */}
           <div style={{ width: 1, height: 20, background: '#333', margin: '0 4px', flexShrink: 0 }} />
