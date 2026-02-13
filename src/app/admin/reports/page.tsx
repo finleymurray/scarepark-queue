@@ -106,10 +106,12 @@ export default function ShowReportsPage() {
   const attractionMap = new Map(attractions.map((a) => [a.id, a]));
   const reportMap = new Map(reports.map((r) => [r.attraction_id, r]));
 
-  // Only rides for reporting purposes
-  const rides = attractions.filter((a) => a.attraction_type === 'ride');
-  const submittedCount = rides.filter((a) => reportMap.has(a.id)).length;
-  const pendingCount = rides.length - submittedCount;
+  // Filter attractions based on dropdown selection
+  const displayedAttractions = selectedAttractionId === 'all'
+    ? attractions
+    : attractions.filter((a) => a.id === selectedAttractionId);
+  const submittedCount = displayedAttractions.filter((a) => reportMap.has(a.id)).length;
+  const pendingCount = displayedAttractions.length - submittedCount;
   const isToday = selectedDate === getTodayDateStr();
 
   const handleLogout = async () => {
@@ -186,7 +188,7 @@ export default function ShowReportsPage() {
             }}
           >
             <option value="all">All Attractions</option>
-            {rides.map((a) => (
+            {attractions.map((a) => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
           </select>
@@ -202,12 +204,12 @@ export default function ShowReportsPage() {
             <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Pending</span>
             <div style={{ color: pendingCount > 0 ? '#ffc107' : '#4caf50', fontSize: 24, fontWeight: 700 }}>{pendingCount}</div>
           </div>
-          {rides.length > 0 && (
+          {displayedAttractions.length > 0 && (
             <div style={{ flex: 1, minWidth: 120 }}>
               <div style={{ width: '100%', height: 8, background: '#222', borderRadius: 4, overflow: 'hidden' }}>
                 <div
                   style={{
-                    width: `${(submittedCount / rides.length) * 100}%`,
+                    width: `${(submittedCount / displayedAttractions.length) * 100}%`,
                     height: '100%',
                     background: '#4caf50',
                     borderRadius: 4,
@@ -220,13 +222,13 @@ export default function ShowReportsPage() {
         </div>
 
         {/* ── Reports ── */}
-        {rides.length === 0 && (
+        {displayedAttractions.length === 0 && (
           <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 40, textAlign: 'center' }}>
             <p style={{ color: '#666', fontSize: 14 }}>No attractions found.</p>
           </div>
         )}
 
-        {rides.map((attraction, idx) => {
+        {displayedAttractions.map((attraction, idx) => {
           const report = reportMap.get(attraction.id);
           const hasReport = !!report;
 
