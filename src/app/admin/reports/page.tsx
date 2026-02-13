@@ -340,7 +340,10 @@ function ReportDetail({ report }: { report: ShowReport }) {
                 </span>
                 <span style={{ fontSize: 12, color: '#888' }}>{d.duration_minutes != null ? `${d.duration_minutes} min` : 'Ongoing'}</span>
               </div>
-              {d.notes && <div style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>{d.notes}</div>}
+              <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                {formatTimestamp(d.started_at)} → {d.resolved_at ? formatTimestamp(d.resolved_at) : 'Unresolved'}
+              </div>
+              {d.notes && <div style={{ fontSize: 12, color: '#aaa', marginTop: 2 }}>{d.notes}</div>}
             </div>
           ))}
         </div>
