@@ -58,6 +58,7 @@ function UserFormModal({
   editing,
   attractions,
   existingPin,
+  allPins,
   onSave,
   onCancel,
   isPinOnlyUser,
@@ -66,6 +67,7 @@ function UserFormModal({
   editing: UserRole | null;
   attractions: Attraction[];
   existingPin: SignoffPin | null;
+  allPins: Map<string, SignoffPin>;
   onSave: (data: {
     email: string;
     displayName: string;
@@ -144,6 +146,15 @@ function UserFormModal({
     if (formPin.trim() && formPin.trim().length !== 4) {
       setFormError('PIN must be exactly 4 digits.');
       return;
+    }
+    if (formPin.trim()) {
+      const duplicate = Array.from(allPins.entries()).find(
+        ([userId, p]) => p.pin === formPin.trim() && (!editing || userId !== editing.id)
+      );
+      if (duplicate) {
+        setFormError('This PIN is already in use by another user.');
+        return;
+      }
     }
     setSaving(true);
     setFormError('');
@@ -701,6 +712,7 @@ export default function UsersPage() {
         editing={editing}
         attractions={attractions}
         existingPin={editing ? pinData.get(editing.id) || null : null}
+        allPins={pinData}
         onSave={handleSave}
         onCancel={() => { setShowForm(false); setEditing(null); }}
         isPinOnlyUser={isPinOnlyUser}

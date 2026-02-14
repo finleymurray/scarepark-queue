@@ -411,6 +411,25 @@ ALTER TABLE throughput_logs
   CHECK (guest_count >= 0 AND guest_count <= 99999);
 
 
+-- ── Unique PIN constraint (prevents duplicate PINs) ──
+-- First remove any existing duplicates (keep the most recent per PIN)
+-- Then add the unique index.
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_indexes WHERE indexname = 'signoff_pins_pin_unique'
+  ) THEN
+    -- Delete older duplicates before adding constraint
+    DELETE FROM signoff_pins
+    WHERE id NOT IN (
+      SELECT DISTINCT ON (pin) id FROM signoff_pins ORDER BY pin, updated_at DESC
+    );
+    CREATE UNIQUE INDEX signoff_pins_pin_unique ON signoff_pins (pin);
+  END IF;
+END $$;
+
+
 -- ══════════════════════════════════════════════════════════════
 -- ── C5: PIN attempt rate limiting (server-side tracking table) ──
 -- ══════════════════════════════════════════════════════════════
