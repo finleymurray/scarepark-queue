@@ -17,16 +17,11 @@ function formatTime12h(time: string): string {
 /* ── Static styles ── */
 
 const headerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '18px 40px',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.5vw 0',
   textAlign: 'center' as const,
-  marginBottom: 12,
+  marginBottom: '0.8vw',
   flexShrink: 0,
-  boxShadow:
-    '0 4px 12px rgba(0,0,0,0.4)',
 };
 
 const headerTitleStyle: React.CSSProperties = {
@@ -35,24 +30,18 @@ const headerTitleStyle: React.CSSProperties = {
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
   color: '#fff',
-  textShadow: '0 0 10px rgba(255,255,255,0.15), 0 0 25px rgba(255,255,255,0.08)',
   margin: 0,
 };
 
 const footerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '14px 40px',
-  marginTop: 12,
+  borderTop: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.2vw 0',
+  marginTop: '0.8vw',
   flexShrink: 0,
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'baseline',
   justifyContent: 'center',
-  gap: 16,
-  boxShadow:
-    '0 4px 12px rgba(0,0,0,0.4)',
+  gap: '1vw',
 };
 
 const bgImgStyle: React.CSSProperties = {
@@ -75,7 +64,7 @@ const gradientStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
   background:
-    'linear-gradient(to right, transparent 40%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.88) 85%, rgba(0,0,0,0.97) 100%), linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.2) 100%)',
+    'linear-gradient(to right, transparent 35%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.75) 72%, rgba(0,0,0,0.92) 85%, rgba(0,0,0,0.98) 100%), linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.15) 100%)',
   zIndex: 3,
 };
 
@@ -102,41 +91,7 @@ const statusOverlayStyle: React.CSSProperties = {
   paddingLeft: '3%',
 };
 
-/* Pill styles */
-const pillBaseStyle: React.CSSProperties = {
-  background: 'rgba(0, 0, 0, 0.75)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 14,
-  padding: '10px 28px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
-
-const pillOpenStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  padding: '10px 0',
-  width: '8vw',
-};
-
-const pillClosedStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  background: 'rgba(220, 53, 69, 0.2)',
-  border: '1px solid rgba(220, 53, 69, 0.3)',
-};
-
-const pillDelayedStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  background: 'rgba(240, 173, 78, 0.18)',
-  border: '1px solid rgba(240, 173, 78, 0.3)',
-};
-
-const pillCapacityStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  background: 'rgba(245, 158, 11, 0.18)',
-  border: '1px solid rgba(245, 158, 11, 0.3)',
-};
+/* Status text styles — no pill containers, just coloured text within gradient fade */
 
 /* Fallback when no background art exists */
 const fallbackBgStyle: React.CSSProperties = {
@@ -162,13 +117,15 @@ const BannerRow = React.memo(function BannerRow({
     () => ({
       ...style,
       position: 'relative',
-      borderRadius: '1rem',
+      borderRadius: 0,
       overflow: 'hidden',
       minHeight: 0,
-      border: '1px solid rgba(255,255,255,0.12)',
     }),
     [style],
   );
+
+  // No glow filter on TV2 — drop-shadow filters are too expensive during scroll animation
+  const logoImgStyle = logoStyle;
 
   return (
     <div style={rowStyle}>
@@ -183,81 +140,78 @@ const BannerRow = React.memo(function BannerRow({
 
       {/* Logo overlay */}
       {logoSrc && (
-        <img src={logoSrc} alt={attraction.name} style={logoStyle} />
+        <img src={logoSrc} alt={attraction.name} style={logoImgStyle} />
       )}
 
-      {/* Status pill */}
+      {/* Status / wait time — no pill, text sits within the gradient fade */}
       <div style={statusOverlayStyle}>
         {status === 'OPEN' && (
-          <div style={pillOpenStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span
               style={{
-                fontSize: '4.5vw',
+                fontSize: '5.5vw',
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
+                color: '#fff',
               }}
             >
               {attraction.wait_time}
             </span>
             <span
               style={{
-                fontSize: '0.9vw',
+                fontSize: '0.85vw',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                color: 'rgba(255,255,255,0.5)',
-                marginTop: 2,
+                letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.45)',
+                marginTop: 4,
               }}
             >
-              Mins
+              Minutes
             </span>
           </div>
         )}
         {status === 'CLOSED' && (
-          <div style={pillClosedStyle}>
-            <span
-              style={{
-                fontSize: '2vw',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#f87171',
-              }}
-            >
-              Closed
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: '2.2vw',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#f87171',
+            }}
+          >
+            Closed
+          </span>
         )}
         {status === 'DELAYED' && (
-          <div style={pillDelayedStyle}>
-            <span
-              style={{
-                fontSize: '1.6vw',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#f0ad4e',
-              }}
-            >
-              Technical Delay
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: '2vw',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#f0ad4e',
+              textAlign: 'center' as const,
+              lineHeight: 1.2,
+            }}
+          >
+            Technical<br />Delay
+          </span>
         )}
         {status === 'AT CAPACITY' && (
-          <div style={pillCapacityStyle}>
-            <span
-              style={{
-                fontSize: '1.6vw',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#F59E0B',
-              }}
-            >
-              At Capacity
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: '2vw',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#F59E0B',
+            }}
+          >
+            At Capacity
+          </span>
         )}
 
         {/* Fallback: show name if no logo */}
@@ -288,21 +242,24 @@ const BannerRow = React.memo(function BannerRow({
 
 /* ── Main page ── */
 
-const PAGE_INTERVAL = 10000;
-const FADE_DURATION = 400;
+const SCROLL_INTERVAL = 5000;
+const ANIM_DURATION = 600;
+const VISIBLE_COUNT = 2;
+const GAP = 20;
 const TV_SAFE_PADDING = '3.5%';
 
-export default function TV2Display() {
+export default function TV25Display() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [autoSort, setAutoSort] = useState(false);
   const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
   const [mainHeight, setMainHeight] = useState(0);
   const [isEmbedded, setIsEmbedded] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
-  const pageRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
-  const perPage = 2;
+
+  // Scroll state — use refs to avoid React re-render issues on TV browsers
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollIndexRef = useRef(0);
 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top);
@@ -339,7 +296,7 @@ export default function TV2Display() {
     fetchData();
 
     const attractionsChannel = supabase
-      .channel('tv2-attractions')
+      .channel('tv25-attractions')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'attractions' },
@@ -364,7 +321,7 @@ export default function TV2Display() {
       .subscribe();
 
     const settingsChannel = supabase
-      .channel('tv2-settings')
+      .channel('tv25-settings')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'park_settings' },
@@ -400,7 +357,18 @@ export default function TV2Display() {
     };
   }, [loading, measureHeight]);
 
-  // Filter to rides only (no shows), then sort if enabled
+  // Preload all attraction images so they don't pop in when scrolling
+  useEffect(() => {
+    if (attractions.length === 0) return;
+    attractions.forEach((a) => {
+      const bg = getAttractionBg(a.slug);
+      const logo = getAttractionLogo(a.slug);
+      if (bg) { const img = new Image(); img.src = bg; }
+      if (logo) { const img = new Image(); img.src = logo; }
+    });
+  }, [attractions]);
+
+  // Filter to rides only, then sort if enabled
   const sortedRides = useMemo(() => {
     const rides = attractions.filter((a) => a.attraction_type !== 'show');
     if (!autoSort) return rides;
@@ -412,63 +380,63 @@ export default function TV2Display() {
     });
   }, [attractions, autoSort]);
 
-  // Build pages array — each page is a slice of rides
-  const pages = useMemo(() => {
-    const result: Attraction[][] = [];
-    for (let i = 0; i < sortedRides.length; i += perPage) {
-      result.push(sortedRides.slice(i, i + perPage));
-    }
-    return result.length > 0 ? result : [[]];
-  }, [sortedRides]);
+  const totalRides = sortedRides.length;
 
-  const totalPages = pages.length;
-
-  const gap = 20;
+  // Row height: space for VISIBLE_COUNT cards with gaps
   const rowHeight = useMemo(() => {
-    const count = Math.min(perPage, sortedRides.length || 1);
-    const totalGap = count > 1 ? (count - 1) * gap : 0;
+    const count = Math.min(VISIBLE_COUNT, totalRides || 1);
+    const totalGap = count > 1 ? (count - 1) * GAP : 0;
     return count > 0 && mainHeight > 0
       ? Math.floor((mainHeight - totalGap) / count)
       : 100;
-  }, [sortedRides.length, mainHeight]);
+  }, [totalRides, mainHeight]);
 
-  // Fade via inline CSS transition + setTimeout (GPU-composited, no per-frame JS)
+  // Step size = one row height + gap
+  const stepSize = rowHeight + GAP;
+
+  // Reset scroll index when rides change
   useEffect(() => {
-    if (totalPages <= 1) {
-      setCurrentPage(0);
-      return;
+    scrollIndexRef.current = 0;
+    if (scrollRef.current) {
+      scrollRef.current.style.transform = 'translateY(0px)';
     }
+  }, [totalRides]);
+
+  // Scroll via CSS transition + setTimeout (GPU-composited, no per-frame JS)
+  useEffect(() => {
+    if (totalRides <= VISIBLE_COUNT || stepSize <= 0) return;
 
     const interval = setInterval(() => {
-      setCurrentPage((prev) => {
-        const oldPage = prev;
-        const newPage = (prev + 1) % totalPages;
+      const el = scrollRef.current;
+      if (!el) return;
 
-        const oldEl = pageRefsMap.current.get(oldPage);
-        const newEl = pageRefsMap.current.get(newPage);
+      const nextIndex = scrollIndexRef.current + 1;
 
-        // Trigger CSS transition: fade out old, fade in new
-        if (oldEl) oldEl.style.opacity = '0';
-        if (newEl) newEl.style.opacity = '1';
+      // Enable CSS transition and move to next position
+      el.style.transition = `transform ${ANIM_DURATION}ms ease-out`;
+      el.style.transform = `translateY(${-(nextIndex * stepSize)}px)`;
 
-        // After transition completes, update pointerEvents
-        setTimeout(() => {
-          if (oldEl) oldEl.style.pointerEvents = 'none';
-          if (newEl) newEl.style.pointerEvents = 'auto';
-        }, FADE_DURATION);
-
-        return newPage;
-      });
-    }, PAGE_INTERVAL);
+      // After transition completes, check if we need to snap back
+      setTimeout(() => {
+        scrollIndexRef.current = nextIndex;
+        if (scrollIndexRef.current >= totalRides) {
+          scrollIndexRef.current = 0;
+          // Instant snap back — disable transition, reset position
+          el.style.transition = 'none';
+          el.style.transform = 'translateY(0px)';
+        }
+      }, ANIM_DURATION + 50);
+    }, SCROLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [totalPages]);
+  }, [totalRides, stepSize]);
 
-  useEffect(() => {
-    if (currentPage >= totalPages) {
-      setCurrentPage(0);
-    }
-  }, [currentPage, totalPages]);
+  // Build the display list: original rides + just enough duplicates for seamless wrap
+  const displayRides = useMemo(() => {
+    if (totalRides === 0) return [];
+    // Only duplicate enough cards to fill the viewport during the wrap transition
+    return [...sortedRides, ...sortedRides.slice(0, VISIBLE_COUNT)];
+  }, [sortedRides, totalRides]);
 
   if (loading) {
     return (
@@ -491,135 +459,50 @@ export default function TV2Display() {
       {/* Header */}
       {!isEmbedded && (
         <div style={headerStyle}>
-          <h1 style={headerTitleStyle}>Live Times</h1>
+          <h1 style={headerTitleStyle}>Maze Queue Times</h1>
         </div>
       )}
 
-      {/* Section divider */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '4px 8px',
-          marginBottom: 8,
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            height: 1,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
-          }}
-        />
-        <span
-          style={{
-            fontSize: '0.85vw',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            flexShrink: 0,
-            color: 'rgba(255,255,255,0.35)',
-          }}
-        >
-          Attractions
-        </span>
-        <div
-          style={{
-            flex: 1,
-            height: 1,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
-          }}
-        />
-      </div>
-
-      {/* Ride banners — all pages stay mounted, only active page visible */}
+      {/* Scrolling ride banners */}
       <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
-        {pages.map((pageRides, pageIndex) => (
-          <div
-            key={pageIndex}
-            ref={(el) => {
-              if (el) pageRefsMap.current.set(pageIndex, el);
-              else pageRefsMap.current.delete(pageIndex);
-            }}
-            className="flex flex-col"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: pageIndex === currentPage ? 1 : 0,
-              pointerEvents: pageIndex === currentPage ? 'auto' : 'none',
-              gap: `${gap}px`,
-              transition: `opacity ${FADE_DURATION}ms ease`,
-            }}
-          >
-            {pageRides.map((attraction) => (
-              <BannerRow
-                key={attraction.id}
-                attraction={attraction}
-                style={{ height: `${rowHeight}px`, minHeight: '80px' }}
-              />
-            ))}
-          </div>
-        ))}
-      </main>
-
-      {/* Page dots */}
-      {totalPages > 1 && !isEmbedded && (
         <div
+          ref={scrollRef}
           style={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 10,
-            paddingTop: 12,
-            flexShrink: 0,
+            flexDirection: 'column',
+            gap: `${GAP}px`,
           }}
         >
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background:
-                  i === currentPage ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)',
-                border:
-                  i === currentPage
-                    ? '1px solid rgba(255,255,255,0.5)'
-                    : '1px solid rgba(255,255,255,0.1)',
-                boxShadow:
-                  i === currentPage
-                    ? '0 0 6px rgba(255,255,255,0.5), 0 0 14px rgba(255,255,255,0.2)'
-                    : 'none',
-                transition: 'all 0.3s',
-              }}
+          {displayRides.map((attraction, idx) => (
+            <BannerRow
+              key={`${attraction.id}-${idx}`}
+              attraction={attraction}
+              style={{ height: `${rowHeight}px`, minHeight: '80px', flexShrink: 0 }}
             />
           ))}
         </div>
-      )}
+      </main>
 
       {/* Footer */}
       {!isEmbedded && (
         <div style={footerStyle}>
           <span
             style={{
-              fontSize: '1.4vw',
+              fontSize: '1vw',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: 'rgba(255,255,255,0.45)',
+              letterSpacing: '0.2em',
+              color: 'rgba(255,255,255,0.35)',
             }}
           >
             Park Closes
           </span>
           <span
             style={{
-              fontSize: '1.8vw',
+              fontSize: '2.2vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
-              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+              color: '#fff',
             }}
           >
             {formatTime12h(closingTime)}

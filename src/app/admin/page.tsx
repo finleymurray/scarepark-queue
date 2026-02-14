@@ -542,6 +542,7 @@ const RideControl = React.memo(function RideControl({
       {/* Status select — pill badge style */}
       <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
         <select
+          key={`status-${attraction.id}-${status}`}
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
@@ -558,7 +559,7 @@ const RideControl = React.memo(function RideControl({
             border: 'none',
             cursor: 'pointer',
             transition: 'filter 0.15s',
-            background: STATUS_PILL_BG[status] || '#555',
+            backgroundColor: STATUS_PILL_BG[status] || '#555',
             color: STATUS_PILL_TEXT[status] || '#fff',
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 2l4 4 4-4' fill='${encodeURIComponent(STATUS_PILL_TEXT[status] || '#fff')}' /%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',
@@ -757,6 +758,7 @@ const ShowControl = React.memo(function ShowControl({
           SHOW
         </span>
         <select
+          key={`status-${attraction.id}-${status}`}
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
@@ -773,7 +775,7 @@ const ShowControl = React.memo(function ShowControl({
             border: 'none',
             cursor: 'pointer',
             transition: 'filter 0.15s',
-            background: STATUS_PILL_BG[status] || '#555',
+            backgroundColor: STATUS_PILL_BG[status] || '#555',
             color: STATUS_PILL_TEXT[status] || '#fff',
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 2l4 4 4-4' fill='${encodeURIComponent(STATUS_PILL_TEXT[status] || '#fff')}' /%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',

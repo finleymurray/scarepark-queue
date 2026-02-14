@@ -17,7 +17,7 @@ function formatTime12h(time: string): string {
  * TV4 — Carousel that cycles through all TV views via iframes.
  *
  * Sequence:
- *   /tv2.5  (ride banners, scrolling ticker)  — 30s
+ *   /tv2    (ride banners, scrolling ticker)  — 30s
  *   /tv3    (show times grid)                 — 15s
  *   /tv1    (queue + show times list)         — 15s
  *
@@ -25,12 +25,12 @@ function formatTime12h(time: string): string {
  * Only the active iframe is visible; transitions use a fade effect.
  *
  * TV4 renders its own persistent header + footer so they never jump
- * between page transitions. The embedded TV1/TV2/TV3 iframes hide
+ * between page transitions. The embedded iframes hide
  * their own headers and footers via isEmbedded detection.
  */
 
 const VIEWS = [
-  { path: '/tv2.5', duration: 30000, title: 'Maze Queue Times' },
+  { path: '/tv2', duration: 30000, title: 'Maze Queue Times' },
   { path: '/tv3', duration: 15000, title: 'Show Schedule' },
   { path: '/tv1', duration: 15000, title: 'Mazes & Shows' },
 ];

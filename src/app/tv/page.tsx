@@ -11,7 +11,7 @@ const TV_SCREENS = [
   {
     path: '/tv2',
     name: 'TV2',
-    description: 'Ride banners with auto-paging',
+    description: 'Ride banners with scrolling ticker',
   },
   {
     path: '/tv3',

@@ -2,20 +2,40 @@
 -- Security Fixes for scarepark-queue (control.immersivecore.network)
 -- Run this in Supabase SQL Editor
 -- ============================================================
+--
+-- FIXES APPLIED (vs previous draft):
+--   1. attractions + park_settings: Added anon SELECT policies so TV screens
+--      (which are unauthenticated) continue to work.
+--   2. attractions: Supervisors can now UPDATE wait_time/status (not just admins).
+--   3. user_roles: All authenticated users can SELECT all rows (needed for
+--      verifyPin() JOIN and checkAuth() role lookups).
+-- ============================================================
 
+
+-- ══════════════════════════════════════════════════════════════
 -- ── C4: Enable RLS on all tables ──
--- Ensures data access is enforced at the database level,
--- not just client-side auth checks.
+-- ══════════════════════════════════════════════════════════════
 
--- attractions: authenticated users can read, only admins can write
+-- ── attractions ──
+-- Anon can read (TV screens), authenticated can read, supervisors+admins can write.
+
 ALTER TABLE attractions ENABLE ROW LEVEL SECURITY;
 
+-- Anon read (TV1, TV2, TV3 pages have no auth)
+DROP POLICY IF EXISTS "Anon can read attractions" ON attractions;
+CREATE POLICY "Anon can read attractions"
+  ON attractions FOR SELECT
+  TO anon
+  USING (true);
+
+-- Authenticated read
 DROP POLICY IF EXISTS "Authenticated users can read attractions" ON attractions;
 CREATE POLICY "Authenticated users can read attractions"
   ON attractions FOR SELECT
   TO authenticated
   USING (true);
 
+-- Admins get full control (INSERT, UPDATE, DELETE via FOR ALL)
 DROP POLICY IF EXISTS "Admins can modify attractions" ON attractions;
 CREATE POLICY "Admins can modify attractions"
   ON attractions FOR ALL
@@ -35,16 +55,47 @@ CREATE POLICY "Admins can modify attractions"
     )
   );
 
+-- Supervisors can UPDATE attractions (wait_time, status from control page)
+DROP POLICY IF EXISTS "Supervisors can update attractions" ON attractions;
+CREATE POLICY "Supervisors can update attractions"
+  ON attractions FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.email = auth.jwt()->>'email'
+        AND user_roles.role = 'supervisor'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.email = auth.jwt()->>'email'
+        AND user_roles.role = 'supervisor'
+    )
+  );
 
--- park_settings: authenticated can read, admins can write
+
+-- ── park_settings ──
+-- Anon can read (TV screens), authenticated can read, admins can write.
+
 ALTER TABLE park_settings ENABLE ROW LEVEL SECURITY;
 
+-- Anon read (TV screens need closing_time, auto_sort_by_wait, etc.)
+DROP POLICY IF EXISTS "Anon can read settings" ON park_settings;
+CREATE POLICY "Anon can read settings"
+  ON park_settings FOR SELECT
+  TO anon
+  USING (true);
+
+-- Authenticated read
 DROP POLICY IF EXISTS "Authenticated users can read settings" ON park_settings;
 CREATE POLICY "Authenticated users can read settings"
   ON park_settings FOR SELECT
   TO authenticated
   USING (true);
 
+-- Admins can modify
 DROP POLICY IF EXISTS "Admins can modify settings" ON park_settings;
 CREATE POLICY "Admins can modify settings"
   ON park_settings FOR ALL
@@ -65,9 +116,13 @@ CREATE POLICY "Admins can modify settings"
   );
 
 
+-- ══════════════════════════════════════════════════════════════
 -- ── H6: RLS on status logs and throughput logs ──
+-- ══════════════════════════════════════════════════════════════
 
--- attraction_status_logs: authenticated can read, admins + supervisors can insert
+-- ── attraction_status_logs ──
+-- Authenticated can read, admins + supervisors can insert/update.
+
 ALTER TABLE attraction_status_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read status logs" ON attraction_status_logs;
@@ -101,7 +156,9 @@ CREATE POLICY "Admins can update status logs"
   );
 
 
--- throughput_logs: authenticated can read, admins + supervisors can write
+-- ── throughput_logs ──
+-- Authenticated can read, admins + supervisors can write.
+
 ALTER TABLE throughput_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read throughput logs" ON throughput_logs;
@@ -130,7 +187,9 @@ CREATE POLICY "Staff can manage throughput logs"
   );
 
 
--- audit_logs: only admins can read, authenticated can insert
+-- ── audit_logs ──
+-- Only admins can read, any authenticated user can insert (audit trail).
+
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Admins can read audit logs" ON audit_logs;
@@ -152,7 +211,11 @@ CREATE POLICY "Authenticated users can insert audit logs"
   WITH CHECK (true);
 
 
--- signoff_sections: authenticated can read, admins can manage
+-- ══════════════════════════════════════════════════════════════
+-- ── Sign-off tables ──
+-- ══════════════════════════════════════════════════════════════
+
+-- ── signoff_sections ──
 ALTER TABLE signoff_sections ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read signoff sections" ON signoff_sections;
@@ -181,7 +244,7 @@ CREATE POLICY "Admins can manage signoff sections"
   );
 
 
--- signoff_completions: authenticated can read + insert
+-- ── signoff_completions ──
 ALTER TABLE signoff_completions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read signoff completions" ON signoff_completions;
@@ -197,7 +260,10 @@ CREATE POLICY "Authenticated users can insert signoff completions"
   WITH CHECK (true);
 
 
--- signoff_pins: authenticated can read (needed for PIN verification)
+-- ── signoff_pins ──
+-- All authenticated can read (needed for PIN verification via verifyPin()).
+-- Only admins can create/update/delete PINs.
+
 ALTER TABLE signoff_pins ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read signoff pins" ON signoff_pins;
@@ -226,7 +292,7 @@ CREATE POLICY "Admins can manage signoff pins"
   );
 
 
--- signoff_checklist_items: authenticated can read, admins can manage
+-- ── signoff_checklist_items ──
 ALTER TABLE signoff_checklist_items ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read checklist items" ON signoff_checklist_items;
@@ -255,26 +321,26 @@ CREATE POLICY "Admins can manage checklist items"
   );
 
 
--- user_roles: admins can read/manage, users can read their own
+-- ══════════════════════════════════════════════════════════════
+-- ── user_roles ──
+-- All authenticated users can READ all rows. This is required because:
+--   - verifyPin() JOINs signoff_pins → user_roles to get the PIN owner's info
+--   - checkAuth() looks up the current user's role
+--   - Admin pages list all users
+-- Only admins can INSERT/UPDATE/DELETE.
+-- ══════════════════════════════════════════════════════════════
+
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can read their own role" ON user_roles;
-CREATE POLICY "Users can read their own role"
-  ON user_roles FOR SELECT
-  TO authenticated
-  USING (email = auth.jwt()->>'email');
-
 DROP POLICY IF EXISTS "Admins can read all user roles" ON user_roles;
-CREATE POLICY "Admins can read all user roles"
+
+-- Single SELECT policy: all authenticated users can read all rows
+DROP POLICY IF EXISTS "Authenticated users can read user roles" ON user_roles;
+CREATE POLICY "Authenticated users can read user roles"
   ON user_roles FOR SELECT
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      WHERE ur.email = auth.jwt()->>'email'
-        AND ur.role = 'admin'
-    )
-  );
+  USING (true);
 
 DROP POLICY IF EXISTS "Admins can manage user roles" ON user_roles;
 CREATE POLICY "Admins can manage user roles"
@@ -296,7 +362,10 @@ CREATE POLICY "Admins can manage user roles"
   );
 
 
--- show_reports: authenticated can read, supervisors + admins can write
+-- ══════════════════════════════════════════════════════════════
+-- ── show_reports ──
+-- ══════════════════════════════════════════════════════════════
+
 ALTER TABLE show_reports ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can read show reports" ON show_reports;
@@ -325,7 +394,9 @@ CREATE POLICY "Staff can manage show reports"
   );
 
 
+-- ══════════════════════════════════════════════════════════════
 -- ── M6: Database-level constraints on numeric fields ──
+-- ══════════════════════════════════════════════════════════════
 
 ALTER TABLE attractions
   DROP CONSTRAINT IF EXISTS attractions_wait_time_range;
@@ -340,9 +411,9 @@ ALTER TABLE throughput_logs
   CHECK (guest_count >= 0 AND guest_count <= 99999);
 
 
--- ── C5: PIN attempt rate limiting ──
--- Create a table to track PIN verification attempts for rate limiting.
--- The application should check this before verifying PINs.
+-- ══════════════════════════════════════════════════════════════
+-- ── C5: PIN attempt rate limiting (server-side tracking table) ──
+-- ══════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS pin_attempts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -372,13 +443,17 @@ CREATE POLICY "Admins can read pin attempts"
   );
 
 -- Auto-clean old attempts (keep 24 hours only)
--- This can be run as a cron job or Supabase scheduled function
--- DELETE FROM pin_attempts WHERE attempted_at < now() - interval '24 hours';
+-- Run this as a Supabase cron job or pg_cron:
+-- SELECT cron.schedule('clean-pin-attempts', '0 * * * *',
+--   $$DELETE FROM pin_attempts WHERE attempted_at < now() - interval '24 hours'$$
+-- );
 
 
+-- ══════════════════════════════════════════════════════════════
 -- ── C3: Fix privilege escalation via signup metadata ──
--- Replace the handle_new_user trigger to never trust user-provided role.
--- IMPORTANT: Review your existing trigger before running this.
+-- IMPORTANT: Review your existing trigger before uncommenting.
+-- This ensures new users always get 'staff' role, never from metadata.
+-- ══════════════════════════════════════════════════════════════
 
 -- CREATE OR REPLACE FUNCTION public.handle_new_user()
 -- RETURNS trigger AS $$
