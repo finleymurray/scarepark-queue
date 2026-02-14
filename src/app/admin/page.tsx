@@ -580,7 +580,7 @@ const RideControl = React.memo(function RideControl({
           const logo = getAttractionLogo(attraction.slug);
           const glow = getLogoGlow(attraction.slug);
           return logo ? (
-            <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 48, height: 48, filter: glow || undefined }} />
+            <img src={logo} alt="" width={64} height={64} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 64, height: 64, filter: glow || undefined }} />
           ) : null;
         })()}
         <div style={{ textAlign: 'center' as const }}>
@@ -598,15 +598,15 @@ const RideControl = React.memo(function RideControl({
       {signoffStatus && (
         <div style={{ marginBottom: 4 }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
+            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
               SIGNED OFF
             </span>
           ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
-            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
+            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
               {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
             </span>
           ) : (
-            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d1010] text-[#d43518]">
+            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d1010] text-[#d43518]">
               NOT SIGNED OFF
             </span>
           )}
@@ -795,7 +795,7 @@ const ShowControl = React.memo(function ShowControl({
           const logo = getAttractionLogo(attraction.slug);
           const glow = getLogoGlow(attraction.slug);
           return logo ? (
-            <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 48, height: 48, filter: glow || undefined }} />
+            <img src={logo} alt="" width={64} height={64} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 64, height: 64, filter: glow || undefined }} />
           ) : null;
         })()}
         <div style={{ textAlign: 'center' as const }}>
@@ -813,15 +813,15 @@ const ShowControl = React.memo(function ShowControl({
       {signoffStatus && (
         <div style={{ marginBottom: 8 }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
+            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
               SIGNED OFF
             </span>
           ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
-            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
+            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
               {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
             </span>
           ) : (
-            <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#3d1010] text-[#d43518]">
+            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d1010] text-[#d43518]">
               NOT SIGNED OFF
             </span>
           )}
@@ -1438,7 +1438,7 @@ export default function AdminDashboard() {
 
       <main style={{ padding: '24px 20px' }}>
       {/* Quick Actions */}
-      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 mb-8">
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 40 }}>
         <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
           <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="flex gap-3">
