@@ -1,4 +1,4 @@
-const CACHE_NAME = 'immersive-core-v2';
+const CACHE_NAME = 'immersive-core-v3';
 
 // Static assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -38,18 +38,30 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   if (url.hostname.includes('supabase')) return;
 
-  // Static assets (images, fonts, CSS, JS) — cache-first
+  // Next.js chunks (_next/) — network-first so deploys don't break navigation
+  if (url.pathname.startsWith('/_next/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Static assets (images, fonts, icons, logos) — cache-first
   if (
     request.destination === 'image' ||
     request.destination === 'font' ||
-    request.destination === 'style' ||
-    request.destination === 'script' ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/logos/') ||
     url.pathname.endsWith('.webp') ||
-    url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.css') ||
-    url.pathname.endsWith('.js')
+    url.pathname.endsWith('.png')
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
