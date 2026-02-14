@@ -148,7 +148,7 @@ function ShowCard({ show }: { show: Attraction }) {
       style={{
         background: 'linear-gradient(180deg, rgba(88, 28, 135, 0.5) 0%, rgba(50, 15, 90, 0.35) 100%)',
         border: '1px solid rgba(168, 85, 247, 0.4)',
-        borderRadius: 12,
+        borderRadius: 6,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
