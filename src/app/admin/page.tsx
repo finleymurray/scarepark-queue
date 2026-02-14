@@ -580,7 +580,7 @@ const RideControl = React.memo(function RideControl({
           const logo = getAttractionLogo(attraction.slug);
           const glow = getLogoGlow(attraction.slug);
           return logo ? (
-            <img src={logo} alt="" width={64} height={64} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 64, height: 64, filter: glow || undefined }} />
+            <img src={logo} alt="" width={80} height={80} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 80, height: 80, filter: glow || undefined }} />
           ) : null;
         })()}
         <div style={{ textAlign: 'center' as const }}>
@@ -795,7 +795,7 @@ const ShowControl = React.memo(function ShowControl({
           const logo = getAttractionLogo(attraction.slug);
           const glow = getLogoGlow(attraction.slug);
           return logo ? (
-            <img src={logo} alt="" width={64} height={64} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 64, height: 64, filter: glow || undefined }} />
+            <img src={logo} alt="" width={80} height={80} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 80, height: 80, filter: glow || undefined }} />
           ) : null;
         })()}
         <div style={{ textAlign: 'center' as const }}>
