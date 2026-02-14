@@ -28,7 +28,7 @@ function ConfirmModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div className="bg-[#111] border border-[#333] rounded-[12px] p-8 w-full max-w-[400px]">
+      <div className="bg-[#1E1E1E] border border-[#2a2a2a] p-8 w-full max-w-[400px]" style={{ borderRadius: 14 }}>
         <p className="text-[#e0e0e0] text-sm font-semibold mb-2">{title}</p>
         <p className="text-[#888] text-sm mb-5">{message}</p>
         <div className="flex gap-3">
@@ -166,7 +166,7 @@ function UserFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" style={{ overflowY: 'auto' }}>
-      <div className="bg-[#111] border border-[#333] rounded-[12px] w-full max-w-lg my-8" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#1E1E1E] border border-[#2a2a2a] w-full max-w-lg my-8" style={{ borderRadius: 14 }} onClick={(e) => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#333]">
           <h3 className="text-[#e0e0e0] text-base font-semibold">
@@ -571,14 +571,19 @@ export default function UsersPage() {
     return (
       <div
         key={user.id}
-        className="bg-[#111] border border-[#333] rounded-[12px] transition-colors hover:border-[#555]"
-        style={{ padding: 32 }}
+        className="bg-[#1E1E1E] border border-[#2a2a2a] transition-colors hover:border-[#555]"
+        style={{ padding: 32, borderRadius: 12 }}
       >
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-5">
             {/* Avatar */}
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
-              ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
+            <div style={
+              user.role === 'admin' && !pinOnly
+                ? { width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, background: 'rgba(10,61,31,0.6)', color: '#4caf50', border: '2px solid rgba(76,175,80,0.3)' }
+                : pinOnly
+                  ? { width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, background: 'rgba(26,16,64,0.6)', color: '#a855f7', border: '2px solid rgba(168,85,247,0.3)' }
+                  : { width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, background: 'rgba(61,48,0,0.6)', color: '#ffc107', border: '2px solid rgba(255,193,7,0.3)' }
+            }>
               {(user.display_name || user.email).charAt(0).toUpperCase()}
             </div>
             <div>
@@ -598,16 +603,18 @@ export default function UsersPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => startEdit(user)}
-              className="px-3 py-1.5 border border-[#333] text-[#888] text-xs font-medium rounded-[6px]
+              className="px-3 py-1.5 text-xs font-medium rounded-[6px]
                          hover:border-[#555] hover:text-[#e0e0e0] transition-colors"
+              style={{ background: 'transparent', border: '1px solid #444', color: '#888' }}
             >
               Edit
             </button>
             {!isYou && (
               <button
                 onClick={() => setDeleteTarget(user)}
-                className="px-3 py-1.5 bg-[#2a1010] text-[#d43518] text-xs font-semibold rounded-[6px]
-                           hover:bg-[#3a1515] transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold rounded-[6px]
+                           hover:brightness-125 transition-colors"
+                style={{ background: 'rgba(220,53,69,0.12)', color: '#f87171', border: 'none' }}
               >
                 Delete
               </button>
@@ -619,7 +626,7 @@ export default function UsersPage() {
         <div className="flex flex-wrap gap-3 items-center">
           {/* Role badge */}
           <span className={`text-[10px] px-2 py-1 rounded-[12px] font-semibold uppercase
-            ${user.role === 'admin' ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#0d2f5e] text-[#6ea8fe]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
+            ${user.role === 'admin' && !pinOnly ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#1a1040] text-[#a855f7]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
             {pinOnly ? 'PIN only' : user.role}
           </span>
 
@@ -710,7 +717,7 @@ export default function UsersPage() {
         </div>
 
         {users.length === 0 ? (
-          <div className="bg-[#111] border border-[#333] rounded-[8px] p-20 text-center">
+          <div className="bg-[#1E1E1E] border border-[#2a2a2a] p-20 text-center" style={{ borderRadius: 12 }}>
             <p className="text-[#666] text-sm">No users configured yet.</p>
             <p className="text-[#444] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
           </div>
@@ -718,7 +725,7 @@ export default function UsersPage() {
           <>
             {renderGroup('Admins', admins, '#0a3d1f', '#4caf50')}
             {renderGroup('Supervisors', supervisors, '#3d3000', '#ffc107')}
-            {renderGroup('PIN-Only', pinOnlyUsers, '#0d2f5e', '#6ea8fe')}
+            {renderGroup('PIN-Only', pinOnlyUsers, '#1a1040', '#a855f7')}
           </>
         )}
 

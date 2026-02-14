@@ -58,7 +58,7 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: 8, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
+      <div style={{ background: '#1E1E1E', border: '1px solid #444', borderRadius: 14, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
         <div className="text-[#dc3545] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
         <p className="text-[#888] text-sm">{message}</p>
@@ -109,7 +109,7 @@ function DelayReasonModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: 8, padding: 24, maxWidth: 480, width: '100%' }}>
+      <div style={{ background: '#1E1E1E', border: '1px solid #444', borderRadius: 14, padding: 24, maxWidth: 480, width: '100%' }}>
         <h2 className="text-white text-lg font-bold mb-1">Delay Reason</h2>
         <p className="text-[#888] text-sm mb-5">
           Why is <span className="text-white font-medium">{attractionName}</span> being delayed?
@@ -285,7 +285,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20 }}>
+    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
       <h3 className="text-white text-lg font-bold mb-3">Add Attraction</h3>
 
       {/* Type toggle */}
@@ -319,7 +319,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
           placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
-          className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                      placeholder-white/30 focus:outline-none focus:border-[#888] transition-colors"
         />
         <button
@@ -373,7 +373,7 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, position: 'relative' }}>
+    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
@@ -405,7 +405,7 @@ function OperatingHoursControl({
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                          focus:outline-none focus:border-[#6ea8fe] transition-colors"
             />
           </div>
@@ -415,7 +415,7 @@ function OperatingHoursControl({
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                          focus:outline-none focus:border-[#6ea8fe] transition-colors"
             />
           </div>
@@ -515,7 +515,7 @@ const RideControl = React.memo(function RideControl({
   }
 
   return (
-    <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20, position: 'relative' }}>
+    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       {/* Header: logo + name + status badge */}
@@ -540,7 +540,7 @@ const RideControl = React.memo(function RideControl({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
-          <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
+          <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-md whitespace-nowrap`}>
             {status}
           </span>
         </div>
@@ -572,7 +572,7 @@ const RideControl = React.memo(function RideControl({
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                      focus:outline-none focus:border-[#6ea8fe] transition-colors cursor-pointer
                      disabled:opacity-50"
         >
@@ -583,9 +583,9 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Wait time display */}
-      <div style={{ textAlign: 'center' as const, marginBottom: 16, padding: '12px 0', background: '#0a0a0a', borderRadius: 6 }}>
+      <div style={{ textAlign: 'center' as const, marginBottom: 16, padding: '16px 0', background: 'transparent', borderRadius: 6 }}>
         <div style={{ color: '#888', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 4 }}>Wait Time</div>
-        <div className={`text-4xl font-bold tabular-nums ${STATUS_TEXT_COLORS[status]}`}>
+        <div className={`text-6xl font-bold tabular-nums ${STATUS_TEXT_COLORS[status]}`}>
           {attraction.wait_time}
           <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)', marginLeft: 4 }}>min</span>
         </div>
@@ -596,7 +596,7 @@ const RideControl = React.memo(function RideControl({
         <button
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
-          className="btn-quick py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+          className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
                      hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           -5m
@@ -604,7 +604,7 @@ const RideControl = React.memo(function RideControl({
         <button
           onClick={() => handleTimeAdjust(5)}
           disabled={saving}
-          className="btn-quick py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+          className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
                      hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +5m
@@ -612,7 +612,7 @@ const RideControl = React.memo(function RideControl({
         <button
           onClick={() => handleTimeAdjust(10)}
           disabled={saving}
-          className="btn-quick py-2.5 bg-[#1a1a1a] border border-[#333] text-white rounded-md
+          className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
                      hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +10m
@@ -629,7 +629,7 @@ const RideControl = React.memo(function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                      placeholder-white/30 focus:outline-none focus:border-[#6ea8fe] transition-colors
                      [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                      [&::-webkit-outer-spin-button]:appearance-none"
@@ -711,7 +711,7 @@ const ShowControl = React.memo(function ShowControl({
   }
 
   return (
-    <div style={{ background: 'rgba(88, 28, 135, 0.08)', border: '1px solid rgba(126, 34, 206, 0.3)', borderRadius: 8, padding: 20, position: 'relative' }}>
+    <div style={{ background: 'rgba(88, 28, 135, 0.12)', border: '1px solid rgba(126, 34, 206, 0.3)', borderRadius: 14, padding: 24, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
@@ -769,7 +769,7 @@ const ShowControl = React.memo(function ShowControl({
           value={status}
           onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
           disabled={saving}
-          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                      focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors cursor-pointer
                      disabled:opacity-50"
         >
@@ -817,7 +817,7 @@ const ShowControl = React.memo(function ShowControl({
           value={newTime}
           onChange={(e) => setNewTime(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
+          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
                      focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
         />
         <button
@@ -1390,7 +1390,7 @@ export default function AdminDashboard() {
       <main style={{ padding: '24px 20px' }}>
       {/* Quick Actions */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 mb-8">
-        <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 20 }}>
+        <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
           <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}

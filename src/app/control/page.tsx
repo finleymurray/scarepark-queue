@@ -111,7 +111,7 @@ function NumericKeypad({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm rounded-lg bg-[#111] border border-[#333] p-6 space-y-4">
+      <div className="w-full max-w-sm bg-[#1E1E1E] border border-[#2a2a2a] p-6 space-y-4" style={{ borderRadius: 14 }}>
         <div className="text-center">
           <p className="text-white/50 text-xs uppercase tracking-wider font-medium">{slotLabel}</p>
           <p className="text-white text-sm mt-1">Enter guest count</p>
@@ -541,7 +541,7 @@ export default function SupervisorDashboard() {
       />
 
       {/* Header — logo, user info & sign out */}
-      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
           <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
           <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
@@ -603,7 +603,7 @@ export default function SupervisorDashboard() {
       <div
         ref={tabBarRef}
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 20px', flexShrink: 0, display: 'flex', gap: 4, overflowX: 'auto' }}
+        style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '8px 20px', flexShrink: 0, display: 'flex', gap: 4, overflowX: 'auto' }}
       >
         {rides.map((a) => {
           const isSelected = a.id === selectedId;
@@ -713,7 +713,7 @@ export default function SupervisorDashboard() {
                 <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Queue Time</h2>
               </div>
 
-              <div className="bg-[#111] border border-[#333] rounded-xl p-8">
+              <div className="bg-[#1E1E1E] border border-[#2a2a2a] rounded-[14px] p-8">
                 {selected.attraction_type === 'show' ? (
                   <div className="text-center py-4">
                     <div className={`text-3xl font-black ${
@@ -744,7 +744,7 @@ export default function SupervisorDashboard() {
                       <button
                         onClick={() => handleWaitTimeUpdate(-5)}
                         disabled={selected.wait_time <= 0}
-                        className="flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333]
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400
                                    text-red-400 text-3xl font-black active:bg-red-900/20
                                    transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
                                    min-w-[80px] min-h-[80px]"
@@ -771,7 +771,7 @@ export default function SupervisorDashboard() {
 
                       <button
                         onClick={() => handleWaitTimeUpdate(5)}
-                        className="flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-[#333]
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E]
                                    text-[#22C55E] text-3xl font-black active:bg-green-900/20
                                    transition-colors touch-manipulation
                                    min-w-[80px] min-h-[80px]"
@@ -792,7 +792,7 @@ export default function SupervisorDashboard() {
               </div>
 
               {slots.length === 0 ? (
-                <div className="bg-[#111] border border-[#333] rounded-lg p-6 text-center">
+                <div className="bg-[#1E1E1E] border border-[#2a2a2a] rounded-lg p-6 text-center">
                   <p className="text-white/30 text-sm">Operating hours not set.</p>
                   <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
                 </div>
@@ -851,8 +851,8 @@ export default function SupervisorDashboard() {
                           ${isCurrent
                             ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
                             : isPast
-                              ? 'bg-[#1a1a1a] border border-[#333] active:bg-[#222]'
-                              : 'bg-[#1a1a1a] border border-[#222] opacity-40 cursor-not-allowed'
+                              ? 'bg-[#1E1E1E] border border-[#2a2a2a] active:bg-[#222]'
+                              : 'bg-[#1E1E1E] border border-[#222] opacity-40 cursor-not-allowed'
                           }`}
                       >
                         <div className={`text-base font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/60'}`}>
@@ -885,7 +885,7 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer style={{ flexShrink: 0, background: '#111', borderTop: '1px solid #333', padding: '20px 24px' }}>
+        <footer style={{ flexShrink: 0, background: '#1E1E1E', borderTop: '1px solid #2a2a2a', padding: '20px 24px' }}>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">

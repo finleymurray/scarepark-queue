@@ -609,7 +609,7 @@ export default function SignoffPage() {
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${(completedSections / totalSections) * 100}%`,
-                        background: completedSections === totalSections ? '#4caf50' : '#6ea8fe',
+                        background: completedSections === totalSections ? '#4caf50' : 'linear-gradient(90deg, #a855f7 0%, #22C55E 100%)',
                       }}
                     />
                   </div>
@@ -639,7 +639,7 @@ export default function SignoffPage() {
                     <div
                       key={section.id}
                       className={`bg-[#1a1a1a] border rounded-[12px] overflow-hidden transition-colors
-                        ${isCompleted ? 'border-[#4caf50]/30' : locked ? 'border-[#333] opacity-60' : isActive ? 'border-[#555]' : 'border-[#333]'}`}
+                        ${isCompleted ? 'border-[rgba(76,175,80,0.3)]' : locked ? 'border-[#333] opacity-60' : isActive ? 'border-[rgba(168,85,247,0.5)]' : 'border-[#333]'}`}
                     >
                       {/* Section header — clickable if not completed and not locked */}
                       <button
@@ -663,7 +663,7 @@ export default function SignoffPage() {
                               </svg>
                             </div>
                           ) : (
-                            <span className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0 text-sm font-bold">
+                            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: 'rgba(168,85,247,0.2)', color: '#a855f7', border: '2px solid rgba(168,85,247,0.4)' }}>
                               {idx + 1}
                             </span>
                           )}
@@ -709,20 +709,11 @@ export default function SignoffPage() {
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-4 px-5 py-4 bg-[#1a1a1a] border rounded-[10px] cursor-pointer
-                                      transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#333] hover:border-[#555]'}`}
+                                    className={`flex items-center gap-4 px-5 py-4 bg-[#161616] border rounded-[10px] cursor-pointer
+                                      transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#2a2a2a] hover:border-[#555]'}`}
                                   >
-                                    <div className={`w-10 h-10 rounded-[8px] flex items-center justify-center shrink-0 transition-colors
-                                      ${checked ? 'bg-[#0a3d1f] border-2 border-[#4caf50]' : 'bg-[#222] border-2 border-[#555]'}`}>
-                                      {checked ? (
-                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                          <path d="M3.5 8L6.5 11L12.5 5" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                      ) : (
-                                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                          <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
-                                        </svg>
-                                      )}
+                                    <div style={{ width: 52, height: 28, borderRadius: 14, background: checked ? '#22C55E' : '#333', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
+                                      <div style={{ position: 'absolute', top: 3, left: checked ? 27 : 3, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : '#888', transition: 'all 0.2s' }} />
                                     </div>
                                     <input
                                       type="checkbox"
@@ -745,7 +736,8 @@ export default function SignoffPage() {
                             disabled={!allChecked && sectionItems.length > 0}
                             className="w-full mt-6 py-4 text-sm font-semibold rounded-[10px] transition-colors touch-manipulation
                                        flex items-center justify-center gap-2
-                                       disabled:opacity-50 disabled:cursor-not-allowed bg-white text-black hover:bg-[#ddd]"
+                                       disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+                            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', color: '#fff' }}
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                               <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
