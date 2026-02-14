@@ -72,8 +72,8 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           color: '#fff',
-          flex: 1,
           minWidth: 0,
+          maxWidth: '70%',
         }}
       >
         {attraction.name}
@@ -84,7 +84,8 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
         <div
           style={{
             flexShrink: 0,
-            marginLeft: 16,
+            marginLeft: 'auto',
+            paddingLeft: 16,
             display: 'flex',
             alignItems: 'baseline',
             gap: 6,
@@ -125,7 +126,8 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
             flexShrink: 0,
-            marginLeft: 16,
+            marginLeft: 'auto',
+            paddingLeft: 16,
           }}
         >
           {statusLabel}
@@ -164,11 +166,30 @@ function ShowCard({ show }: { show: Attraction }) {
           color: 'rgba(255,255,255,0.6)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
-          marginBottom: '0.4vw',
+          marginBottom: '0.2vw',
           lineHeight: 1.1,
         }}
       >
         {show.name}
+      </div>
+
+      {/* Live Show badge */}
+      <div
+        className="tv1-show-badge"
+        style={{
+          fontSize: '0.55vw',
+          fontWeight: 700,
+          padding: '2px 10px',
+          borderRadius: 20,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          background: 'rgba(168, 85, 247, 0.25)',
+          border: '1px solid rgba(168, 85, 247, 0.4)',
+          color: 'rgba(200, 170, 255, 0.9)',
+          marginBottom: '0.4vw',
+        }}
+      >
+        Live Show
       </div>
 
       {/* Status / Next Show — time is the hero */}
