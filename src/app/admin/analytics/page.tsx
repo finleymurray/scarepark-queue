@@ -466,9 +466,9 @@ export default function AnalyticsPage() {
   }, [filteredStatusLogs, attractions]);
 
   const tooltipStyle = {
-    backgroundColor: '#0a0a0a',
-    border: '1px solid #333',
-    borderRadius: '4px',
+    backgroundColor: '#1E1E1E',
+    border: '1px solid #2a2a2a',
+    borderRadius: '6px',
     color: '#fff',
   };
 
@@ -492,9 +492,8 @@ export default function AnalyticsPage() {
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                     focus:outline-none focus:border-[#6ea8fe] transition-colors
-                     [color-scheme:dark]"
+          style={{ padding: '8px 12px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+          className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
         />
         <div className="flex items-center gap-2">
           <label className="text-[#888] text-sm font-medium">From:</label>
@@ -502,9 +501,8 @@ export default function AnalyticsPage() {
             type="time"
             value={fromTime}
             onChange={(e) => setFromTime(e.target.value)}
-            className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                       focus:outline-none focus:border-[#6ea8fe] transition-colors
-                       [color-scheme:dark]"
+            style={{ padding: '8px 12px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+            className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -513,9 +511,8 @@ export default function AnalyticsPage() {
             type="time"
             value={toTime}
             onChange={(e) => setToTime(e.target.value)}
-            className="px-3 py-2 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                       focus:outline-none focus:border-[#6ea8fe] transition-colors
-                       [color-scheme:dark]"
+            style={{ padding: '8px 12px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+            className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
           />
         </div>
       </div>
@@ -543,7 +540,7 @@ export default function AnalyticsPage() {
                     <h2 className="text-white text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
                     <ResponsiveContainer width="100%" height={500}>
                       <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                         {statusPeriods.map((period, i) => (
                           <ReferenceArea
                             key={`${period.attractionName}-${period.start}-${i}`}
@@ -597,7 +594,7 @@ export default function AnalyticsPage() {
                     </ResponsiveContainer>
 
                     {/* Legend for status bands */}
-                    <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#333]">
+                    <div className="flex items-center gap-6 mt-4 pt-4" style={{ borderTop: '1px solid #2a2a2a' }}>
                       <span className="text-[#888] text-xs font-medium uppercase tracking-wider">Shaded areas:</span>
                       {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
                         <div key={status} className="flex items-center gap-2">
@@ -664,7 +661,7 @@ export default function AnalyticsPage() {
                   {/* Summary stats */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
                     {statusLogSummary.map((s) => (
-                      <div key={s.attractionId} style={{ background: '#0a0a0a', borderRadius: 6, padding: 12 }}>
+                      <div key={s.attractionId} style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 8, padding: 12 }}>
                         <div className="text-white text-sm font-semibold mb-2">{s.name}</div>
                         <div className="text-[#888] text-xs space-y-1">
                           <div>Delays: <span className="text-[#f0ad4e] font-medium">{s.delayCount}</span></div>
@@ -679,7 +676,7 @@ export default function AnalyticsPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-[#333] text-white/50 text-xs uppercase tracking-wider">
+                        <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid #2a2a2a', color: 'rgba(255,255,255,0.5)' }}>
                           <th className="text-left px-3 py-2 font-medium">Time</th>
                           <th className="text-left px-3 py-2 font-medium">Attraction</th>
                           <th className="text-left px-3 py-2 font-medium">Transition</th>
@@ -702,7 +699,7 @@ export default function AnalyticsPage() {
                           const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null;
 
                           return (
-                            <tr key={log.id} className="border-b border-[#222]">
+                            <tr key={log.id} style={{ borderBottom: '1px solid #2a2a2a' }}>
                               <td className="px-3 py-2 text-white/60 tabular-nums text-xs whitespace-nowrap">
                                 {new Date(log.changed_at).toLocaleTimeString('en-GB', {
                                   hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
@@ -744,7 +741,7 @@ export default function AnalyticsPage() {
                   <h2 className="text-white text-lg font-bold mb-4">Guest Throughput — {selectedDate}</h2>
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={throughputChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                       <XAxis
                         dataKey="slot"
                         stroke="#fff"
@@ -786,7 +783,7 @@ export default function AnalyticsPage() {
                   <p className="text-[#888] text-xs mb-4">Lines show average wait time per slot. Bars show guest throughput.</p>
                   <ResponsiveContainer width="100%" height={450}>
                     <ComposedChart data={combinedChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                       <XAxis
                         dataKey="slot"
                         stroke="#fff"
@@ -899,7 +896,7 @@ export default function AnalyticsPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-[#333]">
+                          <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
                             <th className="text-left text-[#888] font-medium py-2 pr-4 whitespace-nowrap">Attraction</th>
                             {allSlots.map((slot) => {
                               const [start, end] = slot.split('|');
@@ -921,7 +918,7 @@ export default function AnalyticsPage() {
                             const slotMap = logLookups.get(id)!;
 
                             return (
-                              <tr key={id} className="border-b border-[#222]">
+                              <tr key={id} style={{ borderBottom: '1px solid #2a2a2a' }}>
                                 <td className="py-2 pr-4 whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: nameColor }} />
@@ -948,7 +945,7 @@ export default function AnalyticsPage() {
                           })}
                         </tbody>
                         <tfoot>
-                          <tr className="border-t border-[#333]">
+                          <tr style={{ borderTop: '1px solid #2a2a2a' }}>
                             <td className="py-3 pr-4">
                               <span className="text-[#888] font-semibold text-sm">Park Total</span>
                             </td>

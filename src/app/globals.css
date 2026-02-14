@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-border: #333333;
+  --color-border: #2a2a2a;
   --color-border-hover: #555555;
   --color-text-secondary: #888888;
   --color-text-muted: #666666;
-  --color-surface: #111111;
+  --color-surface: #1E1E1E;
   --color-surface-hover: #1a1a1a;
   --color-input: #1a1a1a;
   --color-status-open: #22C55E;
@@ -53,9 +53,9 @@ body {
 
 /* Panel / Section styling */
 .panel {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 8px;
+  background: #1E1E1E;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
 }
 
 /* Button styles */

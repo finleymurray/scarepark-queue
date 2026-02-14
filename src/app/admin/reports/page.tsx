@@ -135,7 +135,7 @@ export default function ShowReportsPage() {
         <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 24 }}>Show Reports</h2>
 
         {/* ── Filter Bar ── */}
-        <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+        <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           <label style={{ color: '#ccc', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Date</label>
           <input
             type="date"
@@ -144,7 +144,7 @@ export default function ShowReportsPage() {
             style={{
               padding: '8px 12px',
               background: '#1a1a1a',
-              border: '1px solid #444',
+              border: '1px solid #2a2a2a',
               borderRadius: 6,
               color: '#e0e0e0',
               fontSize: 14,
@@ -169,7 +169,7 @@ export default function ShowReportsPage() {
             </button>
           )}
 
-          <div style={{ width: 1, height: 24, background: '#333', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 24, background: '#2a2a2a', flexShrink: 0 }} />
 
           <label style={{ color: '#ccc', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Attraction</label>
           <select
@@ -180,7 +180,7 @@ export default function ShowReportsPage() {
               minWidth: 140,
               padding: '8px 12px',
               background: '#1a1a1a',
-              border: '1px solid #444',
+              border: '1px solid #2a2a2a',
               borderRadius: 6,
               color: '#e0e0e0',
               fontSize: 14,
@@ -195,7 +195,7 @@ export default function ShowReportsPage() {
         </div>
 
         {/* ── Summary Stats ── */}
-        <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
+        <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
           <div>
             <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Submitted</span>
             <div style={{ color: '#4caf50', fontSize: 24, fontWeight: 700 }}>{submittedCount}</div>
@@ -206,16 +206,22 @@ export default function ShowReportsPage() {
           </div>
           {displayedAttractions.length > 0 && (
             <div style={{ flex: 1, minWidth: 120 }}>
-              <div style={{ width: '100%', height: 8, background: '#222', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${(submittedCount / displayedAttractions.length) * 100}%`,
-                    height: '100%',
-                    background: '#4caf50',
-                    borderRadius: 4,
-                    transition: 'width 0.5s',
-                  }}
-                />
+              <div style={{ position: 'relative', width: '100%', height: 8, background: '#1a1a1a', borderRadius: 4, overflow: 'hidden' }}>
+                {/* Blur/glow layer */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, height: '100%',
+                  width: `${(submittedCount / displayedAttractions.length) * 100}%`,
+                  background: 'linear-gradient(90deg, #8B5CF6, #22C55E)',
+                  borderRadius: 4, filter: 'blur(6px)', opacity: 0.6,
+                  transition: 'width 0.5s',
+                }} />
+                {/* Fill layer */}
+                <div style={{
+                  position: 'relative', height: '100%',
+                  width: `${(submittedCount / displayedAttractions.length) * 100}%`,
+                  background: 'linear-gradient(90deg, #8B5CF6, #22C55E)',
+                  borderRadius: 4, transition: 'width 0.5s',
+                }} />
               </div>
             </div>
           )}
@@ -223,7 +229,7 @@ export default function ShowReportsPage() {
 
         {/* ── Reports ── */}
         {displayedAttractions.length === 0 && (
-          <div style={{ background: '#111', border: '1px solid #333', borderRadius: 8, padding: 40, textAlign: 'center' }}>
+          <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, textAlign: 'center' }}>
             <p style={{ color: '#666', fontSize: 14 }}>No attractions found.</p>
           </div>
         )}
@@ -236,12 +242,12 @@ export default function ShowReportsPage() {
             <fieldset
               key={attraction.id}
               style={{
-                border: `1px solid ${hasReport ? '#333' : '#222'}`,
+                border: '1px solid #2a2a2a',
                 borderRadius: 16,
                 padding: '24px 28px',
                 marginBottom: 20,
-                background: '#111',
-                opacity: hasReport ? 1 : 0.5,
+                background: '#1E1E1E',
+                opacity: hasReport ? 1 : 0.65,
               }}
             >
               <legend style={{ color: '#fff', fontSize: 16, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -379,7 +385,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
       </div>
 
       {/* Metadata */}
-      <div style={{ fontSize: 12, color: '#666', borderTop: '1px solid #222', paddingTop: 12 }}>
+      <div style={{ fontSize: 12, color: '#666', borderTop: '1px solid #2a2a2a', paddingTop: 12 }}>
         Submitted by <span style={{ color: '#aaa' }}>{report.submitted_by_name}</span> ({report.submitted_by_email}) &middot; {formatTimestamp(report.created_at)}
       </div>
     </div>
