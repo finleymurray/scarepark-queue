@@ -59,14 +59,14 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
         display: 'flex',
         alignItems: 'center',
         padding: '0 1%',
-        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.08)',
+        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.15)',
       }}
     >
       {/* Name — white text */}
       <span
         className="tv1-ride-name"
         style={{
-          fontSize: '1.6vw',
+          fontSize: '1.9vw',
           fontWeight: 700,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
@@ -94,7 +94,7 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
           <span
             className="tv1-wait-time"
             style={{
-              fontSize: '2.4vw',
+              fontSize: '2.8vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1,
@@ -106,7 +106,7 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
           <span
             className="tv1-wait-label"
             style={{
-              fontSize: '0.85vw',
+              fontSize: '1vw',
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
@@ -121,7 +121,7 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
           className="tv1-status-pill"
           style={{
             color: statusColour,
-            fontSize: '1.2vw',
+            fontSize: '1.5vw',
             fontWeight: 800,
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
