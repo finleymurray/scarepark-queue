@@ -186,21 +186,20 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         {status === 'OPEN' && (
           <div
             style={{
-              background: 'rgba(0, 0, 0, 0.6)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 14,
-              padding: '6px 0',
-              width: '8vw',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              padding: '4px 16px',
               display: 'flex',
-              flexDirection: 'column' as const,
-              alignItems: 'center',
+              alignItems: 'baseline',
               justifyContent: 'center',
+              gap: 4,
             }}
           >
             <span
               className="tv1-wait-time"
               style={{
-                fontSize: '3.5vw',
+                fontSize: '2.4vw',
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
@@ -213,15 +212,14 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             <span
               className="tv1-wait-label"
               style={{
-                fontSize: '0.8vw',
+                fontSize: '0.75vw',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                color: 'rgba(255,255,255,0.5)',
-                marginTop: 2,
+                letterSpacing: '0.1em',
+                color: 'rgba(255,255,255,0.45)',
               }}
             >
-              Mins
+              min
             </span>
           </div>
         )}
@@ -366,17 +364,32 @@ export default function TVDisplay() {
   const [autoSort, setAutoSort] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
+  // isEmbedded = inside any iframe (TV4 carousel, etc.) — hides header/footer
   const [isEmbedded, setIsEmbedded] = useState(false);
+  // isExternalEmbed = ?embed=true in URL — shows header/footer, scales to fit
+  const [isExternalEmbed, setIsExternalEmbed] = useState(false);
   const [containerScale, setContainerScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsEmbedded(window.self !== window.top);
+    const inIframe = window.self !== window.top;
+    const urlParams = new URLSearchParams(window.location.search);
+    const externalEmbed = urlParams.get('embed') === 'true';
+
+    if (externalEmbed) {
+      // External webpage embed: show header/footer, scale to fit
+      setIsExternalEmbed(true);
+      setIsEmbedded(false);
+    } else if (inIframe) {
+      // TV4 carousel or similar: hide header/footer, no padding
+      setIsEmbedded(true);
+      setIsExternalEmbed(false);
+    }
   }, []);
 
-  // Scale content to fit iframe when embedded
+  // Scale content to fit iframe when externally embedded
   useEffect(() => {
-    if (!isEmbedded) { setContainerScale(1); return; }
+    if (!isExternalEmbed) { setContainerScale(1); return; }
 
     const calculate = () => {
       const scaleX = window.innerWidth / 1920;
@@ -387,7 +400,7 @@ export default function TVDisplay() {
     calculate();
     window.addEventListener('resize', calculate);
     return () => window.removeEventListener('resize', calculate);
-  }, [isEmbedded]);
+  }, [isExternalEmbed]);
 
   // Tick every 30s so show times auto-advance
   useEffect(() => {
@@ -499,17 +512,17 @@ export default function TVDisplay() {
       ref={containerRef}
       className="tv1-root"
       style={{
-        width: isEmbedded ? 1920 : '100%',
-        height: isEmbedded ? 1080 : '100%',
-        transform: isEmbedded ? `scale(${containerScale})` : 'none',
+        width: isExternalEmbed ? 1920 : '100%',
+        height: isExternalEmbed ? 1080 : '100%',
+        transform: isExternalEmbed ? `scale(${containerScale})` : 'none',
         transformOrigin: 'top left',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        paddingLeft: isEmbedded ? '3.5%' : TV_SAFE_PADDING,
-        paddingRight: isEmbedded ? '3.5%' : TV_SAFE_PADDING,
-        paddingTop: isEmbedded ? '2%' : '2%',
-        paddingBottom: isEmbedded ? '2%' : '2%',
+        paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
+        paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
+        paddingTop: isEmbedded ? 0 : '2%',
+        paddingBottom: isEmbedded ? 0 : '2%',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: '#fff',
       }}
@@ -572,10 +585,12 @@ export default function TVDisplay() {
           }
         }
       `}</style>
-      {/* Header */}
-      <header style={headerStyle}>
-        <h1 className="tv1-header-title" style={headerTitleStyle}>Live Times</h1>
-      </header>
+      {/* Header — hidden when inside TV4 carousel */}
+      {!isEmbedded && (
+        <header style={headerStyle}>
+          <h1 className="tv1-header-title" style={headerTitleStyle}>Live Times</h1>
+        </header>
+      )}
 
       {/* Content */}
       <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
@@ -684,8 +699,9 @@ export default function TVDisplay() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer style={footerStyle}>
+      {/* Footer — hidden when inside TV4 carousel */}
+      {!isEmbedded && (
+        <footer style={footerStyle}>
           <span
             className="tv1-footer-label"
             style={{
@@ -711,6 +727,7 @@ export default function TVDisplay() {
             {formatTime12h(closingTime)}
           </span>
         </footer>
+      )}
     </div>
     </div>
   );
