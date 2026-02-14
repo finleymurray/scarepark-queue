@@ -110,8 +110,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         flex: 1,
         minHeight: 0,
         borderRadius: 14,
-        paddingLeft: '3%',
-        paddingRight: '2%',
+        padding: '0 3%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -138,7 +137,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
       </span>
 
       {/* Status */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         {status === 'CLOSED' && (
           <div
             className="tv1-status-pill"
@@ -523,10 +522,10 @@ export default function TVDisplay() {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
-        paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
-        paddingTop: isEmbedded ? 0 : '2%',
-        paddingBottom: isEmbedded ? 0 : '2%',
+        paddingLeft: isEmbedded ? '1%' : TV_SAFE_PADDING,
+        paddingRight: isEmbedded ? '1%' : TV_SAFE_PADDING,
+        paddingTop: isEmbedded ? '0.5%' : '2%',
+        paddingBottom: isEmbedded ? '0.5%' : '2%',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: '#fff',
       }}
