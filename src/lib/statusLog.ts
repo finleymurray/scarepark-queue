@@ -35,7 +35,7 @@ export async function logStatusChange({
   });
 
   if (error) {
-    console.error('Status log error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Status log error:', error);
   }
 }
 
@@ -58,7 +58,7 @@ export async function resolveDelay(attractionId: string): Promise<void> {
     .eq('id', data.id);
 
   if (updateError) {
-    console.error('Resolve delay error:', updateError);
+    if (process.env.NODE_ENV === 'development') console.error('Resolve delay error:', updateError);
   }
 }
 
@@ -76,7 +76,7 @@ export async function getAllStatusLogs(
     .order('changed_at', { ascending: true });
 
   if (error) {
-    console.error('Fetch status logs error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Fetch status logs error:', error);
     return [];
   }
   return data || [];

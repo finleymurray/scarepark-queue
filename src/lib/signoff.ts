@@ -37,7 +37,7 @@ export async function verifyPin(pin: string): Promise<PinVerifyResult | PinVerif
     .eq('pin', pin);
 
   if (error) {
-    console.error('PIN verify error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('PIN verify error:', error);
     return { valid: false, error: 'System error. Try again.' };
   }
 

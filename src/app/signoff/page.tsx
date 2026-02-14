@@ -37,9 +37,12 @@ function PinPadModal({
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
 
   function handleDigit(d: string) {
     if (pin.length >= 4) return;
+    if (lockedUntil && Date.now() < lockedUntil) return;
     setPin((p) => p + d);
     setError('');
   }
@@ -54,12 +57,28 @@ function PinPadModal({
       setError('PIN must be 4 digits.');
       return;
     }
+    // C5: Rate limiting — lock out after 5 failed attempts
+    if (lockedUntil && Date.now() < lockedUntil) {
+      const secondsLeft = Math.ceil((lockedUntil - Date.now()) / 1000);
+      setError(`Too many attempts. Try again in ${secondsLeft}s.`);
+      setPin('');
+      return;
+    }
     setVerifying(true);
     const result = await verifyPin(pin);
     setVerifying(false);
 
     if (!result.valid) {
-      setError(result.error);
+      const attempts = failedAttempts + 1;
+      setFailedAttempts(attempts);
+      if (attempts >= 5) {
+        // Lock for 60 seconds, doubling for each subsequent block
+        const lockDuration = 60000 * Math.pow(2, Math.floor((attempts - 5) / 5));
+        setLockedUntil(Date.now() + lockDuration);
+        setError(`Too many failed attempts. Locked for ${lockDuration / 1000}s.`);
+      } else {
+        setError(result.error);
+      }
       setPin('');
       return;
     }
@@ -72,6 +91,8 @@ function PinPadModal({
 
     setPin('');
     setError('');
+    setFailedAttempts(0);
+    setLockedUntil(null);
     onVerified(result.userName, result.userEmail);
   }
 
@@ -367,7 +388,7 @@ export default function SignoffPage() {
     });
 
     if (error) {
-      console.error('Sign-off error:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Sign-off error:', error);
       setShowPinPad(false);
       setPinSectionId(null);
       return;

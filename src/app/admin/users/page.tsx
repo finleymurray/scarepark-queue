@@ -490,12 +490,18 @@ export default function UsersPage() {
         .from('user_roles')
         .update(payload)
         .eq('id', editing.id);
-      if (error) return error.message;
+      if (error) {
+        if (process.env.NODE_ENV === 'development') console.error('User update error:', error);
+        return 'Failed to update user. Please try again.';
+      }
     } else {
       const { error } = await supabase
         .from('user_roles')
         .insert({ ...payload, created_at: new Date().toISOString() });
-      if (error) return error.message.includes('duplicate') ? 'A user with this email already exists.' : error.message;
+      if (error) {
+        if (process.env.NODE_ENV === 'development') console.error('User create error:', error);
+        return error.message?.includes('duplicate') ? 'A user with this email already exists.' : 'Failed to create user. Please try again.';
+      }
     }
 
     const { data: freshUsers } = await supabase

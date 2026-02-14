@@ -225,19 +225,19 @@ export default function SupervisorDashboard() {
       setDisplayName(auth.displayName || '');
       setUserRole(auth.role);
 
+      // Filter attractions at query level for supervisors (H2 fix)
+      let attractionsQuery = supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true });
+      if (auth.role === 'supervisor' && auth.allowedAttractions && auth.allowedAttractions.length > 0) {
+        attractionsQuery = attractionsQuery.in('id', auth.allowedAttractions);
+      }
+
       const [attractionsRes, settingsRes] = await Promise.all([
-        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        attractionsQuery,
         supabase.from('park_settings').select('key,value'),
       ]);
 
       if (!attractionsRes.error && attractionsRes.data) {
-        if (auth.role === 'supervisor' && auth.allowedAttractions) {
-          const allowed = new Set(auth.allowedAttractions);
-          const filtered = attractionsRes.data.filter((a: Attraction) => allowed.has(a.id));
-          setAttractions(filtered);
-        } else {
-          setAttractions(attractionsRes.data);
-        }
+        setAttractions(attractionsRes.data);
         const firstRide = attractionsRes.data.find((a: Attraction) => a.attraction_type !== 'show');
         if (firstRide) {
           setSelectedId(firstRide.id);
@@ -448,6 +448,10 @@ export default function SupervisorDashboard() {
   // Handle throughput log save
   async function handleLogThroughput(slot: { start: string; end: string }, count: number) {
     if (!selectedId) return;
+    // Validate guest count (M6 fix)
+    const sanitisedCount = Math.max(0, Math.min(99999, Math.round(count)));
+    if (!Number.isFinite(sanitisedCount)) return;
+    count = sanitisedCount;
     const attraction = rides.find((r) => r.id === selectedId);
     const attractionName = attraction?.name || 'Unknown';
     const existing = getLogForSlot(slot);

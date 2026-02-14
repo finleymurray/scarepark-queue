@@ -1061,13 +1061,19 @@ export default function AdminDashboard() {
       return;
     }
 
+    // Validate numeric fields before sending (M6 fix)
+    const sanitised = { ...updates };
+    if ('wait_time' in sanitised && sanitised.wait_time !== undefined) {
+      sanitised.wait_time = Math.max(0, Math.min(180, Math.round(sanitised.wait_time as number)));
+    }
+
     const { error } = await supabase
       .from('attractions')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...sanitised, updated_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {
-      console.error('Error updating attraction:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Error updating attraction:', error);
       return;
     }
 
@@ -1146,7 +1152,7 @@ export default function AdminDashboard() {
       .eq('id', attractionId);
 
     if (error) {
-      console.error('Error updating attraction:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Error updating attraction:', error);
       return;
     }
 
@@ -1177,7 +1183,7 @@ export default function AdminDashboard() {
       .from('park_settings')
       .upsert({ key: 'opening_time', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 
-    if (error) console.error('Error updating opening time:', error);
+    if (error && process.env.NODE_ENV === 'development') console.error('Error updating opening time:', error);
   }, []);
 
   const handleClosingTimeUpdate = useCallback(async (value: string) => {
@@ -1186,7 +1192,7 @@ export default function AdminDashboard() {
       .update({ value, updated_at: new Date().toISOString() })
       .eq('key', 'closing_time');
 
-    if (error) console.error('Error updating closing time:', error);
+    if (error && process.env.NODE_ENV === 'development') console.error('Error updating closing time:', error);
   }, []);
 
   const handleAddAttraction = useCallback(async (name: string, type: AttractionType) => {
@@ -1211,8 +1217,8 @@ export default function AdminDashboard() {
       .single();
 
     if (error) {
-      console.error('Error adding attraction:', error);
-      throw new Error(error.message);
+      if (process.env.NODE_ENV === 'development') console.error('Error adding attraction:', error);
+      throw new Error('Failed to add attraction. Please try again.');
     }
 
     const performer = displayNameRef.current || userEmailRef.current;
@@ -1245,7 +1251,7 @@ export default function AdminDashboard() {
       .delete()
       .eq('id', id);
 
-    if (error) console.error('Error deleting attraction:', error);
+    if (error && process.env.NODE_ENV === 'development') console.error('Error deleting attraction:', error);
     setDeleteTarget(null);
   }, []);
 

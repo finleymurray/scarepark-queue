@@ -284,7 +284,7 @@ export default function LogsPage() {
 
     const { data, error } = await query;
     if (error) {
-      console.error('Error fetching logs:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Error fetching logs:', error);
       return { data: [], hasMore: false };
     }
     return { data: data || [], hasMore: (data?.length || 0) === PAGE_SIZE };

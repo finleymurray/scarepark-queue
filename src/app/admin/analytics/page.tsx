@@ -140,7 +140,7 @@ export default function AnalyticsPage() {
       ]);
 
       if (historyRes.error) {
-        console.error('Error fetching history:', historyRes.error);
+        if (process.env.NODE_ENV === 'development') console.error('Error fetching history:', historyRes.error);
         setHistoryData([]);
       } else {
         setHistoryData(historyRes.data || []);

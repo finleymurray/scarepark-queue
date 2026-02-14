@@ -29,6 +29,6 @@ export async function logAudit({
   });
 
   if (error) {
-    console.error('Audit log error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Audit log error:', error);
   }
 }

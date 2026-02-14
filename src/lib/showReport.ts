@@ -137,8 +137,8 @@ export async function submitShowReport(
     .upsert(report, { onConflict: 'attraction_id,report_date' });
 
   if (error) {
-    console.error('Show report submit error:', error);
-    return { success: false, error: error.message };
+    if (process.env.NODE_ENV === 'development') console.error('Show report submit error:', error);
+    return { success: false, error: 'Failed to submit report. Please try again.' };
   }
 
   // Log audit
@@ -168,7 +168,7 @@ export async function getExistingReport(
     .maybeSingle();
 
   if (error) {
-    console.error('Fetch existing report error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Fetch existing report error:', error);
     return null;
   }
 
