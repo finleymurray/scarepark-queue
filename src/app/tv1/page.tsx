@@ -110,24 +110,28 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         flex: 1,
         minHeight: 0,
         borderRadius: 14,
-        paddingLeft: '4%',
-        paddingRight: '4%',
+        paddingLeft: '3%',
+        paddingRight: '2%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        overflow: 'hidden',
       }}
     >
       {/* Name */}
       <span
         className="tv1-ride-name"
         style={{
-          fontSize: '1.6vw',
+          fontSize: '1.5vw',
           fontWeight: 800,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           color: '#fff',
           textShadow: '0 0 10px rgba(34, 197, 94, 0.3), 0 0 25px rgba(34, 197, 94, 0.1)',
+          flex: 1,
+          minWidth: 0,
+          marginRight: 16,
         }}
       >
         {attraction.name}
@@ -141,12 +145,12 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             style={{
               background: 'rgba(220, 53, 69, 0.18)',
               border: '1px solid rgba(220, 53, 69, 0.35)',
-              borderRadius: 12,
-              padding: '8px 24px',
+              borderRadius: 10,
+              padding: '6px 18px',
               boxShadow: '0 0 10px rgba(220, 53, 69, 0.1)',
             }}
           >
-            <span style={{ color: '#f87171', fontSize: '1.3vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ color: '#f87171', fontSize: '1.1vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Closed
             </span>
           </div>
@@ -157,12 +161,12 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             style={{
               background: 'rgba(240, 173, 78, 0.18)',
               border: '1px solid rgba(240, 173, 78, 0.35)',
-              borderRadius: 12,
-              padding: '8px 24px',
+              borderRadius: 10,
+              padding: '6px 18px',
               boxShadow: '0 0 10px rgba(240, 173, 78, 0.1)',
             }}
           >
-            <span style={{ color: '#f0ad4e', fontSize: '1.3vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ color: '#f0ad4e', fontSize: '1.1vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Technical Delay
             </span>
           </div>
@@ -173,12 +177,12 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             style={{
               background: 'rgba(245, 158, 11, 0.18)',
               border: '1px solid rgba(245, 158, 11, 0.35)',
-              borderRadius: 12,
-              padding: '8px 24px',
+              borderRadius: 10,
+              padding: '6px 18px',
               boxShadow: '0 0 10px rgba(245, 158, 11, 0.1)',
             }}
           >
-            <span style={{ color: '#F59E0B', fontSize: '1.3vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ color: '#F59E0B', fontSize: '1.1vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               At Capacity
             </span>
           </div>
@@ -188,8 +192,8 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             style={{
               background: 'rgba(0, 0, 0, 0.5)',
               border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 12,
-              padding: '4px 16px',
+              borderRadius: 10,
+              padding: '4px 14px',
               display: 'flex',
               alignItems: 'baseline',
               justifyContent: 'center',
@@ -199,7 +203,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             <span
               className="tv1-wait-time"
               style={{
-                fontSize: '2.4vw',
+                fontSize: '2vw',
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
@@ -212,7 +216,7 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             <span
               className="tv1-wait-label"
               style={{
-                fontSize: '0.75vw',
+                fontSize: '0.65vw',
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
