@@ -30,9 +30,9 @@ function formatTime12h(time: string): string {
  */
 
 const VIEWS = [
-  { path: '/tv2.5', duration: 30000 },
-  { path: '/tv3', duration: 15000 },
-  { path: '/tv1', duration: 15000 },
+  { path: '/tv2.5', duration: 30000, title: 'Maze Queue Times' },
+  { path: '/tv3', duration: 15000, title: 'Show Schedule' },
+  { path: '/tv1', duration: 15000, title: 'Mazes & Shows' },
 ];
 
 const TV_SAFE_PADDING = '3.5%';
@@ -128,9 +128,9 @@ export default function TV4Carousel() {
         color: '#fff',
       }}
     >
-      {/* Header */}
+      {/* Header — title updates with each carousel view */}
       <div style={headerStyle}>
-        <h1 style={headerTitleStyle}>Live Times</h1>
+        <h1 style={headerTitleStyle}>{VIEWS[activeIndex].title}</h1>
       </div>
 
       {/* Iframe carousel — instant swap, no fade (too heavy for TV hardware) */}
