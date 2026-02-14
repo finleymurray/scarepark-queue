@@ -457,7 +457,7 @@ export default function TV25Display() {
       {/* Header */}
       {!isEmbedded && (
         <div style={headerStyle}>
-          <h1 style={headerTitleStyle}>Live Times</h1>
+          <h1 style={headerTitleStyle}>Maze Queue Times</h1>
         </div>
       )}
 

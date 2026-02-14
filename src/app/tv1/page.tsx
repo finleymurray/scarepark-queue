@@ -490,7 +490,7 @@ export default function TVDisplay() {
               margin: 0,
             }}
           >
-            Live Wait Times
+            Mazes & Shows
           </h1>
         </header>
       )}
