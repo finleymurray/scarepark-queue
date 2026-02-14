@@ -1,4 +1,4 @@
-const CACHE_NAME = 'immersive-core-v1';
+const CACHE_NAME = 'immersive-core-v2';
 
 // Static assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -67,6 +67,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // HTML pages — network-first with cache fallback
+  // Skip same-origin navigation requests so Next.js client-side routing works cleanly
+  if (request.mode === 'navigate') {
+    return;
+  }
   if (request.destination === 'document' || request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)

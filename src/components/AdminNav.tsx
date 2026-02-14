@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const PRIMARY_TABS = [
@@ -69,7 +70,7 @@ export default function AdminNav({
       {/* Header bar — logo, user info & sign out */}
       <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <a href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+          <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
             <Image
               src="/logo.png"
               alt="Immersive Core"
@@ -79,7 +80,7 @@ export default function AdminNav({
               style={{ width: 36, height: 'auto' }}
             />
             <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Admin</h1>
-          </a>
+          </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
             {userEmail && (
               <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -122,7 +123,7 @@ export default function AdminNav({
           {PRIMARY_TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
-              <a
+              <Link
                 key={tab.href}
                 href={tab.href}
                 style={{
@@ -149,7 +150,7 @@ export default function AdminNav({
                 }}
               >
                 {tab.label}
-              </a>
+              </Link>
             );
           })}
 
@@ -205,7 +206,7 @@ export default function AdminNav({
                 {MORE_TABS.map((tab) => {
                   const active = isActive(tab.href);
                   return (
-                    <a
+                    <Link
                       key={tab.href}
                       href={tab.href}
                       onClick={() => setMoreOpen(false)}
@@ -232,7 +233,7 @@ export default function AdminNav({
                       }}
                     >
                       {tab.label}
-                    </a>
+                    </Link>
                   );
                 })}
               </div>
