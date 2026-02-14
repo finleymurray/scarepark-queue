@@ -33,45 +33,34 @@ function getNextShowTime(showTimes: string[] | null): string | null {
   return null;
 }
 
-/* ── Styles matching TV1/TV2 ── */
+/* ── Clean header/footer — borderline style ── */
 
 const headerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '18px 40px',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.5vw 0',
   textAlign: 'center' as const,
-  marginBottom: 12,
+  marginBottom: '0.8vw',
   flexShrink: 0,
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
 };
 
 const headerTitleStyle: React.CSSProperties = {
-  fontSize: '2.2vw',
+  fontSize: '2.5vw',
   fontWeight: 900,
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
   color: '#fff',
-  textShadow: '0 0 10px rgba(255,255,255,0.15), 0 0 25px rgba(255,255,255,0.08)',
   margin: 0,
 };
 
 const footerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '14px 40px',
-  marginTop: 12,
+  borderTop: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.2vw 0',
+  marginTop: '0.8vw',
   flexShrink: 0,
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'baseline',
   justifyContent: 'center',
-  gap: 16,
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+  gap: '1vw',
 };
 
 const TV_SAFE_PADDING = '3.5%';
@@ -184,48 +173,9 @@ export default function TV3ShowTimes() {
       {/* Header */}
       {!isEmbedded && (
         <div style={headerStyle}>
-          <h1 style={headerTitleStyle}>Live Times</h1>
+          <h1 style={headerTitleStyle}>Show Schedule</h1>
         </div>
       )}
-
-      {/* Section divider */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '4px 8px',
-          marginBottom: 8,
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            height: 1,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
-          }}
-        />
-        <span
-          style={{
-            fontSize: '0.85vw',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            flexShrink: 0,
-            color: 'rgba(255,255,255,0.35)',
-          }}
-        >
-          Shows
-        </span>
-        <div
-          style={{
-            flex: 1,
-            height: 1,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02))',
-          }}
-        />
-      </div>
 
       {/* Show Cards Grid */}
       <main className="flex-1 flex items-center justify-center" style={{ overflow: 'hidden', minHeight: 0 }}>
@@ -249,7 +199,7 @@ export default function TV3ShowTimes() {
               return (
                 <div
                   key={show.id}
-                  className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-purple-500/30 overflow-hidden"
+                  className="relative flex flex-col items-center justify-center rounded-lg overflow-hidden"
                   style={{ padding: '3% 4%', background: bg ? undefined : 'rgba(88, 28, 135, 0.4)', minHeight: 0 }}
                 >
                   {/* Background art */}
@@ -297,7 +247,7 @@ export default function TV3ShowTimes() {
                         <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
                       ) : nextShow ? (
                         <>
-                          <p className="text-white/50 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
+                          <p className="text-white/70 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
                             Next Show
                           </p>
                           <p className="text-white text-[4vw] font-black tabular-nums leading-none">
@@ -321,22 +271,21 @@ export default function TV3ShowTimes() {
         <footer style={footerStyle}>
           <span
             style={{
-              fontSize: '1.4vw',
+              fontSize: '1vw',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: 'rgba(255,255,255,0.45)',
+              letterSpacing: '0.2em',
+              color: 'rgba(255,255,255,0.35)',
             }}
           >
             Park Closes
           </span>
           <span
             style={{
-              fontSize: '1.8vw',
+              fontSize: '2.2vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               color: '#fff',
-              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
             }}
           >
             {formatTime12h(closingTime)}

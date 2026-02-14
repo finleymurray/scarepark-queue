@@ -17,16 +17,11 @@ function formatTime12h(time: string): string {
 /* ── Static styles ── */
 
 const headerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '18px 40px',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.5vw 0',
   textAlign: 'center' as const,
-  marginBottom: 12,
+  marginBottom: '0.8vw',
   flexShrink: 0,
-  boxShadow:
-    '0 4px 12px rgba(0,0,0,0.4)',
 };
 
 const headerTitleStyle: React.CSSProperties = {
@@ -35,24 +30,18 @@ const headerTitleStyle: React.CSSProperties = {
   textTransform: 'uppercase',
   letterSpacing: '0.2em',
   color: '#fff',
-  textShadow: '0 0 10px rgba(255,255,255,0.15), 0 0 25px rgba(255,255,255,0.08)',
   margin: 0,
 };
 
 const footerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '14px 40px',
-  marginTop: 12,
+  borderTop: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.2vw 0',
+  marginTop: '0.8vw',
   flexShrink: 0,
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'baseline',
   justifyContent: 'center',
-  gap: 16,
-  boxShadow:
-    '0 4px 12px rgba(0,0,0,0.4)',
+  gap: '1vw',
 };
 
 const bgImgStyle: React.CSSProperties = {
@@ -75,7 +64,7 @@ const gradientStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
   background:
-    'linear-gradient(to right, transparent 40%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.88) 85%, rgba(0,0,0,0.97) 100%), linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.2) 100%)',
+    'linear-gradient(to right, transparent 35%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.75) 72%, rgba(0,0,0,0.92) 85%, rgba(0,0,0,0.98) 100%), linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.15) 100%)',
   zIndex: 3,
 };
 
@@ -102,41 +91,7 @@ const statusOverlayStyle: React.CSSProperties = {
   paddingLeft: '3%',
 };
 
-/* Pill styles */
-const pillBaseStyle: React.CSSProperties = {
-  background: 'rgba(0, 0, 0, 0.75)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 14,
-  padding: '10px 28px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
-
-const pillOpenStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  padding: '10px 0',
-  width: '8vw',
-};
-
-const pillClosedStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  background: 'rgba(220, 53, 69, 0.2)',
-  border: '1px solid rgba(220, 53, 69, 0.3)',
-};
-
-const pillDelayedStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  background: 'rgba(240, 173, 78, 0.18)',
-  border: '1px solid rgba(240, 173, 78, 0.3)',
-};
-
-const pillCapacityStyle: React.CSSProperties = {
-  ...pillBaseStyle,
-  background: 'rgba(245, 158, 11, 0.18)',
-  border: '1px solid rgba(245, 158, 11, 0.3)',
-};
+/* Status text styles — no pill containers, just coloured text within gradient fade */
 
 /* Fallback when no background art exists */
 const fallbackBgStyle: React.CSSProperties = {
@@ -162,10 +117,9 @@ const BannerRow = React.memo(function BannerRow({
     () => ({
       ...style,
       position: 'relative',
-      borderRadius: '1rem',
+      borderRadius: 0,
       overflow: 'hidden',
       minHeight: 0,
-      border: '1px solid rgba(255,255,255,0.12)',
     }),
     [style],
   );
@@ -189,78 +143,73 @@ const BannerRow = React.memo(function BannerRow({
         <img src={logoSrc} alt={attraction.name} style={logoImgStyle} />
       )}
 
-      {/* Status pill */}
+      {/* Status / wait time — no pill, text sits within the gradient fade */}
       <div style={statusOverlayStyle}>
         {status === 'OPEN' && (
-          <div style={pillOpenStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span
               style={{
-                fontSize: '4.5vw',
+                fontSize: '5.5vw',
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
+                color: '#fff',
               }}
             >
               {attraction.wait_time}
             </span>
             <span
               style={{
-                fontSize: '0.9vw',
+                fontSize: '0.85vw',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                color: 'rgba(255,255,255,0.5)',
-                marginTop: 2,
+                letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.45)',
+                marginTop: 4,
               }}
             >
-              Mins
+              Minutes
             </span>
           </div>
         )}
         {status === 'CLOSED' && (
-          <div style={pillClosedStyle}>
-            <span
-              style={{
-                fontSize: '2vw',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#f87171',
-              }}
-            >
-              Closed
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: '2.2vw',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#f87171',
+            }}
+          >
+            Closed
+          </span>
         )}
         {status === 'DELAYED' && (
-          <div style={pillDelayedStyle}>
-            <span
-              style={{
-                fontSize: '1.6vw',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#f0ad4e',
-              }}
-            >
-              Technical Delay
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: '2vw',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#f0ad4e',
+            }}
+          >
+            Delayed
+          </span>
         )}
         {status === 'AT CAPACITY' && (
-          <div style={pillCapacityStyle}>
-            <span
-              style={{
-                fontSize: '1.6vw',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#F59E0B',
-              }}
-            >
-              At Capacity
-            </span>
-          </div>
+          <span
+            style={{
+              fontSize: '2vw',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#F59E0B',
+            }}
+          >
+            At Capacity
+          </span>
         )}
 
         {/* Fallback: show name if no logo */}
@@ -512,45 +461,6 @@ export default function TV25Display() {
         </div>
       )}
 
-      {/* Section divider */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '4px 8px',
-          marginBottom: 8,
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            height: 1,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.15))',
-          }}
-        />
-        <span
-          style={{
-            fontSize: '0.85vw',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            flexShrink: 0,
-            color: 'rgba(255,255,255,0.35)',
-          }}
-        >
-          Attractions
-        </span>
-        <div
-          style={{
-            flex: 1,
-            height: 1,
-            background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02)',
-          }}
-        />
-      </div>
-
       {/* Scrolling ride banners */}
       <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
         <div
@@ -576,21 +486,21 @@ export default function TV25Display() {
         <div style={footerStyle}>
           <span
             style={{
-              fontSize: '1.4vw',
+              fontSize: '1vw',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: 'rgba(255,255,255,0.45)',
+              letterSpacing: '0.2em',
+              color: 'rgba(255,255,255,0.35)',
             }}
           >
             Park Closes
           </span>
           <span
             style={{
-              fontSize: '1.8vw',
+              fontSize: '2.2vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
-              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+              color: '#fff',
             }}
           >
             {formatTime12h(closingTime)}

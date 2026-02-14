@@ -37,45 +37,34 @@ const VIEWS = [
 
 const TV_SAFE_PADDING = '3.5%';
 
-/* ── Styles matching TV1/TV2/TV3 exactly ── */
+/* ── Clean header/footer — borderline style, no rounded containers ── */
 
 const headerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '18px 40px',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.5vw 0',
   textAlign: 'center' as const,
-  marginBottom: 12,
+  marginBottom: '0.8vw',
   flexShrink: 0,
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
 };
 
 const headerTitleStyle: React.CSSProperties = {
-  fontSize: '2.2vw',
-  fontWeight: 900,
+  fontSize: '1.8vw',
+  fontWeight: 800,
   textTransform: 'uppercase',
-  letterSpacing: '0.2em',
+  letterSpacing: '0.35em',
   color: '#fff',
-  textShadow: '0 0 10px rgba(255,255,255,0.15), 0 0 25px rgba(255,255,255,0.08)',
   margin: 0,
 };
 
 const footerStyle: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '14px 40px',
-  marginTop: 12,
+  borderTop: '1px solid rgba(255,255,255,0.1)',
+  padding: '1.2vw 0',
+  marginTop: '0.8vw',
   flexShrink: 0,
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'baseline',
   justifyContent: 'center',
-  gap: 16,
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+  gap: '1vw',
 };
 
 export default function TV4Carousel() {
@@ -164,22 +153,21 @@ export default function TV4Carousel() {
       <footer style={footerStyle}>
         <span
           style={{
-            fontSize: '1.4vw',
+            fontSize: '1vw',
             fontWeight: 600,
             textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            color: 'rgba(255,255,255,0.45)',
+            letterSpacing: '0.2em',
+            color: 'rgba(255,255,255,0.35)',
           }}
         >
           Park Closes
         </span>
         <span
           style={{
-            fontSize: '1.8vw',
+            fontSize: '2.2vw',
             fontWeight: 900,
             fontVariantNumeric: 'tabular-nums',
             color: '#fff',
-            textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
           }}
         >
           {formatTime12h(closingTime)}
