@@ -95,7 +95,7 @@ function PinPadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm bg-[#111] border border-[#333] rounded-[12px] p-8">
+      <div className="w-full max-w-sm border border-[#333] rounded-[12px] p-8" style={{ background: '#1E1E1E' }}>
         <p className="text-white text-center text-base font-semibold mb-1">Enter Your PIN</p>
         <p className="text-[#888] text-center text-[13px] mb-6">
           Requires: {SIGNOFF_ROLE_LABELS[requiredRole]}
@@ -448,11 +448,11 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden rounded-[12px] border border-[#333] bg-[#111]
+                    className="relative overflow-hidden rounded-[12px] border border-[#333]
                                transition-all duration-200 touch-manipulation
                                hover:border-[#555] active:scale-[0.97]
                                focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)]"
-                    style={{ aspectRatio: '1' }}
+                    style={{ aspectRatio: '1', background: '#1E1E1E' }}
                   >
                     {/* Subtle glow radial gradient */}
                     {glowRgb && (
@@ -544,7 +544,7 @@ export default function SignoffPage() {
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10 bg-[#111]">
+            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10" style={{ background: '#1E1E1E' }}>
               <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
                 <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">1</span>
                 Sign-Off Sections
@@ -604,12 +604,35 @@ export default function SignoffPage() {
                       <span className="text-[12px] font-semibold px-2.5 py-0.5 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">COMPLETE</span>
                     )}
                   </div>
-                  <div className="w-full h-2 bg-[#222] rounded-full overflow-hidden">
+                  <div style={{ position: 'relative', width: '100%', height: 10, background: '#222', borderRadius: 99, overflow: 'visible' }}>
+                    {/* Glow layer */}
                     <div
-                      className="h-full rounded-full transition-all duration-500"
                       style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        height: '100%',
+                        borderRadius: 99,
                         width: `${(completedSections / totalSections) * 100}%`,
-                        background: completedSections === totalSections ? '#4caf50' : 'linear-gradient(90deg, #a855f7 0%, #22C55E 100%)',
+                        background: completedSections === totalSections
+                          ? '#4caf50'
+                          : 'linear-gradient(90deg, #a855f7, #22C55E)',
+                        filter: 'blur(8px)',
+                        opacity: 0.5,
+                        transition: 'width 0.5s ease',
+                      }}
+                    />
+                    {/* Fill layer */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        height: '100%',
+                        borderRadius: 99,
+                        width: `${(completedSections / totalSections) * 100}%`,
+                        background: completedSections === totalSections
+                          ? '#4caf50'
+                          : 'linear-gradient(90deg, #a855f7 0%, #22C55E 100%)',
+                        transition: 'width 0.5s ease',
                       }}
                     />
                   </div>
@@ -734,10 +757,10 @@ export default function SignoffPage() {
                           <button
                             onClick={() => handleSignOffClick(section.id)}
                             disabled={!allChecked && sectionItems.length > 0}
-                            className="w-full mt-6 py-4 text-sm font-semibold rounded-[10px] transition-colors touch-manipulation
+                            className="w-full mt-6 text-base font-semibold rounded-[12px] transition-colors touch-manipulation
                                        flex items-center justify-center gap-2
                                        disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', color: '#fff' }}
+                            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', color: '#fff', minHeight: 56, padding: '16px 24px' }}
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                               <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -760,7 +783,7 @@ export default function SignoffPage() {
             </div>
 
             {/* ── End of Night Report Button ── */}
-            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10 bg-[#111]">
+            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10" style={{ background: '#1E1E1E' }}>
               <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
                 <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">2</span>
                 Show Report

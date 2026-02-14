@@ -22,11 +22,25 @@ const STATUS_COLORS: Record<AttractionStatus, string> = {
   'AT CAPACITY': 'bg-[#F59E0B]',
 };
 
-const STATUS_TEXT_COLORS: Record<AttractionStatus, string> = {
-  'OPEN': 'text-green-400',
-  'CLOSED': 'text-[#dc3545]',
-  'DELAYED': 'text-delay-orange',
-  'AT CAPACITY': 'text-capacity-amber',
+const STATUS_INLINE_COLORS: Record<AttractionStatus, string> = {
+  'OPEN': '#22C55E',
+  'CLOSED': '#dc3545',
+  'DELAYED': '#f0ad4e',
+  'AT CAPACITY': '#F59E0B',
+};
+
+const STATUS_PILL_BG: Record<AttractionStatus, string> = {
+  'OPEN': '#22C55E',
+  'CLOSED': '#dc3545',
+  'DELAYED': '#f0ad4e',
+  'AT CAPACITY': '#F59E0B',
+};
+
+const STATUS_PILL_TEXT: Record<AttractionStatus, string> = {
+  'OPEN': '#000',
+  'CLOSED': '#fff',
+  'DELAYED': '#000',
+  'AT CAPACITY': '#000',
 };
 
 function formatTime12h(time: string): string {
@@ -515,40 +529,74 @@ const RideControl = React.memo(function RideControl({
   }
 
   return (
-    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, position: 'relative' }}>
+    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
       <SaveFeedback show={showSaved} />
 
-      {/* Header: logo + name + status badge */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-          {(() => {
-            const logo = getAttractionLogo(attraction.slug);
-            const glow = getLogoGlow(attraction.slug);
-            return logo ? (
-              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48, filter: glow || undefined }} />
-            ) : null;
-          })()}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <EditableName
-              name={attraction.name}
-              onSave={(newName) => {
-                const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                handleUpdate({ name: newName, slug: newSlug });
-              }}
-            />
-          </div>
+      {/* Reorder buttons — top right corner */}
+      {onMove && (
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
+          <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
-          <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-md whitespace-nowrap`}>
-            {status}
-          </span>
+      )}
+
+      {/* Status select — pill badge style */}
+      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+        <select
+          value={status}
+          onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
+          disabled={saving}
+          style={{
+            appearance: 'none',
+            WebkitAppearance: 'none',
+            MozAppearance: 'none' as never,
+            padding: '6px 30px 6px 14px',
+            fontSize: 12,
+            fontWeight: 800,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.04em',
+            borderRadius: 6,
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'filter 0.15s',
+            background: STATUS_PILL_BG[status] || '#555',
+            color: STATUS_PILL_TEXT[status] || '#fff',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 2l4 4 4-4' fill='${encodeURIComponent(STATUS_PILL_TEXT[status] || '#fff')}' /%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 10px center',
+            backgroundSize: '8px',
+            opacity: saving ? 0.5 : 1,
+            outline: 'none',
+          }}
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Logo + Name — centred */}
+      <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        {(() => {
+          const logo = getAttractionLogo(attraction.slug);
+          const glow = getLogoGlow(attraction.slug);
+          return logo ? (
+            <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 48, height: 48, filter: glow || undefined }} />
+          ) : null;
+        })()}
+        <div style={{ textAlign: 'center' as const }}>
+          <EditableName
+            name={attraction.name}
+            onSave={(newName) => {
+              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              handleUpdate({ name: newName, slug: newSlug });
+            }}
+          />
         </div>
       </div>
 
-      {/* Sign-off badge */}
+      {/* Sign-off badge — centred */}
       {signoffStatus && (
-        <div className="mb-3">
+        <div style={{ marginBottom: 4 }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
             <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
               SIGNED OFF
@@ -565,34 +613,16 @@ const RideControl = React.memo(function RideControl({
         </div>
       )}
 
-      {/* Status select */}
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', color: '#888', fontSize: 12, fontWeight: 500, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>Status</label>
-        <select
-          value={status}
-          onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
-          disabled={saving}
-          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                     focus:outline-none focus:border-[#6ea8fe] transition-colors cursor-pointer
-                     disabled:opacity-50"
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Wait time display */}
-      <div style={{ textAlign: 'center' as const, marginBottom: 16, padding: '16px 0', background: 'transparent', borderRadius: 6 }}>
-        <div style={{ color: '#888', fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 4 }}>Wait Time</div>
-        <div className={`text-6xl font-bold tabular-nums ${STATUS_TEXT_COLORS[status]}`}>
+      <div style={{ textAlign: 'center' as const, marginBottom: 12, padding: '4px 0' }}>
+        <div className="text-6xl font-bold tabular-nums" style={{ color: STATUS_INLINE_COLORS[status] }}>
           {attraction.wait_time}
-          <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)', marginLeft: 4 }}>min</span>
         </div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.35)', textTransform: 'lowercase' as const, letterSpacing: '0.05em' }}>min</div>
       </div>
 
       {/* Quick adjust buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12, width: '100%' }}>
         <button
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
@@ -620,7 +650,7 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Custom time input */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, width: '100%' }}>
         <input
           type="number"
           value={customTime}
@@ -645,7 +675,7 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Remove */}
-      <div style={{ borderTop: '1px solid #222', paddingTop: 12 }}>
+      <div style={{ borderTop: '1px solid #222', paddingTop: 12, width: '100%' }}>
         <button
           onClick={() => onDelete(attraction.id, attraction.name)}
           className="w-full py-2 text-xs text-white/30 hover:text-[#d43518] hover:bg-[#d43518]/10
@@ -711,42 +741,77 @@ const ShowControl = React.memo(function ShowControl({
   }
 
   return (
-    <div style={{ background: 'rgba(88, 28, 135, 0.12)', border: '1px solid rgba(126, 34, 206, 0.3)', borderRadius: 14, padding: 24, position: 'relative' }}>
+    <div style={{ background: 'rgba(88, 28, 135, 0.12)', border: '1px solid rgba(126, 34, 206, 0.3)', borderRadius: 14, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
       <SaveFeedback show={showSaved} />
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-          {(() => {
-            const logo = getAttractionLogo(attraction.slug);
-            const glow = getLogoGlow(attraction.slug);
-            return logo ? (
-              <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain flex-shrink-0" style={{ width: 48, height: 48, filter: glow || undefined }} />
-            ) : null;
-          })()}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <EditableName
-              name={attraction.name}
-              onSave={(newName) => {
-                const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                handleUpdate({ name: newName, slug: newSlug });
-              }}
-            />
-          </div>
+      {/* Reorder buttons — top right corner */}
+      {onMove && (
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
+          <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
-          <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-            SHOW
-          </span>
-          <span className={`${STATUS_COLORS[status]} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
-            {status}
-          </span>
+      )}
+
+      {/* SHOW badge + Status pill — centred */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-md whitespace-nowrap">
+          SHOW
+        </span>
+        <select
+          value={status}
+          onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
+          disabled={saving}
+          style={{
+            appearance: 'none',
+            WebkitAppearance: 'none',
+            MozAppearance: 'none' as never,
+            padding: '6px 30px 6px 14px',
+            fontSize: 12,
+            fontWeight: 800,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.04em',
+            borderRadius: 6,
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'filter 0.15s',
+            background: STATUS_PILL_BG[status] || '#555',
+            color: STATUS_PILL_TEXT[status] || '#fff',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 2l4 4 4-4' fill='${encodeURIComponent(STATUS_PILL_TEXT[status] || '#fff')}' /%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 10px center',
+            backgroundSize: '8px',
+            opacity: saving ? 0.5 : 1,
+            outline: 'none',
+          }}
+        >
+          {SHOW_STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Logo + Name — centred */}
+      <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        {(() => {
+          const logo = getAttractionLogo(attraction.slug);
+          const glow = getLogoGlow(attraction.slug);
+          return logo ? (
+            <img src={logo} alt="" width={48} height={48} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 48, height: 48, filter: glow || undefined }} />
+          ) : null;
+        })()}
+        <div style={{ textAlign: 'center' as const }}>
+          <EditableName
+            name={attraction.name}
+            onSave={(newName) => {
+              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              handleUpdate({ name: newName, slug: newSlug });
+            }}
+          />
         </div>
       </div>
 
-      {/* Sign-off badge */}
+      {/* Sign-off badge — centred */}
       {signoffStatus && (
-        <div className="mb-3">
+        <div style={{ marginBottom: 8 }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
             <span className="inline-block text-[10px] font-semibold px-2 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
               SIGNED OFF
@@ -763,24 +828,8 @@ const ShowControl = React.memo(function ShowControl({
         </div>
       )}
 
-      <div className="mb-4">
-        <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">Status</label>
-        <select
-          value={status}
-          onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
-          disabled={saving}
-          className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                     focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors cursor-pointer
-                     disabled:opacity-50"
-        >
-          {SHOW_STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Show times list */}
-      <div className="mb-3">
+      <div className="mb-3" style={{ width: '100%' }}>
         <label className="block text-[#888] text-xs font-medium mb-2 uppercase tracking-wider">Show Times</label>
         {sortedTimes.length === 0 ? (
           <p className="text-white/30 text-xs italic mb-2">No show times added</p>
@@ -811,7 +860,7 @@ const ShowControl = React.memo(function ShowControl({
       </div>
 
       {/* Add new time */}
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-2 mb-3" style={{ width: '100%' }}>
         <input
           type="time"
           value={newTime}
