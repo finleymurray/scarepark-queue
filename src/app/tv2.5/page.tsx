@@ -193,9 +193,11 @@ const BannerRow = React.memo(function BannerRow({
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               color: '#f0ad4e',
+              textAlign: 'center' as const,
+              lineHeight: 1.2,
             }}
           >
-            Delayed
+            Technical<br />Delay
           </span>
         )}
         {status === 'AT CAPACITY' && (

@@ -46,7 +46,7 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
 
   const statusLabel =
     status === 'CLOSED' ? 'Closed' :
-    status === 'DELAYED' ? 'Delayed' :
+    status === 'DELAYED' ? 'Technical Delay' :
     status === 'AT CAPACITY' ? 'At Capacity' :
     null;
 
@@ -214,7 +214,7 @@ function ShowCard({ show }: { show: Attraction }) {
             textTransform: 'uppercase',
           }}
         >
-          Delayed
+          Technical Delay
         </span>
       ) : nextShow ? (
         <div

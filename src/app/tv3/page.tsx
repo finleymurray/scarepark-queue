@@ -244,7 +244,7 @@ export default function TV3ShowTimes() {
                     {/* "Next Show" label */}
                     <div className="text-center">
                       {show.status === 'DELAYED' ? (
-                        <p className="text-[#f0ad4e] text-[3.5vw] font-bold">Delayed</p>
+                        <p className="text-[#f0ad4e] text-[3.5vw] font-bold" style={{ lineHeight: 1.2, textAlign: 'center' }}>Technical<br />Delay</p>
                       ) : nextShow ? (
                         <>
                           <p className="text-white/70 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
