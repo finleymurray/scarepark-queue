@@ -30,102 +30,48 @@ function getNextShowTime(showTimes: string[] | null): string | null {
     }
   }
 
-  // All shows have passed — return null (no more shows today)
   return null;
 }
 
-/* ── Styles matching approved concept ── */
-
-const headerStyle: React.CSSProperties = {
-  background:
-    'linear-gradient(180deg, rgba(40,40,40,0.95) 0%, rgba(18,18,18,0.98) 100%)',
-  borderTop: '1px solid rgba(255,255,255,0.18)',
-  borderLeft: '1px solid rgba(255,255,255,0.08)',
-  borderRight: '1px solid rgba(255,255,255,0.08)',
-  borderBottom: '1px solid rgba(255,255,255,0.04)',
-  borderRadius: 14,
-  padding: '22px 40px',
-  textAlign: 'center' as const,
-  marginBottom: 12,
-  flexShrink: 0,
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 24px rgba(0,0,0,0.5)',
-};
-
-const headerTitleStyle: React.CSSProperties = {
-  fontSize: '2.2vw',
-  fontWeight: 900,
-  textTransform: 'uppercase',
-  letterSpacing: '0.2em',
-  color: '#fff',
-  textShadow: '0 0 10px rgba(255,255,255,0.15), 0 0 25px rgba(255,255,255,0.08)',
-  margin: 0,
-};
-
-const rideRowStyle: React.CSSProperties = {
-  background: 'linear-gradient(180deg, rgba(34, 197, 94, 0.16) 0%, rgba(34, 197, 94, 0.06) 100%)',
-  borderTop: '1px solid rgba(34, 197, 94, 0.3)',
-  borderRight: '1px solid rgba(34, 197, 94, 0.3)',
-  borderBottom: '1px solid rgba(34, 197, 94, 0.2)',
-  borderLeft: '3px solid rgba(34, 197, 94, 0.7)',
-  boxShadow:
-    'inset 0 1px 0 rgba(34, 197, 94, 0.15), 0 0 12px rgba(34, 197, 94, 0.1), 0 0 25px rgba(34, 197, 94, 0.05)',
-};
-
-const showCardStyle: React.CSSProperties = {
-  background: 'linear-gradient(180deg, rgba(88, 28, 135, 0.45) 0%, rgba(60, 20, 100, 0.25) 100%)',
-  border: '2px solid rgba(168, 85, 247, 0.45)',
-  boxShadow:
-    'inset 0 1px 0 rgba(168, 85, 247, 0.2), 0 0 15px rgba(168, 85, 247, 0.15), 0 0 30px rgba(168, 85, 247, 0.08)',
-};
-
-const footerStyle: React.CSSProperties = {
-  background:
-    'linear-gradient(180deg, rgba(40,40,40,0.95) 0%, rgba(18,18,18,0.98) 100%)',
-  borderTop: '1px solid rgba(255,255,255,0.18)',
-  borderLeft: '1px solid rgba(255,255,255,0.08)',
-  borderRight: '1px solid rgba(255,255,255,0.08)',
-  borderBottom: '1px solid rgba(255,255,255,0.04)',
-  borderRadius: 14,
-  padding: '18px 40px',
-  marginTop: 12,
-  flexShrink: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 20,
-  boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 24px rgba(0,0,0,0.5)',
-};
-
 /* ── Ride Row Component ── */
-function RideRow({ attraction }: { attraction: Attraction }) {
+function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boolean }) {
   const status = attraction.status as AttractionStatus;
+
+  // Colour-coded status text
+  const statusColour =
+    status === 'CLOSED' ? '#ef4444' :
+    status === 'DELAYED' ? '#f0ad4e' :
+    status === 'AT CAPACITY' ? '#F59E0B' :
+    '#22C55E';
+
+  const statusLabel =
+    status === 'CLOSED' ? 'Closed' :
+    status === 'DELAYED' ? 'Delayed' :
+    status === 'AT CAPACITY' ? 'At Capacity' :
+    null;
 
   return (
     <div
       className="tv1-ride-row"
       style={{
-        ...rideRowStyle,
         flex: 1,
         minHeight: 0,
-        borderRadius: 14,
-        padding: '0 2.5% 0 3%',
         display: 'flex',
         alignItems: 'center',
+        padding: '0 1%',
+        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.08)',
       }}
     >
-      {/* Name */}
+      {/* Name — white text */}
       <span
         className="tv1-ride-name"
         style={{
-          fontSize: '1.5vw',
-          fontWeight: 800,
+          fontSize: '1.6vw',
+          fontWeight: 700,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           color: '#fff',
-          textShadow: '0 0 10px rgba(34, 197, 94, 0.3), 0 0 25px rgba(34, 197, 94, 0.1)',
           flex: 1,
           minWidth: 0,
         }}
@@ -133,77 +79,25 @@ function RideRow({ attraction }: { attraction: Attraction }) {
         {attraction.name}
       </span>
 
-      {/* Status — right-aligned, no wrapper pill for wait times */}
-      {status === 'CLOSED' && (
-        <span
-          className="tv1-status-pill"
-          style={{
-            color: '#f87171',
-            fontSize: '1.1vw',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            flexShrink: 0,
-            marginLeft: 12,
-            textShadow: '0 0 8px rgba(220, 53, 69, 0.4)',
-          }}
-        >
-          Closed
-        </span>
-      )}
-      {status === 'DELAYED' && (
-        <span
-          className="tv1-status-pill"
-          style={{
-            color: '#f0ad4e',
-            fontSize: '1.1vw',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            flexShrink: 0,
-            marginLeft: 12,
-            textShadow: '0 0 8px rgba(240, 173, 78, 0.4)',
-          }}
-        >
-          Delayed
-        </span>
-      )}
-      {status === 'AT CAPACITY' && (
-        <span
-          className="tv1-status-pill"
-          style={{
-            color: '#F59E0B',
-            fontSize: '1.1vw',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            flexShrink: 0,
-            marginLeft: 12,
-            textShadow: '0 0 8px rgba(245, 158, 11, 0.4)',
-          }}
-        >
-          At Capacity
-        </span>
-      )}
-      {status === 'OPEN' && (
+      {/* Status / wait time — colour coded, right aligned */}
+      {status === 'OPEN' ? (
         <div
           style={{
             flexShrink: 0,
-            marginLeft: 12,
+            marginLeft: 16,
             display: 'flex',
             alignItems: 'baseline',
-            gap: 4,
+            gap: 6,
           }}
         >
           <span
             className="tv1-wait-time"
             style={{
-              fontSize: '2.2vw',
+              fontSize: '2.4vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1,
-              color: '#fff',
-              textShadow: '0 0 12px rgba(255,255,255,0.2)',
+              color: statusColour,
             }}
           >
             {attraction.wait_time}
@@ -211,16 +105,31 @@ function RideRow({ attraction }: { attraction: Attraction }) {
           <span
             className="tv1-wait-label"
             style={{
-              fontSize: '0.7vw',
-              fontWeight: 700,
+              fontSize: '0.85vw',
+              fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '0.08em',
+              color: 'rgba(255,255,255,0.35)',
             }}
           >
             min
           </span>
         </div>
+      ) : (
+        <span
+          className="tv1-status-pill"
+          style={{
+            color: statusColour,
+            fontSize: '1.2vw',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            flexShrink: 0,
+            marginLeft: 16,
+          }}
+        >
+          {statusLabel}
+        </span>
       )}
     </div>
   );
@@ -235,64 +144,42 @@ function ShowCard({ show }: { show: Attraction }) {
     <div
       className="tv1-show-card"
       style={{
-        ...showCardStyle,
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 12,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 16,
-        padding: '0.6vw 2%',
+        padding: '1.2vw 2%',
         textAlign: 'center',
       }}
     >
-      {/* Show Name */}
+      {/* Show Name — secondary */}
       <div
         className="tv1-show-name"
         style={{
-          fontSize: '1.6vw',
-          fontWeight: 900,
-          marginBottom: '0.15vw',
-          color: '#fff',
-          textShadow: '0 0 12px rgba(168, 85, 247, 0.5), 0 0 30px rgba(168, 85, 247, 0.2)',
+          fontSize: '1.1vw',
+          fontWeight: 700,
+          color: 'rgba(255,255,255,0.6)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          marginBottom: '0.4vw',
           lineHeight: 1.1,
         }}
       >
         {show.name}
       </div>
 
-      {/* Badge */}
-      <div
-        className="tv1-show-badge"
-        style={{
-          fontSize: '0.55vw',
-          fontWeight: 700,
-          padding: '2px 8px',
-          borderRadius: 20,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          background: 'rgba(168, 85, 247, 0.3)',
-          border: '1px solid rgba(168, 85, 247, 0.4)',
-          color: 'rgba(200, 170, 255, 0.9)',
-          textShadow: '0 0 6px rgba(168, 85, 247, 0.5)',
-          marginBottom: '0.3vw',
-        }}
-      >
-        Live Show
-      </div>
-
-      {/* Status / Next Show */}
+      {/* Status / Next Show — time is the hero */}
       {status === 'CLOSED' ? (
         <span
           className="tv1-show-status"
           style={{
-            background: 'rgba(220, 53, 69, 0.15)',
-            border: '1px solid rgba(220, 53, 69, 0.3)',
-            color: '#f87171',
-            fontSize: '1.1vw',
-            fontWeight: 700,
-            padding: '4px 16px',
-            borderRadius: 8,
-            textShadow: '0 0 8px rgba(220, 53, 69, 0.5)',
+            color: '#ef4444',
+            fontSize: '1.6vw',
+            fontWeight: 800,
+            textTransform: 'uppercase',
           }}
         >
           Closed
@@ -302,49 +189,34 @@ function ShowCard({ show }: { show: Attraction }) {
           className="tv1-show-status"
           style={{
             color: '#f0ad4e',
-            fontSize: '1.4vw',
-            fontWeight: 700,
-            textShadow: '0 0 8px rgba(240, 173, 78, 0.5)',
+            fontSize: '1.6vw',
+            fontWeight: 800,
+            textTransform: 'uppercase',
           }}
         >
           Delayed
         </span>
       ) : nextShow ? (
-        <>
-          <div
-            className="tv1-show-next-label"
-            style={{
-              fontSize: '0.8vw',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: 'rgba(255,255,255,0.45)',
-              marginBottom: '0.1vw',
-            }}
-          >
-            Next Show
-          </div>
-          <div
-            className="tv1-show-time"
-            style={{
-              fontSize: '2.4vw',
-              fontWeight: 900,
-              fontVariantNumeric: 'tabular-nums',
-              lineHeight: 1,
-              color: '#fff',
-              textShadow: '0 0 15px rgba(168, 85, 247, 0.5), 0 0 35px rgba(168, 85, 247, 0.2)',
-            }}
-          >
-            {formatTime12h(nextShow)}
-          </div>
-        </>
+        <div
+          className="tv1-show-time"
+          style={{
+            fontSize: '2.8vw',
+            fontWeight: 900,
+            fontVariantNumeric: 'tabular-nums',
+            lineHeight: 1,
+            color: '#fff',
+          }}
+        >
+          {formatTime12h(nextShow)}
+        </div>
       ) : (
         <div
           className="tv1-show-status"
           style={{
-            fontSize: '1.1vw',
+            fontSize: '1.2vw',
             fontWeight: 700,
-            color: 'rgba(255,255,255,0.3)',
+            color: 'rgba(255,255,255,0.25)',
+            textTransform: 'uppercase',
           }}
         >
           No More Shows
@@ -375,11 +247,9 @@ export default function TVDisplay() {
     const externalEmbed = urlParams.get('embed') === 'true';
 
     if (externalEmbed) {
-      // External webpage embed: show header/footer, scale to fit
       setIsExternalEmbed(true);
       setIsEmbedded(false);
     } else if (inIframe) {
-      // TV4 carousel or similar: hide header/footer, no padding
       setIsEmbedded(true);
       setIsExternalEmbed(false);
     }
@@ -549,17 +419,11 @@ export default function TVDisplay() {
           .tv1-root .tv1-status-pill {
             font-size: 2vw !important;
           }
-          .tv1-root .tv1-divider-label {
-            font-size: 1.6vw !important;
+          .tv1-root .tv1-section-label {
+            font-size: 1.8vw !important;
           }
           .tv1-root .tv1-show-name {
-            font-size: 2.8vw !important;
-          }
-          .tv1-root .tv1-show-badge {
-            font-size: 1vw !important;
-          }
-          .tv1-root .tv1-show-next-label {
-            font-size: 1.4vw !important;
+            font-size: 2.2vw !important;
           }
           .tv1-root .tv1-show-time {
             font-size: 4.5vw !important;
@@ -583,110 +447,93 @@ export default function TVDisplay() {
           }
         }
       `}</style>
-      {/* Header — hidden when inside TV4 carousel */}
+
+      {/* ── Header ── full-width bar, no rounded container */}
       {!isEmbedded && (
-        <header style={headerStyle}>
-          <h1 className="tv1-header-title" style={headerTitleStyle}>Live Times</h1>
+        <header
+          style={{
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            padding: '1.5vw 0',
+            textAlign: 'center',
+            marginBottom: '0.8vw',
+            flexShrink: 0,
+          }}
+        >
+          <h1
+            className="tv1-header-title"
+            style={{
+              fontSize: '1.8vw',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.35em',
+              color: '#fff',
+              margin: 0,
+            }}
+          >
+            Live Wait Times
+          </h1>
         </header>
       )}
 
-      {/* Content */}
-      <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
-        {/* Attractions divider */}
+      {/* ── Content ── */}
+      <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6vw', overflow: 'hidden' }}>
+
+        {/* Section label — ATTRACTIONS */}
         <div
           style={{
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '4px 8px',
-            marginTop: 2,
-            marginBottom: 2,
+            padding: '0.3vw 1%',
           }}
         >
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.4))',
-            }}
-          />
           <span
-            className="tv1-divider-label"
+            className="tv1-section-label"
             style={{
-              fontSize: '0.85vw',
+              fontSize: '0.9vw',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              flexShrink: 0,
-              color: 'rgba(34, 197, 94, 0.5)',
+              letterSpacing: '0.25em',
+              color: 'rgba(255,255,255,0.3)',
             }}
           >
             Attractions
           </span>
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.4), rgba(34, 197, 94, 0.05))',
-            }}
-          />
         </div>
 
-        {/* Rides list */}
-        <div className="tv1-rides-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
-          {sortedRides.map((ride) => (
-            <RideRow key={ride.id} attraction={ride} />
+        {/* Rides list — clean table rows with thin separators */}
+        <div className="tv1-rides-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {sortedRides.map((ride, i) => (
+            <RideRow key={ride.id} attraction={ride} isLast={i === sortedRides.length - 1} />
           ))}
         </div>
 
-        {/* Live Shows divider */}
+        {/* Section label — SHOWS */}
         <div
           style={{
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '4px 8px',
-            marginTop: 6,
-            marginBottom: 2,
+            padding: '0.3vw 1%',
+            marginTop: '0.4vw',
           }}
         >
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.05), rgba(168, 85, 247, 0.5))',
-            }}
-          />
           <span
-            className="tv1-divider-label"
+            className="tv1-section-label"
             style={{
-              fontSize: '0.85vw',
+              fontSize: '0.9vw',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              flexShrink: 0,
-              color: 'rgba(168, 85, 247, 0.6)',
+              letterSpacing: '0.25em',
+              color: 'rgba(255,255,255,0.3)',
             }}
           >
             Shows
           </span>
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.5), rgba(168, 85, 247, 0.05))',
-            }}
-          />
         </div>
 
-        {/* Show cards grid */}
+        {/* Show cards grid — clean, flat cards */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${shows.length || 3}, 1fr)`,
-            gap: 10,
+            gap: '0.6vw',
             flex: '0 0 auto',
             minHeight: 0,
           }}
@@ -697,17 +544,28 @@ export default function TVDisplay() {
         </div>
       </div>
 
-      {/* Footer — hidden when inside TV4 carousel */}
+      {/* ── Footer ── full-width bar, no rounded container */}
       {!isEmbedded && (
-        <footer style={footerStyle}>
+        <footer
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            padding: '1.2vw 0',
+            marginTop: '0.8vw',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'center',
+            gap: '1vw',
+          }}
+        >
           <span
             className="tv1-footer-label"
             style={{
-              fontSize: '1.4vw',
+              fontSize: '1vw',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-              color: 'rgba(255,255,255,0.5)',
+              letterSpacing: '0.2em',
+              color: 'rgba(255,255,255,0.35)',
             }}
           >
             Park Closes
@@ -715,11 +573,10 @@ export default function TVDisplay() {
           <span
             className="tv1-footer-time"
             style={{
-              fontSize: '2vw',
+              fontSize: '2.2vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               color: '#fff',
-              textShadow: '0 0 10px rgba(255,255,255,0.25)',
             }}
           >
             {formatTime12h(closingTime)}
