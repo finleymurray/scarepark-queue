@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
@@ -38,15 +38,18 @@ function getNextShowTime(showTimes: string[] | null): string | null {
 
 const headerStyle: React.CSSProperties = {
   background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '18px 40px',
+    'linear-gradient(180deg, rgba(40,40,40,0.95) 0%, rgba(18,18,18,0.98) 100%)',
+  borderTop: '1px solid rgba(255,255,255,0.18)',
+  borderLeft: '1px solid rgba(255,255,255,0.08)',
+  borderRight: '1px solid rgba(255,255,255,0.08)',
+  borderBottom: '1px solid rgba(255,255,255,0.04)',
+  borderRadius: 14,
+  padding: '22px 40px',
   textAlign: 'center' as const,
   marginBottom: 12,
   flexShrink: 0,
   boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+    'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 24px rgba(0,0,0,0.5)',
 };
 
 const headerTitleStyle: React.CSSProperties = {
@@ -60,33 +63,39 @@ const headerTitleStyle: React.CSSProperties = {
 };
 
 const rideRowStyle: React.CSSProperties = {
-  background: 'linear-gradient(180deg, rgba(34, 197, 94, 0.14) 0%, rgba(34, 197, 94, 0.09) 100%)',
-  border: '1px solid rgba(34, 197, 94, 0.35)',
+  background: 'linear-gradient(180deg, rgba(34, 197, 94, 0.16) 0%, rgba(34, 197, 94, 0.06) 100%)',
+  borderTop: '1px solid rgba(34, 197, 94, 0.3)',
+  borderRight: '1px solid rgba(34, 197, 94, 0.3)',
+  borderBottom: '1px solid rgba(34, 197, 94, 0.2)',
+  borderLeft: '3px solid rgba(34, 197, 94, 0.7)',
   boxShadow:
-    'inset 0 1px 0 rgba(34, 197, 94, 0.2), inset 0 -1px 0 rgba(34, 197, 94, 0.05), 0 0 12px rgba(34, 197, 94, 0.15), 0 0 25px rgba(34, 197, 94, 0.08)',
+    'inset 0 1px 0 rgba(34, 197, 94, 0.15), 0 0 12px rgba(34, 197, 94, 0.1), 0 0 25px rgba(34, 197, 94, 0.05)',
 };
 
 const showCardStyle: React.CSSProperties = {
-  background: 'linear-gradient(180deg, rgba(88, 28, 135, 0.4) 0%, rgba(88, 28, 135, 0.22) 100%)',
-  border: '1px solid rgba(168, 85, 247, 0.4)',
+  background: 'linear-gradient(180deg, rgba(88, 28, 135, 0.45) 0%, rgba(60, 20, 100, 0.25) 100%)',
+  border: '2px solid rgba(168, 85, 247, 0.45)',
   boxShadow:
-    'inset 0 1px 0 rgba(168, 85, 247, 0.25), inset 0 -1px 0 rgba(168, 85, 247, 0.05), 0 0 15px rgba(168, 85, 247, 0.2), 0 0 30px rgba(168, 85, 247, 0.1), 0 0 60px rgba(168, 85, 247, 0.05)',
+    'inset 0 1px 0 rgba(168, 85, 247, 0.2), 0 0 15px rgba(168, 85, 247, 0.15), 0 0 30px rgba(168, 85, 247, 0.08)',
 };
 
 const footerStyle: React.CSSProperties = {
   background:
-    'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%), linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.95) 100%)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 12,
-  padding: '14px 40px',
+    'linear-gradient(180deg, rgba(40,40,40,0.95) 0%, rgba(18,18,18,0.98) 100%)',
+  borderTop: '1px solid rgba(255,255,255,0.18)',
+  borderLeft: '1px solid rgba(255,255,255,0.08)',
+  borderRight: '1px solid rgba(255,255,255,0.08)',
+  borderBottom: '1px solid rgba(255,255,255,0.04)',
+  borderRadius: 14,
+  padding: '18px 40px',
   marginTop: 12,
   flexShrink: 0,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  gap: 16,
+  gap: 20,
   boxShadow:
-    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.02), 0 0 15px rgba(255,255,255,0.03), 0 0 30px rgba(255,255,255,0.015), 0 4px 12px rgba(0,0,0,0.4)',
+    'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.02), 0 8px 24px rgba(0,0,0,0.5)',
 };
 
 /* ── Ride Row Component ── */
@@ -127,69 +136,76 @@ function RideRow({ attraction }: { attraction: Attraction }) {
       {/* Status */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
         {status === 'CLOSED' && (
-          <span
+          <div
             className="tv1-status-pill"
             style={{
-              background: 'rgba(220, 53, 69, 0.15)',
-              border: '1px solid rgba(220, 53, 69, 0.3)',
-              color: '#f87171',
-              fontSize: '1.1vw',
-              fontWeight: 700,
-              padding: '4px 16px',
-              borderRadius: 8,
-              textShadow: '0 0 8px rgba(220, 53, 69, 0.5)',
-              boxShadow: '0 0 8px rgba(220, 53, 69, 0.1), 0 0 20px rgba(220, 53, 69, 0.05)',
+              background: 'rgba(220, 53, 69, 0.18)',
+              border: '1px solid rgba(220, 53, 69, 0.35)',
+              borderRadius: 12,
+              padding: '8px 24px',
+              boxShadow: '0 0 10px rgba(220, 53, 69, 0.1)',
             }}
           >
-            Closed
-          </span>
+            <span style={{ color: '#f87171', fontSize: '1.3vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Closed
+            </span>
+          </div>
         )}
         {status === 'DELAYED' && (
-          <span
+          <div
             className="tv1-status-pill"
             style={{
-              background: 'rgba(240, 173, 78, 0.15)',
-              border: '1px solid rgba(240, 173, 78, 0.3)',
-              color: '#f0ad4e',
-              fontSize: '1.1vw',
-              fontWeight: 700,
-              padding: '4px 16px',
-              borderRadius: 8,
-              textShadow: '0 0 8px rgba(240, 173, 78, 0.5)',
-              boxShadow: '0 0 8px rgba(240, 173, 78, 0.1), 0 0 20px rgba(240, 173, 78, 0.05)',
+              background: 'rgba(240, 173, 78, 0.18)',
+              border: '1px solid rgba(240, 173, 78, 0.35)',
+              borderRadius: 12,
+              padding: '8px 24px',
+              boxShadow: '0 0 10px rgba(240, 173, 78, 0.1)',
             }}
           >
-            Technical Delay
-          </span>
+            <span style={{ color: '#f0ad4e', fontSize: '1.3vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Technical Delay
+            </span>
+          </div>
         )}
         {status === 'AT CAPACITY' && (
-          <span
+          <div
             className="tv1-status-pill"
             style={{
-              background: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              color: '#F59E0B',
-              fontSize: '1.1vw',
-              fontWeight: 700,
-              padding: '4px 16px',
-              borderRadius: 8,
-              textShadow: '0 0 8px rgba(245, 158, 11, 0.5)',
-              boxShadow: '0 0 8px rgba(245, 158, 11, 0.1), 0 0 20px rgba(245, 158, 11, 0.05)',
+              background: 'rgba(245, 158, 11, 0.18)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: 12,
+              padding: '8px 24px',
+              boxShadow: '0 0 10px rgba(245, 158, 11, 0.1)',
             }}
           >
-            At Capacity
-          </span>
+            <span style={{ color: '#F59E0B', fontSize: '1.3vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              At Capacity
+            </span>
+          </div>
         )}
         {status === 'OPEN' && (
-          <>
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.6)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 14,
+              padding: '6px 0',
+              width: '8vw',
+              display: 'flex',
+              flexDirection: 'column' as const,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <span
               className="tv1-wait-time"
               style={{
-                fontSize: '2.2vw',
+                fontSize: '3.5vw',
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
+                lineHeight: 1,
                 color: '#fff',
-                textShadow: '0 0 12px rgba(255,255,255,0.2), 0 0 30px rgba(255,255,255,0.08)',
+                textShadow: '0 0 12px rgba(255,255,255,0.2)',
               }}
             >
               {attraction.wait_time}
@@ -197,16 +213,17 @@ function RideRow({ attraction }: { attraction: Attraction }) {
             <span
               className="tv1-wait-label"
               style={{
-                fontSize: '0.9vw',
-                fontWeight: 600,
+                fontSize: '0.8vw',
+                fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: 'rgba(255,255,255,0.45)',
+                letterSpacing: '0.15em',
+                color: 'rgba(255,255,255,0.5)',
+                marginTop: 2,
               }}
             >
               Mins
             </span>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -350,10 +367,27 @@ export default function TVDisplay() {
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [isEmbedded, setIsEmbedded] = useState(false);
+  const [containerScale, setContainerScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top);
   }, []);
+
+  // Scale content to fit iframe when embedded
+  useEffect(() => {
+    if (!isEmbedded) { setContainerScale(1); return; }
+
+    const calculate = () => {
+      const scaleX = window.innerWidth / 1920;
+      const scaleY = window.innerHeight / 1080;
+      setContainerScale(Math.min(scaleX, scaleY));
+    };
+
+    calculate();
+    window.addEventListener('resize', calculate);
+    return () => window.removeEventListener('resize', calculate);
+  }, [isEmbedded]);
 
   // Tick every 30s so show times auto-advance
   useEffect(() => {
@@ -454,17 +488,28 @@ export default function TVDisplay() {
 
   return (
     <div
-      className="tv1-root"
       style={{
+        width: '100vw',
         height: '100vh',
         background: '#000',
+        overflow: 'hidden',
+      }}
+    >
+    <div
+      ref={containerRef}
+      className="tv1-root"
+      style={{
+        width: isEmbedded ? 1920 : '100%',
+        height: isEmbedded ? 1080 : '100%',
+        transform: isEmbedded ? `scale(${containerScale})` : 'none',
+        transformOrigin: 'top left',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
-        paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
-        paddingTop: isEmbedded ? 0 : '2%',
-        paddingBottom: isEmbedded ? 0 : '2%',
+        paddingLeft: isEmbedded ? '3.5%' : TV_SAFE_PADDING,
+        paddingRight: isEmbedded ? '3.5%' : TV_SAFE_PADDING,
+        paddingTop: isEmbedded ? '2%' : '2%',
+        paddingBottom: isEmbedded ? '2%' : '2%',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: '#fff',
       }}
@@ -528,11 +573,9 @@ export default function TVDisplay() {
         }
       `}</style>
       {/* Header */}
-      {!isEmbedded && (
-        <header style={headerStyle}>
-          <h1 className="tv1-header-title" style={headerTitleStyle}>Live Times</h1>
-        </header>
-      )}
+      <header style={headerStyle}>
+        <h1 className="tv1-header-title" style={headerTitleStyle}>Live Times</h1>
+      </header>
 
       {/* Content */}
       <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
@@ -642,8 +685,7 @@ export default function TVDisplay() {
       </div>
 
       {/* Footer */}
-      {!isEmbedded && (
-        <footer style={footerStyle}>
+      <footer style={footerStyle}>
           <span
             className="tv1-footer-label"
             style={{
@@ -651,7 +693,7 @@ export default function TVDisplay() {
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.15em',
-              color: 'rgba(255,255,255,0.45)',
+              color: 'rgba(255,255,255,0.5)',
             }}
           >
             Park Closes
@@ -659,17 +701,17 @@ export default function TVDisplay() {
           <span
             className="tv1-footer-time"
             style={{
-              fontSize: '1.8vw',
+              fontSize: '2vw',
               fontWeight: 900,
               fontVariantNumeric: 'tabular-nums',
               color: '#fff',
-              textShadow: '0 0 10px rgba(255,255,255,0.2), 0 0 25px rgba(255,255,255,0.08)',
+              textShadow: '0 0 10px rgba(255,255,255,0.25)',
             }}
           >
             {formatTime12h(closingTime)}
           </span>
         </footer>
-      )}
+    </div>
     </div>
   );
 }
