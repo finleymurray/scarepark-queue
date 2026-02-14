@@ -89,6 +89,7 @@ export default function AdminNav({
             )}
             <button
               onClick={onLogout}
+              className="admin-nav-signout"
               style={{
                 background: 'none',
                 border: '1px solid #555',
@@ -97,15 +98,6 @@ export default function AdminNav({
                 borderRadius: 4,
                 cursor: 'pointer',
                 fontSize: 12,
-                transition: 'border-color 0.15s, color 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#888';
-                e.currentTarget.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#555';
-                e.currentTarget.style.color = '#aaa';
               }}
             >
               Sign out
@@ -126,27 +118,13 @@ export default function AdminNav({
               <Link
                 key={tab.href}
                 href={tab.href}
+                className={`admin-nav-tab ${active ? 'admin-nav-tab-active' : ''}`}
                 style={{
-                  color: active ? '#fff' : '#aaa',
                   textDecoration: 'none',
                   fontSize: 14,
                   padding: '6px 12px',
                   borderRadius: 6,
-                  background: active ? '#222' : 'transparent',
-                  transition: 'background 0.2s, color 0.2s',
                   flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = '#222';
-                    e.currentTarget.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#aaa';
-                  }
                 }}
               >
                 {tab.label}
@@ -158,9 +136,8 @@ export default function AdminNav({
           <div ref={moreRef} style={{ position: 'relative', flexShrink: 0 }}>
             <button
               onClick={() => setMoreOpen((v) => !v)}
+              className={`admin-nav-tab ${moreIsActive || moreOpen ? 'admin-nav-tab-active' : ''}`}
               style={{
-                color: moreIsActive ? '#fff' : '#aaa',
-                background: moreIsActive || moreOpen ? '#222' : 'transparent',
                 border: 'none',
                 fontSize: 14,
                 padding: '6px 12px',
@@ -169,19 +146,6 @@ export default function AdminNav({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                transition: 'background 0.2s, color 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                if (!moreIsActive && !moreOpen) {
-                  e.currentTarget.style.background = '#222';
-                  e.currentTarget.style.color = '#fff';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!moreIsActive && !moreOpen) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#aaa';
-                }
               }}
             >
               {activeMoreLabel || 'More'}
@@ -210,26 +174,12 @@ export default function AdminNav({
                       key={tab.href}
                       href={tab.href}
                       onClick={() => setMoreOpen(false)}
+                      className={`admin-nav-dropdown ${active ? 'admin-nav-dropdown-active' : ''}`}
                       style={{
                         display: 'block',
                         padding: '8px 16px',
-                        color: active ? '#fff' : '#aaa',
-                        background: active ? '#222' : 'transparent',
                         textDecoration: 'none',
                         fontSize: 14,
-                        transition: 'background 0.15s, color 0.15s',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) {
-                          e.currentTarget.style.background = '#222';
-                          e.currentTarget.style.color = '#fff';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = '#aaa';
-                        }
                       }}
                     >
                       {tab.label}
@@ -251,26 +201,16 @@ export default function AdminNav({
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="admin-nav-tab"
                   style={{
-                    color: '#aaa',
                     textDecoration: 'none',
                     fontSize: 14,
                     padding: '6px 12px',
                     borderRadius: 6,
-                    background: 'transparent',
-                    transition: 'background 0.2s, color 0.2s',
                     flexShrink: 0,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 5,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#222';
-                    e.currentTarget.style.color = '#fff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#aaa';
                   }}
                 >
                   {link.label}

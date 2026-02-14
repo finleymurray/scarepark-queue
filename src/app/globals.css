@@ -66,6 +66,45 @@ body {
   transform: scale(0.95);
 }
 
+/* Admin nav tabs */
+.admin-nav-tab {
+  color: #aaa;
+  background: transparent;
+  transition: background 0.2s, color 0.2s;
+}
+.admin-nav-tab:hover {
+  color: #fff;
+  background: #222;
+}
+.admin-nav-tab-active {
+  color: #fff !important;
+  background: #222 !important;
+}
+
+/* Admin nav dropdown items */
+.admin-nav-dropdown {
+  color: #aaa;
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.admin-nav-dropdown:hover {
+  color: #fff;
+  background: #222;
+}
+.admin-nav-dropdown-active {
+  color: #fff !important;
+  background: #222 !important;
+}
+
+/* Admin nav sign out */
+.admin-nav-signout {
+  transition: border-color 0.15s, color 0.15s;
+}
+.admin-nav-signout:hover {
+  border-color: #888 !important;
+  color: #fff !important;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
