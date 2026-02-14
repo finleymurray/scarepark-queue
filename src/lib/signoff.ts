@@ -34,22 +34,20 @@ export async function verifyPin(pin: string): Promise<PinVerifyResult | PinVerif
   const { data, error } = await supabase
     .from('signoff_pins')
     .select('signoff_roles, user_roles!inner(display_name, email)')
-    .eq('pin', pin);
+    .eq('pin', pin)
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     if (process.env.NODE_ENV === 'development') console.error('PIN verify error:', error);
     return { valid: false, error: 'System error. Try again.' };
   }
 
-  if (!data || data.length === 0) {
+  if (!data) {
     return { valid: false, error: 'Invalid PIN.' };
   }
 
-  if (data.length > 1) {
-    return { valid: false, error: 'Duplicate PIN detected. Contact an admin.' };
-  }
-
-  const row = data[0] as unknown as { signoff_roles: SignoffRoleKey[]; user_roles: { display_name: string | null; email: string } };
+  const row = data as unknown as { signoff_roles: SignoffRoleKey[]; user_roles: { display_name: string | null; email: string } };
   const userRoles = row.user_roles;
   const isPinOnly = userRoles.email.endsWith('@signoff.local');
 
