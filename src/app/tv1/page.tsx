@@ -146,8 +146,8 @@ function ShowCard({ show }: { show: Attraction }) {
     <div
       className="tv1-show-card"
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'linear-gradient(180deg, rgba(88, 28, 135, 0.5) 0%, rgba(50, 15, 90, 0.35) 100%)',
+        border: '1px solid rgba(168, 85, 247, 0.4)',
         borderRadius: 12,
         display: 'flex',
         flexDirection: 'column',
@@ -157,15 +157,14 @@ function ShowCard({ show }: { show: Attraction }) {
         textAlign: 'center',
       }}
     >
-      {/* Show Name — secondary */}
+      {/* Show Name */}
       <div
         className="tv1-show-name"
         style={{
-          fontSize: '1.1vw',
-          fontWeight: 700,
-          color: 'rgba(255,255,255,0.6)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          fontSize: '1.3vw',
+          fontWeight: 800,
+          color: '#fff',
+          letterSpacing: '0.04em',
           marginBottom: '0.2vw',
           lineHeight: 1.1,
         }}
@@ -499,40 +498,56 @@ export default function TVDisplay() {
       {/* ── Content ── */}
       <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6vw', overflow: 'hidden' }}>
 
-        {/* Section label — ATTRACTIONS */}
+        {/* Centred attractions table */}
         <div
+          className="tv1-attractions-table"
           style={{
-            flexShrink: 0,
-            padding: '0.3vw 1%',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            width: '60%',
+            maxWidth: 900,
+            margin: '0 auto',
           }}
         >
-          <span
-            className="tv1-section-label"
+          {/* Section label — ATTRACTIONS */}
+          <div
             style={{
-              fontSize: '0.9vw',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.25em',
-              color: 'rgba(255,255,255,0.3)',
+              flexShrink: 0,
+              padding: '0.3vw 0',
+              textAlign: 'center',
             }}
           >
-            Attractions
-          </span>
-        </div>
+            <span
+              className="tv1-section-label"
+              style={{
+                fontSize: '0.9vw',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.25em',
+                color: 'rgba(255,255,255,0.3)',
+              }}
+            >
+              Attractions
+            </span>
+          </div>
 
-        {/* Rides list — clean table rows with thin separators */}
-        <div className="tv1-rides-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {sortedRides.map((ride, i) => (
-            <RideRow key={ride.id} attraction={ride} isLast={i === sortedRides.length - 1} />
-          ))}
+          {/* Rides list — clean table rows with thin separators */}
+          <div className="tv1-rides-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {sortedRides.map((ride, i) => (
+              <RideRow key={ride.id} attraction={ride} isLast={i === sortedRides.length - 1} />
+            ))}
+          </div>
         </div>
 
         {/* Section label — SHOWS */}
         <div
           style={{
             flexShrink: 0,
-            padding: '0.3vw 1%',
+            padding: '0.3vw 0',
             marginTop: '0.4vw',
+            textAlign: 'center',
           }}
         >
           <span
@@ -549,7 +564,7 @@ export default function TVDisplay() {
           </span>
         </div>
 
-        {/* Show cards grid — clean, flat cards */}
+        {/* Show cards grid */}
         <div
           style={{
             display: 'grid',
