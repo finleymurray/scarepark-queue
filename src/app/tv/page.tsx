@@ -33,6 +33,11 @@ const TV_SCREENS = [
     name: 'TV4',
     description: 'Auto-carousel of all TV views',
   },
+  {
+    path: '/tv5',
+    name: 'TV5',
+    description: 'Glitch logo montage',
+  },
 ];
 
 export default function TVHub() {
