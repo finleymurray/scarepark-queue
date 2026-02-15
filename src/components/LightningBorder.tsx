@@ -38,7 +38,8 @@ function generateBranch(startX: number, startY: number, length: number, angle: n
  * Animated Tesla coil / lightning bolt border.
  *
  * Two modes:
- * 1. IDLE HUM — subtle, thin, nearly-still glowing line. Gentle shimmer.
+ * 1. IDLE BUZZ — active, jittery, buzzing line with micro-branches and sparks.
+ *    Regenerates frequently for a restless electric hum.
  * 2. CRACK — every 5–10s a violent bolt shoots across with branches & sparks,
  *    then fades back to idle over ~500ms.
  */
@@ -70,19 +71,37 @@ export default function LightningBorder() {
     };
   }, [scheduleCrack]);
 
-  // Gentle idle bolt — regenerate slowly for subtle shimmer
+  // Buzzy idle bolt — regenerate frequently for jittery feel
   const [idleKey, setIdleKey] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => setIdleKey((k) => k + 1), 4000);
+    const interval = setInterval(() => setIdleKey((k) => k + 1), 1800);
     return () => clearInterval(interval);
   }, []);
 
-  // Idle SVG data — very low jitter, single thin bolt
+  // Idle SVG data — two buzzy bolts with micro-branches and sparks
   const idleSvg = useMemo(() => {
     const w = 1000;
     const cy = 5;
-    const bolt = generateBolt(w, cy, 100, 1.2);
-    return { bolt };
+    const bolt1 = generateBolt(w, cy, 80, 2.2);
+    const bolt2 = generateBolt(w, cy, 60, 1.8);
+
+    // Micro-branches — small forks that flicker
+    const branches: { d: string; cls: string }[] = [];
+    for (let i = 0; i < 4; i++) {
+      const bx = 100 + Math.random() * 800;
+      const by = cy + (Math.random() - 0.5) * 2;
+      const angle = (Math.random() > 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.6);
+      const len = 4 + Math.random() * 8;
+      branches.push({ d: generateBranch(bx, by, len, angle), cls: `b${(i % 4) + 1}` });
+    }
+
+    // Small sparks
+    const sparks: { cx: number; cy: number }[] = [];
+    for (let i = 0; i < 3; i++) {
+      sparks.push({ cx: 100 + Math.random() * 800, cy: cy + (Math.random() - 0.5) * 2 });
+    }
+
+    return { bolt1, bolt2, branches, sparks };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idleKey]);
 
@@ -124,7 +143,7 @@ export default function LightningBorder() {
         overflow: 'visible',
       }}
     >
-      {/* ── IDLE HUM ── subtle glowing line that shimmers */}
+      {/* ── IDLE BUZZ ── active, jittery electric hum */}
       <svg
         viewBox="0 0 1000 10"
         preserveAspectRatio="none"
@@ -140,22 +159,48 @@ export default function LightningBorder() {
         }}
       >
         <style>{`
-          .lb-idle-amb { fill:none; stroke:#7c3aed; stroke-width:8; stroke-linecap:round; opacity:0.08; filter:url(#lb-blur5); }
-          .lb-idle-glow { fill:none; stroke-width:3; stroke-linecap:round; opacity:0.2; filter:url(#lb-blur2); animation:lb-idle-glow 3s ease-in-out infinite; }
-          .lb-idle-core { fill:none; stroke-width:0.8; stroke-linecap:round; stroke-linejoin:bevel; animation:lb-idle-core 3s ease-in-out infinite; }
-          .lb-idle-hot { fill:none; stroke-width:0.3; stroke:#fff; stroke-linecap:round; opacity:0.4; animation:lb-idle-hot 2s ease-in-out infinite; }
-          @keyframes lb-idle-core { 0%{stroke:#8B5CF6;opacity:0.5}25%{stroke:#a78bfa;opacity:0.65}50%{stroke:#818cf8;opacity:0.5}75%{stroke:#c084fc;opacity:0.6}100%{stroke:#8B5CF6;opacity:0.5} }
-          @keyframes lb-idle-glow { 0%{stroke:#7c3aed;opacity:0.15}25%{stroke:#8B5CF6;opacity:0.25}50%{stroke:#818cf8;opacity:0.18}75%{stroke:#a78bfa;opacity:0.22}100%{stroke:#7c3aed;opacity:0.15} }
-          @keyframes lb-idle-hot { 0%,100%{opacity:0.3}50%{opacity:0.5} }
+          .lb-idle-amb { fill:none; stroke:#7c3aed; stroke-width:8; stroke-linecap:round; opacity:0.12; filter:url(#lb-blur5); animation:lb-idle-amb 1.5s ease-in-out infinite; }
+          .lb-idle-glow { fill:none; stroke-width:3.5; stroke-linecap:round; filter:url(#lb-blur2); animation:lb-idle-glow 1.5s ease-in-out infinite; }
+          .lb-idle-core { fill:none; stroke-width:1.1; stroke-linecap:round; stroke-linejoin:bevel; animation:lb-idle-core 1.5s ease-in-out infinite; }
+          .lb-idle-hot { fill:none; stroke-width:0.4; stroke:#fff; stroke-linecap:round; animation:lb-idle-hot 0.8s ease-in-out infinite; }
+          .lb-idle-s2 .lb-idle-core,.lb-idle-s2 .lb-idle-glow,.lb-idle-s2 .lb-idle-amb { animation-delay:0.4s; }
+          .lb-idle-br { fill:none; stroke-width:0.6; stroke-linecap:round; stroke-linejoin:bevel; opacity:0; animation:lb-idle-bf 1.8s ease-in-out infinite; }
+          .lb-idle-brg { fill:none; stroke-width:2; stroke-linecap:round; filter:url(#lb-blur1); opacity:0; animation:lb-idle-bfg 1.8s ease-in-out infinite; }
+          .lb-idle-b1 { animation-delay:0s; } .lb-idle-b2 { animation-delay:0.5s; } .lb-idle-b3 { animation-delay:1.1s; } .lb-idle-b4 { animation-delay:0.3s; }
+          @keyframes lb-idle-core { 0%{stroke:#8B5CF6;opacity:0.7}15%{stroke:#c4b5fd;opacity:0.85}30%{stroke:#818cf8;opacity:0.7}50%{stroke:#a78bfa;opacity:0.8}70%{stroke:#c084fc;opacity:0.75}85%{stroke:#e0e7ff;opacity:0.9}100%{stroke:#8B5CF6;opacity:0.7} }
+          @keyframes lb-idle-glow { 0%{stroke:#7c3aed;opacity:0.25}20%{stroke:#8B5CF6;opacity:0.4}40%{stroke:#818cf8;opacity:0.3}60%{stroke:#a78bfa;opacity:0.38}80%{stroke:#c084fc;opacity:0.32}100%{stroke:#7c3aed;opacity:0.25} }
+          @keyframes lb-idle-amb { 0%{stroke:#7c3aed;opacity:0.1}30%{stroke:#8B5CF6;opacity:0.18}60%{stroke:#818cf8;opacity:0.14}100%{stroke:#7c3aed;opacity:0.1} }
+          @keyframes lb-idle-hot { 0%,100%{opacity:0.35}20%{opacity:0.7}40%{opacity:0.3}60%{opacity:0.65}80%{opacity:0.4} }
+          @keyframes lb-idle-bf { 0%,100%{opacity:0;stroke:#8B5CF6}5%{opacity:0.8;stroke:#e0e7ff}10%{opacity:0.1;stroke:#a78bfa}15%{opacity:0.6;stroke:#c4b5fd}22%{opacity:0;stroke:#8B5CF6} }
+          @keyframes lb-idle-bfg { 0%,100%{opacity:0;stroke:#7c3aed}5%{opacity:0.4;stroke:#c4b5fd}10%{opacity:0.05;stroke:#8B5CF6}15%{opacity:0.3;stroke:#a78bfa}22%{opacity:0;stroke:#7c3aed} }
         `}</style>
         <defs>
+          <filter id="lb-blur1"><feGaussianBlur stdDeviation="1.5" /></filter>
           <filter id="lb-blur2"><feGaussianBlur stdDeviation="2" /></filter>
           <filter id="lb-blur5"><feGaussianBlur stdDeviation="5" /></filter>
         </defs>
-        <path className="lb-idle-amb" d={idleSvg.bolt} />
-        <path className="lb-idle-glow" d={idleSvg.bolt} />
-        <path className="lb-idle-core" d={idleSvg.bolt} />
-        <path className="lb-idle-hot" d={idleSvg.bolt} />
+        {/* Two buzzy bolts */}
+        <path className="lb-idle-amb" d={idleSvg.bolt1} />
+        <g className="lb-idle-s2"><path className="lb-idle-amb" d={idleSvg.bolt2} /></g>
+        <path className="lb-idle-glow" d={idleSvg.bolt1} />
+        <g className="lb-idle-s2"><path className="lb-idle-glow" d={idleSvg.bolt2} /></g>
+        <path className="lb-idle-core" d={idleSvg.bolt1} />
+        <g className="lb-idle-s2"><path className="lb-idle-core" d={idleSvg.bolt2} /></g>
+        <path className="lb-idle-hot" d={idleSvg.bolt1} />
+        {/* Micro-branches */}
+        {idleSvg.branches.map((b, i) => (
+          <React.Fragment key={i}>
+            <path className={`lb-idle-brg lb-idle-${b.cls}`} d={b.d} />
+            <path className={`lb-idle-br lb-idle-${b.cls}`} d={b.d} />
+          </React.Fragment>
+        ))}
+        {/* Sparks */}
+        {idleSvg.sparks.map((s, i) => (
+          <circle key={i} fill="#fff" cx={s.cx} cy={s.cy} r={0.8} opacity={0}>
+            <animate attributeName="opacity" values="0;0.8;0.2;0.7;0" dur={`${(1 + Math.random() * 1).toFixed(1)}s`} repeatCount="indefinite" begin={`${(Math.random() * 1.5).toFixed(1)}s`} />
+            <animate attributeName="r" values="0.4;1.5;0.6;1.2;0.4" dur={`${(1 + Math.random() * 1).toFixed(1)}s`} repeatCount="indefinite" begin={`${(Math.random() * 1.5).toFixed(1)}s`} />
+          </circle>
+        ))}
       </svg>
 
       {/* ── CRACK ── violent burst that appears on top */}
@@ -190,7 +235,6 @@ export default function LightningBorder() {
           @keyframes lb-cr-hflash { 0%{opacity:1}15%{opacity:0.9}40%{opacity:0.6}100%{opacity:0} }
           @keyframes lb-cr-bflash { 0%{stroke:#fff;opacity:1}10%{stroke:#e0e7ff;opacity:0.9}30%{stroke:#c4b5fd;opacity:0.7}60%{stroke:#8B5CF6;opacity:0.3}100%{stroke:#7c3aed;opacity:0} }
           @keyframes lb-cr-bgflash { 0%{stroke:#c4b5fd;opacity:0.7}15%{stroke:#e0e7ff;opacity:0.5}40%{stroke:#8B5CF6;opacity:0.3}100%{stroke:#7c3aed;opacity:0} }
-          @keyframes lb-cr-spark { 0%{r:0.5;opacity:0}5%{r:3;opacity:1}15%{r:1.5;opacity:0.8}30%{r:2.5;opacity:0.6}60%{r:1;opacity:0.3}100%{r:0.5;opacity:0} }
         `}</style>
         <defs>
           <filter id="lb-cblur1"><feGaussianBlur stdDeviation="1.5" /></filter>

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
+import { getAttractionLogo } from '@/lib/logos';
 import LightningBorder from '@/components/LightningBorder';
 import type { Attraction, ParkSetting } from '@/types/database';
 
@@ -82,7 +82,6 @@ const FearRow = React.memo(function FearRow({
 }) {
   const rating = FEAR_RATINGS[attraction.slug] ?? 0;
   const logoSrc = getAttractionLogo(attraction.slug);
-  const glowFilter = getLogoGlow(attraction.slug, 'strong');
 
   return (
     <div
@@ -92,7 +91,7 @@ const FearRow = React.memo(function FearRow({
         height: rowHeight,
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         padding: '0 1.5vw',
-        gap: '2vw',
+        gap: '1.2vw',
       }}
     >
       {/* Rank number */}
@@ -110,13 +109,14 @@ const FearRow = React.memo(function FearRow({
         {rank}
       </span>
 
-      {/* Logo — big and prominent */}
+      {/* Logo */}
       <div
         style={{
-          flex: '0 0 28vw',
+          flex: '1 1 0',
           height: '75%',
           display: 'flex',
           alignItems: 'center',
+          minWidth: 0,
         }}
       >
         {logoSrc && (
@@ -129,14 +129,13 @@ const FearRow = React.memo(function FearRow({
               maxWidth: '100%',
               objectFit: 'contain',
               objectPosition: 'left center',
-              filter: glowFilter || undefined,
             }}
           />
         )}
       </div>
 
-      {/* Skulls — pushed to the right, big */}
-      <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+      {/* Skulls */}
+      <div style={{ flexShrink: 0 }}>
         <SkullRow count={rating} />
       </div>
     </div>
