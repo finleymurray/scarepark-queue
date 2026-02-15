@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import LightningBorder from '@/components/LightningBorder';
+import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -471,27 +472,8 @@ export default function TVDisplay() {
 
       {/* ── Header ── full-width bar with lightning border */}
       {!isEmbedded && (
-        <header
-          style={{
-            padding: '1.5vw 0 0',
-            textAlign: 'center',
-            marginBottom: '0.8vw',
-            flexShrink: 0,
-          }}
-        >
-          <h1
-            className="tv1-header-title"
-            style={{
-              fontSize: '1.8vw',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.35em',
-              color: '#fff',
-              margin: 0,
-            }}
-          >
-            Mazes & Shows
-          </h1>
+        <header style={{ flexShrink: 0 }}>
+          <ElectricHeader title="Mazes & Shows" fontSize="2.2vw" />
           <LightningBorder />
         </header>
       )}
@@ -583,45 +565,40 @@ export default function TVDisplay() {
 
       {/* ── Footer ── lightning border + closing time */}
       {!isEmbedded && (
-        <footer
-          style={{
-            marginTop: '0.8vw',
-            flexShrink: 0,
-          }}
-        >
+        <footer style={{ marginTop: '0.4vw', flexShrink: 0 }}>
           <LightningBorder />
           <div
             style={{
-              padding: '1.2vw 0',
+              padding: '0.6vw 0',
               display: 'flex',
               alignItems: 'baseline',
               justifyContent: 'center',
-              gap: '1vw',
+              gap: '0.8vw',
             }}
           >
-          <span
-            className="tv1-footer-label"
-            style={{
-              fontSize: '1vw',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            Park Closes
-          </span>
-          <span
-            className="tv1-footer-time"
-            style={{
-              fontSize: '2.2vw',
-              fontWeight: 900,
-              fontVariantNumeric: 'tabular-nums',
-              color: '#fff',
-            }}
-          >
-            {formatTime12h(closingTime)}
-          </span>
+            <span
+              className="tv1-footer-label"
+              style={{
+                fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+                fontSize: '1.1vw',
+                letterSpacing: '0.25em',
+                color: 'rgba(255,255,255,0.35)',
+              }}
+            >
+              Park Closes
+            </span>
+            <span
+              className="tv1-footer-time"
+              style={{
+                fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+                fontSize: '2.4vw',
+                fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '0.06em',
+                color: '#fff',
+              }}
+            >
+              {formatTime12h(closingTime)}
+            </span>
           </div>
         </footer>
       )}

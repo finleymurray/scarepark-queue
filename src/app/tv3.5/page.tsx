@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getAttractionLogo } from '@/lib/logos';
 import LightningBorder from '@/components/LightningBorder';
+import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -266,25 +267,8 @@ export default function TV35ScreamMeter() {
     >
       {/* Header */}
       {!isEmbedded && (
-        <div
-          style={{
-            padding: '1.2vw 0',
-            textAlign: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <h1
-            style={{
-              fontSize: '2.2vw',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: '#fff',
-              margin: 0,
-            }}
-          >
-            Fear Rating
-          </h1>
+        <div style={{ flexShrink: 0 }}>
+          <ElectricHeader title="Fear Rating" fontSize="2.4vw" />
           <LightningBorder />
         </div>
       )}
@@ -310,36 +294,13 @@ export default function TV35ScreamMeter() {
 
       {/* Footer */}
       {!isEmbedded && (
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ marginTop: '0.4vw', flexShrink: 0 }}>
           <LightningBorder />
-          <div
-            style={{
-              padding: '1vw 0',
-              display: 'flex',
-              alignItems: 'baseline',
-              justifyContent: 'center',
-              gap: '1vw',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '1vw',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                color: 'rgba(255,255,255,0.35)',
-              }}
-            >
+          <div style={{ padding: '0.6vw 0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.8vw' }}>
+            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.1vw', letterSpacing: '0.25em', color: 'rgba(255,255,255,0.35)' }}>
               Park Closes
             </span>
-            <span
-              style={{
-                fontSize: '2.2vw',
-                fontWeight: 900,
-                fontVariantNumeric: 'tabular-nums',
-                color: '#fff',
-              }}
-            >
+            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '2.4vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: '#fff' }}>
               {formatTime12h(closingTime)}
             </span>
           </div>
