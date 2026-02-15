@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import LightningBorder from '@/components/LightningBorder';
 import type { ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -33,7 +34,7 @@ const VIEWS = [
   { path: '/tv2', duration: 30000, title: 'Maze Queue Times' },
   { path: '/tv3', duration: 15000, title: 'Show Schedule' },
   { path: '/tv1', duration: 15000, title: 'Mazes & Shows' },
-  { path: '/tv3.5', duration: 15000, title: 'The Scream Meter' },
+  { path: '/tv3.5', duration: 15000, title: 'Fear Rating' },
 ];
 
 const TV_SAFE_PADDING = '3.5%';
@@ -41,8 +42,7 @@ const TV_SAFE_PADDING = '3.5%';
 /* ── Clean header/footer — borderline style, no rounded containers ── */
 
 const headerStyle: React.CSSProperties = {
-  borderBottom: '1px solid rgba(255,255,255,0.1)',
-  padding: '1.5vw 0',
+  padding: '1.5vw 0 0',
   textAlign: 'center' as const,
   marginBottom: '0.8vw',
   flexShrink: 0,
@@ -58,10 +58,12 @@ const headerTitleStyle: React.CSSProperties = {
 };
 
 const footerStyle: React.CSSProperties = {
-  borderTop: '1px solid rgba(255,255,255,0.1)',
-  padding: '1.2vw 0',
   marginTop: '0.8vw',
   flexShrink: 0,
+};
+
+const footerInnerStyle: React.CSSProperties = {
+  padding: '1.2vw 0',
   display: 'flex',
   alignItems: 'baseline',
   justifyContent: 'center',
@@ -132,6 +134,7 @@ export default function TV4Carousel() {
       {/* Header — title updates with each carousel view */}
       <div style={headerStyle}>
         <h1 style={headerTitleStyle}>{VIEWS[activeIndex].title}</h1>
+        <LightningBorder />
       </div>
 
       {/* Iframe carousel — instant swap, no fade (too heavy for TV hardware) */}
@@ -152,27 +155,30 @@ export default function TV4Carousel() {
 
       {/* Footer */}
       <footer style={footerStyle}>
-        <span
-          style={{
-            fontSize: '1vw',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            color: 'rgba(255,255,255,0.35)',
-          }}
-        >
-          Park Closes
-        </span>
-        <span
-          style={{
-            fontSize: '2.2vw',
-            fontWeight: 900,
-            fontVariantNumeric: 'tabular-nums',
-            color: '#fff',
-          }}
-        >
-          {formatTime12h(closingTime)}
-        </span>
+        <LightningBorder />
+        <div style={footerInnerStyle}>
+          <span
+            style={{
+              fontSize: '1vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: 'rgba(255,255,255,0.35)',
+            }}
+          >
+            Park Closes
+          </span>
+          <span
+            style={{
+              fontSize: '2.2vw',
+              fontWeight: 900,
+              fontVariantNumeric: 'tabular-nums',
+              color: '#fff',
+            }}
+          >
+            {formatTime12h(closingTime)}
+          </span>
+        </div>
       </footer>
     </div>
   );

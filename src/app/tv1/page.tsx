@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import LightningBorder from '@/components/LightningBorder';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -468,12 +469,11 @@ export default function TVDisplay() {
         }
       `}</style>
 
-      {/* ── Header ── full-width bar, no rounded container */}
+      {/* ── Header ── full-width bar with lightning border */}
       {!isEmbedded && (
         <header
           style={{
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            padding: '1.5vw 0',
+            padding: '1.5vw 0 0',
             textAlign: 'center',
             marginBottom: '0.8vw',
             flexShrink: 0,
@@ -492,6 +492,7 @@ export default function TVDisplay() {
           >
             Mazes & Shows
           </h1>
+          <LightningBorder />
         </header>
       )}
 
@@ -580,20 +581,24 @@ export default function TVDisplay() {
         </div>
       </div>
 
-      {/* ── Footer ── full-width bar, no rounded container */}
+      {/* ── Footer ── lightning border + closing time */}
       {!isEmbedded && (
         <footer
           style={{
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            padding: '1.2vw 0',
             marginTop: '0.8vw',
             flexShrink: 0,
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'center',
-            gap: '1vw',
           }}
         >
+          <LightningBorder />
+          <div
+            style={{
+              padding: '1.2vw 0',
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'center',
+              gap: '1vw',
+            }}
+          >
           <span
             className="tv1-footer-label"
             style={{
@@ -617,6 +622,7 @@ export default function TVDisplay() {
           >
             {formatTime12h(closingTime)}
           </span>
+          </div>
         </footer>
       )}
     </div>

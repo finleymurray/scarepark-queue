@@ -26,7 +26,7 @@ const TV_SCREENS = [
   {
     path: '/tv3.5',
     name: 'TV3.5',
-    description: 'The Scream Meter — fear ratings',
+    description: 'Fear Rating',
   },
   {
     path: '/tv4',

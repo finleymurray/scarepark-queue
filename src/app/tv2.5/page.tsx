@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getAttractionLogo, getAttractionBg } from '@/lib/logos';
+import LightningBorder from '@/components/LightningBorder';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 
 function formatTime12h(time: string): string {
@@ -17,8 +18,7 @@ function formatTime12h(time: string): string {
 /* ── Static styles ── */
 
 const headerStyle: React.CSSProperties = {
-  borderBottom: '1px solid rgba(255,255,255,0.1)',
-  padding: '1.5vw 0',
+  padding: '1.5vw 0 0',
   textAlign: 'center' as const,
   marginBottom: '0.8vw',
   flexShrink: 0,
@@ -34,10 +34,12 @@ const headerTitleStyle: React.CSSProperties = {
 };
 
 const footerStyle: React.CSSProperties = {
-  borderTop: '1px solid rgba(255,255,255,0.1)',
-  padding: '1.2vw 0',
   marginTop: '0.8vw',
   flexShrink: 0,
+};
+
+const footerInnerStyle: React.CSSProperties = {
+  padding: '1.2vw 0',
   display: 'flex',
   alignItems: 'baseline',
   justifyContent: 'center',
@@ -457,6 +459,7 @@ export default function TV25Display() {
       {!isEmbedded && (
         <div style={headerStyle}>
           <h1 style={headerTitleStyle}>Maze Queue Times</h1>
+          <LightningBorder />
         </div>
       )}
 
@@ -483,27 +486,30 @@ export default function TV25Display() {
       {/* Footer */}
       {!isEmbedded && (
         <div style={footerStyle}>
-          <span
-            style={{
-              fontSize: '1vw',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            Park Closes
-          </span>
-          <span
-            style={{
-              fontSize: '2.2vw',
-              fontWeight: 900,
-              fontVariantNumeric: 'tabular-nums',
-              color: '#fff',
-            }}
-          >
-            {formatTime12h(closingTime)}
-          </span>
+          <LightningBorder />
+          <div style={footerInnerStyle}>
+            <span
+              style={{
+                fontSize: '1vw',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.35)',
+              }}
+            >
+              Park Closes
+            </span>
+            <span
+              style={{
+                fontSize: '2.2vw',
+                fontWeight: 900,
+                fontVariantNumeric: 'tabular-nums',
+                color: '#fff',
+              }}
+            >
+              {formatTime12h(closingTime)}
+            </span>
+          </div>
         </div>
       )}
     </div>
