@@ -31,11 +31,11 @@ function formatTime12h(time: string): string {
  */
 
 const VIEWS = [
-  { path: '/tv2', duration: 30000, title: 'Maze Queue Times' },
-  { path: '/tv3', duration: 15000, title: 'Show Schedule' },
-  { path: '/tv1', duration: 15000, title: 'Mazes & Shows' },
-  { path: '/tv3.5', duration: 7000, title: 'Fear Rating' },
-  { path: '/tv5', duration: 8500, title: 'Glitch Montage' },
+  { path: '/tv2', duration: 30000, title: 'Maze Queue Times', fullscreen: false },
+  { path: '/tv3', duration: 15000, title: 'Show Schedule', fullscreen: false },
+  { path: '/tv1', duration: 15000, title: 'Mazes & Shows', fullscreen: false },
+  { path: '/tv3.5', duration: 7000, title: 'Fear Rating', fullscreen: false },
+  { path: '/tv5', duration: 8500, title: '', fullscreen: true },
 ];
 
 const TV_SAFE_PADDING = '3.5%';
@@ -120,23 +120,27 @@ export default function TV4Carousel() {
     };
   }, [activeIndex]);
 
+  const isFullscreen = VIEWS[activeIndex].fullscreen;
+
   return (
     <div
       className="h-screen w-screen bg-black flex flex-col overflow-hidden"
       style={{
-        paddingLeft: TV_SAFE_PADDING,
-        paddingRight: TV_SAFE_PADDING,
-        paddingTop: '2%',
-        paddingBottom: '2%',
+        paddingLeft: isFullscreen ? 0 : TV_SAFE_PADDING,
+        paddingRight: isFullscreen ? 0 : TV_SAFE_PADDING,
+        paddingTop: isFullscreen ? 0 : '2%',
+        paddingBottom: isFullscreen ? 0 : '2%',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: '#fff',
       }}
     >
-      {/* Header — title updates with each carousel view */}
-      <div style={headerStyle}>
-        <h1 style={headerTitleStyle}>{VIEWS[activeIndex].title}</h1>
-        <LightningBorder />
-      </div>
+      {/* Header — hidden during fullscreen views (e.g. TV5 glitch montage) */}
+      {!isFullscreen && (
+        <div style={headerStyle}>
+          <h1 style={headerTitleStyle}>{VIEWS[activeIndex].title}</h1>
+          <LightningBorder />
+        </div>
+      )}
 
       {/* Iframe carousel — instant swap, no fade (too heavy for TV hardware) */}
       <div className="flex-1 relative overflow-hidden">
@@ -154,33 +158,35 @@ export default function TV4Carousel() {
         ))}
       </div>
 
-      {/* Footer */}
-      <footer style={footerStyle}>
-        <LightningBorder />
-        <div style={footerInnerStyle}>
-          <span
-            style={{
-              fontSize: '1vw',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            Park Closes
-          </span>
-          <span
-            style={{
-              fontSize: '2.2vw',
-              fontWeight: 900,
-              fontVariantNumeric: 'tabular-nums',
-              color: '#fff',
-            }}
-          >
-            {formatTime12h(closingTime)}
-          </span>
-        </div>
-      </footer>
+      {/* Footer — hidden during fullscreen views */}
+      {!isFullscreen && (
+        <footer style={footerStyle}>
+          <LightningBorder />
+          <div style={footerInnerStyle}>
+            <span
+              style={{
+                fontSize: '1vw',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.35)',
+              }}
+            >
+              Park Closes
+            </span>
+            <span
+              style={{
+                fontSize: '2.2vw',
+                fontWeight: 900,
+                fontVariantNumeric: 'tabular-nums',
+                color: '#fff',
+              }}
+            >
+              {formatTime12h(closingTime)}
+            </span>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }
