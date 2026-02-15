@@ -88,66 +88,60 @@ const FearRow = React.memo(function FearRow({
       style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
         height: rowHeight,
         borderBottom: '1px solid rgba(255,255,255,0.06)',
-        padding: '0 6vw',
+        padding: '0 5vw',
+        overflow: 'hidden',
       }}
     >
-      {/* Inner container — constrained width so content stays grouped */}
-      <div
+      {/* Rank number */}
+      <span
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2vw',
-          width: '100%',
-          maxWidth: '85vw',
+          fontSize: '2.5vw',
+          fontWeight: 900,
+          color: 'rgba(255,255,255,0.15)',
+          fontVariantNumeric: 'tabular-nums',
+          width: '3.5vw',
+          textAlign: 'center',
+          flexShrink: 0,
+          marginRight: '1.5vw',
         }}
       >
-        {/* Rank number */}
-        <span
-          style={{
-            fontSize: '3vw',
-            fontWeight: 900,
-            color: 'rgba(255,255,255,0.15)',
-            fontVariantNumeric: 'tabular-nums',
-            width: '4vw',
-            textAlign: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {rank}
-        </span>
+        {rank}
+      </span>
 
-        {/* Logo — fixed proportion, bigger */}
-        <div
-          style={{
-            flex: '1 1 0',
-            height: '85%',
-            display: 'flex',
-            alignItems: 'center',
-            minWidth: 0,
-          }}
-        >
-          {logoSrc && (
-            <img
-              src={logoSrc}
-              alt={attraction.name}
-              style={{
-                height: '100%',
-                width: 'auto',
-                maxWidth: '100%',
-                objectFit: 'contain',
-                objectPosition: 'left center',
-              }}
-            />
-          )}
-        </div>
+      {/* Logo — constrained to row height, left-aligned */}
+      <div
+        style={{
+          flex: '0 1 auto',
+          display: 'flex',
+          alignItems: 'center',
+          height: '70%',
+          minWidth: 0,
+          marginRight: '2vw',
+        }}
+      >
+        {logoSrc && (
+          <img
+            src={logoSrc}
+            alt={attraction.name}
+            style={{
+              height: '100%',
+              width: 'auto',
+              maxWidth: '38vw',
+              objectFit: 'contain',
+              objectPosition: 'left center',
+            }}
+          />
+        )}
+      </div>
 
-        {/* Skulls */}
-        <div style={{ flexShrink: 0 }}>
-          <SkullRow count={rating} />
-        </div>
+      {/* Spacer */}
+      <div style={{ flex: '1 1 0', minWidth: 0 }} />
+
+      {/* Skulls — pushed right */}
+      <div style={{ flexShrink: 0 }}>
+        <SkullRow count={rating} />
       </div>
     </div>
   );
