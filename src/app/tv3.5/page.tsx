@@ -17,10 +17,10 @@ function formatTime12h(time: string): string {
 
 /* ── Fear ratings — hardcoded 1-6 Scream Skull scale, mazes only ── */
 const FEAR_RATINGS: Record<string, number> = {
-  'night-terrors': 6,
-  'drowned': 5,
-  'westlake-witch-trials': 4,
-  'the-bunker': 3,
+  'drowned': 6,
+  'the-bunker': 5,
+  'night-terrors': 4,
+  'westlake-witch-trials': 3,
   'strings-of-control': 2,
   'signal-loss': 1,
 };
@@ -88,55 +88,66 @@ const FearRow = React.memo(function FearRow({
       style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         height: rowHeight,
         borderBottom: '1px solid rgba(255,255,255,0.06)',
-        padding: '0 1.5vw',
-        gap: '1.2vw',
+        padding: '0 6vw',
       }}
     >
-      {/* Rank number */}
-      <span
-        style={{
-          fontSize: '3vw',
-          fontWeight: 900,
-          color: 'rgba(255,255,255,0.15)',
-          fontVariantNumeric: 'tabular-nums',
-          width: '4vw',
-          textAlign: 'center',
-          flexShrink: 0,
-        }}
-      >
-        {rank}
-      </span>
-
-      {/* Logo */}
+      {/* Inner container — constrained width so content stays grouped */}
       <div
         style={{
-          flex: '1 1 0',
-          height: '75%',
           display: 'flex',
           alignItems: 'center',
-          minWidth: 0,
+          gap: '2vw',
+          width: '100%',
+          maxWidth: '85vw',
         }}
       >
-        {logoSrc && (
-          <img
-            src={logoSrc}
-            alt={attraction.name}
-            style={{
-              height: '100%',
-              width: 'auto',
-              maxWidth: '100%',
-              objectFit: 'contain',
-              objectPosition: 'left center',
-            }}
-          />
-        )}
-      </div>
+        {/* Rank number */}
+        <span
+          style={{
+            fontSize: '3vw',
+            fontWeight: 900,
+            color: 'rgba(255,255,255,0.15)',
+            fontVariantNumeric: 'tabular-nums',
+            width: '4vw',
+            textAlign: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {rank}
+        </span>
 
-      {/* Skulls */}
-      <div style={{ flexShrink: 0 }}>
-        <SkullRow count={rating} />
+        {/* Logo — fixed proportion, bigger */}
+        <div
+          style={{
+            flex: '1 1 0',
+            height: '85%',
+            display: 'flex',
+            alignItems: 'center',
+            minWidth: 0,
+          }}
+        >
+          {logoSrc && (
+            <img
+              src={logoSrc}
+              alt={attraction.name}
+              style={{
+                height: '100%',
+                width: 'auto',
+                maxWidth: '100%',
+                objectFit: 'contain',
+                objectPosition: 'left center',
+              }}
+            />
+          )}
+        </div>
+
+        {/* Skulls */}
+        <div style={{ flexShrink: 0 }}>
+          <SkullRow count={rating} />
+        </div>
       </div>
     </div>
   );
