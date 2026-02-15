@@ -138,7 +138,7 @@ export default function TV4Carousel() {
       {/* Header — hidden during fullscreen views (e.g. TV5 glitch montage) */}
       {!isFullscreen && (
         <div style={{ flexShrink: 0 }}>
-          <ElectricHeader title={VIEWS[activeIndex].title} fontSize="2vw" />
+          <ElectricHeader title={VIEWS[activeIndex].title} fontSize="3vw" />
           <LightningBorder />
         </div>
       )}
@@ -161,16 +161,13 @@ export default function TV4Carousel() {
 
       {/* Footer — hidden during fullscreen views */}
       {!isFullscreen && (
-        <footer style={{ marginTop: '0.4vw', flexShrink: 0 }}>
-          <LightningBorder />
-          <div style={{ padding: '0.6vw 0', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.8vw' }}>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.1vw', letterSpacing: '0.25em', color: 'rgba(255,255,255,0.35)' }}>
-              Park Closes
+        <footer style={{ flexShrink: 0, textAlign: 'center', padding: '0.3vw 0' }}>
+            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '0.85vw', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
+              Park Closes{' '}
             </span>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '2.4vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: '#fff' }}>
+            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.4vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.7)' }}>
               {formatTime12h(closingTime)}
             </span>
-          </div>
         </footer>
       )}
     </div>

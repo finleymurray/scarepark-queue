@@ -194,7 +194,7 @@ export default function ElectricHeader({
       style={{
         position: 'relative',
         textAlign: 'center',
-        padding: '0.8vw 0 0.4vw',
+        padding: '1.4vw 0 0.8vw',
       }}
     >
       <h1
@@ -206,9 +206,9 @@ export default function ElectricHeader({
           letterSpacing: '0.35em',
           lineHeight: 1,
           margin: 0,
-          color: '#e0e7ff',
-          WebkitTextStroke: '0.5px rgba(139, 92, 246, 0.3)',
-          textShadow: '0 0 7px rgba(139,92,246,0.9), 0 0 20px rgba(139,92,246,0.5), 0 0 40px rgba(96,165,250,0.3), 0 0 80px rgba(139,92,246,0.15)',
+          color: '#f0f0ff',
+          WebkitTextStroke: '0.7px rgba(139, 92, 246, 0.35)',
+          textShadow: '0 0 10px rgba(139,92,246,1), 0 0 30px rgba(139,92,246,0.6), 0 0 50px rgba(96,165,250,0.35), 0 0 90px rgba(139,92,246,0.2)',
           animation: 'eh-neon-flicker 4s ease-in-out infinite',
           position: 'relative',
           zIndex: 2,

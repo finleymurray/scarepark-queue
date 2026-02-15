@@ -473,7 +473,7 @@ export default function TVDisplay() {
       {/* ── Header ── full-width bar with lightning border */}
       {!isEmbedded && (
         <header style={{ flexShrink: 0 }}>
-          <ElectricHeader title="Mazes & Shows" fontSize="2.2vw" />
+          <ElectricHeader title="Mazes & Shows" fontSize="3.2vw" />
           <LightningBorder />
         </header>
       )}
@@ -565,41 +565,30 @@ export default function TVDisplay() {
 
       {/* ── Footer ── lightning border + closing time */}
       {!isEmbedded && (
-        <footer style={{ marginTop: '0.4vw', flexShrink: 0 }}>
-          <LightningBorder />
-          <div
-            style={{
-              padding: '0.6vw 0',
-              display: 'flex',
-              alignItems: 'baseline',
-              justifyContent: 'center',
-              gap: '0.8vw',
-            }}
-          >
+        <footer style={{ flexShrink: 0, textAlign: 'center', padding: '0.3vw 0' }}>
             <span
               className="tv1-footer-label"
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '1.1vw',
-                letterSpacing: '0.25em',
-                color: 'rgba(255,255,255,0.35)',
+                fontSize: '0.85vw',
+                letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.3)',
               }}
             >
-              Park Closes
+              Park Closes{' '}
             </span>
             <span
               className="tv1-footer-time"
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '2.4vw',
+                fontSize: '1.4vw',
                 fontVariantNumeric: 'tabular-nums',
                 letterSpacing: '0.06em',
-                color: '#fff',
+                color: 'rgba(255,255,255,0.7)',
               }}
             >
               {formatTime12h(closingTime)}
             </span>
-          </div>
         </footer>
       )}
     </div>
