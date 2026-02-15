@@ -24,6 +24,11 @@ const TV_SCREENS = [
     description: 'Show times with artwork',
   },
   {
+    path: '/tv3.5',
+    name: 'TV3.5',
+    description: 'The Scream Meter — fear ratings',
+  },
+  {
     path: '/tv4',
     name: 'TV4',
     description: 'Auto-carousel of all TV views',

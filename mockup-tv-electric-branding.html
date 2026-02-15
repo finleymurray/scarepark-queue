@@ -69,7 +69,7 @@
   .lightning-border {
     position: relative;
     width: 100%;
-    height: 20px;
+    height: 10px;
     flex-shrink: 0;
     overflow: visible;
   }
@@ -83,42 +83,42 @@
     overflow: visible;
   }
 
-  /* The main bolt path — thicker, brighter */
+  /* The main bolt path — thin, sharp */
   .bolt-core {
     fill: none;
-    stroke-width: 2.2;
+    stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: bevel;
   }
 
-  /* Outer glow layer — wider, more intense */
+  /* Outer glow layer — tight, focused */
   .bolt-glow {
     fill: none;
-    stroke-width: 8;
+    stroke-width: 4;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.55;
-    filter: blur(4px);
+    opacity: 0.45;
+    filter: blur(2px);
   }
 
-  /* Wide ambient glow — much bigger spread */
+  /* Ambient glow — subtle spread */
   .bolt-ambient {
     fill: none;
-    stroke-width: 22;
+    stroke-width: 10;
     stroke-linecap: round;
     stroke-linejoin: round;
-    opacity: 0.2;
-    filter: blur(10px);
+    opacity: 0.15;
+    filter: blur(5px);
   }
 
   /* Hot inner core — white-hot center line */
   .bolt-hot {
     fill: none;
-    stroke-width: 1;
+    stroke-width: 0.6;
     stroke-linecap: round;
     stroke-linejoin: bevel;
     stroke: #fff;
-    opacity: 0.9;
+    opacity: 0.85;
   }
 
   /* Animated colour cycling — faster, punchier */
@@ -171,10 +171,10 @@
   .bolt-set-3 .bolt-ambient { animation-delay: 1.2s; }
   .bolt-set-3 .bolt-hot    { animation-delay: 1.2s; }
 
-  /* Branch bolts — more visible, sharper */
+  /* Branch bolts — thin, sharp forks */
   .bolt-branch {
     fill: none;
-    stroke-width: 1.2;
+    stroke-width: 0.7;
     stroke-linecap: round;
     stroke-linejoin: bevel;
     opacity: 0;
@@ -182,11 +182,11 @@
   }
   .bolt-branch-glow {
     fill: none;
-    stroke-width: 5;
+    stroke-width: 2.5;
     stroke-linecap: round;
     stroke-linejoin: round;
     opacity: 0;
-    filter: blur(3px);
+    filter: blur(1.5px);
     animation: branch-flicker-glow 2s ease-in-out infinite;
   }
 
@@ -213,7 +213,7 @@
   .bolt-branch.b5, .bolt-branch-glow.b5 { animation-delay: 1.8s; }
   .bolt-branch.b6, .bolt-branch-glow.b6 { animation-delay: 0.9s; }
 
-  /* Spark nodes — bigger, brighter */
+  /* Spark nodes — small, sharp */
   .spark-node {
     fill: #fff;
     opacity: 0;
@@ -228,11 +228,11 @@
   .spark-node:nth-child(8) { animation-delay: 0.2s; }
 
   @keyframes spark-pop {
-    0%, 100% { opacity: 0; r: 1; }
-    3%       { opacity: 1; r: 3.5; }
-    6%       { opacity: 0.3; r: 1.5; }
-    9%       { opacity: 0.9; r: 2.5; }
-    15%      { opacity: 0; r: 1; }
+    0%, 100% { opacity: 0; r: 0.5; }
+    3%       { opacity: 1; r: 2; }
+    6%       { opacity: 0.3; r: 1; }
+    9%       { opacity: 0.9; r: 1.5; }
+    15%      { opacity: 0; r: 0.5; }
   }
 
   /* ── TV content header / footer ── */
@@ -703,30 +703,30 @@ function generateBranch(startX, startY, length, angle) {
 // Create the full SVG content for a lightning border
 function createLightningSVG(id) {
   const w = 1000;
-  const h = 20;
+  const h = 10;
   const cy = h / 2;
 
-  // 3 overlapping bolts — lots of segments for jagged look, high jitter
-  const bolt1 = generateBolt(w, cy, 80, 9);
-  const bolt2 = generateBolt(w, cy, 65, 7);
-  const bolt3 = generateBolt(w, cy, 50, 8);
+  // 3 overlapping bolts — many segments for jagged look, moderate jitter within thin band
+  const bolt1 = generateBolt(w, cy, 80, 4);
+  const bolt2 = generateBolt(w, cy, 65, 3);
+  const bolt3 = generateBolt(w, cy, 50, 3.5);
 
-  // More branches — 10 forks
+  // Branches — 6 short forks
   const branches = [];
-  for (let i = 0; i < 10; i++) {
-    const bx = 50 + Math.random() * 900;
-    const by = cy + (Math.random() - 0.5) * 6;
-    const angle = (Math.random() > 0.5 ? -1 : 1) * (0.4 + Math.random() * 1.0);
-    const len = 20 + Math.random() * 35;
+  for (let i = 0; i < 6; i++) {
+    const bx = 80 + Math.random() * 840;
+    const by = cy + (Math.random() - 0.5) * 3;
+    const angle = (Math.random() > 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.8);
+    const len = 8 + Math.random() * 14;
     branches.push({ d: generateBranch(bx, by, len, angle), delay: i });
   }
 
-  // More sparks — 8 nodes
+  // Sparks — 5 small nodes
   const sparks = [];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 5; i++) {
     sparks.push({
-      cx: 50 + Math.random() * 900,
-      cy: cy + (Math.random() - 0.5) * 6,
+      cx: 80 + Math.random() * 840,
+      cy: cy + (Math.random() - 0.5) * 3,
     });
   }
 
@@ -752,9 +752,9 @@ function createLightningSVG(id) {
       `).join('')}
       <!-- Spark nodes -->
       ${sparks.map(s => `
-        <circle class="spark-node" cx="${s.cx.toFixed(1)}" cy="${s.cy.toFixed(1)}" r="2">
+        <circle class="spark-node" cx="${s.cx.toFixed(1)}" cy="${s.cy.toFixed(1)}" r="1">
           <animate attributeName="opacity" values="0;1;0.2;0.9;0" dur="${(1.5 + Math.random() * 1.5).toFixed(1)}s" repeatCount="indefinite" begin="${(Math.random() * 2).toFixed(1)}s" />
-          <animate attributeName="r" values="1;3.5;1.5;2.5;1" dur="${(1.5 + Math.random() * 1.5).toFixed(1)}s" repeatCount="indefinite" begin="${(Math.random() * 2).toFixed(1)}s" />
+          <animate attributeName="r" values="0.5;2;1;1.5;0.5" dur="${(1.5 + Math.random() * 1.5).toFixed(1)}s" repeatCount="indefinite" begin="${(Math.random() * 2).toFixed(1)}s" />
         </circle>
       `).join('')}
     </svg>
@@ -1058,14 +1058,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   <!-- ════════════════════════════════════════════════════════════════ -->
   <!-- NEW: The Scream Meter — 1-6 Scream Skulls, most → least scary  -->
-  <!-- Ratings remapped to 1-6 skull scale:                            -->
-  <!--   Night Terrors: 6, Drowned: 5, Nightmare Realm: 5,            -->
-  <!--   Westlake: 4, Shadows: 4, Bunker: 3, Summoning: 3,           -->
-  <!--   Strings: 2, Signal Loss: 1                                   -->
+  <!-- Mazes only (no shows). Ratings:                                 -->
+  <!--   Night Terrors: 6, Drowned: 5, Westlake: 4,                   -->
+  <!--   Bunker: 3, Strings: 2, Signal Loss: 1                        -->
   <!-- ════════════════════════════════════════════════════════════════ -->
   <div class="mockup-card">
     <div class="mockup-label" style="background: linear-gradient(90deg, #0d0d0d, #1a0a20); border-color: #2a1a3a;">
-      NEW — The Scream Meter (1-6 Scream Skulls)
+      NEW — The Scream Meter (1-6 Scream Skulls, Mazes Only)
     </div>
     <div class="tv-frame">
       <div class="tv-header">
@@ -1081,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Night Terrors</div>
-              <div class="fear-desc">Plunged into total darkness. Your worst fears manifest around every corner.</div>
+              <div class="fear-desc">The lights are off. The door is closed. You're not alone.</div>
               <div data-skulls="6" data-max="6" data-size="14"></div>
             </div>
           </div>
@@ -1092,84 +1091,51 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Drowned</div>
-              <div class="fear-desc">Waterlogged corridors hide the restless dead beneath the surface.</div>
+              <div class="fear-desc">A damaged vessel drifts in black waters as sirens infect the crew one by one.</div>
               <div data-skulls="5" data-max="6" data-size="14"></div>
             </div>
           </div>
-          <!-- #3 Nightmare Realm — 5 skulls -->
-          <div class="fear-card" style="background: linear-gradient(135deg, #151520 0%, #0a0a10 100%);">
-            <span class="fear-rank">#3</span>
-            <img class="fear-card-logo" src="/logos/nightmare-realm.webp" alt="Nightmare Realm">
-            <div class="fear-card-gradient"></div>
-            <div class="fear-card-content">
-              <div class="fear-name">Nightmare Realm</div>
-              <div class="fear-desc">Reality fractures as twisted dreamscapes blur the line between sleep and death.</div>
-              <div data-skulls="5" data-max="6" data-size="14"></div>
-            </div>
-          </div>
-          <!-- #4 Westlake Witch Trials — 4 skulls -->
+          <!-- #3 Westlake Witch Trials — 4 skulls -->
           <div class="fear-card" style="background: linear-gradient(135deg, #2d1a0a 0%, #0d0805 100%);">
-            <span class="fear-rank">#4</span>
+            <span class="fear-rank">#3</span>
             <img class="fear-card-logo" src="/logos/westlake-witch-trials.webp" alt="Westlake Witch Trials">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Westlake Witch Trials</div>
-              <div class="fear-desc">Accused and condemned. The witches of Westlake demand their revenge.</div>
+              <div class="fear-desc">A neon-soaked town gripped by 80s satanic panic has found its witches.</div>
               <div data-skulls="4" data-max="6" data-size="14"></div>
             </div>
           </div>
-          <!-- #5 Shadows Unleashed — 4 skulls -->
-          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%);">
-            <span class="fear-rank">#5</span>
-            <img class="fear-card-logo" src="/logos/shadows-unleashed.webp" alt="Shadows Unleashed">
-            <div class="fear-card-gradient"></div>
-            <div class="fear-card-content">
-              <div class="fear-name">Shadows Unleashed</div>
-              <div class="fear-desc">Ancient shadows stir in the void. Something primal hunts in the dark.</div>
-              <div data-skulls="4" data-max="6" data-size="14"></div>
-            </div>
-          </div>
-          <!-- #6 The Bunker — 3 skulls -->
+          <!-- #4 The Bunker — 3 skulls -->
           <div class="fear-card" style="background: linear-gradient(135deg, #1a1a0a 0%, #0a0a05 100%);">
-            <span class="fear-rank">#6</span>
+            <span class="fear-rank">#4</span>
             <img class="fear-card-logo" src="/logos/the-bunker.webp" alt="The Bunker">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">The Bunker</div>
-              <div class="fear-desc">A derelict military bunker overrun by failed experiments gone feral.</div>
+              <div class="fear-desc">The Whitmore family survived the apocalypse in luxury — and kept their favourite tradition alive.</div>
               <div data-skulls="3" data-max="6" data-size="14"></div>
             </div>
           </div>
-          <!-- #7 The Summoning — 3 skulls -->
-          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%);">
-            <span class="fear-rank">#7</span>
-            <img class="fear-card-logo" src="/logos/the-summoning.webp" alt="The Summoning">
-            <div class="fear-card-gradient"></div>
-            <div class="fear-card-content">
-              <div class="fear-name">The Summoning</div>
-              <div class="fear-desc">A forbidden ritual pulls demonic forces into our world. Witness the ceremony.</div>
-              <div data-skulls="3" data-max="6" data-size="14"></div>
-            </div>
-          </div>
-          <!-- #8 Strings of Control — 2 skulls -->
+          <!-- #5 Strings of Control — 2 skulls -->
           <div class="fear-card" style="background: linear-gradient(135deg, #1a1a05 0%, #0a0a02 100%);">
-            <span class="fear-rank">#8</span>
+            <span class="fear-rank">#5</span>
             <img class="fear-card-logo" src="/logos/strings-of-control.webp" alt="Strings of Control">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Strings of Control</div>
-              <div class="fear-desc">Marionettes dance on invisible strings. Who is pulling yours?</div>
+              <div class="fear-desc">Behind the velvet curtains, something else is pulling the strings.</div>
               <div data-skulls="2" data-max="6" data-size="14"></div>
             </div>
           </div>
-          <!-- #9 Signal Loss — 1 skull -->
+          <!-- #6 Signal Loss — 1 skull -->
           <div class="fear-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);">
-            <span class="fear-rank">#9</span>
+            <span class="fear-rank">#6</span>
             <img class="fear-card-logo" src="/logos/signal-loss.webp" alt="Signal Loss">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Signal Loss</div>
-              <div class="fear-desc">Static fills the screens. Something is broadcasting from inside the walls.</div>
+              <div class="fear-desc">The broadcast went dead at 2:17am — but something is still transmitting.</div>
               <div data-skulls="1" data-max="6" data-size="14"></div>
             </div>
           </div>
@@ -1192,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <h2 class="section-title">The Scream Meter — Full Width Preview</h2>
   <div class="mockup-card full-width">
     <div class="mockup-label" style="background: linear-gradient(90deg, #0d0d0d, #1a0a20); border-color: #2a1a3a;">
-      The Scream Meter — 16:9 Full Preview (ranked most &rarr; least scary, 1-6 Scream Skulls)
+      The Scream Meter — 16:9 Full Preview (ranked most &rarr; least scary, mazes only, 1-6 Scream Skulls)
     </div>
     <div class="tv-frame fw">
       <div class="tv-header">
@@ -1208,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Night Terrors</div>
-              <div class="fear-desc">Plunged into total darkness. Your worst fears manifest around every corner.</div>
+              <div class="fear-desc">The lights are off. The door is closed. You're not alone.</div>
               <div data-skulls="6" data-max="6" data-size="20"></div>
             </div>
           </div>
@@ -1219,84 +1185,51 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Drowned</div>
-              <div class="fear-desc">Waterlogged corridors hide the restless dead beneath the surface.</div>
+              <div class="fear-desc">A damaged vessel drifts in black waters as sirens infect the crew one by one.</div>
               <div data-skulls="5" data-max="6" data-size="20"></div>
             </div>
           </div>
-          <!-- #3 Nightmare Realm — 5 skulls -->
-          <div class="fear-card" style="background: linear-gradient(135deg, #151520 0%, #0a0a10 100%); border-radius: 10px;">
-            <span class="fear-rank">#3</span>
-            <img class="fear-card-logo" src="/logos/nightmare-realm.webp" alt="Nightmare Realm">
-            <div class="fear-card-gradient"></div>
-            <div class="fear-card-content">
-              <div class="fear-name">Nightmare Realm</div>
-              <div class="fear-desc">Reality fractures as twisted dreamscapes blur the line between sleep and death.</div>
-              <div data-skulls="5" data-max="6" data-size="20"></div>
-            </div>
-          </div>
-          <!-- #4 Westlake Witch Trials — 4 skulls -->
+          <!-- #3 Westlake Witch Trials — 4 skulls -->
           <div class="fear-card" style="background: linear-gradient(135deg, #2d1a0a 0%, #0d0805 100%); border-radius: 10px;">
-            <span class="fear-rank">#4</span>
+            <span class="fear-rank">#3</span>
             <img class="fear-card-logo" src="/logos/westlake-witch-trials.webp" alt="Westlake Witch Trials">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Westlake Witch Trials</div>
-              <div class="fear-desc">Accused and condemned. The witches of Westlake demand their revenge.</div>
+              <div class="fear-desc">A neon-soaked town gripped by 80s satanic panic has found its witches.</div>
               <div data-skulls="4" data-max="6" data-size="20"></div>
             </div>
           </div>
-          <!-- #5 Shadows Unleashed — 4 skulls -->
-          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%); border-radius: 10px;">
-            <span class="fear-rank">#5</span>
-            <img class="fear-card-logo" src="/logos/shadows-unleashed.webp" alt="Shadows Unleashed">
-            <div class="fear-card-gradient"></div>
-            <div class="fear-card-content">
-              <div class="fear-name">Shadows Unleashed</div>
-              <div class="fear-desc">Ancient shadows stir in the void. Something primal hunts in the dark.</div>
-              <div data-skulls="4" data-max="6" data-size="20"></div>
-            </div>
-          </div>
-          <!-- #6 The Bunker — 3 skulls -->
+          <!-- #4 The Bunker — 3 skulls -->
           <div class="fear-card" style="background: linear-gradient(135deg, #1a1a0a 0%, #0a0a05 100%); border-radius: 10px;">
-            <span class="fear-rank">#6</span>
+            <span class="fear-rank">#4</span>
             <img class="fear-card-logo" src="/logos/the-bunker.webp" alt="The Bunker">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">The Bunker</div>
-              <div class="fear-desc">A derelict military bunker overrun by failed experiments gone feral.</div>
+              <div class="fear-desc">The Whitmore family survived the apocalypse in luxury — and kept their favourite tradition alive.</div>
               <div data-skulls="3" data-max="6" data-size="20"></div>
             </div>
           </div>
-          <!-- #7 The Summoning — 3 skulls -->
-          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%); border-radius: 10px;">
-            <span class="fear-rank">#7</span>
-            <img class="fear-card-logo" src="/logos/the-summoning.webp" alt="The Summoning">
-            <div class="fear-card-gradient"></div>
-            <div class="fear-card-content">
-              <div class="fear-name">The Summoning</div>
-              <div class="fear-desc">A forbidden ritual pulls demonic forces into our world. Witness the ceremony.</div>
-              <div data-skulls="3" data-max="6" data-size="20"></div>
-            </div>
-          </div>
-          <!-- #8 Strings of Control — 2 skulls -->
+          <!-- #5 Strings of Control — 2 skulls -->
           <div class="fear-card" style="background: linear-gradient(135deg, #1a1a05 0%, #0a0a02 100%); border-radius: 10px;">
-            <span class="fear-rank">#8</span>
+            <span class="fear-rank">#5</span>
             <img class="fear-card-logo" src="/logos/strings-of-control.webp" alt="Strings of Control">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Strings of Control</div>
-              <div class="fear-desc">Marionettes dance on invisible strings. Who is pulling yours?</div>
+              <div class="fear-desc">Behind the velvet curtains, something else is pulling the strings.</div>
               <div data-skulls="2" data-max="6" data-size="20"></div>
             </div>
           </div>
-          <!-- #9 Signal Loss — 1 skull -->
+          <!-- #6 Signal Loss — 1 skull -->
           <div class="fear-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); border-radius: 10px;">
-            <span class="fear-rank">#9</span>
+            <span class="fear-rank">#6</span>
             <img class="fear-card-logo" src="/logos/signal-loss.webp" alt="Signal Loss">
             <div class="fear-card-gradient"></div>
             <div class="fear-card-content">
               <div class="fear-name">Signal Loss</div>
-              <div class="fear-desc">Static fills the screens. Something is broadcasting from inside the walls.</div>
+              <div class="fear-desc">The broadcast went dead at 2:17am — but something is still transmitting.</div>
               <div data-skulls="1" data-max="6" data-size="20"></div>
             </div>
           </div>
@@ -1327,8 +1260,8 @@ document.addEventListener('DOMContentLoaded', () => {
     <li>Skulls are neon red (#DC2626) with animated <strong>glowing drop-shadow</strong> — matches concept art</li>
     <li>Unfilled skulls sit at 15% opacity to show the max scale</li>
     <li>Each card now includes the <strong>attraction logo</strong> (top-left) and a <strong>brief description</strong> of the maze</li>
-    <li>Cards still ranked <strong>#1 to #9, most scary to least scary</strong>, reading left-to-right, top-to-bottom</li>
-    <li>Skull ratings: Night Terrors (6), Drowned (5), Nightmare Realm (5), Westlake (4), Shadows (4), Bunker (3), Summoning (3), Strings (2), Signal Loss (1)</li>
+    <li>Cards ranked <strong>#1 to #6, most scary to least scary</strong> — mazes only (no shows), reading left-to-right, top-to-bottom</li>
+    <li>Skull ratings: Night Terrors (6), Drowned (5), Westlake (4), Bunker (3), Strings (2), Signal Loss (1)</li>
     <li>All animation is CSS + lightweight SVG — no canvas, no heavy JS, safe for TV hardware</li>
   </ul>
 </div>

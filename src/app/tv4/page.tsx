@@ -33,6 +33,7 @@ const VIEWS = [
   { path: '/tv2', duration: 30000, title: 'Maze Queue Times' },
   { path: '/tv3', duration: 15000, title: 'Show Schedule' },
   { path: '/tv1', duration: 15000, title: 'Mazes & Shows' },
+  { path: '/tv3.5', duration: 15000, title: 'The Scream Meter' },
 ];
 
 const TV_SAFE_PADDING = '3.5%';
