@@ -161,13 +161,16 @@ export default function TV4Carousel() {
 
       {/* Footer — hidden during fullscreen views */}
       {!isFullscreen && (
-        <footer style={{ flexShrink: 0, textAlign: 'center', padding: '0.3vw 0' }}>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '0.85vw', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
+        <footer style={{ flexShrink: 0 }}>
+          <LightningBorder />
+          <div style={{ textAlign: 'center', padding: '0.3vw 0' }}>
+            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1vw', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
               Park Closes{' '}
             </span>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.4vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.7)' }}>
+            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.7vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.7)' }}>
               {formatTime12h(closingTime)}
             </span>
+          </div>
         </footer>
       )}
     </div>
