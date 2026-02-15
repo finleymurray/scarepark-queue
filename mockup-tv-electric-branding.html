@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TV Screen Mockups — Electric Branding v3</title>
+<style>
+  /* ── Reset ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 40px 30px;
+  }
+
+  h2.section-title {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 16px;
+    padding-left: 4px;
+  }
+
+  .mockup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  .mockup-card {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .mockup-card.full-width {
+    grid-column: 1 / -1;
+  }
+  .mockup-label {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.4);
+    border-bottom: 1px solid #2a2a2a;
+    background: #0d0d0d;
+  }
+
+  /* ── Each TV screen container ── */
+  .tv-frame {
+    aspect-ratio: 16 / 9;
+    background: #000;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 3.5% 3.5% 2% 3.5%;
+  }
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* LIGHTNING BOLT EFFECT — SVG jagged path with animated glow     */
+  /* ════════════════════════════════════════════════════════════════ */
+
+  .lightning-border {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+
+  .lightning-border svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* The main bolt path — thicker, brighter */
+  .bolt-core {
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: bevel;
+  }
+
+  /* Outer glow layer — wider, more intense */
+  .bolt-glow {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.55;
+    filter: blur(4px);
+  }
+
+  /* Wide ambient glow — much bigger spread */
+  .bolt-ambient {
+    fill: none;
+    stroke-width: 22;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.2;
+    filter: blur(10px);
+  }
+
+  /* Hot inner core — white-hot center line */
+  .bolt-hot {
+    fill: none;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: bevel;
+    stroke: #fff;
+    opacity: 0.9;
+  }
+
+  /* Animated colour cycling — faster, punchier */
+  @keyframes bolt-pulse {
+    0%   { stroke: #8B5CF6; opacity: 1; }
+    10%  { stroke: #c4b5fd; opacity: 1; }
+    20%  { stroke: #60a5fa; opacity: 0.95; }
+    35%  { stroke: #fff; opacity: 1; }
+    50%  { stroke: #a78bfa; opacity: 1; }
+    65%  { stroke: #818cf8; opacity: 0.95; }
+    80%  { stroke: #c084fc; opacity: 1; }
+    100% { stroke: #8B5CF6; opacity: 1; }
+  }
+  @keyframes bolt-pulse-glow {
+    0%   { stroke: #8B5CF6; opacity: 0.5; }
+    10%  { stroke: #c4b5fd; opacity: 0.7; }
+    20%  { stroke: #60a5fa; opacity: 0.55; }
+    35%  { stroke: #e0e7ff; opacity: 0.75; }
+    50%  { stroke: #a78bfa; opacity: 0.6; }
+    65%  { stroke: #818cf8; opacity: 0.55; }
+    80%  { stroke: #c084fc; opacity: 0.65; }
+    100% { stroke: #8B5CF6; opacity: 0.5; }
+  }
+  @keyframes bolt-pulse-ambient {
+    0%   { stroke: #7c3aed; opacity: 0.18; }
+    25%  { stroke: #60a5fa; opacity: 0.28; }
+    50%  { stroke: #c084fc; opacity: 0.22; }
+    75%  { stroke: #818cf8; opacity: 0.25; }
+    100% { stroke: #7c3aed; opacity: 0.18; }
+  }
+  @keyframes bolt-hot-pulse {
+    0%, 100% { opacity: 0.7; }
+    25%      { opacity: 1; }
+    50%      { opacity: 0.5; }
+    75%      { opacity: 0.9; }
+  }
+
+  .bolt-core   { animation: bolt-pulse 1.8s ease-in-out infinite; }
+  .bolt-glow   { animation: bolt-pulse-glow 1.8s ease-in-out infinite; }
+  .bolt-ambient { animation: bolt-pulse-ambient 1.8s ease-in-out infinite; }
+  .bolt-hot    { animation: bolt-hot-pulse 1.2s ease-in-out infinite; }
+
+  /* Stagger the second & third bolts */
+  .bolt-set-2 .bolt-core   { animation-delay: 0.6s; }
+  .bolt-set-2 .bolt-glow   { animation-delay: 0.6s; }
+  .bolt-set-2 .bolt-ambient { animation-delay: 0.6s; }
+  .bolt-set-2 .bolt-hot    { animation-delay: 0.6s; }
+  .bolt-set-3 .bolt-core   { animation-delay: 1.2s; }
+  .bolt-set-3 .bolt-glow   { animation-delay: 1.2s; }
+  .bolt-set-3 .bolt-ambient { animation-delay: 1.2s; }
+  .bolt-set-3 .bolt-hot    { animation-delay: 1.2s; }
+
+  /* Branch bolts — more visible, sharper */
+  .bolt-branch {
+    fill: none;
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: bevel;
+    opacity: 0;
+    animation: branch-flicker 2s ease-in-out infinite;
+  }
+  .bolt-branch-glow {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    filter: blur(3px);
+    animation: branch-flicker-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes branch-flicker {
+    0%, 100% { opacity: 0; stroke: #8B5CF6; }
+    3%       { opacity: 1; stroke: #fff; }
+    6%       { opacity: 0.15; stroke: #a78bfa; }
+    9%       { opacity: 0.85; stroke: #e0e7ff; }
+    14%      { opacity: 0.4; stroke: #c4b5fd; }
+    20%      { opacity: 0; stroke: #8B5CF6; }
+  }
+  @keyframes branch-flicker-glow {
+    0%, 100% { opacity: 0; stroke: #7c3aed; }
+    3%       { opacity: 0.6; stroke: #c4b5fd; }
+    6%       { opacity: 0.1; stroke: #8B5CF6; }
+    9%       { opacity: 0.5; stroke: #a78bfa; }
+    14%      { opacity: 0.2; stroke: #8B5CF6; }
+    20%      { opacity: 0; stroke: #7c3aed; }
+  }
+
+  .bolt-branch.b2, .bolt-branch-glow.b2 { animation-delay: 0.7s; }
+  .bolt-branch.b3, .bolt-branch-glow.b3 { animation-delay: 1.3s; }
+  .bolt-branch.b4, .bolt-branch-glow.b4 { animation-delay: 0.3s; }
+  .bolt-branch.b5, .bolt-branch-glow.b5 { animation-delay: 1.8s; }
+  .bolt-branch.b6, .bolt-branch-glow.b6 { animation-delay: 0.9s; }
+
+  /* Spark nodes — bigger, brighter */
+  .spark-node {
+    fill: #fff;
+    opacity: 0;
+    animation: spark-pop 2s ease-in-out infinite;
+  }
+  .spark-node:nth-child(2) { animation-delay: 0.5s; }
+  .spark-node:nth-child(3) { animation-delay: 1.1s; }
+  .spark-node:nth-child(4) { animation-delay: 0.3s; }
+  .spark-node:nth-child(5) { animation-delay: 1.6s; }
+  .spark-node:nth-child(6) { animation-delay: 0.8s; }
+  .spark-node:nth-child(7) { animation-delay: 1.3s; }
+  .spark-node:nth-child(8) { animation-delay: 0.2s; }
+
+  @keyframes spark-pop {
+    0%, 100% { opacity: 0; r: 1; }
+    3%       { opacity: 1; r: 3.5; }
+    6%       { opacity: 0.3; r: 1.5; }
+    9%       { opacity: 0.9; r: 2.5; }
+    15%      { opacity: 0; r: 1; }
+  }
+
+  /* ── TV content header / footer ── */
+  .tv-header {
+    text-align: center;
+    padding-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .tv-header h1 {
+    font-size: 16px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .tv-footer {
+    text-align: center;
+    padding-top: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 10px;
+  }
+  .tv-footer .label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.35);
+  }
+  .tv-footer .time {
+    font-size: 18px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+  }
+
+  .tv-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── TV1 list rows ── */
+  .tv1-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .tv1-row .name {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    padding-left: 4px;
+  }
+  .tv1-row .type-badge {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.3);
+    margin-left: 8px;
+  }
+  .tv1-row .wait {
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    min-width: 50px;
+    text-align: right;
+  }
+  .tv1-row .wait-label {
+    font-size: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.35);
+    margin-left: 4px;
+  }
+  .tv1-row .status-closed { color: #ef4444; font-weight: 900; font-size: 11px; text-transform: uppercase; }
+  .tv1-row .status-delayed { color: #f0ad4e; font-weight: 900; font-size: 11px; text-transform: uppercase; }
+
+  /* ── TV2/TV2.5 banner rows ── */
+  .banner-row {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .banner-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  }
+  .banner-bg.has-art {
+    background-size: cover;
+    background-position: center;
+  }
+  .banner-darken {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.15);
+    z-index: 2;
+  }
+  .banner-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right,
+      transparent 35%, rgba(0,0,0,0.4) 55%,
+      rgba(0,0,0,0.75) 72%, rgba(0,0,0,0.92) 85%,
+      rgba(0,0,0,0.98) 100%),
+    linear-gradient(to bottom,
+      rgba(0,0,0,0.15) 0%, transparent 20%,
+      transparent 80%, rgba(0,0,0,0.15) 100%);
+    z-index: 3;
+  }
+  .banner-logo {
+    position: absolute;
+    left: 3%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6;
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(139,92,246,0.5);
+    letter-spacing: 0.02em;
+  }
+  .banner-status {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4%;
+  }
+  .banner-wait {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .banner-wait .num {
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: #fff;
+  }
+  .banner-wait .unit {
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
+
+  /* ── TV3 show cards ── */
+  .tv3-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    height: 100%;
+  }
+  .tv3-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 8px 10px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  }
+  .tv3-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+    z-index: 1;
+  }
+  .tv3-card-content {
+    position: relative;
+    z-index: 2;
+  }
+  .tv3-card .show-name {
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 3px;
+  }
+  .tv3-card .show-time {
+    font-size: 8px;
+    color: rgba(255,255,255,0.5);
+  }
+  .tv3-card .show-next {
+    font-size: 11px;
+    font-weight: 900;
+    color: #a78bfa;
+    margin-top: 2px;
+  }
+
+  /* ── TV4 carousel indicator ── */
+  .tv4-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+  }
+  .tv4-dots {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .tv4-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+  }
+  .tv4-dot.active {
+    background: #8B5CF6;
+    box-shadow: 0 0 8px rgba(139,92,246,0.6);
+  }
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* SCREAM METER — Skull-based fear rating cards                    */
+  /* ════════════════════════════════════════════════════════════════ */
+
+  .fear-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .fear-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  }
+  .fear-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top,
+      rgba(0,0,0,0.92) 0%,
+      rgba(0,0,0,0.6) 40%,
+      rgba(0,0,0,0.25) 70%,
+      transparent 100%);
+    z-index: 1;
+  }
+  .fear-card-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 10px 8px;
+    margin-top: auto;
+  }
+  /* Logo image on fear cards */
+  .fear-card-logo {
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    z-index: 3;
+    height: 32%;
+    width: auto;
+    max-width: 65%;
+    object-fit: contain;
+    object-position: left top;
+    opacity: 0.85;
+  }
+  .fear-card .fear-name {
+    font-size: 9px;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+  }
+  .fear-desc {
+    font-size: 6.5px;
+    line-height: 1.35;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 5px;
+  }
+
+  /* Skull row */
+  .skull-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .skull-row .skull-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .skull-row .skull-icon.empty {
+    opacity: 0.15;
+  }
+  .skull-row .skull-icon.filled {
+    filter: drop-shadow(0 0 3px rgba(220, 38, 38, 0.8)) drop-shadow(0 0 6px rgba(220, 38, 38, 0.4));
+  }
+
+  /* Rank number badge */
+  .fear-rank {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    z-index: 3;
+    font-size: 20px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.08);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Skull glow animation */
+  @keyframes skull-glow {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(220,38,38,0.8)) drop-shadow(0 0 6px rgba(220,38,38,0.4)); }
+    50%      { filter: drop-shadow(0 0 5px rgba(239,68,68,0.9)) drop-shadow(0 0 10px rgba(220,38,38,0.6)); }
+  }
+  .skull-icon.filled { animation: skull-glow 3s ease-in-out infinite; }
+  .skull-icon.filled:nth-child(2) { animation-delay: 0.3s; }
+  .skull-icon.filled:nth-child(3) { animation-delay: 0.6s; }
+  .skull-icon.filled:nth-child(4) { animation-delay: 0.9s; }
+  .skull-icon.filled:nth-child(5) { animation-delay: 1.2s; }
+  .skull-icon.filled:nth-child(6) { animation-delay: 1.5s; }
+
+  /* ── Page-level heading ── */
+  .page-heading {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  .page-heading h1 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .page-heading p {
+    color: rgba(255,255,255,0.35);
+    font-size: 14px;
+  }
+
+  /* Note label at bottom of page */
+  .notes-section {
+    max-width: 1800px;
+    margin: 50px auto 0;
+    padding: 24px;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+  }
+  .notes-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+  }
+  .notes-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  .notes-section li {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .notes-section li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #8B5CF6;
+    transform: translateY(-50%);
+    box-shadow: 0 0 6px rgba(139,92,246,0.5);
+  }
+
+  /* ── Full-width preview overrides ── */
+  .fw .fear-card-logo {
+    height: 38%;
+  }
+  .fw .fear-name { font-size: 12px !important; margin-bottom: 4px !important; }
+  .fw .fear-desc { font-size: 8.5px !important; margin-bottom: 7px !important; }
+  .fw .skull-row .skull-icon { width: 20px !important; height: 20px !important; }
+  .fw .skull-row { gap: 3px !important; }
+  .fw .fear-rank { font-size: 32px !important; }
+  .fw .fear-card-content { padding: 0 14px 12px !important; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- Inline SVG skull symbol — used via <use> everywhere             -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden;">
+  <defs>
+    <symbol id="skull-sym" viewBox="0 0 24 24">
+      <!-- Skull shape -->
+      <path d="M12 2C7.03 2 3 5.58 3 10c0 2.07.86 3.95 2.25 5.33V18a1 1 0 0 0 1 1h1.5v2a1 1 0 0 0 1 1h1.5a1 1 0 0 0 1-1v-2h1.5v2a1 1 0 0 0 1 1h1.5a1 1 0 0 0 1-1v-2h1.5a1 1 0 0 0 1-1v-2.67C20.14 13.95 21 12.07 21 10c0-4.42-4.03-8-9-8z" fill="#DC2626"/>
+      <!-- Eye sockets -->
+      <circle cx="9" cy="10" r="2" fill="#0a0a0a"/>
+      <circle cx="15" cy="10" r="2" fill="#0a0a0a"/>
+      <!-- Nose -->
+      <path d="M12 13.5l-1 1.5h2l-1-1.5z" fill="#0a0a0a"/>
+      <!-- Teeth line -->
+      <line x1="8" y1="17" x2="16" y2="17" stroke="#0a0a0a" stroke-width="0.5"/>
+      <line x1="10" y1="16" x2="10" y2="18" stroke="#0a0a0a" stroke-width="0.4"/>
+      <line x1="12" y1="16" x2="12" y2="18" stroke="#0a0a0a" stroke-width="0.4"/>
+      <line x1="14" y1="16" x2="14" y2="18" stroke="#0a0a0a" stroke-width="0.4"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- Reusable SVG Lightning Bolt Templates                          -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<script>
+// Generates a jagged lightning bolt — more segments = sharper, higher jitter = bigger spikes
+function generateBolt(width, y, segments, jitter) {
+  const segW = width / segments;
+  let d = `M 0 ${y}`;
+  let prevY = y;
+  for (let i = 1; i < segments; i++) {
+    const x = i * segW;
+    // Sharp directional changes — each point yanks hard in the opposite direction
+    const direction = (Math.random() > 0.5 ? 1 : -1);
+    const spike = direction * (Math.random() * jitter * 0.7 + jitter * 0.3);
+    // Clamp so it doesn't leave the viewBox too much
+    const newY = Math.max(y - jitter, Math.min(y + jitter, prevY + spike));
+    d += ` L ${x.toFixed(1)} ${newY.toFixed(1)}`;
+    prevY = newY;
+  }
+  d += ` L ${width} ${y}`;
+  return d;
+}
+
+// Generates a branching fork with multiple sub-segments (jagged, not smooth)
+function generateBranch(startX, startY, length, angle) {
+  const segments = 3 + Math.floor(Math.random() * 3);
+  const segLen = length / segments;
+  let d = `M ${startX.toFixed(1)} ${startY.toFixed(1)}`;
+  let cx = startX, cy = startY;
+  for (let i = 0; i < segments; i++) {
+    const jitterAngle = angle + (Math.random() - 0.5) * 0.8;
+    cx += Math.cos(jitterAngle) * segLen;
+    cy += Math.sin(jitterAngle) * segLen;
+    d += ` L ${cx.toFixed(1)} ${cy.toFixed(1)}`;
+  }
+  return d;
+}
+
+// Create the full SVG content for a lightning border
+function createLightningSVG(id) {
+  const w = 1000;
+  const h = 20;
+  const cy = h / 2;
+
+  // 3 overlapping bolts — lots of segments for jagged look, high jitter
+  const bolt1 = generateBolt(w, cy, 80, 9);
+  const bolt2 = generateBolt(w, cy, 65, 7);
+  const bolt3 = generateBolt(w, cy, 50, 8);
+
+  // More branches — 10 forks
+  const branches = [];
+  for (let i = 0; i < 10; i++) {
+    const bx = 50 + Math.random() * 900;
+    const by = cy + (Math.random() - 0.5) * 6;
+    const angle = (Math.random() > 0.5 ? -1 : 1) * (0.4 + Math.random() * 1.0);
+    const len = 20 + Math.random() * 35;
+    branches.push({ d: generateBranch(bx, by, len, angle), delay: i });
+  }
+
+  // More sparks — 8 nodes
+  const sparks = [];
+  for (let i = 0; i < 8; i++) {
+    sparks.push({
+      cx: 50 + Math.random() * 900,
+      cy: cy + (Math.random() - 0.5) * 6,
+    });
+  }
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ambient glow — all 3 bolts -->
+      <path class="bolt-ambient" d="${bolt1}" />
+      <path class="bolt-ambient bolt-set-2" d="${bolt2}" />
+      <!-- Outer glow -->
+      <path class="bolt-glow" d="${bolt1}" />
+      <path class="bolt-glow bolt-set-2" d="${bolt2}" />
+      <path class="bolt-glow bolt-set-3" d="${bolt3}" />
+      <!-- Core bolt -->
+      <path class="bolt-core" d="${bolt1}" />
+      <path class="bolt-core bolt-set-2" d="${bolt2}" />
+      <path class="bolt-core bolt-set-3" d="${bolt3}" />
+      <!-- White-hot inner line on primary bolt -->
+      <path class="bolt-hot" d="${bolt1}" />
+      <!-- Branches -->
+      ${branches.map((b, i) => `
+        <path class="bolt-branch-glow b${(i % 6) + 1}" d="${b.d}" />
+        <path class="bolt-branch b${(i % 6) + 1}" d="${b.d}" />
+      `).join('')}
+      <!-- Spark nodes -->
+      ${sparks.map(s => `
+        <circle class="spark-node" cx="${s.cx.toFixed(1)}" cy="${s.cy.toFixed(1)}" r="2">
+          <animate attributeName="opacity" values="0;1;0.2;0.9;0" dur="${(1.5 + Math.random() * 1.5).toFixed(1)}s" repeatCount="indefinite" begin="${(Math.random() * 2).toFixed(1)}s" />
+          <animate attributeName="r" values="1;3.5;1.5;2.5;1" dur="${(1.5 + Math.random() * 1.5).toFixed(1)}s" repeatCount="indefinite" begin="${(Math.random() * 2).toFixed(1)}s" />
+        </circle>
+      `).join('')}
+    </svg>
+  `;
+}
+
+// Helper: generate skull row HTML
+function skullRow(count, maxSkulls, size) {
+  const sz = size || 14;
+  let html = '<div class="skull-row">';
+  for (let i = 1; i <= maxSkulls; i++) {
+    const cls = i <= count ? 'skull-icon filled' : 'skull-icon empty';
+    html += `<svg class="${cls}" width="${sz}" height="${sz}" viewBox="0 0 24 24"><use href="#skull-sym"/></svg>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Populate lightning borders
+  document.querySelectorAll('.lightning-border').forEach((el, i) => {
+    el.innerHTML = createLightningSVG('bolt-' + i);
+  });
+
+  // Regenerate bolts rapidly for a violent, crackling feel
+  setInterval(() => {
+    document.querySelectorAll('.lightning-border').forEach((el, i) => {
+      el.innerHTML = createLightningSVG('bolt-regen-' + i);
+    });
+  }, 2500);
+
+  // Populate skull ratings
+  document.querySelectorAll('[data-skulls]').forEach(el => {
+    const count = parseInt(el.getAttribute('data-skulls'), 10);
+    const max = parseInt(el.getAttribute('data-max') || '6', 10);
+    const size = parseInt(el.getAttribute('data-size') || '14', 10);
+    el.innerHTML = skullRow(count, max, size);
+  });
+});
+</script>
+
+<div class="page-heading">
+  <h1>TV Screen Mockups</h1>
+  <p>Tesla coil / lightning bolt branding + The Scream Meter (1-6 Scream Skulls)</p>
+</div>
+
+<div class="mockup-grid">
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TV1 — Queue times & show times list                            -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="mockup-card">
+    <div class="mockup-label">TV1 — Queue Times & Show Times List</div>
+    <div class="tv-frame">
+      <div class="tv-header">
+        <h1 style="font-size:14px; font-weight:800;">Mazes & Shows</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content" style="overflow-y: auto;">
+        <div class="tv1-row">
+          <span class="name">Westlake Witch Trials</span>
+          <span class="type-badge">MAZE</span>
+          <span class="wait">45</span>
+          <span class="wait-label">MIN</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">The Bunker</span>
+          <span class="type-badge">MAZE</span>
+          <span class="wait">30</span>
+          <span class="wait-label">MIN</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">Drowned</span>
+          <span class="type-badge">MAZE</span>
+          <span class="wait">55</span>
+          <span class="wait-label">MIN</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">Strings of Control</span>
+          <span class="type-badge">MAZE</span>
+          <span class="wait">20</span>
+          <span class="wait-label">MIN</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">Night Terrors</span>
+          <span class="type-badge">MAZE</span>
+          <span class="status-closed">Closed</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">Signal Loss</span>
+          <span class="type-badge">MAZE</span>
+          <span class="wait">40</span>
+          <span class="wait-label">MIN</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">The Summoning</span>
+          <span class="type-badge">SHOW</span>
+          <span class="wait" style="font-size:10px; color:#a78bfa;">7:30 PM</span>
+        </div>
+        <div class="tv1-row">
+          <span class="name">Nightmare Realm</span>
+          <span class="type-badge">MAZE</span>
+          <span class="wait">35</span>
+          <span class="wait-label">MIN</span>
+        </div>
+        <div class="tv1-row" style="border-bottom:none;">
+          <span class="name">Shadows Unleashed</span>
+          <span class="type-badge">SHOW</span>
+          <span class="wait" style="font-size:10px; color:#a78bfa;">8:00 PM</span>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 4px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TV2 — 2-up ride banners with scrolling ticker                  -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="mockup-card">
+    <div class="mockup-label">TV2 — Ride Banners (2-up, scrolling)</div>
+    <div class="tv-frame">
+      <div class="tv-header">
+        <h1>Maze Queue Times</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="banner-row" style="flex: 1;">
+          <div class="banner-bg has-art" style="background: linear-gradient(135deg, #2d1a0a 0%, #1a0d05 100%);"></div>
+          <div class="banner-darken"></div>
+          <div class="banner-gradient"></div>
+          <div class="banner-logo">Westlake Witch Trials</div>
+          <div class="banner-status">
+            <div class="banner-wait">
+              <span class="num" style="font-size: 32px;">45</span>
+              <span class="unit">Minutes</span>
+            </div>
+          </div>
+        </div>
+        <div class="banner-row" style="flex: 1;">
+          <div class="banner-bg has-art" style="background: linear-gradient(135deg, #1a1a0a 0%, #0d0d05 100%);"></div>
+          <div class="banner-darken"></div>
+          <div class="banner-gradient"></div>
+          <div class="banner-logo">The Bunker</div>
+          <div class="banner-status">
+            <div class="banner-wait">
+              <span class="num" style="font-size: 32px;">30</span>
+              <span class="unit">Minutes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 6px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TV2.5 — 4-up compact ride banners                              -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="mockup-card">
+    <div class="mockup-label">TV2.5 — Compact 4-up Ride Banners</div>
+    <div class="tv-frame">
+      <div class="tv-header">
+        <h1>Maze Queue Times</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content" style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="banner-row" style="flex: 1;">
+          <div class="banner-bg has-art" style="background: linear-gradient(135deg, #2d1a0a 0%, #1a0d05 100%);"></div>
+          <div class="banner-darken"></div>
+          <div class="banner-gradient"></div>
+          <div class="banner-logo" style="font-size:11px;">Westlake Witch Trials</div>
+          <div class="banner-status">
+            <div class="banner-wait">
+              <span class="num" style="font-size: 22px;">45</span>
+              <span class="unit">Minutes</span>
+            </div>
+          </div>
+        </div>
+        <div class="banner-row" style="flex: 1;">
+          <div class="banner-bg has-art" style="background: linear-gradient(135deg, #1a1a0a 0%, #0d0d05 100%);"></div>
+          <div class="banner-darken"></div>
+          <div class="banner-gradient"></div>
+          <div class="banner-logo" style="font-size:11px;">The Bunker</div>
+          <div class="banner-status">
+            <div class="banner-wait">
+              <span class="num" style="font-size: 22px;">30</span>
+              <span class="unit">Minutes</span>
+            </div>
+          </div>
+        </div>
+        <div class="banner-row" style="flex: 1;">
+          <div class="banner-bg has-art" style="background: linear-gradient(135deg, #0a1a1a 0%, #050d0d 100%);"></div>
+          <div class="banner-darken"></div>
+          <div class="banner-gradient"></div>
+          <div class="banner-logo" style="font-size:11px;">Drowned</div>
+          <div class="banner-status">
+            <div class="banner-wait">
+              <span class="num" style="font-size: 22px;">55</span>
+              <span class="unit">Minutes</span>
+            </div>
+          </div>
+        </div>
+        <div class="banner-row" style="flex: 1;">
+          <div class="banner-bg has-art" style="background: linear-gradient(135deg, #1a1a0a 0%, #0d0d05 100%);"></div>
+          <div class="banner-darken"></div>
+          <div class="banner-gradient"></div>
+          <div class="banner-logo" style="font-size:11px;">Strings of Control</div>
+          <div class="banner-status">
+            <div class="banner-wait">
+              <span class="num" style="font-size: 22px;">20</span>
+              <span class="unit">Minutes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 4px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TV3 — Show times with artwork                                  -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="mockup-card">
+    <div class="mockup-label">TV3 — Show Schedule</div>
+    <div class="tv-frame">
+      <div class="tv-header">
+        <h1 style="font-size:17px;">Show Schedule</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content">
+        <div class="tv3-grid">
+          <div class="tv3-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0d0515 100%);">
+            <div class="tv3-card-gradient"></div>
+            <div class="tv3-card-content">
+              <div class="show-name">The Summoning</div>
+              <div class="show-time">6:00 PM &bull; 7:30 PM &bull; 9:00 PM</div>
+              <div class="show-next">Next: 7:30 PM</div>
+            </div>
+          </div>
+          <div class="tv3-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0d0515 100%);">
+            <div class="tv3-card-gradient"></div>
+            <div class="tv3-card-content">
+              <div class="show-name">Shadows Unleashed</div>
+              <div class="show-time">6:30 PM &bull; 8:00 PM &bull; 9:30 PM</div>
+              <div class="show-next">Next: 8:00 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 6px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TV4 — Auto-carousel of all TV views                            -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="mockup-card">
+    <div class="mockup-label">TV4 — Auto-Carousel</div>
+    <div class="tv-frame">
+      <div class="tv-header">
+        <h1 style="font-size:14px; font-weight:800;">Maze Queue Times</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content">
+        <div class="tv4-overlay">
+          <div style="font-size:11px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.15em;">Cycling through views</div>
+          <div class="tv4-dots">
+            <div class="tv4-dot active"></div>
+            <div class="tv4-dot"></div>
+            <div class="tv4-dot"></div>
+            <div class="tv4-dot"></div>
+          </div>
+          <div style="margin-top: 12px; font-size: 10px; color: rgba(255,255,255,0.15);">
+            TV2 &rarr; TV3 &rarr; TV1 &rarr; Scream Meter
+          </div>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 6px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- NEW: The Scream Meter — 1-6 Scream Skulls, most → least scary  -->
+  <!-- Ratings remapped to 1-6 skull scale:                            -->
+  <!--   Night Terrors: 6, Drowned: 5, Nightmare Realm: 5,            -->
+  <!--   Westlake: 4, Shadows: 4, Bunker: 3, Summoning: 3,           -->
+  <!--   Strings: 2, Signal Loss: 1                                   -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="mockup-card">
+    <div class="mockup-label" style="background: linear-gradient(90deg, #0d0d0d, #1a0a20); border-color: #2a1a3a;">
+      NEW — The Scream Meter (1-6 Scream Skulls)
+    </div>
+    <div class="tv-frame">
+      <div class="tv-header">
+        <h1 style="font-size:15px;">The Scream Meter</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content">
+        <div class="fear-grid">
+          <!-- #1 Night Terrors — 6 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);">
+            <span class="fear-rank">#1</span>
+            <img class="fear-card-logo" src="/logos/night-terrors.webp" alt="Night Terrors">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Night Terrors</div>
+              <div class="fear-desc">Plunged into total darkness. Your worst fears manifest around every corner.</div>
+              <div data-skulls="6" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #2 Drowned — 5 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #0a1a1a 0%, #050a0a 100%);">
+            <span class="fear-rank">#2</span>
+            <img class="fear-card-logo" src="/logos/drowned.webp" alt="Drowned">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Drowned</div>
+              <div class="fear-desc">Waterlogged corridors hide the restless dead beneath the surface.</div>
+              <div data-skulls="5" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #3 Nightmare Realm — 5 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #151520 0%, #0a0a10 100%);">
+            <span class="fear-rank">#3</span>
+            <img class="fear-card-logo" src="/logos/nightmare-realm.webp" alt="Nightmare Realm">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Nightmare Realm</div>
+              <div class="fear-desc">Reality fractures as twisted dreamscapes blur the line between sleep and death.</div>
+              <div data-skulls="5" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #4 Westlake Witch Trials — 4 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #2d1a0a 0%, #0d0805 100%);">
+            <span class="fear-rank">#4</span>
+            <img class="fear-card-logo" src="/logos/westlake-witch-trials.webp" alt="Westlake Witch Trials">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Westlake Witch Trials</div>
+              <div class="fear-desc">Accused and condemned. The witches of Westlake demand their revenge.</div>
+              <div data-skulls="4" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #5 Shadows Unleashed — 4 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%);">
+            <span class="fear-rank">#5</span>
+            <img class="fear-card-logo" src="/logos/shadows-unleashed.webp" alt="Shadows Unleashed">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Shadows Unleashed</div>
+              <div class="fear-desc">Ancient shadows stir in the void. Something primal hunts in the dark.</div>
+              <div data-skulls="4" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #6 The Bunker — 3 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a0a 0%, #0a0a05 100%);">
+            <span class="fear-rank">#6</span>
+            <img class="fear-card-logo" src="/logos/the-bunker.webp" alt="The Bunker">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">The Bunker</div>
+              <div class="fear-desc">A derelict military bunker overrun by failed experiments gone feral.</div>
+              <div data-skulls="3" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #7 The Summoning — 3 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%);">
+            <span class="fear-rank">#7</span>
+            <img class="fear-card-logo" src="/logos/the-summoning.webp" alt="The Summoning">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">The Summoning</div>
+              <div class="fear-desc">A forbidden ritual pulls demonic forces into our world. Witness the ceremony.</div>
+              <div data-skulls="3" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #8 Strings of Control — 2 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a05 0%, #0a0a02 100%);">
+            <span class="fear-rank">#8</span>
+            <img class="fear-card-logo" src="/logos/strings-of-control.webp" alt="Strings of Control">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Strings of Control</div>
+              <div class="fear-desc">Marionettes dance on invisible strings. Who is pulling yours?</div>
+              <div data-skulls="2" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+          <!-- #9 Signal Loss — 1 skull -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);">
+            <span class="fear-rank">#9</span>
+            <img class="fear-card-logo" src="/logos/signal-loss.webp" alt="Signal Loss">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Signal Loss</div>
+              <div class="fear-desc">Static fills the screens. Something is broadcasting from inside the walls.</div>
+              <div data-skulls="1" data-max="6" data-size="14"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 6px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end mockup-grid -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Full-width Scream Meter — larger preview            -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div style="max-width: 1800px; margin: 40px auto 0;">
+  <h2 class="section-title">The Scream Meter — Full Width Preview</h2>
+  <div class="mockup-card full-width">
+    <div class="mockup-label" style="background: linear-gradient(90deg, #0d0d0d, #1a0a20); border-color: #2a1a3a;">
+      The Scream Meter — 16:9 Full Preview (ranked most &rarr; least scary, 1-6 Scream Skulls)
+    </div>
+    <div class="tv-frame fw">
+      <div class="tv-header">
+        <h1 style="font-size: 22px;">The Scream Meter</h1>
+        <div class="lightning-border"></div>
+      </div>
+      <div class="tv-content">
+        <div class="fear-grid" style="gap: 14px;">
+          <!-- #1 Night Terrors — 6 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); border-radius: 10px;">
+            <span class="fear-rank">#1</span>
+            <img class="fear-card-logo" src="/logos/night-terrors.webp" alt="Night Terrors">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Night Terrors</div>
+              <div class="fear-desc">Plunged into total darkness. Your worst fears manifest around every corner.</div>
+              <div data-skulls="6" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #2 Drowned — 5 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #0a1a1a 0%, #050a0a 100%); border-radius: 10px;">
+            <span class="fear-rank">#2</span>
+            <img class="fear-card-logo" src="/logos/drowned.webp" alt="Drowned">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Drowned</div>
+              <div class="fear-desc">Waterlogged corridors hide the restless dead beneath the surface.</div>
+              <div data-skulls="5" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #3 Nightmare Realm — 5 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #151520 0%, #0a0a10 100%); border-radius: 10px;">
+            <span class="fear-rank">#3</span>
+            <img class="fear-card-logo" src="/logos/nightmare-realm.webp" alt="Nightmare Realm">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Nightmare Realm</div>
+              <div class="fear-desc">Reality fractures as twisted dreamscapes blur the line between sleep and death.</div>
+              <div data-skulls="5" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #4 Westlake Witch Trials — 4 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #2d1a0a 0%, #0d0805 100%); border-radius: 10px;">
+            <span class="fear-rank">#4</span>
+            <img class="fear-card-logo" src="/logos/westlake-witch-trials.webp" alt="Westlake Witch Trials">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Westlake Witch Trials</div>
+              <div class="fear-desc">Accused and condemned. The witches of Westlake demand their revenge.</div>
+              <div data-skulls="4" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #5 Shadows Unleashed — 4 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%); border-radius: 10px;">
+            <span class="fear-rank">#5</span>
+            <img class="fear-card-logo" src="/logos/shadows-unleashed.webp" alt="Shadows Unleashed">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Shadows Unleashed</div>
+              <div class="fear-desc">Ancient shadows stir in the void. Something primal hunts in the dark.</div>
+              <div data-skulls="4" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #6 The Bunker — 3 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a0a 0%, #0a0a05 100%); border-radius: 10px;">
+            <span class="fear-rank">#6</span>
+            <img class="fear-card-logo" src="/logos/the-bunker.webp" alt="The Bunker">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">The Bunker</div>
+              <div class="fear-desc">A derelict military bunker overrun by failed experiments gone feral.</div>
+              <div data-skulls="3" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #7 The Summoning — 3 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a0a2a 0%, #0a0515 100%); border-radius: 10px;">
+            <span class="fear-rank">#7</span>
+            <img class="fear-card-logo" src="/logos/the-summoning.webp" alt="The Summoning">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">The Summoning</div>
+              <div class="fear-desc">A forbidden ritual pulls demonic forces into our world. Witness the ceremony.</div>
+              <div data-skulls="3" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #8 Strings of Control — 2 skulls -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a05 0%, #0a0a02 100%); border-radius: 10px;">
+            <span class="fear-rank">#8</span>
+            <img class="fear-card-logo" src="/logos/strings-of-control.webp" alt="Strings of Control">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Strings of Control</div>
+              <div class="fear-desc">Marionettes dance on invisible strings. Who is pulling yours?</div>
+              <div data-skulls="2" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+          <!-- #9 Signal Loss — 1 skull -->
+          <div class="fear-card" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); border-radius: 10px;">
+            <span class="fear-rank">#9</span>
+            <img class="fear-card-logo" src="/logos/signal-loss.webp" alt="Signal Loss">
+            <div class="fear-card-gradient"></div>
+            <div class="fear-card-content">
+              <div class="fear-name">Signal Loss</div>
+              <div class="fear-desc">Static fills the screens. Something is broadcasting from inside the walls.</div>
+              <div data-skulls="1" data-max="6" data-size="20"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lightning-border" style="margin-top: 8px;"></div>
+      <div class="tv-footer">
+        <span class="label">Park Closes</span>
+        <span class="time">11:00 PM</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Design Notes                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="notes-section">
+  <h3>Design Notes — v3</h3>
+  <ul>
+    <li>Lightning bolts are <strong>jagged SVG polylines</strong> with randomised zigzag segments — Tesla coil / electrical discharge feel</li>
+    <li>Bolts regenerate every 4 seconds so the path changes, creating a living, crackling effect</li>
+    <li>Each bolt has 3 layers: ambient glow (wide, blurred), outer glow (medium blur), and a bright core line</li>
+    <li>Short <strong>branch forks</strong> randomly flicker off the main bolt — like real electrical discharge branching</li>
+    <li><strong>Spark nodes</strong> flash at random junction points along the bolt</li>
+    <li>Colour palette: purple (#8B5CF6) &rarr; blue (#60a5fa) &rarr; white — pulses between them</li>
+    <li>The Scream Meter now uses <strong>1-6 Scream Skull icons</strong> instead of a /10 numeric bar</li>
+    <li>Skulls are neon red (#DC2626) with animated <strong>glowing drop-shadow</strong> — matches concept art</li>
+    <li>Unfilled skulls sit at 15% opacity to show the max scale</li>
+    <li>Each card now includes the <strong>attraction logo</strong> (top-left) and a <strong>brief description</strong> of the maze</li>
+    <li>Cards still ranked <strong>#1 to #9, most scary to least scary</strong>, reading left-to-right, top-to-bottom</li>
+    <li>Skull ratings: Night Terrors (6), Drowned (5), Nightmare Realm (5), Westlake (4), Shadows (4), Bunker (3), Summoning (3), Strings (2), Signal Loss (1)</li>
+    <li>All animation is CSS + lightweight SVG — no canvas, no heavy JS, safe for TV hardware</li>
+  </ul>
+</div>
+
+</body>
+</html>
