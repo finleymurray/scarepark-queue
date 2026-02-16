@@ -65,6 +65,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
   const isClosed = attraction.status === 'CLOSED';
   const isDelayed = attraction.status === 'DELAYED';
   const isAtCapacity = attraction.status === 'AT CAPACITY';
+  const showVignette = slug !== 'the-bunker';
 
   return (
     <div
@@ -74,9 +75,6 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
         overflow: 'hidden',
         position: 'relative',
         background: '#000',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
       {/* Full-bleed background image */}
@@ -93,20 +91,23 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
         />
       )}
 
-      {/* Subtle vignette */}
+      {/* Very slight vignette — skip for bunker */}
+      {showVignette && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.35) 100%)',
+            zIndex: 1,
+          }}
+        />
+      )}
+
+      {/* Content — absolute centred */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.4) 100%)',
-          zIndex: 1,
-        }}
-      />
-
-      {/* Content — dead centre */}
-      <div
-        style={{
-          position: 'relative',
           zIndex: 2,
           display: 'flex',
           flexDirection: 'column',
