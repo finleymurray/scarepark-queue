@@ -6,16 +6,9 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 /**
  * TV5 — Lightning Strike Montage with Glitch
  *
- * Skinny, sudden lightning strikes that hit the logo (which appears IN FRONT
- * of the bolts). Glitchy vibe: scanline tears, RGB channel splits, block
- * displacement on impact. Not thick tesla coils — sharp, cracking lightning.
- *
- * Sequence:
- *   1. Darkness builds (0.8s)
- *   2. Electric charge — skinny bolts crack in (0.6s)
- *   3. 6 logos revealed by striking lightning + glitch bursts (~2.5s each)
- *   4. Final discharge + white-out (0.35s)
- *   5. Repeat
+ * Continuous loop — no black gaps. Each logo holds for ~2.5s with
+ * lightning strikes + glitch bursts on every transition. White flash
+ * punctuates each logo swap. Loops seamlessly from last → first.
  */
 
 /* ── Attraction data ── */
@@ -29,11 +22,7 @@ const ATTRACTIONS = [
 ];
 
 /* ── Timing ── */
-const HOLD_BLACK = 800;
-const CHARGE_UP = 600;
 const LOGO_DURATION = 2500;
-const FLASH_OUT = 350;
-const TOTAL_DURATION = HOLD_BLACK + CHARGE_UP + (ATTRACTIONS.length * LOGO_DURATION) + FLASH_OUT + 300;
 
 /* ══════════════════════════════════════
    Skinny lightning bolt (canvas)
@@ -370,175 +359,107 @@ export default function TV5Lightning() {
     };
     requestAnimationFrame(renderFrame);
 
-    // ── Main sequence ──
-    const runSequence = () => {
+    // ── Show a single logo with lightning + flash transition ──
+    const showLogo = (index: number) => {
       if (!running) return;
-      let t = 0;
       const w = boltCanvas.width;
       const h = boltCanvas.height;
       const cx = w / 2;
       const cy = h / 2;
+      const attraction = ATTRACTIONS[index];
 
-      // Reset
-      s.phase = 'black';
-      s.activeBolts = [];
-      s.staticIntensity = 0;
-      s.glitchIntensity = 0;
-      s.colorBase = '180,220,255';
-      s.tintRgb = '100,180,255';
-      if (logoContainerRef.current) logoContainerRef.current.style.opacity = '0';
-      if (flashRef.current) flashRef.current.style.opacity = '0';
-      if (ambientRef.current) ambientRef.current.style.opacity = '0';
-      if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0';
-      if (logoGlowRef.current) logoGlowRef.current.style.opacity = '0';
-      if (logoImgRef.current) logoImgRef.current.style.filter = '';
+      s.phase = 'logo';
+      s.colorBase = attraction.tintRgb;
+      s.tintRgb = attraction.tintRgb;
 
-      // Phase 2: Charge — just ambient tension build, no bolts yet
-      setTimeout(() => {
-        if (!running) return;
-        s.phase = 'charge';
-        if (ambientRef.current) {
-          ambientRef.current.style.background = 'radial-gradient(ellipse at center, rgba(100,180,255,0.05) 0%, transparent 60%)';
-          ambientRef.current.style.opacity = '0.4';
-        }
-      }, HOLD_BLACK);
-      t = HOLD_BLACK;
+      // White flash on transition
+      if (flashRef.current) {
+        flashRef.current.style.background = '#fff';
+        flashRef.current.style.opacity = '0.6';
+        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.2'; }, 60);
+        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0'; }, 150);
+      }
 
-      // Phase 3: Logo reveals
-      t += CHARGE_UP;
-      ATTRACTIONS.forEach((attraction, i) => {
-        const logoStart = t + i * LOGO_DURATION;
+      // 4-6 converging strikes from all edges
+      const boltCount = 4 + Math.floor(Math.random() * 3);
+      for (let b = 0; b < boltCount; b++) {
+        const [sx, sy] = getEdgePoint((index + b) % 4, w, h);
+        queueBolt(sx, sy, cx + (Math.random() - 0.5) * 30, cy + (Math.random() - 0.5) * 20, {
+          segments: 24, jitter: 50 + Math.random() * 25, width: 2 + Math.random() * 1.5,
+          glowSize: 16 + Math.random() * 10, colorBase: attraction.tintRgb,
+          branchChance: 0.35, branchDepth: 2,
+        }, 250 + Math.random() * 100);
+      }
 
+      // Burst effects
+      fireStaticBurst(0.7, 350, attraction.tintRgb);
+      fireGlitchBurst(0.8, 300);
+
+      // Show logo with RGB split glitch on entry
+      if (logoImgRef.current) {
+        logoImgRef.current.src = `/logos/${attraction.slug}.webp`;
+        logoImgRef.current.alt = attraction.name;
+        applyLogoGlitch(0.8, attraction.tint);
+        setTimeout(() => {
+          if (logoImgRef.current) {
+            logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
+          }
+        }, 100);
+      }
+      if (logoContainerRef.current) {
+        logoContainerRef.current.style.opacity = '1';
+        logoContainerRef.current.style.transform = `scale(1.04) translate(${(Math.random() - 0.5) * 5}px, ${(Math.random() - 0.5) * 3}px)`;
+        setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'scale(1) translate(0,0)'; }, 60);
+      }
+      if (logoGlowRef.current) {
+        logoGlowRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.25) 0%, rgba(${attraction.tintRgb},0.08) 40%, transparent 65%)`;
+        logoGlowRef.current.style.opacity = '1';
+      }
+      if (ambientRef.current) {
+        ambientRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.08) 0%, transparent 65%)`;
+        ambientRef.current.style.opacity = '0.7';
+      }
+      if (edgeGlowRef.current) {
+        edgeGlowRef.current.style.boxShadow = `inset 0 0 80px rgba(${attraction.tintRgb},0.3), inset 0 0 200px rgba(${attraction.tintRgb},0.08)`;
+        edgeGlowRef.current.style.opacity = '0.6';
+        setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.15'; }, 180);
+      }
+
+      // Follow-up strikes during the hold (at ~35% and ~70%)
+      [0.35, 0.7].forEach((frac) => {
         setTimeout(() => {
           if (!running) return;
-          s.phase = 'logo';
-          s.colorBase = attraction.tintRgb;
-          s.tintRgb = attraction.tintRgb;
-
-          // 4-6 converging strikes from all edges, spread across the screen
-          const boltCount = 4 + Math.floor(Math.random() * 3);
-          for (let b = 0; b < boltCount; b++) {
-            // Ensure bolts come from all 4 edges (cycle through them)
-            const [sx, sy] = getEdgePoint((i + b) % 4, w, h);
-            // Target the logo centre with slight variance
-            queueBolt(sx, sy, cx + (Math.random() - 0.5) * 30, cy + (Math.random() - 0.5) * 20, {
-              segments: 24, jitter: 50 + Math.random() * 25, width: 2 + Math.random() * 1.5,
-              glowSize: 16 + Math.random() * 10, colorBase: attraction.tintRgb,
-              branchChance: 0.35, branchDepth: 2,
-            }, 250 + Math.random() * 100);
+          const strikeCount = 2 + Math.floor(Math.random() * 2);
+          for (let sb = 0; sb < strikeCount; sb++) {
+            const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
+            queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
+              segments: 18, jitter: 50, width: 2 + Math.random() * 1, glowSize: 14,
+              colorBase: attraction.tintRgb, branchChance: 0.3, branchDepth: 1,
+            }, 200);
           }
-
-          // Burst effects
-          fireStaticBurst(0.7, 350, attraction.tintRgb);
-          fireGlitchBurst(0.8, 300);
-
-          // Show logo with RGB split glitch on entry
-          if (logoImgRef.current) {
-            logoImgRef.current.src = `/logos/${attraction.slug}.webp`;
-            logoImgRef.current.alt = attraction.name;
-            // Initial RGB split that settles
-            applyLogoGlitch(0.8, attraction.tint);
-            setTimeout(() => {
-              if (logoImgRef.current) {
-                logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
-              }
-            }, 100);
-          }
-          if (logoContainerRef.current) {
-            logoContainerRef.current.style.opacity = '1';
-            // Jolt on reveal
-            logoContainerRef.current.style.transform = `scale(1.04) translate(${(Math.random() - 0.5) * 5}px, ${(Math.random() - 0.5) * 3}px)`;
-            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'scale(1) translate(0,0)'; }, 60);
-          }
-          if (logoGlowRef.current) {
-            logoGlowRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.25) 0%, rgba(${attraction.tintRgb},0.08) 40%, transparent 65%)`;
-            logoGlowRef.current.style.opacity = '1';
-          }
-          if (ambientRef.current) {
-            ambientRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.08) 0%, transparent 65%)`;
-            ambientRef.current.style.opacity = '0.7';
-          }
-          if (edgeGlowRef.current) {
-            edgeGlowRef.current.style.boxShadow = `inset 0 0 80px rgba(${attraction.tintRgb},0.3), inset 0 0 200px rgba(${attraction.tintRgb},0.08)`;
-            edgeGlowRef.current.style.opacity = '0.6';
-            setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.15'; }, 180);
-          }
-          if (flashRef.current) {
-            flashRef.current.style.background = `rgba(${attraction.tintRgb},0.25)`;
-            flashRef.current.style.opacity = '0.4';
-            setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0'; }, 70);
-          }
-        }, logoStart);
-
-        // Follow-up strikes during the logo hold (at ~35% and ~70%)
-        [0.35, 0.7].forEach((frac) => {
+          fireStaticBurst(0.4, 200, attraction.tintRgb);
+          fireGlitchBurst(0.4, 150);
+          applyLogoGlitch(0.5, attraction.tint);
           setTimeout(() => {
-            if (!running) return;
-            const strikeCount = 2 + Math.floor(Math.random() * 2);
-            for (let sb = 0; sb < strikeCount; sb++) {
-              const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
-              queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
-                segments: 18, jitter: 50, width: 2 + Math.random() * 1, glowSize: 14,
-                colorBase: attraction.tintRgb, branchChance: 0.3, branchDepth: 1,
-              }, 200);
+            if (logoImgRef.current) {
+              logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
             }
-            fireStaticBurst(0.4, 200, attraction.tintRgb);
-            fireGlitchBurst(0.4, 150);
-            applyLogoGlitch(0.5, attraction.tint);
-            setTimeout(() => {
-              if (logoImgRef.current) {
-                logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
-              }
-            }, 80);
-            if (logoContainerRef.current) {
-              logoContainerRef.current.style.transform = `translate(${(Math.random() - 0.5) * 4}px, ${(Math.random() - 0.5) * 3}px)`;
-              setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 50);
-            }
-          }, logoStart + LOGO_DURATION * frac);
-        });
+          }, 80);
+          if (logoContainerRef.current) {
+            logoContainerRef.current.style.transform = `translate(${(Math.random() - 0.5) * 4}px, ${(Math.random() - 0.5) * 3}px)`;
+            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 50);
+          }
+        }, LOGO_DURATION * frac);
       });
 
-      // Phase 4: Final discharge
-      const flashStart = t + ATTRACTIONS.length * LOGO_DURATION;
+      // After LOGO_DURATION, move to next logo (seamless loop)
       setTimeout(() => {
-        if (!running) return;
-        s.phase = 'flash';
-
-        // Multiple bolts from every direction
-        for (let b = 0; b < 8; b++) {
-          const [sx, sy] = getEdgePoint(b % 4, w, h);
-          queueBolt(sx, sy, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 40, {
-            segments: 24, jitter: 80, width: 2.5 + Math.random() * 1.5, glowSize: 20,
-            colorBase: '220,240,255', branchChance: 0.4, branchDepth: 2,
-          }, 200);
-        }
-        fireStaticBurst(1.0, 400, null);
-        fireGlitchBurst(1.0, 350);
-
-        if (flashRef.current) { flashRef.current.style.background = '#fff'; flashRef.current.style.opacity = '0.8'; }
-        if (edgeGlowRef.current) {
-          edgeGlowRef.current.style.boxShadow = 'inset 0 0 120px rgba(255,255,255,0.4), inset 0 0 250px rgba(180,220,255,0.15)';
-          edgeGlowRef.current.style.opacity = '1';
-        }
-
-        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.3'; }, 70);
-        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.1'; }, 140);
-        setTimeout(() => {
-          if (flashRef.current) flashRef.current.style.opacity = '0';
-          if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0';
-          if (ambientRef.current) ambientRef.current.style.opacity = '0';
-          if (logoContainerRef.current) logoContainerRef.current.style.opacity = '0';
-          if (logoGlowRef.current) logoGlowRef.current.style.opacity = '0';
-          s.phase = 'black';
-          s.staticIntensity = 0;
-          s.glitchIntensity = 0;
-        }, FLASH_OUT);
-      }, flashStart);
-
-      setTimeout(runSequence, TOTAL_DURATION);
+        showLogo((index + 1) % ATTRACTIONS.length);
+      }, LOGO_DURATION);
     };
 
-    runSequence();
+    // Start immediately with the first logo
+    showLogo(0);
 
     return () => {
       running = false;
