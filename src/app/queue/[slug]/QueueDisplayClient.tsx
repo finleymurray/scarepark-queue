@@ -121,7 +121,6 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
               fontSize: 'min(55vh, 45vw)',
               lineHeight: 0.85,
-              fontVariantNumeric: 'tabular-nums',
               color: theme.color,
               textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
             }}
