@@ -118,7 +118,7 @@ export default function TV4Carousel() {
     }
   }, [activeIndex]);
 
-  /* Carousel timer — instant swap (fading iframes is too heavy for TV hardware) */
+  /* Carousel timer — advances to next view after duration elapses */
   useEffect(() => {
     const current = VIEWS[activeIndex];
     timerRef.current = setTimeout(() => {
@@ -152,7 +152,7 @@ export default function TV4Carousel() {
         </div>
       )}
 
-      {/* Iframe carousel — instant swap, no fade (too heavy for TV hardware) */}
+      {/* Iframe carousel — GPU-composited opacity crossfade */}
       <div className="flex-1 relative overflow-hidden">
         {VIEWS.map((view, i) => (
           <iframe
@@ -162,7 +162,8 @@ export default function TV4Carousel() {
             title={`TV View ${view.path}`}
             className="absolute inset-0 w-full h-full border-0"
             style={{
-              visibility: i === activeIndex ? 'visible' : 'hidden',
+              opacity: i === activeIndex ? 1 : 0,
+              transition: 'opacity 0.5s ease-in-out',
               pointerEvents: i === activeIndex ? 'auto' : 'none',
             }}
           />
