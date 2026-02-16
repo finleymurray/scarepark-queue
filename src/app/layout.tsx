@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Bebas_Neue, Barlow_Condensed } from "next/font/google";
+import { DM_Sans, Bebas_Neue, Teko } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 
@@ -16,10 +16,10 @@ const bebasNeue = Bebas_Neue({
   display: "swap",
 });
 
-const barlowCondensed = Barlow_Condensed({
-  weight: ["700", "800", "900"],
+const teko = Teko({
+  weight: ["700"],
   subsets: ["latin"],
-  variable: "--font-barlow-condensed",
+  variable: "--font-teko",
   display: "swap",
 });
 
@@ -45,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${bebasNeue.variable} ${barlowCondensed.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${bebasNeue.variable} ${teko.variable}`}>
       <head>
         <meta
           httpEquiv="Content-Security-Policy"

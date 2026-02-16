@@ -118,7 +118,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "var(--font-barlow-condensed), 'Barlow Condensed', Impact, sans-serif",
+              fontFamily: "var(--font-teko), 'Teko', Impact, sans-serif",
               fontSize: 'min(55vh, 45vw)',
               fontWeight: 900,
               lineHeight: 0.85,
@@ -131,7 +131,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "var(--font-barlow-condensed), 'Barlow Condensed', Impact, sans-serif",
+              fontFamily: "var(--font-teko), 'Teko', Impact, sans-serif",
               fontSize: 'min(10vh, 8vw)',
               fontWeight: 700,
               lineHeight: 1,
