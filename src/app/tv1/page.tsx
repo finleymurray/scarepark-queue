@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
+import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -251,6 +252,7 @@ function ShowCard({ show }: { show: Attraction }) {
 const TV_SAFE_PADDING = '3.5%';
 
 export default function TVDisplay() {
+  useConnectionHealth('tv1');
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [closingTime, setClosingTime] = useState('');
   const [autoSort, setAutoSort] = useState(false);

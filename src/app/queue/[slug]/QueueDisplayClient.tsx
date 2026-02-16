@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getQueueBg, getQueueTextTheme } from '@/lib/logos';
 import type { Attraction } from '@/types/database';
+import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 
 export default function QueueDisplayClient({ slug }: { slug: string }) {
+  useConnectionHealth(`queue-${slug}`);
   const [attraction, setAttraction] = useState<Attraction | null>(null);
   const [loading, setLoading] = useState(true);
 

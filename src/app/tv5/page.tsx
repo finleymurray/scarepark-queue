@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 
 /**
  * TV5 — Glitch Logo Montage
@@ -57,6 +58,7 @@ function generateTears(count: number): { y: number; shift: number; height: numbe
 }
 
 export default function TV5Glitch() {
+  useConnectionHealth('tv5');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'black' | 'noise' | 'logo' | 'flash'>('black');
   const [logoIndex, setLogoIndex] = useState(-1);

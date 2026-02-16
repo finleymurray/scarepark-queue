@@ -66,6 +66,15 @@ export interface AuditLog {
   created_at: string;
 }
 
+/* ── Screen Monitoring ── */
+
+export interface ScreenHeartbeat {
+  screen_id: string;
+  page: string;
+  last_seen: string;
+  user_agent: string | null;
+}
+
 /* ── Sign-Off System ── */
 
 export type SignoffRoleKey = 'supervisor' | 'show_captain' | 'construction' | 'tech' | 'manager';

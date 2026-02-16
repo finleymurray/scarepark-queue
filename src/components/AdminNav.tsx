@@ -13,6 +13,7 @@ const PRIMARY_TABS = [
 
 const MORE_TABS = [
   { label: 'Users', href: '/admin/users' },
+  { label: 'Screens', href: '/admin/screens' },
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Logs', href: '/admin/logs' },
 ];
