@@ -134,6 +134,8 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
               fontSize: 'min(10vh, 8vw)',
               lineHeight: 1,
+              letterSpacing: '0.35em',
+              textIndent: '0.35em',
               color: theme.color,
               textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
               marginTop: '1vh',
