@@ -152,7 +152,7 @@ const BannerRow = React.memo(function BannerRow({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span
               style={{
-                fontSize: '5.5vw',
+                fontSize: '7vw',
                 fontWeight: 900,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
@@ -163,7 +163,7 @@ const BannerRow = React.memo(function BannerRow({
             </span>
             <span
               style={{
-                fontSize: '0.85vw',
+                fontSize: '1.2vw',
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.2em',
@@ -404,6 +404,22 @@ export default function TV25Display() {
       scrollRef.current.style.transform = 'translateY(0px)';
     }
   }, [totalRides]);
+
+  // Listen for reset-scroll messages from TV4 carousel parent
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.data?.type === 'tv4-reset-scroll') {
+        scrollIndexRef.current = 0;
+        const el = scrollRef.current;
+        if (el) {
+          el.style.transition = 'none';
+          el.style.transform = 'translateY(0px)';
+        }
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Scroll via CSS transition + setTimeout (GPU-composited, no per-frame JS)
   useEffect(() => {

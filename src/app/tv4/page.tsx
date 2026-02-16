@@ -35,7 +35,6 @@ const VIEWS = [
   { path: '/tv2', duration: 30000, title: 'Maze Queue Times', fullscreen: false },
   { path: '/tv3', duration: 15000, title: 'Show Schedule', fullscreen: false },
   { path: '/tv1', duration: 15000, title: 'Mazes & Shows', fullscreen: false },
-  { path: '/tv3.5', duration: 7000, title: 'Fear Rating', fullscreen: false },
   { path: '/tv5', duration: 8500, title: '', fullscreen: true },
 ];
 
@@ -109,6 +108,16 @@ export default function TV4Carousel() {
     };
   }, []);
 
+  /* When active view changes, tell the newly-visible iframe to reset scroll */
+  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
+
+  useEffect(() => {
+    const iframe = iframeRefs.current[activeIndex];
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage({ type: 'tv4-reset-scroll' }, '*');
+    }
+  }, [activeIndex]);
+
   /* Carousel timer — instant swap (fading iframes is too heavy for TV hardware) */
   useEffect(() => {
     const current = VIEWS[activeIndex];
@@ -148,6 +157,7 @@ export default function TV4Carousel() {
         {VIEWS.map((view, i) => (
           <iframe
             key={view.path}
+            ref={(el) => { iframeRefs.current[i] = el; }}
             src={view.path}
             title={`TV View ${view.path}`}
             className="absolute inset-0 w-full h-full border-0"
