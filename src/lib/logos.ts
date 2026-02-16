@@ -42,12 +42,12 @@ export function getAttractionBg(slug: string): string | null {
 
 /** Queue-specific backgrounds (for entrance screens). Falls back to regular bg. */
 const QUEUE_BG: Record<string, string> = {
-  'the-bunker': '/logos/the-bunker-queue-bg.png',
-  'westlake-witch-trials': '/logos/westlake-witch-trials-queue-bg.png',
-  'drowned': '/logos/drowned-queue-bg.png',
-  'night-terrors': '/logos/night-terrors-queue-bg.png',
-  'signal-loss': '/logos/signal-loss-queue-bg.png',
-  'strings-of-control': '/logos/strings-of-control-queue-bg.png',
+  'the-bunker': '/logos/the-bunker-queue-bg.webp',
+  'westlake-witch-trials': '/logos/westlake-witch-trials-queue-bg.webp',
+  'drowned': '/logos/drowned-queue-bg.webp',
+  'night-terrors': '/logos/night-terrors-queue-bg.webp',
+  'signal-loss': '/logos/signal-loss-queue-bg.webp',
+  'strings-of-control': '/logos/strings-of-control-queue-bg.webp',
 };
 
 /** Returns the queue display background for an attraction slug.
