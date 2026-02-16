@@ -75,6 +75,18 @@ export interface ScreenHeartbeat {
   user_agent: string | null;
 }
 
+/* ── Screen Controller ── */
+
+export interface Screen {
+  id: string;
+  code: string;
+  assigned_path: string | null;
+  name: string | null;
+  last_seen: string;
+  user_agent: string | null;
+  created_at: string;
+}
+
 /* ── Sign-Off System ── */
 
 export type SignoffRoleKey = 'supervisor' | 'show_captain' | 'construction' | 'tech' | 'manager';

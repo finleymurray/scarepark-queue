@@ -6,6 +6,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import { useScreenAssignment } from '@/hooks/useScreenAssignment';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -74,6 +75,7 @@ const footerInnerStyle: React.CSSProperties = {
 
 export default function TV4Carousel() {
   useConnectionHealth('tv4');
+  useScreenAssignment();
   const [activeIndex, setActiveIndex] = useState(0);
   const [closingTime, setClosingTime] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

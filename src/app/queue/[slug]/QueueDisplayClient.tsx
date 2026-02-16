@@ -5,9 +5,11 @@ import { supabase } from '@/lib/supabase';
 import { getQueueBg, getQueueTextTheme } from '@/lib/logos';
 import type { Attraction } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import { useScreenAssignment } from '@/hooks/useScreenAssignment';
 
 export default function QueueDisplayClient({ slug }: { slug: string }) {
   useConnectionHealth(`queue-${slug}`);
+  useScreenAssignment();
   const [attraction, setAttraction] = useState<Attraction | null>(null);
   const [loading, setLoading] = useState(true);
 
