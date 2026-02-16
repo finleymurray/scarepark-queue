@@ -118,6 +118,13 @@ export default function TV4Carousel() {
     if (iframe?.contentWindow) {
       iframe.contentWindow.postMessage({ type: 'tv4-reset-scroll' }, '*');
     }
+    // Tell TV5 to restart its sequence when it becomes visible
+    if (VIEWS[activeIndex].path === '/tv5') {
+      const tv5Iframe = iframeRefs.current[VIEWS.findIndex(v => v.path === '/tv5')];
+      if (tv5Iframe?.contentWindow) {
+        tv5Iframe.contentWindow.postMessage({ type: 'tv5-restart' }, '*');
+      }
+    }
   }, [activeIndex]);
 
   /* Carousel timer — advances to next view after duration elapses */

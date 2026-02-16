@@ -214,6 +214,11 @@ export default function TV5Lightning() {
     activeBolts: [] as { x1: number; y1: number; x2: number; y2: number; opts: BoltOpts; born: number; lifespan: number }[],
   });
 
+  // Sequence generation — incremented to cancel pending timeouts on restart
+  const sequenceGenRef = useRef(0);
+  // Expose a restart trigger that the effect can call
+  const restartFnRef = useRef<(() => void) | null>(null);
+
   // Preload logos
   useEffect(() => {
     ATTRACTIONS.forEach((a) => {
@@ -378,8 +383,11 @@ export default function TV5Lightning() {
     requestAnimationFrame(renderFrame);
 
     // ── Show a single logo with lightning + flash transition ──
-    const showLogo = (index: number) => {
+    const showLogo = (index: number, gen?: number) => {
       if (!running) return;
+      // If a newer generation was started, bail out of this chain
+      const myGen = gen ?? sequenceGenRef.current;
+      if (myGen !== sequenceGenRef.current) return;
       const w = boltCanvas.width;
       const h = boltCanvas.height;
       const cx = w / 2;
@@ -446,7 +454,7 @@ export default function TV5Lightning() {
 
       // Mid-hold big strike burst at ~55%
       setTimeout(() => {
-        if (!running) return;
+        if (!running || myGen !== sequenceGenRef.current) return;
         const strikeCount = 3 + Math.floor(Math.random() * 3);
         for (let sb = 0; sb < strikeCount; sb++) {
           const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
@@ -467,16 +475,52 @@ export default function TV5Lightning() {
 
       // After LOGO_DURATION, move to next logo (seamless loop)
       setTimeout(() => {
-        showLogo((index + 1) % ATTRACTIONS.length);
+        if (myGen !== sequenceGenRef.current) return;
+        showLogo((index + 1) % ATTRACTIONS.length, myGen);
       }, LOGO_DURATION);
     };
 
+    // Restart helper — clears visuals and starts from logo 0
+    const restart = () => {
+      // Bump generation so any pending setTimeout chains bail out
+      sequenceGenRef.current += 1;
+      // Clear all active bolts and effects
+      s.activeBolts = [];
+      s.staticIntensity = 0;
+      s.glitchIntensity = 0;
+      s.phase = 'black';
+      // Clear canvases
+      boltCtx.clearRect(0, 0, boltCanvas.width, boltCanvas.height);
+      staticCtx.clearRect(0, 0, staticCanvas.width, staticCanvas.height);
+      glitchCtx.clearRect(0, 0, glitchCanvas.width, glitchCanvas.height);
+      // Hide logo + effects
+      if (logoContainerRef.current) logoContainerRef.current.style.opacity = '0';
+      if (logoGlowRef.current) logoGlowRef.current.style.opacity = '0';
+      if (ambientRef.current) ambientRef.current.style.opacity = '0';
+      if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0';
+      if (flashRef.current) flashRef.current.style.opacity = '0';
+      // Start fresh
+      showLogo(0, sequenceGenRef.current);
+    };
+    restartFnRef.current = restart;
+
     // Start immediately with the first logo
-    showLogo(0);
+    showLogo(0, sequenceGenRef.current);
+
+    // Listen for restart message from TV4 carousel
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'tv5-restart') {
+        restart();
+      }
+    };
+    window.addEventListener('message', handleMessage);
 
     return () => {
       running = false;
+      sequenceGenRef.current += 1; // cancel any pending chains
       window.removeEventListener('resize', resize);
+      window.removeEventListener('message', handleMessage);
+      restartFnRef.current = null;
     };
   }, [fireStaticBurst, fireGlitchBurst, queueBolt, getEdgePoint, applyLogoGlitch]);
 
