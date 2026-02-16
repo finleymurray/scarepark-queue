@@ -118,7 +118,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-rajdhani), 'Rajdhani', sans-serif",
               fontSize: 'min(55vh, 45vw)',
               fontWeight: 900,
               lineHeight: 0.85,
@@ -131,7 +131,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-rajdhani), 'Rajdhani', sans-serif",
               fontSize: 'min(10vh, 8vw)',
               fontWeight: 700,
               lineHeight: 1,
