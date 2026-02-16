@@ -135,6 +135,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               fontSize: 'min(10vh, 8vw)',
               lineHeight: 1,
               letterSpacing: '0.35em',
+              paddingLeft: '0.35em',
               color: theme.color,
               textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
               marginTop: '1vh',
