@@ -40,6 +40,18 @@ export function getAttractionBg(slug: string): string | null {
   return null;
 }
 
+/** Queue-specific backgrounds (for entrance screens). Falls back to regular bg. */
+const QUEUE_BG: Record<string, string> = {
+  'the-bunker': '/logos/the-bunker-queue-bg.png',
+};
+
+/** Returns the queue display background for an attraction slug.
+ *  Uses a dedicated queue bg if available, otherwise falls back to the regular bg. */
+export function getQueueBg(slug: string): string | null {
+  if (QUEUE_BG[slug]) return QUEUE_BG[slug];
+  return getAttractionBg(slug);
+}
+
 /** Glow color per logo, matched to the dominant colour of the artwork. */
 const LOGO_GLOW_COLORS: Record<string, string> = {
   'westlake-witch-trials': '220, 80, 20',     // orange-red

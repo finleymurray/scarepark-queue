@@ -40,10 +40,20 @@ const TV_SCREENS = [
   },
 ];
 
+const QUEUE_DISPLAYS = [
+  { slug: 'the-bunker', name: 'The Bunker' },
+  { slug: 'drowned', name: 'Drowned' },
+  { slug: 'night-terrors', name: 'Night Terrors' },
+  { slug: 'westlake-witch-trials', name: 'Westlake Witch Trials' },
+  { slug: 'strings-of-control', name: 'Strings of Control' },
+  { slug: 'signal-loss', name: 'Signal Loss' },
+];
+
 export default function TVHub() {
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8">
-      <h1 className="text-white text-4xl font-black mb-2 tracking-tight">TV Displays</h1>
+    <div className="min-h-screen bg-black flex flex-col items-center p-8">
+      {/* TV Screens */}
+      <h1 className="text-white text-4xl font-black mb-2 tracking-tight mt-8">TV Displays</h1>
       <p className="text-white/40 text-lg mb-10">Select a screen to launch</p>
 
       <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
@@ -57,6 +67,27 @@ export default function TVHub() {
               {screen.name}
             </h2>
             <p className="text-white/50 text-sm">{screen.description}</p>
+          </Link>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div className="w-full max-w-2xl my-12 border-t border-white/10" />
+
+      {/* Queue Entrance Displays */}
+      <h2 className="text-white text-3xl font-black mb-2 tracking-tight">Queue Entrance Displays</h2>
+      <p className="text-white/40 text-base mb-8">Per-attraction screens for outside each maze</p>
+
+      <div className="grid grid-cols-3 gap-4 w-full max-w-2xl">
+        {QUEUE_DISPLAYS.map((attraction) => (
+          <Link
+            key={attraction.slug}
+            href={`/queue/${attraction.slug}`}
+            className="group block rounded-xl border-2 border-amber-500/30 bg-amber-950/20 p-6 text-center transition-all hover:border-amber-500/60 hover:bg-amber-950/40 hover:scale-[1.02]"
+          >
+            <h3 className="text-white text-lg font-bold group-hover:text-amber-300 transition-colors">
+              {attraction.name}
+            </h3>
           </Link>
         ))}
       </div>
