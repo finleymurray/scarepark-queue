@@ -43,6 +43,7 @@ export function getAttractionBg(slug: string): string | null {
 /** Queue-specific backgrounds (for entrance screens). Falls back to regular bg. */
 const QUEUE_BG: Record<string, string> = {
   'the-bunker': '/logos/the-bunker-queue-bg.png',
+  'westlake-witch-trials': '/logos/westlake-witch-trials-queue-bg.png',
 };
 
 /** Returns the queue display background for an attraction slug.
@@ -68,6 +69,21 @@ const LOGO_GLOW_COLORS: Record<string, string> = {
 /** Returns the raw RGB string for a slug's glow color, or null. */
 export function getGlowRgb(slug: string): string | null {
   return LOGO_GLOW_COLORS[slug] ?? null;
+}
+
+/** Queue display text theme — colour + glow matched to each attraction's vibe. */
+const QUEUE_TEXT_THEME: Record<string, { color: string; rgb: string }> = {
+  'the-bunker':             { color: '#FBBF24', rgb: '251,191,36' },    // warm amber
+  'westlake-witch-trials':  { color: '#F97316', rgb: '249,115,22' },    // burnt orange
+  'drowned':                { color: '#5EEAD4', rgb: '94,234,212' },    // teal
+  'strings-of-control':     { color: '#FCD34D', rgb: '252,211,77' },    // golden
+  'night-terrors':           { color: '#E2E8F0', rgb: '226,232,240' },   // icy white
+  'signal-loss':            { color: '#A5F3FC', rgb: '165,243,252' },    // electric cyan
+};
+
+/** Returns the queue text theme { color, rgb } for an attraction, with fallback. */
+export function getQueueTextTheme(slug: string): { color: string; rgb: string } {
+  return QUEUE_TEXT_THEME[slug] ?? { color: '#FBBF24', rgb: '251,191,36' };
 }
 
 /** Returns a CSS filter drop-shadow string for the logo glow, or empty string.

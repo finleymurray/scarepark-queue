@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getQueueBg, getLogoGlow } from '@/lib/logos';
+import { getQueueBg, getQueueTextTheme } from '@/lib/logos';
 import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction } from '@/types/database';
@@ -12,8 +12,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
 
   const bgSrc = getQueueBg(slug);
-  const logoSrc = getAttractionLogo(slug);
-  const logoGlow = getLogoGlow(slug, 'strong');
+  const theme = getQueueTextTheme(slug);
 
   useEffect(() => {
     async function fetchAttraction() {
@@ -97,12 +96,12 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
         />
       )}
 
-      {/* Dark overlay + vignette for text readability */}
+      {/* Subtle vignette — just enough to help text pop at edges */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.75) 100%)',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.4) 100%)',
           zIndex: 1,
         }}
       />
@@ -118,39 +117,14 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '3vh 5vw',
+          padding: '2vh 5vw',
         }}
       >
         {/* Header — "CURRENT WAIT TIME" */}
         <div style={{ flexShrink: 0, width: '100%' }}>
-          <ElectricHeader title="Current Wait Time" fontSize="4vw" />
+          <ElectricHeader title="Current Wait Time" fontSize="3vw" />
           <LightningBorder />
         </div>
-
-        {/* Logo */}
-        {logoSrc && (
-          <div
-            style={{
-              marginTop: '2vh',
-              flexShrink: 0,
-              height: '12vh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <img
-              src={logoSrc}
-              alt={attraction.name}
-              style={{
-                maxHeight: '100%',
-                maxWidth: '50vw',
-                objectFit: 'contain',
-                filter: logoGlow,
-              }}
-            />
-          </div>
-        )}
 
         {/* Wait time / Status — centred, massive */}
         <div
@@ -168,11 +142,11 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               <span
                 style={{
                   fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                  fontSize: '28vh',
+                  fontSize: '38vh',
                   lineHeight: 0.85,
                   fontVariantNumeric: 'tabular-nums',
-                  color: '#FBBF24',
-                  textShadow: '0 0 40px rgba(251,191,36,0.6), 0 0 80px rgba(251,191,36,0.3), 0 4px 20px rgba(0,0,0,0.8)',
+                  color: theme.color,
+                  textShadow: `0 0 40px rgba(${theme.rgb},0.7), 0 0 80px rgba(${theme.rgb},0.4), 0 0 120px rgba(${theme.rgb},0.2), 0 4px 20px rgba(0,0,0,0.8)`,
                   letterSpacing: '-0.02em',
                 }}
               >
@@ -181,10 +155,10 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               <span
                 style={{
                   fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                  fontSize: '6vh',
+                  fontSize: '7vh',
                   letterSpacing: '0.3em',
-                  color: '#FBBF24',
-                  textShadow: '0 0 20px rgba(251,191,36,0.4), 0 2px 10px rgba(0,0,0,0.8)',
+                  color: theme.color,
+                  textShadow: `0 0 20px rgba(${theme.rgb},0.5), 0 2px 10px rgba(0,0,0,0.8)`,
                   marginTop: '1vh',
                 }}
               >
@@ -197,10 +171,10 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
             <span
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '14vh',
+                fontSize: '18vh',
                 letterSpacing: '0.15em',
                 color: '#f87171',
-                textShadow: '0 0 40px rgba(248,113,113,0.5), 0 4px 20px rgba(0,0,0,0.8)',
+                textShadow: '0 0 40px rgba(248,113,113,0.6), 0 0 80px rgba(248,113,113,0.3), 0 4px 20px rgba(0,0,0,0.8)',
               }}
             >
               Closed
@@ -211,12 +185,12 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
             <span
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '10vh',
+                fontSize: '14vh',
                 letterSpacing: '0.1em',
                 textAlign: 'center',
                 lineHeight: 1.1,
                 color: '#F59E0B',
-                textShadow: '0 0 40px rgba(245,158,11,0.5), 0 4px 20px rgba(0,0,0,0.8)',
+                textShadow: '0 0 40px rgba(245,158,11,0.6), 0 0 80px rgba(245,158,11,0.3), 0 4px 20px rgba(0,0,0,0.8)',
               }}
             >
               Technical<br />Delay
@@ -227,12 +201,12 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
             <span
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '10vh',
+                fontSize: '14vh',
                 letterSpacing: '0.1em',
                 textAlign: 'center',
                 lineHeight: 1.1,
                 color: '#F59E0B',
-                textShadow: '0 0 40px rgba(245,158,11,0.5), 0 4px 20px rgba(0,0,0,0.8)',
+                textShadow: '0 0 40px rgba(245,158,11,0.6), 0 0 80px rgba(245,158,11,0.3), 0 4px 20px rgba(0,0,0,0.8)',
               }}
             >
               At Capacity
