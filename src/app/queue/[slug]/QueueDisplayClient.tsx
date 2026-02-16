@@ -117,16 +117,18 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
         }}
       >
         {isOpen && (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
                 fontSize: '55vh',
-                lineHeight: 0.82,
+                lineHeight: 1,
                 fontVariantNumeric: 'tabular-nums',
                 color: theme.color,
                 textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
                 letterSpacing: '-0.02em',
+                margin: 0,
+                padding: 0,
               }}
             >
               {attraction.wait_time}
@@ -135,15 +137,17 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               style={{
                 fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
                 fontSize: '10vh',
+                lineHeight: 1,
                 letterSpacing: '0.35em',
+                paddingLeft: '0.35em',
                 color: theme.color,
                 textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
-                marginTop: '1vh',
+                marginTop: '-2vh',
               }}
             >
               Minutes
             </span>
-          </>
+          </div>
         )}
 
         {isClosed && (

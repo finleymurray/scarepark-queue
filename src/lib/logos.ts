@@ -44,6 +44,10 @@ export function getAttractionBg(slug: string): string | null {
 const QUEUE_BG: Record<string, string> = {
   'the-bunker': '/logos/the-bunker-queue-bg.png',
   'westlake-witch-trials': '/logos/westlake-witch-trials-queue-bg.png',
+  'drowned': '/logos/drowned-queue-bg.png',
+  'night-terrors': '/logos/night-terrors-queue-bg.png',
+  'signal-loss': '/logos/signal-loss-queue-bg.png',
+  'strings-of-control': '/logos/strings-of-control-queue-bg.png',
 };
 
 /** Returns the queue display background for an attraction slug.
