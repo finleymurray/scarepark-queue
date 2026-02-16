@@ -70,10 +70,9 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
   return (
     <div
       style={{
-        width: '100vw',
-        height: '100vh',
+        position: 'fixed',
+        inset: 0,
         overflow: 'hidden',
-        position: 'relative',
         background: '#000',
       }}
     >
