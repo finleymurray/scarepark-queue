@@ -87,6 +87,7 @@ export default function AnalyticsPage() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [fromTime, setFromTime] = useState('00:00');
   const [toTime, setToTime] = useState('23:59');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -156,7 +157,7 @@ export default function AnalyticsPage() {
     }
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, selectedDate]);
+  }, [authenticated, selectedDate, refreshKey]);
 
   // Filter data by selected time window
   const filteredHistory = useMemo(() => {
@@ -515,6 +516,28 @@ export default function AnalyticsPage() {
             className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
           />
         </div>
+        <button
+          onClick={() => setRefreshKey((k) => k + 1)}
+          style={{
+            padding: '8px 14px',
+            background: '#1a1a1a',
+            border: '1px solid #2a2a2a',
+            borderRadius: 6,
+            color: '#888',
+            fontSize: 12,
+            cursor: 'pointer',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Refresh
+        </button>
       </div>
 
       {/* Charts */}

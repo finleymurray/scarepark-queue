@@ -132,7 +132,31 @@ export default function ShowReportsPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 80px' }}>
-        <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 24 }}>Show Reports</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>Show Reports</h2>
+          <button
+            onClick={() => fetchReports(selectedDate, selectedAttractionId)}
+            style={{
+              padding: '6px 12px',
+              background: '#161616',
+              border: '1px solid #2a2a2a',
+              borderRadius: 8,
+              color: '#888',
+              fontSize: 12,
+              cursor: 'pointer',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Refresh
+          </button>
+        </div>
 
         {/* ── Filter Bar ── */}
         <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>

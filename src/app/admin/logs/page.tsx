@@ -353,7 +353,31 @@ export default function LogsPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <h2 className="text-2xl font-bold mb-6">Audit Logs</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <h2 className="text-2xl font-bold" style={{ margin: 0 }}>Audit Logs</h2>
+          <button
+            onClick={() => applyFilters(filterAttraction, filterType)}
+            style={{
+              padding: '6px 12px',
+              background: '#161616',
+              border: '1px solid #2a2a2a',
+              borderRadius: 8,
+              color: '#888',
+              fontSize: 12,
+              cursor: 'pointer',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Refresh
+          </button>
+        </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-6">

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
-import type { ScreenHeartbeat, Screen } from '@/types/database';
+import type { Screen } from '@/types/database';
 
 /* ── Assignable paths ── */
 
@@ -27,29 +27,6 @@ const ASSIGNABLE_PATHS = [
 ];
 
 /* ── Helpers ── */
-
-function groupByPage(screens: ScreenHeartbeat[]): Record<string, ScreenHeartbeat[]> {
-  const groups: Record<string, ScreenHeartbeat[]> = {};
-  for (const s of screens) {
-    if (!groups[s.page]) groups[s.page] = [];
-    groups[s.page].push(s);
-  }
-  return groups;
-}
-
-function getPageLabel(page: string): string {
-  if (page.startsWith('queue-')) {
-    const slug = page.replace('queue-', '');
-    return slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  }
-  return page.toUpperCase();
-}
-
-function getPageCategory(page: string): 'tv' | 'queue' | 'other' {
-  if (page.startsWith('tv')) return 'tv';
-  if (page.startsWith('queue-')) return 'queue';
-  return 'other';
-}
 
 function timeAgo(isoString: string): string {
   const seconds = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
@@ -90,17 +67,6 @@ const statCardStyle: React.CSSProperties = {
   minWidth: 100,
 };
 
-const sectionHeaderStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.12em',
-  color: '#666',
-  marginBottom: 12,
-  paddingBottom: 8,
-  borderBottom: '1px solid #2a2a2a',
-};
-
 const selectStyle: React.CSSProperties = {
   background: '#161616',
   border: '1px solid #2a2a2a',
@@ -120,19 +86,15 @@ export default function ScreensPage() {
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [heartbeats, setHeartbeats] = useState<ScreenHeartbeat[]>([]);
   const [managedScreens, setManagedScreens] = useState<Screen[]>([]);
-  const [now, setNow] = useState(Date.now());
-  const [showLegacy, setShowLegacy] = useState(false);
 
   const fetchData = useCallback(async () => {
-    const [heartbeatsRes, screensRes] = await Promise.all([
-      supabase.from('screen_heartbeats').select('*').order('last_seen', { ascending: false }),
-      supabase.from('screens').select('*').order('last_seen', { ascending: false }),
-    ]);
+    const { data, error } = await supabase
+      .from('screens')
+      .select('*')
+      .order('last_seen', { ascending: false });
 
-    if (!heartbeatsRes.error && heartbeatsRes.data) setHeartbeats(heartbeatsRes.data);
-    if (!screensRes.error && screensRes.data) setManagedScreens(screensRes.data);
+    if (!error && data) setManagedScreens(data);
   }, []);
 
   useEffect(() => {
@@ -158,7 +120,6 @@ export default function ScreensPage() {
     if (loading) return;
 
     const dataInterval = setInterval(fetchData, 15000);
-    const clockInterval = setInterval(() => setNow(Date.now()), 5000);
 
     // Realtime: live updates for managed screens
     const channel = supabase
@@ -175,7 +136,6 @@ export default function ScreensPage() {
 
     return () => {
       clearInterval(dataInterval);
-      clearInterval(clockInterval);
       supabase.removeChannel(channel);
     };
   }, [loading, fetchData]);
@@ -186,6 +146,11 @@ export default function ScreensPage() {
     await supabase.from('screens').update({
       assigned_path: newPath,
     }).eq('id', screen.id);
+  }
+
+  async function handleDeleteScreen(screen: Screen) {
+    await supabase.from('screens').delete().eq('id', screen.id);
+    fetchData();
   }
 
   async function handleLogout() {
@@ -201,22 +166,7 @@ export default function ScreensPage() {
     );
   }
 
-  // Legacy heartbeat stats
-  const grouped = groupByPage(heartbeats);
-  const pageNames = Object.keys(grouped).sort((a, b) => {
-    const catA = getPageCategory(a);
-    const catB = getPageCategory(b);
-    if (catA !== catB) {
-      const order = { tv: 0, queue: 1, other: 2 };
-      return order[catA] - order[catB];
-    }
-    return a.localeCompare(b, undefined, { numeric: true });
-  });
-  const tvPages = pageNames.filter((p) => getPageCategory(p) === 'tv');
-  const queuePages = pageNames.filter((p) => getPageCategory(p) === 'queue');
-  const otherPages = pageNames.filter((p) => getPageCategory(p) === 'other');
-
-  // Managed screen stats
+  // Screen stats
   const managedOnline = managedScreens.filter((s) => getStatus(s.last_seen) === 'online').length;
   const managedAssigned = managedScreens.filter((s) => s.assigned_path).length;
 
@@ -225,11 +175,36 @@ export default function ScreensPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Screen Controller</h2>
-          <p style={{ fontSize: 14, color: '#888', marginTop: 4, marginBottom: 0 }}>
-            Manage and assign display screens. Point each Pi to <code style={{ background: '#2a2a2a', padding: '1px 5px', borderRadius: 3, fontSize: 13 }}>/screen</code> to register.
-          </p>
+        <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Screen Controller</h2>
+            <p style={{ fontSize: 14, color: '#888', marginTop: 4, marginBottom: 0 }}>
+              Manage and assign display screens. Point each Pi to <code style={{ background: '#2a2a2a', padding: '1px 5px', borderRadius: 3, fontSize: 13 }}>/screen</code> to register.
+            </p>
+          </div>
+          <button
+            onClick={() => fetchData()}
+            style={{
+              padding: '6px 12px',
+              background: '#161616',
+              border: '1px solid #2a2a2a',
+              borderRadius: 8,
+              color: '#888',
+              fontSize: 12,
+              cursor: 'pointer',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              flexShrink: 0,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Refresh
+          </button>
         </div>
 
         {/* Stats row */}
@@ -268,83 +243,12 @@ export default function ScreensPage() {
                 key={screen.id}
                 screen={screen}
                 onAssign={handleAssignPath}
+                onDelete={handleDeleteScreen}
               />
             ))}
           </div>
         )}
 
-        {/* ── Legacy Heartbeats (collapsible) ── */}
-        <div style={{ marginTop: 16 }}>
-          <button
-            onClick={() => setShowLegacy(!showLegacy)}
-            style={{
-              ...sectionHeaderStyle,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              width: '100%',
-              padding: '8px 0',
-            }}
-          >
-            <span style={{ transition: 'transform 0.2s', transform: showLegacy ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
-              &#9654;
-            </span>
-            Legacy Heartbeats ({heartbeats.length} devices)
-          </button>
-
-          {showLegacy && (
-            <div style={{ marginTop: 12 }}>
-              {heartbeats.length === 0 ? (
-                <p style={{ color: '#555', fontSize: 13, padding: '12px 0' }}>No legacy heartbeats detected.</p>
-              ) : (
-                <>
-                  {tvPages.length > 0 && (
-                    <div style={{ marginBottom: 28 }}>
-                      <div style={sectionHeaderStyle}>TV Displays</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
-                        {tvPages.map((page) => (
-                          <PageCard key={page} page={page} devices={grouped[page]} now={now} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {queuePages.length > 0 && (
-                    <div style={{ marginBottom: 28 }}>
-                      <div style={sectionHeaderStyle}>Queue Entrance Displays</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
-                        {queuePages.map((page) => (
-                          <PageCard key={page} page={page} devices={grouped[page]} now={now} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {otherPages.length > 0 && (
-                    <div style={{ marginBottom: 28 }}>
-                      <div style={sectionHeaderStyle}>Other</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
-                        {otherPages.map((page) => (
-                          <PageCard key={page} page={page} devices={grouped[page]} now={now} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* SQL setup note */}
-        <div style={{ marginTop: 32, padding: '16px 20px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10, fontSize: 12, color: '#666' }}>
-          <strong style={{ color: '#888' }}>Supabase Tables Required</strong>
-          <p style={{ margin: '6px 0 0' }}>
-            This page reads from the <code style={{ background: '#2a2a2a', padding: '1px 5px', borderRadius: 3 }}>screens</code> table (screen controller) and the legacy{' '}
-            <code style={{ background: '#2a2a2a', padding: '1px 5px', borderRadius: 3 }}>screen_heartbeats</code> table.
-          </p>
-        </div>
       </div>
     </div>
   );
@@ -355,9 +259,11 @@ export default function ScreensPage() {
 function ManagedScreenCard({
   screen,
   onAssign,
+  onDelete,
 }: {
   screen: Screen;
   onAssign: (screen: Screen, path: string) => void;
+  onDelete: (screen: Screen) => void;
 }) {
   const status = getStatus(screen.last_seen);
   const statusInfo = statusColors[status];
@@ -385,13 +291,37 @@ function ManagedScreenCard({
             {screen.code}
           </div>
         </div>
-        <span style={{
-          fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
-          background: `${statusInfo.bg}15`, color: statusInfo.text,
-          border: `1px solid ${statusInfo.bg}30`,
-        }}>
-          {statusInfo.label}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+            background: `${statusInfo.bg}15`, color: statusInfo.text,
+            border: `1px solid ${statusInfo.bg}30`,
+          }}>
+            {statusInfo.label}
+          </span>
+          {status === 'offline' && (
+            <button
+              onClick={() => onDelete(screen)}
+              title="Remove offline screen"
+              style={{
+                padding: '3px 6px',
+                background: 'transparent',
+                border: '1px solid #EF444430',
+                borderRadius: 6,
+                color: '#EF4444',
+                fontSize: 11,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Path assignment */}
@@ -424,91 +354,3 @@ function ManagedScreenCard({
   );
 }
 
-/* ── Legacy Page Card Component ── */
-
-function PageCard({
-  page,
-  devices,
-  now,
-}: {
-  page: string;
-  devices: ScreenHeartbeat[];
-  now: number;
-}) {
-  const sorted = [...devices].sort((a, b) => {
-    const statusA = getStatus(a.last_seen);
-    const statusB = getStatus(b.last_seen);
-    const order = { online: 0, warning: 1, offline: 2 };
-    if (order[statusA] !== order[statusB]) return order[statusA] - order[statusB];
-    return new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
-  });
-
-  const statuses = sorted.map((d) => getStatus(d.last_seen));
-  const overallStatus = statuses.includes('offline')
-    ? 'offline'
-    : statuses.includes('warning')
-      ? 'warning'
-      : 'online';
-
-  const statusInfo = statusColors[overallStatus];
-  const label = getPageLabel(page);
-  const isQueue = getPageCategory(page) === 'queue';
-
-  return (
-    <div style={cardStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ position: 'relative', width: 10, height: 10 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusInfo.bg }} />
-            {overallStatus === 'online' && (
-              <div style={{
-                position: 'absolute', inset: -3, borderRadius: '50%',
-                background: statusInfo.bg, opacity: 0.3,
-                animation: 'pulse-ring 2s ease-out infinite',
-              }} />
-            )}
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
-              {isQueue ? `🎢 ${label}` : `📺 ${label}`}
-            </div>
-            <div style={{ fontSize: 11, color: '#666' }}>/{page.replace('queue-', 'queue/')}</div>
-          </div>
-        </div>
-        <span style={{
-          fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
-          background: `${statusInfo.bg}15`, color: statusInfo.text,
-          border: `1px solid ${statusInfo.bg}30`,
-        }}>
-          {statusInfo.label}
-        </span>
-      </div>
-
-      {sorted.map((device) => {
-        const devStatus = getStatus(device.last_seen);
-        const devInfo = statusColors[devStatus];
-
-        return (
-          <div
-            key={device.screen_id}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '8px 10px', background: '#161616', borderRadius: 8,
-              marginBottom: 4, fontSize: 12,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: devInfo.bg, flexShrink: 0 }} />
-              <span style={{ color: '#ccc', fontFamily: 'monospace', fontSize: 11 }}>
-                {device.screen_id}
-              </span>
-            </div>
-            <span style={{ color: '#666', fontSize: 11 }}>
-              {timeAgo(device.last_seen)}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
