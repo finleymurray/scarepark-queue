@@ -78,9 +78,9 @@ export function getGlowRgb(slug: string): string | null {
 /** Queue display text theme — colour + glow matched to each attraction's vibe. */
 const QUEUE_TEXT_THEME: Record<string, { color: string; rgb: string }> = {
   'the-bunker':             { color: '#F59E0B', rgb: '245,158,11' },    // orange amber
-  'westlake-witch-trials':  { color: '#C084FC', rgb: '192,132,252' },    // deep purple
+  'westlake-witch-trials':  { color: '#BEF264', rgb: '190,242,100' },    // sickly potion green
   'drowned':                { color: '#5EEAD4', rgb: '94,234,212' },    // teal
-  'strings-of-control':     { color: '#DC2626', rgb: '220,38,38' },      // royal red
+  'strings-of-control':     { color: '#FDE68A', rgb: '253,230,138' },    // warm stage gold
   'night-terrors':           { color: '#E2E8F0', rgb: '226,232,240' },   // icy white
   'signal-loss':            { color: '#A5F3FC', rgb: '165,243,252' },    // electric cyan
 };
