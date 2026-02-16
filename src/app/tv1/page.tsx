@@ -6,6 +6,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -400,6 +401,7 @@ export default function TVDisplay() {
         overflow: 'hidden',
       }}
     >
+    <ParkClosedOverlay />
     <div
       ref={containerRef}
       className="tv1-root"

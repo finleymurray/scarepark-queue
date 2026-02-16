@@ -7,6 +7,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -477,6 +478,7 @@ export default function TV25Display() {
         paddingBottom: isEmbedded ? 0 : '2%',
       }}
     >
+      <ParkClosedOverlay />
       {/* Header */}
       {!isEmbedded && (
         <div style={{ flexShrink: 0 }}>

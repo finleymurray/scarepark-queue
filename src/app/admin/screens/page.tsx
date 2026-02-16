@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
-import type { Screen } from '@/types/database';
+import type { Screen, ParkSetting } from '@/types/database';
 
 /* ── Assignable paths ── */
 
@@ -87,6 +87,8 @@ export default function ScreensPage() {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [managedScreens, setManagedScreens] = useState<Screen[]>([]);
+  const [parkClosed, setParkClosed] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const fetchData = useCallback(async () => {
     const { data, error } = await supabase
@@ -108,6 +110,15 @@ export default function ScreensPage() {
       setDisplayName(auth.displayName || '');
 
       await fetchData();
+
+      // Fetch park_closed setting
+      const { data: closedSetting } = await supabase
+        .from('park_settings')
+        .select('key,value')
+        .eq('key', 'park_closed')
+        .single();
+      if (closedSetting) setParkClosed(closedSetting.value === 'true');
+
       setLoading(false);
     }
 
@@ -134,9 +145,25 @@ export default function ScreensPage() {
       )
       .subscribe();
 
+    // Realtime: park_settings updates (for blackout toggle sync)
+    const settingsChannel = supabase
+      .channel('admin-screens-settings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'park_settings' },
+        (payload) => {
+          const setting = payload.new as ParkSetting;
+          if (setting.key === 'park_closed') {
+            setParkClosed(setting.value === 'true');
+          }
+        },
+      )
+      .subscribe();
+
     return () => {
       clearInterval(dataInterval);
       supabase.removeChannel(channel);
+      supabase.removeChannel(settingsChannel);
     };
   }, [loading, fetchData]);
 
@@ -146,6 +173,16 @@ export default function ScreensPage() {
     await supabase.from('screens').update({
       assigned_path: newPath,
     }).eq('id', screen.id);
+  }
+
+  async function handleToggleBlackout() {
+    setToggling(true);
+    const newValue = !parkClosed;
+    await supabase
+      .from('park_settings')
+      .upsert({ key: 'park_closed', value: String(newValue) }, { onConflict: 'key' });
+    setParkClosed(newValue);
+    setToggling(false);
   }
 
   async function handleDeleteScreen(screen: Screen) {
@@ -204,6 +241,53 @@ export default function ScreensPage() {
               <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Refresh
+          </button>
+        </div>
+
+        {/* Black Out Screens toggle */}
+        <div style={{
+          ...cardStyle,
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          border: parkClosed ? '1px solid #EF444440' : '1px solid #2a2a2a',
+          transition: 'border-color 0.3s ease',
+        }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+              Black Out Screens
+            </div>
+            <div style={{ fontSize: 12, color: parkClosed ? '#EF4444' : '#666' }}>
+              {parkClosed ? 'All displays are blacked out' : 'All displays showing live content'}
+            </div>
+          </div>
+          <button
+            onClick={handleToggleBlackout}
+            disabled={toggling}
+            style={{
+              position: 'relative',
+              width: 52,
+              height: 28,
+              borderRadius: 14,
+              border: 'none',
+              cursor: toggling ? 'wait' : 'pointer',
+              background: parkClosed ? '#EF4444' : '#333',
+              transition: 'background 0.3s ease',
+              flexShrink: 0,
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 3,
+              left: parkClosed ? 27 : 3,
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              background: '#fff',
+              transition: 'left 0.3s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            }} />
           </button>
         </div>
 

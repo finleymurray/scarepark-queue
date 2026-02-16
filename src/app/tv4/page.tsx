@@ -6,6 +6,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -153,6 +154,7 @@ export default function TV4Carousel() {
         color: '#fff',
       }}
     >
+      <ParkClosedOverlay />
       {/* Header — hidden during fullscreen views (e.g. TV5 glitch montage) */}
       {!isFullscreen && (
         <div style={{ flexShrink: 0 }}>

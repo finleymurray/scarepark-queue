@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { getQueueBg, getQueueTextTheme } from '@/lib/logos';
 import type { Attraction } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 export default function QueueDisplayClient({ slug }: { slug: string }) {
   useConnectionHealth(`queue-${slug}`);
@@ -78,6 +79,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
         background: '#000',
       }}
     >
+      <ParkClosedOverlay />
       {/* Full-bleed background image */}
       {bgSrc && (
         <div

@@ -7,6 +7,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -175,6 +176,7 @@ export default function TV3ShowTimes() {
         gap: 0,
       }}
     >
+      <ParkClosedOverlay />
       {/* Header */}
       {!isEmbedded && (
         <div style={{ flexShrink: 0 }}>

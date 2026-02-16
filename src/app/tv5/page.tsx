@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 /**
  * TV5 — Lightning Strike Montage with Glitch
@@ -526,6 +527,7 @@ export default function TV5Lightning() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000', overflow: 'hidden', zIndex: 9999 }}>
+      <ParkClosedOverlay />
       {/* Ambient electric glow — z1 */}
       <div ref={ambientRef} style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0 }} />
 
