@@ -379,7 +379,7 @@ export default function TV25Display() {
       const aOpen = a.status === 'OPEN' ? 1 : 0;
       const bOpen = b.status === 'OPEN' ? 1 : 0;
       if (aOpen !== bOpen) return bOpen - aOpen;
-      return b.wait_time - a.wait_time;
+      return a.wait_time - b.wait_time;
     });
   }, [attractions, autoSort]);
 
