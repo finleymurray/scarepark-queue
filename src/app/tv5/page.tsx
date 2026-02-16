@@ -13,7 +13,7 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
  * Sequence:
  *   1. Darkness builds (0.8s)
  *   2. Electric charge — skinny bolts crack in (0.6s)
- *   3. 6 logos revealed by striking lightning + glitch bursts (~0.5s each)
+ *   3. 6 logos revealed by striking lightning + glitch bursts (~2.5s each)
  *   4. Final discharge + white-out (0.35s)
  *   5. Repeat
  */
@@ -23,7 +23,7 @@ const ATTRACTIONS = [
   { slug: 'westlake-witch-trials', tint: '#ff1493', tintRgb: '255,20,147', name: 'Westlake Witch Trials' },
   { slug: 'the-bunker', tint: '#dc2626', tintRgb: '220,38,38', name: 'The Bunker' },
   { slug: 'drowned', tint: '#0891b2', tintRgb: '8,145,178', name: 'Drowned' },
-  { slug: 'signal-loss', tint: '#22d3ee', tintRgb: '34,211,238', name: 'Signal Loss' },
+  { slug: 'signal-loss', tint: '#4a6741', tintRgb: '74,103,65', name: 'Signal Loss' },
   { slug: 'strings-of-control', tint: '#eab308', tintRgb: '234,179,8', name: 'Strings of Control' },
   { slug: 'night-terrors', tint: '#e0e0e0', tintRgb: '224,224,224', name: 'Night Terrors' },
 ];
@@ -31,7 +31,7 @@ const ATTRACTIONS = [
 /* ── Timing ── */
 const HOLD_BLACK = 800;
 const CHARGE_UP = 600;
-const LOGO_DURATION = 500;
+const LOGO_DURATION = 2500;
 const FLASH_OUT = 350;
 const TOTAL_DURATION = HOLD_BLACK + CHARGE_UP + (ATTRACTIONS.length * LOGO_DURATION) + FLASH_OUT + 300;
 
@@ -470,27 +470,32 @@ export default function TV5Lightning() {
           }
         }, logoStart);
 
-        // Mid-logo follow-up strike
-        setTimeout(() => {
-          if (!running) return;
-          const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
-          queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
-            segments: 18, jitter: 50, width: 2 + Math.random() * 1, glowSize: 14,
-            colorBase: attraction.tintRgb, branchChance: 0.3, branchDepth: 1,
-          }, 200);
-          fireStaticBurst(0.4, 200, attraction.tintRgb);
-          fireGlitchBurst(0.4, 150);
-          applyLogoGlitch(0.5, attraction.tint);
+        // Follow-up strikes during the logo hold (at ~35% and ~70%)
+        [0.35, 0.7].forEach((frac) => {
           setTimeout(() => {
-            if (logoImgRef.current) {
-              logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
+            if (!running) return;
+            const strikeCount = 2 + Math.floor(Math.random() * 2);
+            for (let sb = 0; sb < strikeCount; sb++) {
+              const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
+              queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
+                segments: 18, jitter: 50, width: 2 + Math.random() * 1, glowSize: 14,
+                colorBase: attraction.tintRgb, branchChance: 0.3, branchDepth: 1,
+              }, 200);
             }
-          }, 80);
-          if (logoContainerRef.current) {
-            logoContainerRef.current.style.transform = `translate(${(Math.random() - 0.5) * 4}px, ${(Math.random() - 0.5) * 3}px)`;
-            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 50);
-          }
-        }, logoStart + LOGO_DURATION * 0.6);
+            fireStaticBurst(0.4, 200, attraction.tintRgb);
+            fireGlitchBurst(0.4, 150);
+            applyLogoGlitch(0.5, attraction.tint);
+            setTimeout(() => {
+              if (logoImgRef.current) {
+                logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
+              }
+            }, 80);
+            if (logoContainerRef.current) {
+              logoContainerRef.current.style.transform = `translate(${(Math.random() - 0.5) * 4}px, ${(Math.random() - 0.5) * 3}px)`;
+              setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 50);
+            }
+          }, logoStart + LOGO_DURATION * frac);
+        });
       });
 
       // Phase 4: Final discharge
@@ -558,7 +563,7 @@ export default function TV5Lightning() {
       {/* Logo — z5 (IN FRONT of lightning) */}
       <div ref={logoContainerRef} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, opacity: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={logoImgRef} src="" alt="" style={{ height: '45%', maxWidth: '70%', objectFit: 'contain', position: 'relative' }} />
+        <img ref={logoImgRef} src="" alt="" style={{ height: '65%', maxWidth: '85%', objectFit: 'contain', position: 'relative' }} />
       </div>
 
       {/* Glitch overlay canvas — z7 (on top for scanline tears) */}
