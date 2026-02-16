@@ -26,9 +26,8 @@ function generateCode(): string {
 
 export default function ScreenController() {
   const [code, setCode] = useState<string | null>(null);
-  const [assignedPath, setAssignedPath] = useState<string | null>(null);
   const [screenId, setScreenId] = useState<string | null>(null);
-  const [status, setStatus] = useState<'registering' | 'waiting' | 'assigned'>('registering');
+  const [status, setStatus] = useState<'registering' | 'waiting'>('registering');
 
   // ── 1. Register on mount ──
   useEffect(() => {
@@ -58,7 +57,10 @@ export default function ScreenController() {
           localStorage.setItem(ID_STORAGE_KEY, data.id);
 
           if (data.assigned_path) {
-            // Already assigned — navigate immediately
+            // Already assigned — clean up and navigate
+            await supabase.from('screens').delete().eq('id', data.id);
+            localStorage.removeItem(CODE_STORAGE_KEY);
+            localStorage.removeItem(ID_STORAGE_KEY);
             window.location.href = data.assigned_path;
             return;
           }
@@ -146,27 +148,22 @@ export default function ScreenController() {
           table: 'screens',
           filter: `id=eq.${screenId}`,
         },
-        (payload) => {
+        async (payload) => {
           const updated = payload.new as Screen;
           if (updated.assigned_path) {
-            setAssignedPath(updated.assigned_path);
-            setStatus('assigned');
+            // Clean up: delete the row and clear localStorage
+            await supabase.from('screens').delete().eq('id', updated.id);
+            localStorage.removeItem(CODE_STORAGE_KEY);
+            localStorage.removeItem(ID_STORAGE_KEY);
+            // Navigate to assigned page
+            window.location.href = updated.assigned_path;
           }
         },
       )
       .subscribe();
 
-    // Also listen for broadcast commands (reload)
-    const cmdChannel = supabase
-      .channel(`screen-cmd-${screenId}`)
-      .on('broadcast', { event: 'reload' }, () => {
-        window.location.reload();
-      })
-      .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
-      supabase.removeChannel(cmdChannel);
     };
   }, [screenId]);
 
@@ -192,13 +189,6 @@ export default function ScreenController() {
 
     return () => clearInterval(checkInterval);
   }, []);
-
-  // ── 5. Navigate when assigned ──
-  useEffect(() => {
-    if (status === 'assigned' && assignedPath) {
-      window.location.href = assignedPath;
-    }
-  }, [status, assignedPath]);
 
   // ── Render: registering state ──
   if (status === 'registering') {

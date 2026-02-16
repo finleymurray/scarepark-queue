@@ -7,7 +7,6 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
-import { useScreenAssignment } from '@/hooks/useScreenAssignment';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -154,7 +153,6 @@ const FearRow = React.memo(function FearRow({
 
 export default function TV35ScreamMeter() {
   useConnectionHealth('tv3.5');
-  useScreenAssignment();
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);

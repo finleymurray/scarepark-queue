@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
-import { useScreenAssignment } from '@/hooks/useScreenAssignment';
 
 /**
  * TV5 — Lightning Strike Montage with Glitch
@@ -193,7 +192,6 @@ function drawGlitchFrame(ctx: CanvasRenderingContext2D, w: number, h: number, in
 
 export default function TV5Lightning() {
   useConnectionHealth('tv5');
-  useScreenAssignment();
 
   const boltCanvasRef = useRef<HTMLCanvasElement>(null);
   const staticCanvasRef = useRef<HTMLCanvasElement>(null);

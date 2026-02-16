@@ -113,28 +113,6 @@ const selectStyle: React.CSSProperties = {
   cursor: 'pointer',
 };
 
-const inputStyle: React.CSSProperties = {
-  background: '#161616',
-  border: '1px solid #2a2a2a',
-  borderRadius: 8,
-  color: '#ccc',
-  fontSize: 13,
-  padding: '6px 10px',
-  width: '100%',
-  outline: 'none',
-};
-
-const btnStyle: React.CSSProperties = {
-  padding: '5px 12px',
-  borderRadius: 8,
-  border: '1px solid #2a2a2a',
-  background: '#161616',
-  color: '#aaa',
-  fontSize: 12,
-  cursor: 'pointer',
-  fontWeight: 600,
-};
-
 /* ── Page Component ── */
 
 export default function ScreensPage() {
@@ -203,27 +181,11 @@ export default function ScreensPage() {
   }, [loading, fetchData]);
 
   async function handleAssignPath(screen: Screen, newPath: string) {
+    if (!newPath) return;
+    // Set the path — the screen will pick this up, navigate, and delete its own row
     await supabase.from('screens').update({
-      assigned_path: newPath || null,
+      assigned_path: newPath,
     }).eq('id', screen.id);
-  }
-
-  async function handleRenameSreen(screen: Screen, newName: string) {
-    await supabase.from('screens').update({
-      name: newName || null,
-    }).eq('id', screen.id);
-  }
-
-  async function handleReload(screen: Screen) {
-    const channel = supabase.channel(`screen-cmd-${screen.id}`);
-    await channel.subscribe();
-    await channel.send({ type: 'broadcast', event: 'reload', payload: {} });
-    // Brief delay so the message sends before we clean up
-    setTimeout(() => supabase.removeChannel(channel), 1000);
-  }
-
-  async function handleRemove(screen: Screen) {
-    await supabase.from('screens').delete().eq('id', screen.id);
   }
 
   async function handleLogout() {
@@ -306,9 +268,6 @@ export default function ScreensPage() {
                 key={screen.id}
                 screen={screen}
                 onAssign={handleAssignPath}
-                onRename={handleRenameSreen}
-                onReload={handleReload}
-                onRemove={handleRemove}
               />
             ))}
           </div>
@@ -396,25 +355,12 @@ export default function ScreensPage() {
 function ManagedScreenCard({
   screen,
   onAssign,
-  onRename,
-  onReload,
-  onRemove,
 }: {
   screen: Screen;
   onAssign: (screen: Screen, path: string) => void;
-  onRename: (screen: Screen, name: string) => void;
-  onReload: (screen: Screen) => void;
-  onRemove: (screen: Screen) => void;
 }) {
   const status = getStatus(screen.last_seen);
   const statusInfo = statusColors[status];
-  const [localName, setLocalName] = useState(screen.name || '');
-  const [confirmRemove, setConfirmRemove] = useState(false);
-
-  // Keep local name in sync when screen data updates
-  useEffect(() => {
-    setLocalName(screen.name || '');
-  }, [screen.name]);
 
   return (
     <div style={cardStyle}>
@@ -448,74 +394,24 @@ function ManagedScreenCard({
         </span>
       </div>
 
-      {/* Name input */}
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>Name</label>
-        <input
-          type="text"
-          value={localName}
-          onChange={(e) => setLocalName(e.target.value)}
-          onBlur={() => onRename(screen, localName)}
-          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-          placeholder="e.g. Main Foyer Left"
-          style={inputStyle}
-        />
-      </div>
-
       {/* Path assignment */}
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>Assigned Display</label>
+      <div style={{ marginBottom: 8 }}>
+        <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>Assign Display</label>
         <select
-          value={screen.assigned_path || ''}
+          value=""
           onChange={(e) => onAssign(screen, e.target.value)}
           style={selectStyle}
         >
-          {ASSIGNABLE_PATHS.map((p) => (
+          <option value="" disabled>Select a page...</option>
+          {ASSIGNABLE_PATHS.filter((p) => p.value).map((p) => (
             <option key={p.value} value={p.value}>{p.label}</option>
           ))}
         </select>
       </div>
 
       {/* Last seen */}
-      <div style={{ fontSize: 11, color: '#666', marginBottom: 12 }}>
+      <div style={{ fontSize: 11, color: '#666' }}>
         Last seen: {timeAgo(screen.last_seen)}
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={() => onReload(screen)}
-          style={{ ...btnStyle, flex: 1 }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#222'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#161616'; }}
-        >
-          Reload
-        </button>
-        {confirmRemove ? (
-          <div style={{ display: 'flex', gap: 4, flex: 1 }}>
-            <button
-              onClick={() => { onRemove(screen); setConfirmRemove(false); }}
-              style={{ ...btnStyle, flex: 1, background: '#7f1d1d', border: '1px solid #991b1b', color: '#fca5a5' }}
-            >
-              Confirm
-            </button>
-            <button
-              onClick={() => setConfirmRemove(false)}
-              style={{ ...btnStyle, flex: 1 }}
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirmRemove(true)}
-            style={{ ...btnStyle, flex: 1, color: '#EF4444' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1010'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#161616'; }}
-          >
-            Remove
-          </button>
-        )}
       </div>
 
       <style>{`
