@@ -103,98 +103,115 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
         />
       )}
 
-      {/* Content — place_content grid centre (more robust than flex for large text) */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 2,
-          display: 'grid',
-          placeItems: 'center',
-        }}
-      >
-        {isOpen && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <span
-              style={{
-                fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: 'min(55vh, 45vw)',
-                lineHeight: 0.85,
-                fontVariantNumeric: 'tabular-nums',
-                color: theme.color,
-                textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {attraction.wait_time}
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: 'min(10vh, 8vw)',
-                lineHeight: 1,
-                letterSpacing: '0.35em',
-                paddingLeft: '0.35em',
-                color: theme.color,
-                textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
-                marginTop: '0.5vh',
-              }}
-            >
-              Minutes
-            </span>
-          </div>
-        )}
-
-        {isClosed && (
+      {/* Content — absolute centre via top/left 50% + translate */}
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+          }}
+        >
           <span
             style={{
               fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-              fontSize: 'min(25vh, 20vw)',
+              fontSize: 'min(55vh, 45vw)',
+              lineHeight: 0.85,
+              fontVariantNumeric: 'tabular-nums',
+              color: theme.color,
+              textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {attraction.wait_time}
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+              fontSize: 'min(10vh, 8vw)',
               lineHeight: 1,
-              letterSpacing: '0.15em',
-              paddingLeft: '0.15em',
-              color: '#f87171',
-              textShadow: '0 0 50px rgba(248,113,113,0.6), 0 0 100px rgba(248,113,113,0.3), 0 4px 30px rgba(0,0,0,0.8)',
+              letterSpacing: '0.35em',
+              paddingLeft: '0.35em',
+              color: theme.color,
+              textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
+              marginTop: '0.5vh',
             }}
           >
-            Closed
+            Minutes
           </span>
-        )}
+        </div>
+      )}
 
-        {isDelayed && (
-          <span
-            style={{
-              fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-              fontSize: 'min(20vh, 16vw)',
-              letterSpacing: '0.1em',
-              paddingLeft: '0.1em',
-              textAlign: 'center',
-              lineHeight: 1.1,
-              color: '#F59E0B',
-              textShadow: '0 0 50px rgba(245,158,11,0.6), 0 0 100px rgba(245,158,11,0.3), 0 4px 30px rgba(0,0,0,0.8)',
-            }}
-          >
-            Technical<br />Delay
-          </span>
-        )}
+      {isClosed && (
+        <span
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 2,
+            fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+            fontSize: 'min(25vh, 20vw)',
+            lineHeight: 1,
+            letterSpacing: '0.15em',
+            paddingLeft: '0.15em',
+            color: '#f87171',
+            textShadow: '0 0 50px rgba(248,113,113,0.6), 0 0 100px rgba(248,113,113,0.3), 0 4px 30px rgba(0,0,0,0.8)',
+          }}
+        >
+          Closed
+        </span>
+      )}
 
-        {isAtCapacity && (
-          <span
-            style={{
-              fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-              fontSize: 'min(20vh, 16vw)',
-              letterSpacing: '0.1em',
-              paddingLeft: '0.1em',
-              textAlign: 'center',
-              lineHeight: 1.1,
-              color: '#F59E0B',
-              textShadow: '0 0 50px rgba(245,158,11,0.6), 0 0 100px rgba(245,158,11,0.3), 0 4px 30px rgba(0,0,0,0.8)',
-            }}
-          >
-            At Capacity
-          </span>
-        )}
-      </div>
+      {isDelayed && (
+        <span
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 2,
+            fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+            fontSize: 'min(20vh, 16vw)',
+            letterSpacing: '0.1em',
+            paddingLeft: '0.1em',
+            textAlign: 'center',
+            lineHeight: 1.1,
+            color: '#F59E0B',
+            textShadow: '0 0 50px rgba(245,158,11,0.6), 0 0 100px rgba(245,158,11,0.3), 0 4px 30px rgba(0,0,0,0.8)',
+          }}
+        >
+          Technical<br />Delay
+        </span>
+      )}
+
+      {isAtCapacity && (
+        <span
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 2,
+            fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+            fontSize: 'min(20vh, 16vw)',
+            letterSpacing: '0.1em',
+            paddingLeft: '0.1em',
+            textAlign: 'center',
+            lineHeight: 1.1,
+            color: '#F59E0B',
+            textShadow: '0 0 50px rgba(245,158,11,0.6), 0 0 100px rgba(245,158,11,0.3), 0 4px 30px rgba(0,0,0,0.8)',
+          }}
+        >
+          At Capacity
+        </span>
+      )}
     </div>
   );
 }
