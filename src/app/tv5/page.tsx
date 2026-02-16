@@ -25,7 +25,7 @@ const ATTRACTIONS = [
   { slug: 'drowned', tint: '#0891b2', tintRgb: '8,145,178', name: 'Drowned' },
   { slug: 'signal-loss', tint: '#22d3ee', tintRgb: '34,211,238', name: 'Signal Loss' },
   { slug: 'strings-of-control', tint: '#eab308', tintRgb: '234,179,8', name: 'Strings of Control' },
-  { slug: 'night-terrors', tint: '#6b21a8', tintRgb: '107,33,168', name: 'Night Terrors' },
+  { slug: 'night-terrors', tint: '#e0e0e0', tintRgb: '224,224,224', name: 'Night Terrors' },
 ];
 
 /* ── Timing ── */
@@ -95,7 +95,7 @@ interface BoltOpts {
 
 function drawLightningStrike(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, opts: BoltOpts = {}) {
   const {
-    segments = 18, jitter = 60, width = 1.5, glowSize = 12,
+    segments = 18, jitter = 60, width = 2.5, glowSize = 18,
     colorBase = '180,220,255', branchChance = 0.3, branchDepth = 2, opacity = 1,
   } = opts;
 
@@ -346,27 +346,11 @@ export default function TV5Lightning() {
       // Draw glitch overlay
       drawGlitchFrame(glitchCtx, w, h, s.glitchIntensity, s.tintRgb);
 
-      // Charge phase: occasional skinny bolt
-      if (s.phase === 'charge' && Math.random() < 0.05) {
-        const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
-        queueBolt(sx, sy, cx + (Math.random() - 0.5) * w * 0.15, cy + (Math.random() - 0.5) * h * 0.15, {
-          segments: 20, jitter: 70, width: 1 + Math.random() * 1.5, glowSize: 10 + Math.random() * 6,
-          colorBase: s.colorBase, branchChance: 0.3, branchDepth: 2,
-        }, 180 + Math.random() * 120);
-        fireStaticBurst(0.4 + Math.random() * 0.2, 200, s.tintRgb);
-        fireGlitchBurst(0.4, 200);
-        if (edgeGlowRef.current) {
-          edgeGlowRef.current.style.boxShadow = `inset 0 0 80px rgba(${s.tintRgb},0.2), inset 0 0 200px rgba(${s.tintRgb},0.06)`;
-          edgeGlowRef.current.style.opacity = '0.5';
-          setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.1'; }, 120);
-        }
-      }
-
       // Logo phase: occasional zap hitting logo centre
       if (s.phase === 'logo' && Math.random() < 0.04) {
         const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
         queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
-          segments: 22, jitter: 55, width: 1 + Math.random() * 1, glowSize: 10 + Math.random() * 5,
+          segments: 22, jitter: 55, width: 2 + Math.random() * 1.5, glowSize: 14 + Math.random() * 8,
           colorBase: s.colorBase, branchChance: 0.35, branchDepth: 2,
         }, 200 + Math.random() * 150);
         fireStaticBurst(0.5 + Math.random() * 0.3, 250, s.tintRgb);
@@ -409,7 +393,7 @@ export default function TV5Lightning() {
       if (logoGlowRef.current) logoGlowRef.current.style.opacity = '0';
       if (logoImgRef.current) logoImgRef.current.style.filter = '';
 
-      // Phase 2: Charge
+      // Phase 2: Charge — just ambient tension build, no bolts yet
       setTimeout(() => {
         if (!running) return;
         s.phase = 'charge';
@@ -417,32 +401,6 @@ export default function TV5Lightning() {
           ambientRef.current.style.background = 'radial-gradient(ellipse at center, rgba(100,180,255,0.05) 0%, transparent 60%)';
           ambientRef.current.style.opacity = '0.4';
         }
-        // First strike — skinny bolt from top
-        setTimeout(() => {
-          if (!running) return;
-          const sx = w * 0.3 + Math.random() * w * 0.4;
-          queueBolt(sx, -30, cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 60, {
-            segments: 22, jitter: 65, width: 1.5, glowSize: 14,
-            colorBase: '180,220,255', branchChance: 0.35, branchDepth: 2,
-          }, 250);
-          fireStaticBurst(0.6, 300, '180,220,255');
-          fireGlitchBurst(0.6, 250);
-          if (edgeGlowRef.current) {
-            edgeGlowRef.current.style.boxShadow = 'inset 0 0 80px rgba(100,180,255,0.25), inset 0 0 200px rgba(100,180,255,0.08)';
-            edgeGlowRef.current.style.opacity = '0.5';
-            setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.1'; }, 180);
-          }
-        }, 100);
-        // Second strike from side
-        setTimeout(() => {
-          if (!running) return;
-          queueBolt(-30, h * 0.3 + Math.random() * h * 0.4, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 50, {
-            segments: 20, jitter: 55, width: 1.2, glowSize: 12,
-            colorBase: '180,220,255', branchChance: 0.3, branchDepth: 2,
-          }, 220);
-          fireStaticBurst(0.5, 250, '180,220,255');
-          fireGlitchBurst(0.5, 200);
-        }, 350);
       }, HOLD_BLACK);
       t = HOLD_BLACK;
 
@@ -457,14 +415,15 @@ export default function TV5Lightning() {
           s.colorBase = attraction.tintRgb;
           s.tintRgb = attraction.tintRgb;
 
-          // 2-4 skinny converging strikes hitting centre
-          const boltCount = 2 + Math.floor(Math.random() * 3);
+          // 4-6 converging strikes from all edges, spread across the screen
+          const boltCount = 4 + Math.floor(Math.random() * 3);
           for (let b = 0; b < boltCount; b++) {
+            // Ensure bolts come from all 4 edges (cycle through them)
             const [sx, sy] = getEdgePoint((i + b) % 4, w, h);
-            // Target the dead centre (logo position) with slight variance
+            // Target the logo centre with slight variance
             queueBolt(sx, sy, cx + (Math.random() - 0.5) * 30, cy + (Math.random() - 0.5) * 20, {
-              segments: 24, jitter: 50 + Math.random() * 25, width: 1 + Math.random() * 1.2,
-              glowSize: 10 + Math.random() * 8, colorBase: attraction.tintRgb,
+              segments: 24, jitter: 50 + Math.random() * 25, width: 2 + Math.random() * 1.5,
+              glowSize: 16 + Math.random() * 10, colorBase: attraction.tintRgb,
               branchChance: 0.35, branchDepth: 2,
             }, 250 + Math.random() * 100);
           }
@@ -516,7 +475,7 @@ export default function TV5Lightning() {
           if (!running) return;
           const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
           queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
-            segments: 18, jitter: 50, width: 1 + Math.random() * 0.8, glowSize: 10,
+            segments: 18, jitter: 50, width: 2 + Math.random() * 1, glowSize: 14,
             colorBase: attraction.tintRgb, branchChance: 0.3, branchDepth: 1,
           }, 200);
           fireStaticBurst(0.4, 200, attraction.tintRgb);
@@ -540,11 +499,11 @@ export default function TV5Lightning() {
         if (!running) return;
         s.phase = 'flash';
 
-        // Multiple skinny bolts from every direction
-        for (let b = 0; b < 6; b++) {
+        // Multiple bolts from every direction
+        for (let b = 0; b < 8; b++) {
           const [sx, sy] = getEdgePoint(b % 4, w, h);
           queueBolt(sx, sy, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 40, {
-            segments: 24, jitter: 80, width: 1.5 + Math.random() * 1, glowSize: 14,
+            segments: 24, jitter: 80, width: 2.5 + Math.random() * 1.5, glowSize: 20,
             colorBase: '220,240,255', branchChance: 0.4, branchDepth: 2,
           }, 200);
         }
