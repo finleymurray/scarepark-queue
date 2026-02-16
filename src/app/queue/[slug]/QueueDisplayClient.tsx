@@ -118,7 +118,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+              fontFamily: "Impact, 'Arial Black', sans-serif",
               fontSize: 'min(55vh, 45vw)',
               lineHeight: 0.85,
               color: theme.color,
@@ -130,7 +130,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+              fontFamily: "Impact, 'Arial Black', sans-serif",
               fontSize: 'min(10vh, 8vw)',
               lineHeight: 1,
               letterSpacing: '0.35em',
@@ -138,6 +138,7 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
               color: theme.color,
               textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
               marginTop: '1vh',
+              textTransform: 'uppercase',
             }}
           >
             Minutes
