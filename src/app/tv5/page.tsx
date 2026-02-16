@@ -4,17 +4,17 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 
 /**
- * TV5 — Tesla Coil Lightning Montage
+ * TV5 — Lightning Strike Montage with Glitch
  *
- * A ~5-second sequence that cycles through all 6 maze logos with
- * tesla-coil-style lightning bolts, static bursts on impact, and
- * attraction-tinted electric glows. Deliberate big strikes, not frantic.
+ * Skinny, sudden lightning strikes that hit the logo (which appears IN FRONT
+ * of the bolts). Glitchy vibe: scanline tears, RGB channel splits, block
+ * displacement on impact. Not thick tesla coils — sharp, cracking lightning.
  *
  * Sequence:
- *   1. Darkness builds tension (0.8s)
- *   2. Electric charge — 2 big bolts crack in with static (0.6s)
- *   3. 6 logos revealed by massive lightning strikes (~0.5s each)
- *   4. Final discharge — bolts from every edge + white-out (0.35s)
+ *   1. Darkness builds (0.8s)
+ *   2. Electric charge — skinny bolts crack in (0.6s)
+ *   3. 6 logos revealed by striking lightning + glitch bursts (~0.5s each)
+ *   4. Final discharge + white-out (0.35s)
  *   5. Repeat
  */
 
@@ -36,7 +36,7 @@ const FLASH_OUT = 350;
 const TOTAL_DURATION = HOLD_BLACK + CHARGE_UP + (ATTRACTIONS.length * LOGO_DURATION) + FLASH_OUT + 300;
 
 /* ══════════════════════════════════════
-   Lightning bolt generation (canvas)
+   Skinny lightning bolt (canvas)
    ══════════════════════════════════════ */
 
 interface Point { x: number; y: number }
@@ -59,35 +59,26 @@ function generateBoltPath(x1: number, y1: number, x2: number, y2: number, segmen
 }
 
 function drawBoltPath(ctx: CanvasRenderingContext2D, points: Point[], width: number, glowSize: number, colorBase: string, coreOpacity: number) {
-  // Outer glow
+  // Outer glow — subtle, thin
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-  ctx.strokeStyle = `rgba(${colorBase},0.08)`;
-  ctx.lineWidth = width + glowSize * 2;
+  ctx.strokeStyle = `rgba(${colorBase},0.12)`;
+  ctx.lineWidth = width + glowSize;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.shadowColor = `rgba(${colorBase},0.4)`;
-  ctx.shadowBlur = glowSize * 1.5;
+  ctx.shadowColor = `rgba(${colorBase},0.5)`;
+  ctx.shadowBlur = glowSize;
   ctx.stroke();
 
-  // Inner glow
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-  ctx.strokeStyle = `rgba(${colorBase},0.35)`;
-  ctx.lineWidth = width + glowSize * 0.5;
-  ctx.shadowBlur = glowSize * 0.6;
-  ctx.stroke();
-
-  // Bright core
+  // Bright core — the visible bolt
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
   ctx.strokeStyle = `rgba(255,255,255,${coreOpacity})`;
   ctx.lineWidth = width;
   ctx.shadowColor = `rgba(${colorBase},0.9)`;
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 8;
   ctx.stroke();
 }
 
@@ -102,10 +93,10 @@ interface BoltOpts {
   opacity?: number;
 }
 
-function drawTeslaBolt(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, opts: BoltOpts = {}) {
+function drawLightningStrike(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, opts: BoltOpts = {}) {
   const {
-    segments = 16, jitter = 80, width = 3.5, glowSize = 35,
-    colorBase = '180,220,255', branchChance = 0.4, branchDepth = 2, opacity = 1,
+    segments = 18, jitter = 60, width = 1.5, glowSize = 12,
+    colorBase = '180,220,255', branchChance = 0.3, branchDepth = 2, opacity = 1,
   } = opts;
 
   ctx.save();
@@ -114,23 +105,25 @@ function drawTeslaBolt(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2
   const mainPath = generateBoltPath(x1, y1, x2, y2, segments, jitter);
   drawBoltPath(ctx, mainPath, width, glowSize, colorBase, 0.95);
 
+  // Skinny branches
   if (branchDepth > 0) {
     for (let i = 3; i < mainPath.length - 2; i++) {
       if (Math.random() < branchChance) {
         const p = mainPath[i];
-        const angle = Math.atan2(y2 - y1, x2 - x1) + (Math.random() - 0.5) * Math.PI * 0.8;
-        const len = (80 + Math.random() * 120) * (branchDepth / 2);
+        const angle = Math.atan2(y2 - y1, x2 - x1) + (Math.random() - 0.5) * Math.PI * 0.7;
+        const len = (40 + Math.random() * 80) * (branchDepth / 2);
         const bx = p.x + Math.cos(angle) * len;
         const by = p.y + Math.sin(angle) * len;
-        const branchPath = generateBoltPath(p.x, p.y, bx, by, 5 + Math.floor(Math.random() * 4), jitter * 0.5);
-        drawBoltPath(ctx, branchPath, width * 0.5, glowSize * 0.4, colorBase, 0.6);
+        const branchPath = generateBoltPath(p.x, p.y, bx, by, 4 + Math.floor(Math.random() * 3), jitter * 0.5);
+        drawBoltPath(ctx, branchPath, width * 0.6, glowSize * 0.4, colorBase, 0.5);
 
-        if (branchDepth > 1 && Math.random() < 0.3) {
+        // Sub-branches
+        if (branchDepth > 1 && Math.random() < 0.25) {
           const sp = branchPath[Math.floor(branchPath.length * 0.6)];
           const sa = angle + (Math.random() - 0.5) * 1.2;
-          const sl = 40 + Math.random() * 60;
+          const sl = 20 + Math.random() * 40;
           const subPath = generateBoltPath(sp.x, sp.y, sp.x + Math.cos(sa) * sl, sp.y + Math.sin(sa) * sl, 3, jitter * 0.3);
-          drawBoltPath(ctx, subPath, width * 0.3, glowSize * 0.2, colorBase, 0.35);
+          drawBoltPath(ctx, subPath, width * 0.4, glowSize * 0.2, colorBase, 0.3);
         }
       }
     }
@@ -166,14 +159,56 @@ function drawStaticFrame(ctx: CanvasRenderingContext2D, intensity: number, tint:
 }
 
 /* ══════════════════════════════════════
+   Glitch effects (canvas overlay)
+   ══════════════════════════════════════ */
+
+function drawGlitchFrame(ctx: CanvasRenderingContext2D, w: number, h: number, intensity: number, tintRgb: string) {
+  if (intensity <= 0) { ctx.clearRect(0, 0, w, h); return; }
+  ctx.clearRect(0, 0, w, h);
+
+  // Scanline tears — horizontal slices displaced sideways
+  const tearCount = Math.floor(2 + intensity * 6);
+  for (let i = 0; i < tearCount; i++) {
+    const y = Math.random() * h;
+    const sliceH = 1 + Math.random() * 4;
+    const offset = (Math.random() - 0.5) * 40 * intensity;
+    ctx.fillStyle = `rgba(${tintRgb},${0.04 + Math.random() * 0.08 * intensity})`;
+    ctx.fillRect(offset, y, w, sliceH);
+  }
+
+  // Block displacement — random rectangular glitch blocks
+  if (intensity > 0.3) {
+    const blockCount = Math.floor(1 + intensity * 3);
+    for (let i = 0; i < blockCount; i++) {
+      const bx = Math.random() * w;
+      const by = Math.random() * h;
+      const bw = 30 + Math.random() * 100;
+      const bh = 2 + Math.random() * 8;
+      const shift = (Math.random() - 0.5) * 20 * intensity;
+      ctx.fillStyle = `rgba(${tintRgb},${0.03 + Math.random() * 0.06})`;
+      ctx.fillRect(bx + shift, by, bw, bh);
+    }
+  }
+
+  // Horizontal scan lines (subtle CRT feel)
+  if (intensity > 0.2) {
+    ctx.fillStyle = `rgba(255,255,255,${0.015 * intensity})`;
+    for (let y = 0; y < h; y += 3) {
+      ctx.fillRect(0, y, w, 1);
+    }
+  }
+}
+
+/* ══════════════════════════════════════
    Component
    ══════════════════════════════════════ */
 
-export default function TV5Tesla() {
+export default function TV5Lightning() {
   useConnectionHealth('tv5');
 
   const boltCanvasRef = useRef<HTMLCanvasElement>(null);
   const staticCanvasRef = useRef<HTMLCanvasElement>(null);
+  const glitchCanvasRef = useRef<HTMLCanvasElement>(null);
   const ambientRef = useRef<HTMLDivElement>(null);
   const logoGlowRef = useRef<HTMLDivElement>(null);
   const logoContainerRef = useRef<HTMLDivElement>(null);
@@ -188,6 +223,7 @@ export default function TV5Tesla() {
     tintRgb: '100,180,255',
     staticIntensity: 0,
     staticTint: null as number[] | null,
+    glitchIntensity: 0,
     activeBolts: [] as { x1: number; y1: number; x2: number; y2: number; opts: BoltOpts; born: number; lifespan: number }[],
   });
 
@@ -214,8 +250,22 @@ export default function TV5Tesla() {
     requestAnimationFrame(decay);
   }, []);
 
+  // Helper: fire a glitch burst (scanlines, block displacement)
+  const fireGlitchBurst = useCallback((peak: number, decayMs: number) => {
+    const s = stateRef.current;
+    s.glitchIntensity = peak;
+    const start = performance.now();
+    const decay = () => {
+      const progress = Math.min((performance.now() - start) / decayMs, 1);
+      s.glitchIntensity = peak * Math.pow(1 - progress, 2);
+      if (progress < 1) requestAnimationFrame(decay);
+      else s.glitchIntensity = 0;
+    };
+    requestAnimationFrame(decay);
+  }, []);
+
   // Helper: queue a bolt
-  const queueBolt = useCallback((x1: number, y1: number, x2: number, y2: number, opts: BoltOpts, lifespan = 200) => {
+  const queueBolt = useCallback((x1: number, y1: number, x2: number, y2: number, opts: BoltOpts, lifespan = 150) => {
     stateRef.current.activeBolts.push({ x1, y1, x2, y2, opts, born: performance.now(), lifespan });
   }, []);
 
@@ -229,18 +279,33 @@ export default function TV5Tesla() {
     }
   }, []);
 
+  // Helper: RGB split on the logo image
+  const applyLogoGlitch = useCallback((intensity: number, tint: string) => {
+    if (!logoImgRef.current) return;
+    const img = logoImgRef.current;
+    if (intensity > 0.3) {
+      const rx = (Math.random() - 0.5) * 8 * intensity;
+      const ry = (Math.random() - 0.5) * 4 * intensity;
+      img.style.filter = `drop-shadow(${rx}px ${ry}px 0 rgba(255,0,0,${0.3 * intensity})) drop-shadow(${-rx}px ${-ry}px 0 rgba(0,255,255,${0.3 * intensity})) drop-shadow(0 0 40px ${tint}) drop-shadow(0 0 80px ${tint}55)`;
+    }
+  }, []);
+
   // Render loop + sequence
   useEffect(() => {
     const boltCanvas = boltCanvasRef.current;
     const staticCanvas = staticCanvasRef.current;
-    if (!boltCanvas || !staticCanvas) return;
+    const glitchCanvas = glitchCanvasRef.current;
+    if (!boltCanvas || !staticCanvas || !glitchCanvas) return;
     const boltCtx = boltCanvas.getContext('2d')!;
     const staticCtx = staticCanvas.getContext('2d')!;
+    const glitchCtx = glitchCanvas.getContext('2d')!;
 
     // Sizing
     const resize = () => {
       boltCanvas.width = window.innerWidth;
       boltCanvas.height = window.innerHeight;
+      glitchCanvas.width = window.innerWidth;
+      glitchCanvas.height = window.innerHeight;
       staticCanvas.width = 320;
       staticCanvas.height = 180;
     };
@@ -261,16 +326,15 @@ export default function TV5Tesla() {
 
       boltCtx.clearRect(0, 0, w, h);
 
-      // Draw lingering bolts
+      // Draw lingering bolts — re-jitter each frame for electric crackle
       s.activeBolts = s.activeBolts.filter((b) => {
         const age = now - b.born;
         if (age > b.lifespan) return false;
         const fadeProgress = age / b.lifespan;
-        const opacity = fadeProgress < 0.4 ? 1 : 1 - ((fadeProgress - 0.4) / 0.6);
-        const jitterMult = 0.7 + Math.random() * 0.6;
-        drawTeslaBolt(boltCtx, b.x1, b.y1, b.x2, b.y2, {
+        const opacity = fadeProgress < 0.3 ? 1 : 1 - ((fadeProgress - 0.3) / 0.7);
+        drawLightningStrike(boltCtx, b.x1, b.y1, b.x2, b.y2, {
           ...b.opts,
-          jitter: (b.opts.jitter || 80) * jitterMult,
+          jitter: (b.opts.jitter || 60) * (0.8 + Math.random() * 0.4),
           opacity: opacity * (b.opts.opacity || 1),
         });
         return true;
@@ -279,36 +343,42 @@ export default function TV5Tesla() {
       // Draw static
       drawStaticFrame(staticCtx, s.staticIntensity, s.staticTint);
 
-      // Charge phase: occasional big bolt
-      if (s.phase === 'charge' && Math.random() < 0.06) {
+      // Draw glitch overlay
+      drawGlitchFrame(glitchCtx, w, h, s.glitchIntensity, s.tintRgb);
+
+      // Charge phase: occasional skinny bolt
+      if (s.phase === 'charge' && Math.random() < 0.05) {
         const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
-        queueBolt(sx, sy, cx + (Math.random() - 0.5) * w * 0.2, cy + (Math.random() - 0.5) * h * 0.2, {
-          segments: 18, jitter: 100, width: 3 + Math.random() * 2, glowSize: 40,
-          colorBase: s.colorBase, branchChance: 0.45, branchDepth: 2,
-        }, 300 + Math.random() * 200);
-        fireStaticBurst(0.5 + Math.random() * 0.3, 250, s.tintRgb);
+        queueBolt(sx, sy, cx + (Math.random() - 0.5) * w * 0.15, cy + (Math.random() - 0.5) * h * 0.15, {
+          segments: 20, jitter: 70, width: 1 + Math.random() * 1.5, glowSize: 10 + Math.random() * 6,
+          colorBase: s.colorBase, branchChance: 0.3, branchDepth: 2,
+        }, 180 + Math.random() * 120);
+        fireStaticBurst(0.4 + Math.random() * 0.2, 200, s.tintRgb);
+        fireGlitchBurst(0.4, 200);
         if (edgeGlowRef.current) {
-          edgeGlowRef.current.style.boxShadow = `inset 0 0 100px rgba(${s.tintRgb},0.25), inset 0 0 250px rgba(${s.tintRgb},0.08)`;
-          edgeGlowRef.current.style.opacity = '0.6';
-          setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.1'; }, 150);
+          edgeGlowRef.current.style.boxShadow = `inset 0 0 80px rgba(${s.tintRgb},0.2), inset 0 0 200px rgba(${s.tintRgb},0.06)`;
+          edgeGlowRef.current.style.opacity = '0.5';
+          setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.1'; }, 120);
         }
       }
 
-      // Logo phase: occasional tesla zap
+      // Logo phase: occasional zap hitting logo centre
       if (s.phase === 'logo' && Math.random() < 0.04) {
         const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
-        queueBolt(sx, sy, cx + (Math.random() - 0.5) * w * 0.1, cy + (Math.random() - 0.5) * h * 0.1, {
-          segments: 20, jitter: 90, width: 4 + Math.random() * 2, glowSize: 45,
-          colorBase: s.colorBase, branchChance: 0.5, branchDepth: 2,
-        }, 350 + Math.random() * 200);
-        fireStaticBurst(0.7 + Math.random() * 0.3, 350, s.tintRgb);
+        queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
+          segments: 22, jitter: 55, width: 1 + Math.random() * 1, glowSize: 10 + Math.random() * 5,
+          colorBase: s.colorBase, branchChance: 0.35, branchDepth: 2,
+        }, 200 + Math.random() * 150);
+        fireStaticBurst(0.5 + Math.random() * 0.3, 250, s.tintRgb);
+        fireGlitchBurst(0.5, 180);
+        // Shake logo on impact
         if (logoContainerRef.current) {
           logoContainerRef.current.style.transform = `translate(${(Math.random() - 0.5) * 6}px, ${(Math.random() - 0.5) * 4}px)`;
           setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 80);
         }
         if (edgeGlowRef.current) {
-          edgeGlowRef.current.style.opacity = '0.7';
-          setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.15'; }, 120);
+          edgeGlowRef.current.style.opacity = '0.6';
+          setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.15'; }, 100);
         }
       }
 
@@ -329,6 +399,7 @@ export default function TV5Tesla() {
       s.phase = 'black';
       s.activeBolts = [];
       s.staticIntensity = 0;
+      s.glitchIntensity = 0;
       s.colorBase = '180,220,255';
       s.tintRgb = '100,180,255';
       if (logoContainerRef.current) logoContainerRef.current.style.opacity = '0';
@@ -336,38 +407,41 @@ export default function TV5Tesla() {
       if (ambientRef.current) ambientRef.current.style.opacity = '0';
       if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0';
       if (logoGlowRef.current) logoGlowRef.current.style.opacity = '0';
+      if (logoImgRef.current) logoImgRef.current.style.filter = '';
 
       // Phase 2: Charge
       setTimeout(() => {
         if (!running) return;
         s.phase = 'charge';
         if (ambientRef.current) {
-          ambientRef.current.style.background = 'radial-gradient(ellipse at center, rgba(100,180,255,0.06) 0%, transparent 60%)';
+          ambientRef.current.style.background = 'radial-gradient(ellipse at center, rgba(100,180,255,0.05) 0%, transparent 60%)';
           ambientRef.current.style.opacity = '0.4';
         }
-        // First big bolt
+        // First strike — skinny bolt from top
         setTimeout(() => {
           if (!running) return;
           const sx = w * 0.3 + Math.random() * w * 0.4;
-          queueBolt(sx, -30, cx + (Math.random() - 0.5) * 100, cy + (Math.random() - 0.5) * 80, {
-            segments: 20, jitter: 100, width: 4, glowSize: 50,
-            colorBase: '180,220,255', branchChance: 0.5, branchDepth: 2,
-          }, 400);
-          fireStaticBurst(0.8, 400, '180,220,255');
+          queueBolt(sx, -30, cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 60, {
+            segments: 22, jitter: 65, width: 1.5, glowSize: 14,
+            colorBase: '180,220,255', branchChance: 0.35, branchDepth: 2,
+          }, 250);
+          fireStaticBurst(0.6, 300, '180,220,255');
+          fireGlitchBurst(0.6, 250);
           if (edgeGlowRef.current) {
-            edgeGlowRef.current.style.boxShadow = 'inset 0 0 100px rgba(100,180,255,0.3), inset 0 0 250px rgba(100,180,255,0.1)';
-            edgeGlowRef.current.style.opacity = '0.6';
-            setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.15'; }, 200);
+            edgeGlowRef.current.style.boxShadow = 'inset 0 0 80px rgba(100,180,255,0.25), inset 0 0 200px rgba(100,180,255,0.08)';
+            edgeGlowRef.current.style.opacity = '0.5';
+            setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.1'; }, 180);
           }
         }, 100);
-        // Second bolt from side
+        // Second strike from side
         setTimeout(() => {
           if (!running) return;
-          queueBolt(-30, h * 0.3 + Math.random() * h * 0.4, cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 60, {
-            segments: 18, jitter: 90, width: 3.5, glowSize: 40,
-            colorBase: '180,220,255', branchChance: 0.45, branchDepth: 2,
-          }, 350);
-          fireStaticBurst(0.6, 300, '180,220,255');
+          queueBolt(-30, h * 0.3 + Math.random() * h * 0.4, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 50, {
+            segments: 20, jitter: 55, width: 1.2, glowSize: 12,
+            colorBase: '180,220,255', branchChance: 0.3, branchDepth: 2,
+          }, 220);
+          fireStaticBurst(0.5, 250, '180,220,255');
+          fireGlitchBurst(0.5, 200);
         }, 350);
       }, HOLD_BLACK);
       t = HOLD_BLACK;
@@ -383,62 +457,79 @@ export default function TV5Tesla() {
           s.colorBase = attraction.tintRgb;
           s.tintRgb = attraction.tintRgb;
 
-          // 2-3 converging bolts
-          const boltCount = 2 + Math.floor(Math.random() * 2);
+          // 2-4 skinny converging strikes hitting centre
+          const boltCount = 2 + Math.floor(Math.random() * 3);
           for (let b = 0; b < boltCount; b++) {
             const [sx, sy] = getEdgePoint((i + b) % 4, w, h);
-            queueBolt(sx, sy, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 40, {
-              segments: 22, jitter: 80 + Math.random() * 40, width: 4 + Math.random() * 2,
-              glowSize: 45 + Math.random() * 15, colorBase: attraction.tintRgb,
-              branchChance: 0.5, branchDepth: 2,
-            }, 400 + Math.random() * 150);
+            // Target the dead centre (logo position) with slight variance
+            queueBolt(sx, sy, cx + (Math.random() - 0.5) * 30, cy + (Math.random() - 0.5) * 20, {
+              segments: 24, jitter: 50 + Math.random() * 25, width: 1 + Math.random() * 1.2,
+              glowSize: 10 + Math.random() * 8, colorBase: attraction.tintRgb,
+              branchChance: 0.35, branchDepth: 2,
+            }, 250 + Math.random() * 100);
           }
 
-          fireStaticBurst(0.9, 400, attraction.tintRgb);
+          // Burst effects
+          fireStaticBurst(0.7, 350, attraction.tintRgb);
+          fireGlitchBurst(0.8, 300);
 
-          // Show logo
+          // Show logo with RGB split glitch on entry
           if (logoImgRef.current) {
             logoImgRef.current.src = `/logos/${attraction.slug}.webp`;
             logoImgRef.current.alt = attraction.name;
-            logoImgRef.current.style.filter = `drop-shadow(0 0 40px ${attraction.tint}) drop-shadow(0 0 80px rgba(${attraction.tintRgb},0.5))`;
+            // Initial RGB split that settles
+            applyLogoGlitch(0.8, attraction.tint);
+            setTimeout(() => {
+              if (logoImgRef.current) {
+                logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
+              }
+            }, 100);
           }
           if (logoContainerRef.current) {
             logoContainerRef.current.style.opacity = '1';
-            logoContainerRef.current.style.transform = `scale(1.06) translate(${(Math.random() - 0.5) * 6}px, ${(Math.random() - 0.5) * 3}px)`;
-            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'scale(1) translate(0,0)'; }, 70);
+            // Jolt on reveal
+            logoContainerRef.current.style.transform = `scale(1.04) translate(${(Math.random() - 0.5) * 5}px, ${(Math.random() - 0.5) * 3}px)`;
+            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'scale(1) translate(0,0)'; }, 60);
           }
           if (logoGlowRef.current) {
-            logoGlowRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.3) 0%, rgba(${attraction.tintRgb},0.1) 40%, transparent 65%)`;
+            logoGlowRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.25) 0%, rgba(${attraction.tintRgb},0.08) 40%, transparent 65%)`;
             logoGlowRef.current.style.opacity = '1';
           }
           if (ambientRef.current) {
-            ambientRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.1) 0%, transparent 65%)`;
-            ambientRef.current.style.opacity = '0.8';
+            ambientRef.current.style.background = `radial-gradient(ellipse at center, rgba(${attraction.tintRgb},0.08) 0%, transparent 65%)`;
+            ambientRef.current.style.opacity = '0.7';
           }
           if (edgeGlowRef.current) {
-            edgeGlowRef.current.style.boxShadow = `inset 0 0 100px rgba(${attraction.tintRgb},0.35), inset 0 0 250px rgba(${attraction.tintRgb},0.1)`;
-            edgeGlowRef.current.style.opacity = '0.7';
-            setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.2'; }, 200);
+            edgeGlowRef.current.style.boxShadow = `inset 0 0 80px rgba(${attraction.tintRgb},0.3), inset 0 0 200px rgba(${attraction.tintRgb},0.08)`;
+            edgeGlowRef.current.style.opacity = '0.6';
+            setTimeout(() => { if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0.15'; }, 180);
           }
           if (flashRef.current) {
-            flashRef.current.style.background = `rgba(${attraction.tintRgb},0.3)`;
-            flashRef.current.style.opacity = '0.5';
-            setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0'; }, 80);
+            flashRef.current.style.background = `rgba(${attraction.tintRgb},0.25)`;
+            flashRef.current.style.opacity = '0.4';
+            setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0'; }, 70);
           }
         }, logoStart);
 
-        // Mid-logo zap
+        // Mid-logo follow-up strike
         setTimeout(() => {
           if (!running) return;
           const [sx, sy] = getEdgePoint(Math.floor(Math.random() * 4), w, h);
-          queueBolt(sx, sy, cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 60, {
-            segments: 16, jitter: 70, width: 3, glowSize: 35,
-            colorBase: attraction.tintRgb, branchChance: 0.4, branchDepth: 1,
-          }, 300);
-          fireStaticBurst(0.5, 250, attraction.tintRgb);
+          queueBolt(sx, sy, cx + (Math.random() - 0.5) * 40, cy + (Math.random() - 0.5) * 30, {
+            segments: 18, jitter: 50, width: 1 + Math.random() * 0.8, glowSize: 10,
+            colorBase: attraction.tintRgb, branchChance: 0.3, branchDepth: 1,
+          }, 200);
+          fireStaticBurst(0.4, 200, attraction.tintRgb);
+          fireGlitchBurst(0.4, 150);
+          applyLogoGlitch(0.5, attraction.tint);
+          setTimeout(() => {
+            if (logoImgRef.current) {
+              logoImgRef.current.style.filter = `drop-shadow(0 0 30px ${attraction.tint}) drop-shadow(0 0 60px rgba(${attraction.tintRgb},0.4))`;
+            }
+          }, 80);
           if (logoContainerRef.current) {
             logoContainerRef.current.style.transform = `translate(${(Math.random() - 0.5) * 4}px, ${(Math.random() - 0.5) * 3}px)`;
-            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 60);
+            setTimeout(() => { if (logoContainerRef.current) logoContainerRef.current.style.transform = 'translate(0,0)'; }, 50);
           }
         }, logoStart + LOGO_DURATION * 0.6);
       });
@@ -449,23 +540,25 @@ export default function TV5Tesla() {
         if (!running) return;
         s.phase = 'flash';
 
-        for (let b = 0; b < 5; b++) {
+        // Multiple skinny bolts from every direction
+        for (let b = 0; b < 6; b++) {
           const [sx, sy] = getEdgePoint(b % 4, w, h);
-          queueBolt(sx, sy, cx + (Math.random() - 0.5) * 100, cy + (Math.random() - 0.5) * 80, {
-            segments: 22, jitter: 120, width: 5, glowSize: 60,
-            colorBase: '220,240,255', branchChance: 0.6, branchDepth: 2,
-          }, 300);
+          queueBolt(sx, sy, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 40, {
+            segments: 24, jitter: 80, width: 1.5 + Math.random() * 1, glowSize: 14,
+            colorBase: '220,240,255', branchChance: 0.4, branchDepth: 2,
+          }, 200);
         }
-        fireStaticBurst(1.0, 500, null);
+        fireStaticBurst(1.0, 400, null);
+        fireGlitchBurst(1.0, 350);
 
-        if (flashRef.current) { flashRef.current.style.background = '#fff'; flashRef.current.style.opacity = '0.9'; }
+        if (flashRef.current) { flashRef.current.style.background = '#fff'; flashRef.current.style.opacity = '0.8'; }
         if (edgeGlowRef.current) {
-          edgeGlowRef.current.style.boxShadow = 'inset 0 0 150px rgba(255,255,255,0.5), inset 0 0 300px rgba(180,220,255,0.2)';
+          edgeGlowRef.current.style.boxShadow = 'inset 0 0 120px rgba(255,255,255,0.4), inset 0 0 250px rgba(180,220,255,0.15)';
           edgeGlowRef.current.style.opacity = '1';
         }
 
-        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.4'; }, 80);
-        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.15'; }, 160);
+        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.3'; }, 70);
+        setTimeout(() => { if (flashRef.current) flashRef.current.style.opacity = '0.1'; }, 140);
         setTimeout(() => {
           if (flashRef.current) flashRef.current.style.opacity = '0';
           if (edgeGlowRef.current) edgeGlowRef.current.style.opacity = '0';
@@ -474,6 +567,7 @@ export default function TV5Tesla() {
           if (logoGlowRef.current) logoGlowRef.current.style.opacity = '0';
           s.phase = 'black';
           s.staticIntensity = 0;
+          s.glitchIntensity = 0;
         }, FLASH_OUT);
       }, flashStart);
 
@@ -486,36 +580,39 @@ export default function TV5Tesla() {
       running = false;
       window.removeEventListener('resize', resize);
     };
-  }, [fireStaticBurst, queueBolt, getEdgePoint]);
+  }, [fireStaticBurst, fireGlitchBurst, queueBolt, getEdgePoint, applyLogoGlitch]);
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000', overflow: 'hidden', zIndex: 9999 }}>
-      {/* Lightning bolt canvas */}
-      <canvas ref={boltCanvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 6, pointerEvents: 'none' }} />
-
-      {/* Static burst canvas */}
-      <canvas ref={staticCanvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2, pointerEvents: 'none', imageRendering: 'pixelated', mixBlendMode: 'screen' }} />
-
-      {/* Ambient electric glow */}
+      {/* Ambient electric glow — z1 */}
       <div ref={ambientRef} style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0 }} />
 
-      {/* Logo glow orb */}
+      {/* Static burst canvas — z2 */}
+      <canvas ref={staticCanvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2, pointerEvents: 'none', imageRendering: 'pixelated', mixBlendMode: 'screen' }} />
+
+      {/* Logo glow orb — z3 */}
       <div ref={logoGlowRef} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '50%', height: '50%', borderRadius: '50%', filter: 'blur(100px)', zIndex: 3, opacity: 0, pointerEvents: 'none' }} />
 
-      {/* Logo */}
+      {/* Lightning bolt canvas — z4 (BELOW logo) */}
+      <canvas ref={boltCanvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 4, pointerEvents: 'none' }} />
+
+      {/* Logo — z5 (IN FRONT of lightning) */}
       <div ref={logoContainerRef} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, opacity: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img ref={logoImgRef} src="" alt="" style={{ height: '45%', maxWidth: '70%', objectFit: 'contain', position: 'relative' }} />
       </div>
 
-      {/* Flash overlay */}
-      <div ref={flashRef} style={{ position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none', opacity: 0 }} />
+      {/* Glitch overlay canvas — z7 (on top for scanline tears) */}
+      <canvas ref={glitchCanvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 7, pointerEvents: 'none', mixBlendMode: 'screen' }} />
 
-      {/* Edge glow */}
+      {/* Vignette — z11 */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.85) 100%)', zIndex: 11, pointerEvents: 'none' }} />
+
+      {/* Edge glow — z12 */}
       <div ref={edgeGlowRef} style={{ position: 'absolute', inset: 0, zIndex: 12, pointerEvents: 'none', opacity: 0 }} />
 
-      {/* Vignette */}
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.85) 100%)', zIndex: 11, pointerEvents: 'none' }} />
+      {/* Flash overlay — z20 */}
+      <div ref={flashRef} style={{ position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none', opacity: 0 }} />
     </div>
   );
 }
