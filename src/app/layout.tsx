@@ -25,6 +25,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Immersive Core — Queue Management",
   description: "Real-time queue management system",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
