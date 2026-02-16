@@ -163,7 +163,7 @@ export default function TV4Carousel() {
             className="absolute inset-0 w-full h-full border-0"
             style={{
               opacity: i === activeIndex ? 1 : 0,
-              transition: 'opacity 0.5s ease-in-out',
+              transition: view.fullscreen || isFullscreen ? 'none' : 'opacity 0.5s ease-in-out',
               pointerEvents: i === activeIndex ? 'auto' : 'none',
             }}
           />
