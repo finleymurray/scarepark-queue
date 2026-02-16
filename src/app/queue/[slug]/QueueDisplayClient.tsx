@@ -118,9 +118,11 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "Impact, 'Arial Black', sans-serif",
+              fontFamily: "var(--font-dm-sans), 'DM Sans', -apple-system, sans-serif",
               fontSize: 'min(55vh, 45vw)',
+              fontWeight: 900,
               lineHeight: 0.85,
+              fontVariantNumeric: 'tabular-nums',
               color: theme.color,
               textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
             }}
@@ -130,15 +132,16 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
           <span
             style={{
               display: 'block',
-              fontFamily: "Impact, 'Arial Black', sans-serif",
+              fontFamily: "var(--font-dm-sans), 'DM Sans', -apple-system, sans-serif",
               fontSize: 'min(10vh, 8vw)',
+              fontWeight: 700,
               lineHeight: 1,
               letterSpacing: '0.35em',
               textIndent: '0.35em',
+              textTransform: 'uppercase',
               color: theme.color,
               textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
               marginTop: '1vh',
-              textTransform: 'uppercase',
             }}
           >
             Minutes
