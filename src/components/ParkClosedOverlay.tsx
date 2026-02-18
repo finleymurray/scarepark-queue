@@ -22,13 +22,12 @@ export default function ParkClosedOverlay() {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/logo.webp"
+        src="/splash.png"
         alt="Immersive Core"
         style={{
-          maxWidth: '30%',
-          maxHeight: '30%',
+          maxWidth: '100%',
+          maxHeight: '100%',
           objectFit: 'contain',
-          opacity: 0.3,
         }}
       />
     </div>
