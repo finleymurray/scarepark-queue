@@ -17,6 +17,7 @@ const ASSIGNABLE_PATHS = [
   { value: '/tv3', label: 'TV3 — Show Times' },
   { value: '/tv3.5', label: 'TV3.5 — Fear Rating' },
   { value: '/tv4', label: 'TV4 — Carousel' },
+  { value: '/tv4.5', label: 'TV4.5 — Lite Carousel (Pi)' },
   { value: '/tv5', label: 'TV5 — Glitch Montage' },
   { value: '/queue/the-bunker', label: 'Queue — The Bunker' },
   { value: '/queue/drowned', label: 'Queue — Drowned' },

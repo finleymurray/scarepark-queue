@@ -34,6 +34,11 @@ const TV_SCREENS = [
     description: 'Auto-carousel of all TV views',
   },
   {
+    path: '/tv4.5',
+    name: 'TV4.5',
+    description: 'Lite carousel (no iframes, Pi-friendly)',
+  },
+  {
     path: '/tv5',
     name: 'TV5',
     description: 'Glitch logo montage',
