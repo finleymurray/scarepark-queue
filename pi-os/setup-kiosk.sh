@@ -86,6 +86,10 @@ fi
 # Add to necessary groups
 usermod -aG video,audio,input,tty "${KIOSK_USER}"
 
+# Allow non-console users to start X server
+mkdir -p /etc/X11
+echo "allowed_users=anybody" > /etc/X11/Xwrapper.config
+
 # ── 3. Set hostname ──
 echo "[3/8] Setting hostname to ${KIOSK_HOSTNAME}..."
 hostnamectl set-hostname "${KIOSK_HOSTNAME}" 2>/dev/null || {
