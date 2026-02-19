@@ -26,6 +26,10 @@ install -m 644 files/immersive-core.plymouth "${ROOTFS_DIR}/usr/share/plymouth/t
 install -m 644 files/immersive-core.script "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core/immersive-core.script"
 install -m 644 files/splash.png "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core/splash.png"
 
+# Unique hostname generator (runs once on first boot)
+install -m 755 files/set-hostname.sh "${ROOTFS_DIR}/usr/local/bin/set-hostname.sh"
+install -m 644 files/set-hostname.service "${ROOTFS_DIR}/lib/systemd/system/set-hostname.service"
+
 # Copy Wi-Fi config if present (wifi.conf is gitignored)
 if [ -f files/wifi.conf ]; then
   install -m 600 files/wifi.conf "${ROOTFS_DIR}/tmp/wifi.conf"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Set unique hostname from MAC address
+After=network-pre.target
+Before=network.target
+ConditionPathExists=/sys/class/net
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/set-hostname.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

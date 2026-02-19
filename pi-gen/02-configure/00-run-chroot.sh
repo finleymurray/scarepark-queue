@@ -45,6 +45,9 @@ chown -R kiosk:kiosk /home/kiosk
 # Enable kiosk service
 systemctl enable kiosk.service
 
+# Enable unique hostname on first boot (ic-kiosk-XXXX from MAC address)
+systemctl enable set-hostname.service
+
 # Enable SSH and remove Bookworm's user-setup blocker
 systemctl enable ssh
 systemctl disable userconf-pi 2>/dev/null || true
