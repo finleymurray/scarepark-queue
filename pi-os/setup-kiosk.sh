@@ -52,23 +52,26 @@ fi
 echo "[1/8] Installing packages..."
 apt-get update -qq
 
-# Detect chromium package name (newer Pi OS uses 'chromium', older uses 'chromium-browser')
-if apt-cache show chromium-browser >/dev/null 2>&1; then
-  CHROMIUM_PKG="chromium-browser"
-else
-  CHROMIUM_PKG="chromium"
-fi
-echo "  Using chromium package: $CHROMIUM_PKG"
-
+# Install base packages first (these always exist)
 apt-get install -y \
   xserver-xorg x11-xserver-utils xinit \
-  "$CHROMIUM_PKG" \
   unclutter \
   plymouth plymouth-themes \
   sed || {
-    echo "ERROR: Package install failed!"
+    echo "ERROR: Base package install failed!"
     exit 1
   }
+
+# Install chromium — try 'chromium' first (newer Pi OS), fall back to 'chromium-browser'
+if apt-get install -y chromium 2>/dev/null; then
+  CHROMIUM_PKG="chromium"
+elif apt-get install -y chromium-browser 2>/dev/null; then
+  CHROMIUM_PKG="chromium-browser"
+else
+  echo "ERROR: Could not install chromium or chromium-browser!"
+  exit 1
+fi
+echo "  Chromium installed as: $CHROMIUM_PKG"
 
 echo "  Packages installed OK"
 
