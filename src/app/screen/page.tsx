@@ -31,18 +31,20 @@ function generateCode(): string {
  * This page is the boot target for every Raspberry Pi kiosk.
  * On load it follows this flow:
  *
- *   1. Check localStorage for `ic-last-path` — if we have a remembered
- *      assignment AND the DB row still exists, navigate there immediately.
- *      This means a Pi that reboots overnight goes straight to its page.
+ *   1. Recovery by hostname (most reliable) — every Pi has a unique
+ *      hostname baked in (ic-kiosk-XXXX). If we find a screen row in
+ *      Supabase matching this hostname AND it has an assigned_path,
+ *      navigate there immediately. This survives localStorage wipes,
+ *      power failures, Chromium crashes — everything.
  *
- *   2. Check localStorage for `ic-screen-id` — if the DB row exists but
- *      has no assignment yet, resume waiting (shows the same code).
+ *   2. Recovery by localStorage — check ic-screen-id / ic-last-path
+ *      for faster recovery without a DB round-trip.
  *
  *   3. If neither exists (fresh Pi), register a new row and show the code.
  *
- * Once waiting, the page polls every 30s (REST) and also subscribes to
- * realtime as a bonus for instant pickup. On assignment it saves the path
- * to `ic-last-path` and navigates — NEVER deletes the row.
+ * Once assigned, the Pi STAYS on its assigned page. The only way to
+ * unassign is for an admin to explicitly clear the assignment in the
+ * admin panel.
  */
 export default function ScreenController() {
   const [code, setCode] = useState<string | null>(null);
@@ -61,30 +63,83 @@ export default function ScreenController() {
     const screenName = hostnameParam || localStorage.getItem('ic-screen-hostname') || null;
 
     async function boot() {
+      // ── Priority 1: Recover by hostname from Supabase ──
+      // This is the most reliable recovery path. The hostname is baked into
+      // the Pi's OS (derived from MAC address) and passed as a URL param
+      // every boot. Even if localStorage is completely wiped, we can find
+      // our screen row by hostname.
+      if (screenName) {
+        try {
+          const { data: hostnameMatch } = await supabase
+            .from('screens')
+            .select('id, code, assigned_path')
+            .eq('name', screenName)
+            .order('last_seen', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (hostnameMatch) {
+            // Found our screen row — restore localStorage
+            localStorage.setItem(ID_STORAGE_KEY, hostnameMatch.id);
+            if (hostnameMatch.code) localStorage.setItem(CODE_STORAGE_KEY, hostnameMatch.code);
+
+            // Heartbeat
+            await supabase.from('screens').update({
+              last_seen: new Date().toISOString(),
+              user_agent: navigator.userAgent,
+            }).eq('id', hostnameMatch.id);
+
+            if (hostnameMatch.assigned_path) {
+              // We have an assignment — go there immediately
+              localStorage.setItem(PATH_STORAGE_KEY, hostnameMatch.assigned_path);
+              window.location.href = hostnameMatch.assigned_path;
+              return;
+            }
+
+            // Row exists but not assigned yet — resume waiting
+            if (!cancelledRef.current) {
+              setCode(hostnameMatch.code);
+              setScreenId(hostnameMatch.id);
+              setStatus('waiting');
+              return;
+            }
+          }
+        } catch {
+          // Network error on hostname lookup — fall through to localStorage
+        }
+      }
+
+      // ── Priority 2: Recover by localStorage ──
       const savedId = localStorage.getItem(ID_STORAGE_KEY);
       const savedPath = localStorage.getItem(PATH_STORAGE_KEY);
 
       // Fast path: we have a remembered assignment — verify row exists, then go
       if (savedId && savedPath) {
-        const { data } = await supabase
-          .from('screens')
-          .select('id, assigned_path')
-          .eq('id', savedId)
-          .single();
+        try {
+          const { data } = await supabase
+            .from('screens')
+            .select('id, assigned_path')
+            .eq('id', savedId)
+            .single();
 
-        if (data) {
-          // Row still exists — heartbeat and navigate
-          await supabase.from('screens').update({
-            last_seen: new Date().toISOString(),
-            current_page: savedPath,
-            user_agent: navigator.userAgent,
-            ...(screenName && { name: screenName }),
-          }).eq('id', savedId);
+          if (data) {
+            // Row still exists — heartbeat and navigate
+            await supabase.from('screens').update({
+              last_seen: new Date().toISOString(),
+              current_page: savedPath,
+              user_agent: navigator.userAgent,
+              ...(screenName && { name: screenName }),
+            }).eq('id', savedId);
 
-          // Use assigned_path if it differs (admin might have reassigned while off)
-          const targetPath = data.assigned_path || savedPath;
-          localStorage.setItem(PATH_STORAGE_KEY, targetPath);
-          window.location.href = targetPath;
+            // Use assigned_path if it differs (admin might have reassigned while off)
+            const targetPath = data.assigned_path || savedPath;
+            localStorage.setItem(PATH_STORAGE_KEY, targetPath);
+            window.location.href = targetPath;
+            return;
+          }
+        } catch {
+          // Network error — use saved path as fallback (go to last known page)
+          window.location.href = savedPath;
           return;
         }
 
@@ -96,32 +151,36 @@ export default function ScreenController() {
 
       // Medium path: we have an ID but no remembered path — resume waiting
       if (savedId && !savedPath) {
-        const { data } = await supabase
-          .from('screens')
-          .select('id, code, assigned_path')
-          .eq('id', savedId)
-          .single();
+        try {
+          const { data } = await supabase
+            .from('screens')
+            .select('id, code, assigned_path')
+            .eq('id', savedId)
+            .single();
 
-        if (!cancelledRef.current && data) {
-          // Update heartbeat
-          await supabase.from('screens').update({
-            last_seen: new Date().toISOString(),
-            user_agent: navigator.userAgent,
-            ...(screenName && { name: screenName }),
-          }).eq('id', data.id);
+          if (!cancelledRef.current && data) {
+            // Update heartbeat
+            await supabase.from('screens').update({
+              last_seen: new Date().toISOString(),
+              user_agent: navigator.userAgent,
+              ...(screenName && { name: screenName }),
+            }).eq('id', data.id);
 
-          // Already assigned since last time?
-          if (data.assigned_path) {
-            localStorage.setItem(PATH_STORAGE_KEY, data.assigned_path);
-            window.location.href = data.assigned_path;
+            // Already assigned since last time?
+            if (data.assigned_path) {
+              localStorage.setItem(PATH_STORAGE_KEY, data.assigned_path);
+              window.location.href = data.assigned_path;
+              return;
+            }
+
+            // Resume waiting with existing code
+            setCode(data.code);
+            setScreenId(data.id);
+            setStatus('waiting');
             return;
           }
-
-          // Resume waiting with existing code
-          setCode(data.code);
-          setScreenId(data.id);
-          setStatus('waiting');
-          return;
+        } catch {
+          // Network error — stay on registration page, will retry
         }
 
         // Row was deleted — clear and fall through
@@ -129,7 +188,7 @@ export default function ScreenController() {
         localStorage.removeItem(CODE_STORAGE_KEY);
       }
 
-      // Slow path: fresh device — register new code
+      // ── Priority 3: Fresh device — register new code ──
       if (cancelledRef.current) return;
       setStatus('registering');
 
@@ -258,7 +317,7 @@ export default function ScreenController() {
 
       if (allDisconnected) {
         if (!disconnectedAt) disconnectedAt = Date.now();
-        else if (Date.now() - disconnectedAt > 30_000) {
+        else if (Date.now() - disconnectedAt > 120_000) {
           window.location.reload();
         }
       } else {
