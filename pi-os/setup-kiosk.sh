@@ -17,7 +17,7 @@
 # ═══════════════════════════════════════════════════════════════════
 
 # ── Defaults ──
-KIOSK_URL="https://immersivecore.network"
+KIOSK_URL="https://control.immersivecore.network"
 KIOSK_HOSTNAME="ic-kiosk"
 KIOSK_ROTATE=0
 KIOSK_USER="kiosk"
@@ -247,6 +247,13 @@ mkdir -p "\${CHROMIUM_DIR}/Default"
 sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 
+# Get screen resolution for window sizing
+SCREEN_RES=\$(xdpyinfo 2>/dev/null | grep dimensions | awk '{print \$2}')
+SCREEN_W=\$(echo "\$SCREEN_RES" | cut -dx -f1)
+SCREEN_H=\$(echo "\$SCREEN_RES" | cut -dx -f2)
+SCREEN_W=\${SCREEN_W:-1920}
+SCREEN_H=\${SCREEN_H:-1080}
+
 # Launch Chromium
 exec ${CHROMIUM_BIN} \\
   --noerrdialogs \\
@@ -264,6 +271,9 @@ exec ${CHROMIUM_BIN} \\
   --enable-features=OverlayScrollbar \\
   --autoplay-policy=no-user-gesture-required \\
   --start-fullscreen \\
+  --start-maximized \\
+  --window-position=0,0 \\
+  --window-size=\${SCREEN_W},\${SCREEN_H} \\
   "${KIOSK_URL}/screen"
 KIOSKEOF
 
