@@ -55,6 +55,8 @@ apt-get update -qq
 # Install base packages first (these always exist)
 apt-get install -y \
   xserver-xorg x11-xserver-utils xinit \
+  openbox \
+  xdotool \
   unclutter \
   plymouth plymouth-themes \
   sed || {
@@ -223,7 +225,6 @@ KIOSK_HOME="/home/${KIOSK_USER}"
 cat > "${KIOSK_HOME}/kiosk.sh" << KIOSKEOF
 #!/bin/bash
 # Immersive Core Kiosk Launcher
-# Launches Chromium in fullscreen kiosk mode pointing to /screen
 
 # Disable screen blanking and DPMS
 xset s off
@@ -232,6 +233,9 @@ xset -dpms
 
 # Hide cursor after 0.5s of inactivity
 unclutter -idle 0.5 -root &
+
+# Start minimal window manager (needed for Chromium --kiosk fullscreen)
+openbox --config-file /dev/null &
 
 # Wait for network (max 30s)
 for i in \$(seq 1 30); do
@@ -247,19 +251,11 @@ mkdir -p "\${CHROMIUM_DIR}/Default"
 sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 
-# Get screen resolution for window sizing
-SCREEN_RES=\$(xdpyinfo 2>/dev/null | grep dimensions | awk '{print \$2}')
-SCREEN_W=\$(echo "\$SCREEN_RES" | cut -dx -f1)
-SCREEN_H=\$(echo "\$SCREEN_RES" | cut -dx -f2)
-SCREEN_W=\${SCREEN_W:-1920}
-SCREEN_H=\${SCREEN_H:-1080}
-
 # Launch Chromium
 exec ${CHROMIUM_BIN} \\
   --noerrdialogs \\
   --disable-infobars \\
   --kiosk \\
-  --incognito \\
   --disable-translate \\
   --disable-features=TranslateUI \\
   --disable-pinch \\
@@ -268,12 +264,8 @@ exec ${CHROMIUM_BIN} \\
   --disable-component-update \\
   --disable-session-crashed-bubble \\
   --disable-gpu-compositing \\
-  --enable-features=OverlayScrollbar \\
   --autoplay-policy=no-user-gesture-required \\
   --start-fullscreen \\
-  --start-maximized \\
-  --window-position=0,0 \\
-  --window-size=\${SCREEN_W},\${SCREEN_H} \\
   "${KIOSK_URL}/screen"
 KIOSKEOF
 
