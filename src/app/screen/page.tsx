@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import ElectricHeader from '@/components/ElectricHeader';
 import LightningBorder from '@/components/LightningBorder';
@@ -10,9 +10,10 @@ import type { Screen } from '@/types/database';
 
 const SAFE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CODE_LENGTH = 4;
-const HEARTBEAT_INTERVAL = 30_000;
+const POLL_INTERVAL = 30_000;
 const CODE_STORAGE_KEY = 'ic-screen-code';
 const ID_STORAGE_KEY = 'ic-screen-id';
+const PATH_STORAGE_KEY = 'ic-last-path';
 
 function generateCode(): string {
   let code = '';
@@ -24,58 +25,110 @@ function generateCode(): string {
 
 /* ── Component ── */
 
+/**
+ * Screen Registration & Recovery Page
+ *
+ * This page is the boot target for every Raspberry Pi kiosk.
+ * On load it follows this flow:
+ *
+ *   1. Check localStorage for `ic-last-path` — if we have a remembered
+ *      assignment AND the DB row still exists, navigate there immediately.
+ *      This means a Pi that reboots overnight goes straight to its page.
+ *
+ *   2. Check localStorage for `ic-screen-id` — if the DB row exists but
+ *      has no assignment yet, resume waiting (shows the same code).
+ *
+ *   3. If neither exists (fresh Pi), register a new row and show the code.
+ *
+ * Once waiting, the page polls every 30s (REST) and also subscribes to
+ * realtime as a bonus for instant pickup. On assignment it saves the path
+ * to `ic-last-path` and navigates — NEVER deletes the row.
+ */
 export default function ScreenController() {
   const [code, setCode] = useState<string | null>(null);
   const [screenId, setScreenId] = useState<string | null>(null);
-  const [status, setStatus] = useState<'registering' | 'waiting'>('registering');
+  const [status, setStatus] = useState<'booting' | 'registering' | 'waiting'>('booting');
+  const cancelledRef = useRef(false);
 
-  // ── 1. Register on mount ──
+  // ── 1. Boot: recover identity or register ──
   useEffect(() => {
-    let cancelled = false;
+    cancelledRef.current = false;
 
-    async function register() {
-      const existingCode = localStorage.getItem(CODE_STORAGE_KEY);
+    async function boot() {
+      const savedId = localStorage.getItem(ID_STORAGE_KEY);
+      const savedPath = localStorage.getItem(PATH_STORAGE_KEY);
 
-      if (existingCode) {
-        // Verify code still exists in DB
+      // Fast path: we have a remembered assignment — verify row exists, then go
+      if (savedId && savedPath) {
+        const { data } = await supabase
+          .from('screens')
+          .select('id, assigned_path')
+          .eq('id', savedId)
+          .single();
+
+        if (data) {
+          // Row still exists — heartbeat and navigate
+          await supabase.from('screens').update({
+            last_seen: new Date().toISOString(),
+            current_page: savedPath,
+            user_agent: navigator.userAgent,
+          }).eq('id', savedId);
+
+          // Use assigned_path if it differs (admin might have reassigned while off)
+          const targetPath = data.assigned_path || savedPath;
+          localStorage.setItem(PATH_STORAGE_KEY, targetPath);
+          window.location.href = targetPath;
+          return;
+        }
+
+        // Row was deleted by admin — clear everything, fall through to register
+        localStorage.removeItem(ID_STORAGE_KEY);
+        localStorage.removeItem(CODE_STORAGE_KEY);
+        localStorage.removeItem(PATH_STORAGE_KEY);
+      }
+
+      // Medium path: we have an ID but no remembered path — resume waiting
+      if (savedId && !savedPath) {
         const { data } = await supabase
           .from('screens')
           .select('id, code, assigned_path')
-          .eq('code', existingCode)
+          .eq('id', savedId)
           .single();
 
-        if (!cancelled && data) {
+        if (!cancelledRef.current && data) {
           // Update heartbeat
           await supabase.from('screens').update({
             last_seen: new Date().toISOString(),
             user_agent: navigator.userAgent,
           }).eq('id', data.id);
 
-          setCode(data.code);
-          setScreenId(data.id);
-
-          localStorage.setItem(ID_STORAGE_KEY, data.id);
-
+          // Already assigned since last time?
           if (data.assigned_path) {
-            // Already assigned — clean up and navigate
-            await supabase.from('screens').delete().eq('id', data.id);
-            localStorage.removeItem(CODE_STORAGE_KEY);
-            localStorage.removeItem(ID_STORAGE_KEY);
+            localStorage.setItem(PATH_STORAGE_KEY, data.assigned_path);
             window.location.href = data.assigned_path;
             return;
           }
 
+          // Resume waiting with existing code
+          setCode(data.code);
+          setScreenId(data.id);
           setStatus('waiting');
           return;
         }
-        // Code was deleted from DB — fall through to generate new one
+
+        // Row was deleted — clear and fall through
+        localStorage.removeItem(ID_STORAGE_KEY);
+        localStorage.removeItem(CODE_STORAGE_KEY);
       }
 
-      // Generate a new code, retry on collision
+      // Slow path: fresh device — register new code
+      if (cancelledRef.current) return;
+      setStatus('registering');
+
       let newCode = generateCode();
       let attempts = 0;
 
-      while (!cancelled && attempts < 10) {
+      while (!cancelledRef.current && attempts < 10) {
         const { data, error } = await supabase
           .from('screens')
           .insert({
@@ -91,13 +144,12 @@ export default function ScreenController() {
           localStorage.setItem(ID_STORAGE_KEY, data.id);
           setCode(data.code);
           setScreenId(data.id);
-
           setStatus('waiting');
           return;
         }
 
         if (error?.code === '23505') {
-          // Unique constraint violation — code collision, retry
+          // Code collision — retry
           newCode = generateCode();
           attempts++;
           continue;
@@ -109,32 +161,50 @@ export default function ScreenController() {
       }
     }
 
-    register();
-    return () => { cancelled = true; };
+    boot();
+    return () => { cancelledRef.current = true; };
   }, []);
 
-  // ── 2. Heartbeat ──
+  // ── 2. Polling heartbeat + assignment check (REST-first) ──
   useEffect(() => {
     if (!screenId) return;
 
-    const interval = setInterval(async () => {
-      const { error } = await supabase
-        .from('screens')
-        .update({ last_seen: new Date().toISOString() })
-        .eq('id', screenId);
+    async function poll() {
+      try {
+        const { data, error } = await supabase
+          .from('screens')
+          .update({
+            last_seen: new Date().toISOString(),
+            current_page: '/screen',
+          })
+          .eq('id', screenId)
+          .select('assigned_path')
+          .single();
 
-      // Row was deleted — re-register
-      if (error) {
-        localStorage.removeItem(CODE_STORAGE_KEY);
-        localStorage.removeItem(ID_STORAGE_KEY);
-        window.location.reload();
+        if (error) {
+          // Row deleted by admin — clear identity, re-register
+          localStorage.removeItem(ID_STORAGE_KEY);
+          localStorage.removeItem(CODE_STORAGE_KEY);
+          localStorage.removeItem(PATH_STORAGE_KEY);
+          window.location.reload();
+          return;
+        }
+
+        if (data?.assigned_path) {
+          localStorage.setItem(PATH_STORAGE_KEY, data.assigned_path);
+          window.location.href = data.assigned_path;
+        }
+      } catch {
+        // Network error — silently fail, retry next poll
       }
-    }, HEARTBEAT_INTERVAL);
+    }
+
+    const interval = setInterval(poll, POLL_INTERVAL);
 
     return () => clearInterval(interval);
   }, [screenId]);
 
-  // ── 3. Realtime subscription for assignment ──
+  // ── 3. Realtime subscription (bonus — instant assignment pickup) ──
   useEffect(() => {
     if (!screenId) return;
 
@@ -148,14 +218,11 @@ export default function ScreenController() {
           table: 'screens',
           filter: `id=eq.${screenId}`,
         },
-        async (payload) => {
+        (payload) => {
           const updated = payload.new as Screen;
           if (updated.assigned_path) {
-            // Clean up: delete the row and clear localStorage
-            await supabase.from('screens').delete().eq('id', updated.id);
-            localStorage.removeItem(CODE_STORAGE_KEY);
-            localStorage.removeItem(ID_STORAGE_KEY);
-            // Navigate to assigned page
+            // Save and navigate — NEVER delete the row
+            localStorage.setItem(PATH_STORAGE_KEY, updated.assigned_path);
             window.location.href = updated.assigned_path;
           }
         },
@@ -190,8 +257,8 @@ export default function ScreenController() {
     return () => clearInterval(checkInterval);
   }, []);
 
-  // ── Render: registering state ──
-  if (status === 'registering') {
+  // ── Render: booting / registering ──
+  if (status === 'booting' || status === 'registering') {
     return (
       <div style={{
         width: '100vw', height: '100vh', background: '#000',
@@ -199,7 +266,7 @@ export default function ScreenController() {
         color: 'rgba(255,255,255,0.4)', fontSize: '2vw',
         fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
       }}>
-        Registering...
+        {status === 'booting' ? 'Starting up...' : 'Registering...'}
       </div>
     );
   }

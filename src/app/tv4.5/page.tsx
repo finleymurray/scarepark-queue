@@ -6,6 +6,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 import TV1Content from '@/components/tv4/TV1Content';
 import TV2Content from '@/components/tv4/TV2Content';
@@ -43,6 +44,7 @@ const TV_SAFE_PADDING = '3.5%';
 
 export default function TV45Carousel() {
   useConnectionHealth('tv4.5');
+  useScreenIdentity('/tv4.5');
 
   /* ── Shared data layer ── */
   const [attractions, setAttractions] = useState<Attraction[]>([]);

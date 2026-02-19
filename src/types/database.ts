@@ -81,6 +81,7 @@ export interface Screen {
   id: string;
   code: string;
   assigned_path: string | null;
+  current_page: string | null;
   name: string | null;
   last_seen: string;
   user_agent: string | null;

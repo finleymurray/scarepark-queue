@@ -7,6 +7,7 @@ import LightningBorder from '@/components/LightningBorder';
 import ElectricHeader from '@/components/ElectricHeader';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 function formatTime12h(time: string): string {
@@ -255,6 +256,7 @@ const TV_SAFE_PADDING = '3.5%';
 
 export default function TV25Display() {
   useConnectionHealth('tv2');
+  useScreenIdentity('/tv2');
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [autoSort, setAutoSort] = useState(false);
   const [closingTime, setClosingTime] = useState('');

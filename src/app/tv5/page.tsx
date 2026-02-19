@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
+import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
 /**
@@ -193,6 +194,7 @@ function drawGlitchFrame(ctx: CanvasRenderingContext2D, w: number, h: number, in
 
 export default function TV5Lightning() {
   useConnectionHealth('tv5');
+  useScreenIdentity('/tv5');
 
   const boltCanvasRef = useRef<HTMLCanvasElement>(null);
   const staticCanvasRef = useRef<HTMLCanvasElement>(null);

@@ -51,6 +51,12 @@ const statusColors = {
   offline: { bg: '#EF4444', text: '#EF4444', label: 'Offline' },
 };
 
+function getPathLabel(path: string | null): string | null {
+  if (!path) return null;
+  const found = ASSIGNABLE_PATHS.find((p) => p.value === path);
+  return found ? found.label : path;
+}
+
 /* ── Styles ── */
 
 const cardStyle: React.CSSProperties = {
@@ -170,7 +176,7 @@ export default function ScreensPage() {
 
   async function handleAssignPath(screen: Screen, newPath: string) {
     if (!newPath) return;
-    // Set the path — the screen will pick this up, navigate, and delete its own row
+    // Set the path — screen picks this up via polling (30s) or realtime (instant)
     await supabase.from('screens').update({
       assigned_path: newPath,
     }).eq('id', screen.id);
@@ -409,9 +415,29 @@ function ManagedScreenCard({
         </div>
       </div>
 
-      {/* Path assignment */}
+      {/* Current info */}
+      {(screen.assigned_path || screen.current_page) && (
+        <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {screen.assigned_path && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 600 }}>Assigned:</span>
+              <span style={{ fontSize: 11, color: '#ccc' }}>{getPathLabel(screen.assigned_path)}</span>
+            </div>
+          )}
+          {screen.current_page && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>Showing:</span>
+              <span style={{ fontSize: 11, color: '#999' }}>{getPathLabel(screen.current_page)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Path assignment / reassignment */}
       <div style={{ marginBottom: 8 }}>
-        <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>Assign Display</label>
+        <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>
+          {screen.assigned_path ? 'Reassign Display' : 'Assign Display'}
+        </label>
         <select
           value=""
           onChange={(e) => onAssign(screen, e.target.value)}
@@ -427,6 +453,7 @@ function ManagedScreenCard({
       {/* Last seen */}
       <div style={{ fontSize: 11, color: '#666' }}>
         Last seen: {timeAgo(screen.last_seen)}
+        {screen.name && <span style={{ marginLeft: 8, color: '#555' }}>({screen.name})</span>}
       </div>
 
       <style>{`
