@@ -62,9 +62,15 @@ fi
 # ── 1. System update + packages ──
 echo "[1/8] Installing packages..."
 apt-get update -qq
+# Try chromium-browser first (older Pi OS), fall back to chromium (newer Pi OS)
+CHROMIUM_PKG="chromium-browser"
+if ! apt-cache show chromium-browser &>/dev/null; then
+  CHROMIUM_PKG="chromium"
+fi
+
 apt-get install -y -qq \
   xserver-xorg x11-xserver-utils xinit \
-  chromium-browser \
+  "$CHROMIUM_PKG" \
   unclutter \
   plymouth plymouth-themes \
   sed \
@@ -222,8 +228,11 @@ mkdir -p "\${CHROMIUM_DIR}/Default"
 sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 
+# Detect chromium binary name
+CHROMIUM_BIN=\$(command -v chromium-browser 2>/dev/null || command -v chromium 2>/dev/null || echo "chromium-browser")
+
 # Launch Chromium
-exec chromium-browser \\
+exec \$CHROMIUM_BIN \\
   --noerrdialogs \\
   --disable-infobars \\
   --kiosk \\
