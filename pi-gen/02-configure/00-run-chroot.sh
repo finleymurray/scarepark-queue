@@ -45,8 +45,13 @@ chown -R kiosk:kiosk /home/kiosk
 # Enable kiosk service
 systemctl enable kiosk.service
 
-# Enable SSH
+# Enable SSH and remove Bookworm's user-setup blocker
 systemctl enable ssh
+systemctl disable userconf-pi 2>/dev/null || true
+rm -f /etc/ssh/sshd_config.d/rename_user.conf 2>/dev/null || true
+
+# Set pi user password for SSH access
+echo "pi:immersivecore" | chpasswd
 
 # Set Plymouth theme
 plymouth-set-default-theme immersive-core 2>/dev/null || true
