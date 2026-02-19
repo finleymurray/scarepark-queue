@@ -30,6 +30,9 @@ sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "${CHROMIUM_DIR}/Default/
 # Detect chromium binary
 CHROMIUM_BIN=$(command -v chromium-browser 2>/dev/null || command -v chromium 2>/dev/null || echo "/usr/bin/chromium")
 
+# Pass hostname as URL parameter so the screen page can report it to Supabase
+KIOSK_HOSTNAME=$(hostname 2>/dev/null || echo "unknown")
+
 # Launch Chromium
 exec $CHROMIUM_BIN \
   --noerrdialogs \
@@ -48,4 +51,4 @@ exec $CHROMIUM_BIN \
   --disable-gpu-compositing \
   --autoplay-policy=no-user-gesture-required \
   --start-fullscreen \
-  "https://control.immersivecore.network/screen"
+  "https://control.immersivecore.network/screen?hostname=${KIOSK_HOSTNAME}"

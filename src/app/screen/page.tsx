@@ -54,6 +54,12 @@ export default function ScreenController() {
   useEffect(() => {
     cancelledRef.current = false;
 
+    // Read hostname from URL param (set by kiosk.sh on Raspberry Pi)
+    const urlParams = new URLSearchParams(window.location.search);
+    const hostnameParam = urlParams.get('hostname');
+    if (hostnameParam) localStorage.setItem('ic-screen-hostname', hostnameParam);
+    const screenName = hostnameParam || localStorage.getItem('ic-screen-hostname') || null;
+
     async function boot() {
       const savedId = localStorage.getItem(ID_STORAGE_KEY);
       const savedPath = localStorage.getItem(PATH_STORAGE_KEY);
@@ -72,6 +78,7 @@ export default function ScreenController() {
             last_seen: new Date().toISOString(),
             current_page: savedPath,
             user_agent: navigator.userAgent,
+            ...(screenName && { name: screenName }),
           }).eq('id', savedId);
 
           // Use assigned_path if it differs (admin might have reassigned while off)
@@ -100,6 +107,7 @@ export default function ScreenController() {
           await supabase.from('screens').update({
             last_seen: new Date().toISOString(),
             user_agent: navigator.userAgent,
+            ...(screenName && { name: screenName }),
           }).eq('id', data.id);
 
           // Already assigned since last time?
@@ -135,6 +143,7 @@ export default function ScreenController() {
             code: newCode,
             last_seen: new Date().toISOString(),
             user_agent: navigator.userAgent,
+            ...(screenName && { name: screenName }),
           })
           .select('id, code, assigned_path')
           .single();
