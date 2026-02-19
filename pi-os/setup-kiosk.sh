@@ -14,18 +14,7 @@
 #   --hostname NAME     Set Pi hostname (default: ic-kiosk)
 #   --rotate DEGREES    Display rotation: 0, 90, 180, 270 (default: 0)
 #
-# What it does:
-#   1. Installs minimal X11 + Chromium + unclutter (no full desktop)
-#   2. Creates kiosk auto-login user
-#   3. Systemd service: Chromium fullscreen → /screen
-#   4. Custom Plymouth boot splash (Immersive Core branding)
-#   5. Disables: screen blanking, DPMS, cursor, rainbow splash, boot text
-#   6. Enables: SSH, GPU memory split (128MB for Chromium)
-#   7. Configures: display rotation, hostname per-device
-#
 # ═══════════════════════════════════════════════════════════════════
-
-set -euo pipefail
 
 # ── Defaults ──
 KIOSK_URL="https://immersivecore.network"
@@ -62,24 +51,34 @@ fi
 # ── 1. System update + packages ──
 echo "[1/8] Installing packages..."
 apt-get update -qq
-# Try chromium-browser first (older Pi OS), fall back to chromium (newer Pi OS)
-CHROMIUM_PKG="chromium-browser"
-if ! apt-cache show chromium-browser &>/dev/null; then
+
+# Detect chromium package name (newer Pi OS uses 'chromium', older uses 'chromium-browser')
+if apt-cache show chromium-browser >/dev/null 2>&1; then
+  CHROMIUM_PKG="chromium-browser"
+else
   CHROMIUM_PKG="chromium"
 fi
+echo "  Using chromium package: $CHROMIUM_PKG"
 
-apt-get install -y -qq \
+apt-get install -y \
   xserver-xorg x11-xserver-utils xinit \
   "$CHROMIUM_PKG" \
   unclutter \
   plymouth plymouth-themes \
-  sed \
-  2>/dev/null
+  sed || {
+    echo "ERROR: Package install failed!"
+    exit 1
+  }
+
+echo "  Packages installed OK"
 
 # ── 2. Create kiosk user ──
 echo "[2/8] Setting up kiosk user..."
-if ! id "${KIOSK_USER}" &>/dev/null; then
+if ! id "${KIOSK_USER}" >/dev/null 2>&1; then
   useradd -m -s /bin/bash "${KIOSK_USER}"
+  echo "  Created user: ${KIOSK_USER}"
+else
+  echo "  User ${KIOSK_USER} already exists"
 fi
 # Add to necessary groups
 usermod -aG video,audio,input,tty "${KIOSK_USER}"
@@ -102,27 +101,32 @@ CONFIG="/boot/config.txt"
 # Fallback for newer Pi OS
 [ ! -f "$CONFIG" ] && CONFIG="/boot/firmware/config.txt"
 
-# GPU memory — 128MB for Chromium rendering
-if ! grep -q "^gpu_mem=" "$CONFIG" 2>/dev/null; then
-  echo "gpu_mem=128" >> "$CONFIG"
-else
-  sed -i 's/^gpu_mem=.*/gpu_mem=128/' "$CONFIG"
-fi
-
-# Disable rainbow splash
-if ! grep -q "^disable_splash=" "$CONFIG" 2>/dev/null; then
-  echo "disable_splash=1" >> "$CONFIG"
-else
-  sed -i 's/^disable_splash=.*/disable_splash=1/' "$CONFIG"
-fi
-
-# Display rotation
-if [ "$KIOSK_ROTATE" != "0" ]; then
-  if ! grep -q "^display_rotate=" "$CONFIG" 2>/dev/null; then
-    echo "display_rotate=${KIOSK_ROTATE}" >> "$CONFIG"
+if [ -f "$CONFIG" ]; then
+  # GPU memory — 128MB for Chromium rendering
+  if ! grep -q "^gpu_mem=" "$CONFIG" 2>/dev/null; then
+    echo "gpu_mem=128" >> "$CONFIG"
   else
-    sed -i "s/^display_rotate=.*/display_rotate=${KIOSK_ROTATE}/" "$CONFIG"
+    sed -i 's/^gpu_mem=.*/gpu_mem=128/' "$CONFIG"
   fi
+
+  # Disable rainbow splash
+  if ! grep -q "^disable_splash=" "$CONFIG" 2>/dev/null; then
+    echo "disable_splash=1" >> "$CONFIG"
+  else
+    sed -i 's/^disable_splash=.*/disable_splash=1/' "$CONFIG"
+  fi
+
+  # Display rotation
+  if [ "$KIOSK_ROTATE" != "0" ]; then
+    if ! grep -q "^display_rotate=" "$CONFIG" 2>/dev/null; then
+      echo "display_rotate=${KIOSK_ROTATE}" >> "$CONFIG"
+    else
+      sed -i "s/^display_rotate=.*/display_rotate=${KIOSK_ROTATE}/" "$CONFIG"
+    fi
+  fi
+  echo "  Config: $CONFIG updated"
+else
+  echo "  WARNING: No config.txt found, skipping display config"
 fi
 
 # ── 6. Plymouth boot splash ──
@@ -134,8 +138,9 @@ mkdir -p "${PLYMOUTH_DIR}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "${SCRIPT_DIR}/splash.png" ]; then
   cp "${SCRIPT_DIR}/splash.png" "${PLYMOUTH_DIR}/splash.png"
+  echo "  Splash image copied"
 else
-  echo "  WARNING: splash.png not found in script directory, using placeholder"
+  echo "  WARNING: splash.png not found in ${SCRIPT_DIR}"
 fi
 
 # Create Plymouth theme
@@ -194,10 +199,17 @@ if [ -f "$CMDLINE" ]; then
   if ! grep -q "vt.global_cursor_default=0" "$CMDLINE"; then
     sed -i 's/$/ vt.global_cursor_default=0/' "$CMDLINE"
   fi
+  echo "  Boot cmdline updated"
+else
+  echo "  WARNING: No cmdline.txt found"
 fi
 
 # ── 7. Kiosk X session + Chromium ──
 echo "[7/8] Creating kiosk service..."
+
+# Detect chromium binary path
+CHROMIUM_BIN=$(command -v chromium-browser 2>/dev/null || command -v chromium 2>/dev/null || echo "/usr/bin/chromium")
+echo "  Chromium binary: $CHROMIUM_BIN"
 
 # Chromium kiosk startup script
 KIOSK_HOME="/home/${KIOSK_USER}"
@@ -216,7 +228,7 @@ unclutter -idle 0.5 -root &
 
 # Wait for network (max 30s)
 for i in \$(seq 1 30); do
-  if ping -c1 -W1 8.8.8.8 &>/dev/null; then
+  if ping -c1 -W1 8.8.8.8 >/dev/null 2>&1; then
     break
   fi
   sleep 1
@@ -228,11 +240,8 @@ mkdir -p "\${CHROMIUM_DIR}/Default"
 sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "\${CHROMIUM_DIR}/Default/Preferences" 2>/dev/null || true
 
-# Detect chromium binary name
-CHROMIUM_BIN=\$(command -v chromium-browser 2>/dev/null || command -v chromium 2>/dev/null || echo "chromium-browser")
-
 # Launch Chromium
-exec \$CHROMIUM_BIN \\
+exec ${CHROMIUM_BIN} \\
   --noerrdialogs \\
   --disable-infobars \\
   --kiosk \\
@@ -279,6 +288,7 @@ SERVICEEOF
 
 systemctl daemon-reload
 systemctl enable kiosk.service
+echo "  Kiosk service created and enabled"
 
 # Auto-login on tty1 (backup if systemd service fails)
 mkdir -p /etc/systemd/system/getty@tty1.service.d
@@ -307,16 +317,14 @@ fi
 
 echo ""
 echo "═══════════════════════════════════════════"
-echo "  Setup complete!"
+echo "  ✅ Setup complete!"
 echo "═══════════════════════════════════════════"
 echo ""
 echo "  Next steps:"
-echo "  1. Copy splash.png to $(pwd) if not already done"
-echo "  2. Reboot: sudo reboot"
-echo "  3. Pi will show Immersive Core splash, then"
+echo "  1. Reboot: sudo reboot"
+echo "  2. Pi will show Immersive Core splash, then"
 echo "     auto-launch Chromium → ${KIOSK_URL}/screen"
-echo "  4. Enter the code shown on-screen in Admin → Screens"
+echo "  3. Enter the code shown on-screen in Admin → Screens"
 echo ""
-echo "  SSH into this Pi:  ssh ${KIOSK_USER}@${KIOSK_HOSTNAME}.local"
-echo "  Default password:  (set one with: sudo passwd ${KIOSK_USER})"
+echo "  SSH into this Pi:  ssh pi@${KIOSK_HOSTNAME}.local"
 echo ""
