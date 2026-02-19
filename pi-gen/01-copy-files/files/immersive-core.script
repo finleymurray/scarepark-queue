@@ -1,0 +1,24 @@
+# Immersive Core Plymouth Script — black background + centered logo
+
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+logo_image = Image("splash.png");
+logo_sprite = Sprite(logo_image);
+
+# Scale to fit screen while maintaining aspect ratio
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+image_width = logo_image.GetWidth();
+image_height = logo_image.GetHeight();
+
+scale_x = screen_width / image_width;
+scale_y = screen_height / image_height;
+scale = Math.Min(scale_x, scale_y) * 0.6;
+
+scaled_width = image_width * scale;
+scaled_height = image_height * scale;
+
+logo_sprite.SetX(screen_width / 2 - scaled_width / 2);
+logo_sprite.SetY(screen_height / 2 - scaled_height / 2);
+logo_sprite.SetImage(logo_image.Scale(scaled_width, scaled_height));

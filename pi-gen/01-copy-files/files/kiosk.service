@@ -1,0 +1,19 @@
+[Unit]
+Description=Immersive Core Kiosk
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=kiosk
+Group=kiosk
+Type=simple
+ExecStart=/usr/bin/xinit /home/kiosk/kiosk.sh -- :0 -nolisten tcp vt7
+Restart=on-failure
+RestartSec=5
+
+# Environment for X
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/kiosk/.Xauthority
+
+[Install]
+WantedBy=multi-user.target

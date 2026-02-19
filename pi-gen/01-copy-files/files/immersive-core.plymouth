@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Immersive Core
+Description=Immersive Core kiosk boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/immersive-core
+ScriptFile=/usr/share/plymouth/themes/immersive-core/immersive-core.script

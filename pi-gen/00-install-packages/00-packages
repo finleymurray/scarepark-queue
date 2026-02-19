@@ -1,0 +1,9 @@
+xserver-xorg
+x11-xserver-utils
+xinit
+openbox
+xdotool
+unclutter
+chromium
+plymouth
+plymouth-themes
