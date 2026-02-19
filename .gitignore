@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# pi-gen build artifacts
+/deploy/
+/pi-gen/.pi-gen-repo/

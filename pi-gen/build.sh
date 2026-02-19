@@ -3,8 +3,8 @@
 # Immersive Core — Build Custom Pi OS Image
 # ═══════════════════════════════════════════════════════════════════
 #
-# Builds a custom Raspberry Pi OS Lite image with the Immersive Core
-# kiosk pre-installed. Requires Docker.
+# Builds a custom Raspberry Pi OS Lite (64-bit) image with the
+# Immersive Core kiosk pre-installed. Requires Docker.
 #
 # Usage:
 #   cd pi-gen
@@ -38,22 +38,19 @@ if ! docker info &>/dev/null; then
   exit 1
 fi
 
-echo "[1/4] Cloning pi-gen..."
+echo "[1/4] Cloning pi-gen (bookworm arm64 branch)..."
 if [ -d "$PIGEN_DIR" ]; then
-  echo "  pi-gen repo already exists, pulling latest..."
-  cd "$PIGEN_DIR"
-  git pull --quiet
-else
-  git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git "$PIGEN_DIR"
-  cd "$PIGEN_DIR"
+  echo "  Removing old pi-gen repo..."
+  rm -rf "$PIGEN_DIR"
 fi
+git clone --depth 1 --branch bookworm-arm64 https://github.com/RPi-Distro/pi-gen.git "$PIGEN_DIR"
+cd "$PIGEN_DIR"
 
 echo "[2/4] Configuring build..."
 
-# Write pi-gen config
+# Write pi-gen config — RELEASE is set by the branch (bookworm)
 cat > config << 'EOF'
 IMG_NAME=immersive-core-kiosk
-RELEASE=bookworm
 TARGET_HOSTNAME=ic-kiosk
 FIRST_USER_NAME=pi
 FIRST_USER_PASS=immersivecore
@@ -73,27 +70,31 @@ touch stage3/SKIP_IMAGES stage4/SKIP_IMAGES stage5/SKIP_IMAGES
 
 echo "[3/4] Linking custom kiosk stage..."
 
-# Remove old link/dir if exists
+# Remove old stage if exists
 rm -rf "${PIGEN_DIR}/${STAGE_NAME}"
 
 # Create the stage directory structure
 mkdir -p "${PIGEN_DIR}/${STAGE_NAME}"
 
 # Copy our stage files into the pi-gen structure
+cp "${SCRIPT_DIR}/prerun.sh" "${PIGEN_DIR}/${STAGE_NAME}/"
 cp -r "${SCRIPT_DIR}/00-install-packages" "${PIGEN_DIR}/${STAGE_NAME}/"
 cp -r "${SCRIPT_DIR}/01-copy-files" "${PIGEN_DIR}/${STAGE_NAME}/"
 cp -r "${SCRIPT_DIR}/02-configure" "${PIGEN_DIR}/${STAGE_NAME}/"
 cp "${SCRIPT_DIR}/EXPORT_IMAGE" "${PIGEN_DIR}/${STAGE_NAME}/"
 
 # Ensure scripts are executable
+chmod +x "${PIGEN_DIR}/${STAGE_NAME}/prerun.sh"
 chmod +x "${PIGEN_DIR}/${STAGE_NAME}/01-copy-files/00-run.sh"
 chmod +x "${PIGEN_DIR}/${STAGE_NAME}/02-configure/00-run-chroot.sh"
 
 echo "[4/4] Building image (this takes 20-40 minutes)..."
 echo ""
 echo "  Building with Docker..."
-echo "  Logs: ${PIGEN_DIR}/work/*/build.log"
 echo ""
+
+# Remove stale container from previous builds (if any)
+docker rm -v pigen_work 2>/dev/null || true
 
 ./build-docker.sh
 
@@ -118,6 +119,6 @@ if ls deploy/*.zip &>/dev/null; then
 else
   echo ""
   echo "ERROR: No image found in deploy/"
-  echo "Check build logs: ${PIGEN_DIR}/work/*/build.log"
+  echo "Check build logs in: ${PIGEN_DIR}/work/"
   exit 1
 fi

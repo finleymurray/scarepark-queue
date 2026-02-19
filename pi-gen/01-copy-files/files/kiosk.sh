@@ -35,6 +35,9 @@ exec $CHROMIUM_BIN \
   --noerrdialogs \
   --disable-infobars \
   --kiosk \
+  --no-first-run \
+  --no-default-browser-check \
+  --disable-sync \
   --disable-translate \
   --disable-features=TranslateUI \
   --disable-pinch \
