@@ -25,3 +25,8 @@ install -d "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core"
 install -m 644 files/immersive-core.plymouth "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core/immersive-core.plymouth"
 install -m 644 files/immersive-core.script "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core/immersive-core.script"
 install -m 644 files/splash.png "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core/splash.png"
+
+# Copy Wi-Fi config if present (wifi.conf is gitignored)
+if [ -f files/wifi.conf ]; then
+  install -m 600 files/wifi.conf "${ROOTFS_DIR}/tmp/wifi.conf"
+fi

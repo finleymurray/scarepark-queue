@@ -1,20 +1,27 @@
 #!/bin/bash -e
 
 # ── Wi-Fi Configuration (NetworkManager) ──────────────────────────
-mkdir -p /etc/NetworkManager/system-connections
-cat > /etc/NetworkManager/system-connections/BT-M3A8QK.nmconnection << 'NMEOF'
+# Reads credentials from pi-gen/wifi.conf (not committed to git)
+# Create wifi.conf with: WIFI_SSID=YourNetwork and WIFI_PASS=YourPassword
+WIFI_CONF="/boot/firmware/wifi.conf"
+[ ! -f "$WIFI_CONF" ] && WIFI_CONF="/tmp/wifi.conf"
+if [ -f "$WIFI_CONF" ]; then
+  . "$WIFI_CONF"
+  if [ -n "$WIFI_SSID" ] && [ -n "$WIFI_PASS" ]; then
+    mkdir -p /etc/NetworkManager/system-connections
+    cat > "/etc/NetworkManager/system-connections/${WIFI_SSID}.nmconnection" << NMEOF
 [connection]
-id=BT-M3A8QK
+id=${WIFI_SSID}
 type=wifi
 autoconnect=true
 
 [wifi]
 mode=infrastructure
-ssid=BT-M3A8QK
+ssid=${WIFI_SSID}
 
 [wifi-security]
 key-mgmt=wpa-psk
-psk=gD3vJQaFbnE4ey
+psk=${WIFI_PASS}
 
 [ipv4]
 method=auto
@@ -22,7 +29,9 @@ method=auto
 [ipv6]
 method=auto
 NMEOF
-chmod 600 /etc/NetworkManager/system-connections/BT-M3A8QK.nmconnection
+    chmod 600 "/etc/NetworkManager/system-connections/${WIFI_SSID}.nmconnection"
+  fi
+fi
 
 # Create kiosk user if it doesn't exist
 if ! id "kiosk" >/dev/null 2>&1; then

@@ -83,6 +83,15 @@ cp -r "${SCRIPT_DIR}/01-copy-files" "${PIGEN_DIR}/${STAGE_NAME}/"
 cp -r "${SCRIPT_DIR}/02-configure" "${PIGEN_DIR}/${STAGE_NAME}/"
 cp "${SCRIPT_DIR}/EXPORT_IMAGE" "${PIGEN_DIR}/${STAGE_NAME}/"
 
+# Copy Wi-Fi credentials if present (wifi.conf is gitignored)
+if [ -f "${SCRIPT_DIR}/wifi.conf" ]; then
+  cp "${SCRIPT_DIR}/wifi.conf" "${PIGEN_DIR}/${STAGE_NAME}/01-copy-files/files/wifi.conf"
+  echo "  Wi-Fi config found — credentials will be baked in"
+else
+  echo "  No wifi.conf found — Wi-Fi must be configured manually after boot"
+  echo "  Create pi-gen/wifi.conf with: WIFI_SSID=... and WIFI_PASS=..."
+fi
+
 # Ensure scripts are executable
 chmod +x "${PIGEN_DIR}/${STAGE_NAME}/prerun.sh"
 chmod +x "${PIGEN_DIR}/${STAGE_NAME}/01-copy-files/00-run.sh"

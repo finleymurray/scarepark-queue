@@ -43,3 +43,4 @@ next-env.d.ts
 # pi-gen build artifacts
 /deploy/
 /pi-gen/.pi-gen-repo/
+/pi-gen/wifi.conf
