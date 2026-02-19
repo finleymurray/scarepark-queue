@@ -191,11 +191,14 @@ export default function ScreenController() {
           .single();
 
         if (error) {
-          // Row deleted by admin — clear identity, re-register
-          localStorage.removeItem(ID_STORAGE_KEY);
-          localStorage.removeItem(CODE_STORAGE_KEY);
-          localStorage.removeItem(PATH_STORAGE_KEY);
-          window.location.reload();
+          // Only re-register if the row is truly gone (PGRST116 = no rows found)
+          // Other errors (network, rate limit) are silently retried next poll
+          if (error.code === 'PGRST116') {
+            localStorage.removeItem(ID_STORAGE_KEY);
+            localStorage.removeItem(CODE_STORAGE_KEY);
+            localStorage.removeItem(PATH_STORAGE_KEY);
+            window.location.reload();
+          }
           return;
         }
 

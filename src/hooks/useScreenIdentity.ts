@@ -56,11 +56,14 @@ export function useScreenIdentity(pagePath: string) {
           .single();
 
         if (error) {
-          // Row was deleted by admin — clear identity, go back to /screen
-          localStorage.removeItem(ID_STORAGE_KEY);
-          localStorage.removeItem('ic-screen-code');
-          localStorage.removeItem(PATH_STORAGE_KEY);
-          window.location.href = '/screen';
+          // Only clear identity if the row is truly gone (PGRST116 = no rows found)
+          // Other errors (network, rate limit, etc.) should be silently retried
+          if (error.code === 'PGRST116') {
+            localStorage.removeItem(ID_STORAGE_KEY);
+            localStorage.removeItem('ic-screen-code');
+            localStorage.removeItem(PATH_STORAGE_KEY);
+            window.location.href = '/screen';
+          }
           return;
         }
 

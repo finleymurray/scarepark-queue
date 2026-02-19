@@ -18,7 +18,7 @@ export function useConnectionHealth(
   _pageName: string,
   options?: { maxDowntime?: number },
 ) {
-  const maxDowntime = options?.maxDowntime ?? 30_000;
+  const maxDowntime = options?.maxDowntime ?? 120_000;
   const disconnectedAtRef = useRef<number | null>(null);
 
   useEffect(() => {

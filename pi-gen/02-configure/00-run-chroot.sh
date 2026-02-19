@@ -75,13 +75,12 @@ if [ -f "$CONFIG" ]; then
   fi
 fi
 
-# Boot cmdline tweaks — splash, hide cursor, quiet boot
+# Boot cmdline tweaks — verbose boot for debugging (re-enable splash quiet once confirmed)
 CMDLINE="/boot/firmware/cmdline.txt"
 [ ! -f "$CMDLINE" ] && CMDLINE="/boot/cmdline.txt"
 if [ -f "$CMDLINE" ]; then
-  if ! grep -q "splash" "$CMDLINE"; then
-    sed -i 's/$/ splash quiet/' "$CMDLINE"
-  fi
+  # Remove quiet/splash for verbose boot debugging
+  sed -i 's/ quiet//g; s/ splash//g' "$CMDLINE"
   sed -i 's/console=tty1//' "$CMDLINE"
   if ! grep -q "vt.global_cursor_default=0" "$CMDLINE"; then
     sed -i 's/$/ vt.global_cursor_default=0/' "$CMDLINE"
