@@ -226,3 +226,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE user_roles;
 -- CREATE POLICY "Allow authenticated insert" ON attractions FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 -- CREATE POLICY "Allow authenticated update" ON attractions FOR UPDATE USING (auth.uid() IS NOT NULL);
 -- CREATE POLICY "Allow authenticated delete" ON attractions FOR DELETE USING (auth.uid() IS NOT NULL);
+--
+-- -- Add editable label to screens (custom display name per screen)
+-- ALTER TABLE screens ADD COLUMN IF NOT EXISTS label TEXT;

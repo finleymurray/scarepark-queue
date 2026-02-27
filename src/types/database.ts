@@ -83,6 +83,7 @@ export interface Screen {
   assigned_path: string | null;
   current_page: string | null;
   name: string | null;
+  label: string | null;
   last_seen: string;
   user_agent: string | null;
   created_at: string;

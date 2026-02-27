@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
@@ -197,6 +197,10 @@ export default function ScreensPage() {
     fetchData();
   }
 
+  async function handleLabelChange(screen: Screen, label: string) {
+    await supabase.from('screens').update({ label: label || null }).eq('id', screen.id);
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push('/login');
@@ -335,6 +339,7 @@ export default function ScreensPage() {
                 screen={screen}
                 onAssign={handleAssignPath}
                 onDelete={handleDeleteScreen}
+                onLabelChange={handleLabelChange}
               />
             ))}
           </div>
@@ -351,21 +356,40 @@ function ManagedScreenCard({
   screen,
   onAssign,
   onDelete,
+  onLabelChange,
 }: {
   screen: Screen;
   onAssign: (screen: Screen, path: string) => void;
   onDelete: (screen: Screen) => void;
+  onLabelChange: (screen: Screen, label: string) => void;
 }) {
   const status = getStatus(screen.last_seen);
   const statusInfo = statusColors[status];
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(screen.label || '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function startEditing() {
+    setDraft(screen.label || '');
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function save() {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed !== (screen.label || '')) {
+      onLabelChange(screen, trimmed);
+    }
+  }
 
   return (
     <div style={cardStyle}>
-      {/* Header: code + status */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Header: label/code + status */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0, flex: 1 }}>
           {/* Status dot with pulse */}
-          <div style={{ position: 'relative', width: 10, height: 10 }}>
+          <div style={{ position: 'relative', width: 10, height: 10, flexShrink: 0, marginTop: 6 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusInfo.bg }} />
             {status === 'online' && (
               <div style={{
@@ -375,14 +399,49 @@ function ManagedScreenCard({
               }} />
             )}
           </div>
-          <div style={{
-            fontSize: 22, fontWeight: 800, letterSpacing: '0.2em',
-            fontFamily: 'monospace', color: '#fff',
-          }}>
-            {screen.code}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            {editing ? (
+              <input
+                ref={inputRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={save}
+                onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+                placeholder="Enter screen name..."
+                style={{
+                  fontSize: 16, fontWeight: 700, color: '#fff',
+                  background: '#161616', border: '1px solid #8B5CF6',
+                  borderRadius: 6, padding: '2px 8px', width: '100%',
+                  outline: 'none',
+                }}
+              />
+            ) : (
+              <div onClick={startEditing} style={{ cursor: 'pointer' }}>
+                <div style={{
+                  fontSize: screen.label ? 16 : 22,
+                  fontWeight: screen.label ? 700 : 800,
+                  letterSpacing: screen.label ? 'normal' : '0.2em',
+                  fontFamily: screen.label ? 'inherit' : 'monospace',
+                  color: '#fff',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {screen.label || screen.code}
+                </div>
+                {screen.label && (
+                  <div style={{ fontSize: 11, color: '#555', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
+                    {screen.code}
+                  </div>
+                )}
+                {!screen.label && (
+                  <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>
+                    Click to name this screen
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 2 }}>
           <span style={{
             fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
             background: `${statusInfo.bg}15`, color: statusInfo.text,
