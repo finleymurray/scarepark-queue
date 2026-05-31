@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
-import type { Attraction, ShowReport } from '@/types/database';
+import { SIGNOFF_ROLE_LABELS } from '@/lib/signoff';
+import type { Attraction, ShowReport, SignoffCompletion, SignoffSection, SignoffRoleKey } from '@/types/database';
 
 /* ── Helpers ── */
 
@@ -41,13 +41,20 @@ function formatDate(dateStr: string): string {
 
 /* ── Single report page ── */
 
+interface SignoffEntry {
+  section: SignoffSection;
+  completion: SignoffCompletion;
+}
+
 function ReportPage({
   report,
   attraction,
+  signoffs,
   isLast,
 }: {
   report: ShowReport;
   attraction: Attraction | undefined;
+  signoffs: SignoffEntry[];
   isLast: boolean;
 }) {
   const throughput = report.hourly_throughput || [];
@@ -193,6 +200,46 @@ function ReportPage({
         </div>
       )}
 
+      {/* Sign-Off Record */}
+      {signoffs.length > 0 && (
+        <div className="section">
+          <h2 className="section-title">Sign-Off Record</h2>
+          {(['opening', 'closing'] as const).map((phase) => {
+            const phaseEntries = signoffs.filter((s) => s.section.phase === phase);
+            if (phaseEntries.length === 0) return null;
+            return (
+              <div key={phase} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: '8.5pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#888', marginBottom: 4 }}>
+                  {phase === 'opening' ? 'Opening' : 'Closing'}
+                </div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Section</th>
+                      <th>Role</th>
+                      <th>Signed by</th>
+                      <th className="text-right">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {phaseEntries
+                      .sort((a, b) => a.section.sort_order - b.section.sort_order)
+                      .map(({ section, completion }) => (
+                        <tr key={completion.id}>
+                          <td>{section.name}</td>
+                          <td style={{ color: '#666' }}>{SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}</td>
+                          <td style={{ fontWeight: 600 }}>{completion.signed_by_name || completion.signed_by_email}</td>
+                          <td className="text-right" style={{ whiteSpace: 'nowrap' }}>{formatTs(completion.signed_at)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Signature */}
       <div className="section signature-section">
         <h2 className="section-title">Signature</h2>
@@ -227,6 +274,8 @@ function PrintContent() {
 
   const [reports, setReports] = useState<ShowReport[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [completions, setCompletions] = useState<SignoffCompletion[]>([]);
+  const [sections, setSections] = useState<SignoffSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [autoPrint, setAutoPrint] = useState(false);
@@ -240,13 +289,17 @@ function PrintContent() {
         return;
       }
 
-      const [reportsRes, attractionsRes] = await Promise.all([
+      const [reportsRes, attractionsRes, completionsRes, sectionsRes] = await Promise.all([
         supabase.from('show_reports').select('*').eq('report_date', dateStr).order('created_at', { ascending: true }),
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
+        supabase.from('signoff_completions').select('*').eq('sign_date', dateStr),
+        supabase.from('signoff_sections').select('*').order('sort_order', { ascending: true }),
       ]);
 
       setReports(reportsRes.data || []);
       setAttractions(attractionsRes.data || []);
+      setCompletions(completionsRes.data || []);
+      setSections(sectionsRes.data || []);
       setLoading(false);
 
       // Auto-print if ?print=1
@@ -307,14 +360,26 @@ function PrintContent() {
 
       {/* Report pages */}
       <div className="print-container">
-        {reports.map((report, idx) => (
-          <ReportPage
-            key={report.id}
-            report={report}
-            attraction={attractions.find((a) => a.id === report.attraction_id)}
-            isLast={idx === reports.length - 1}
-          />
-        ))}
+        {reports.map((report, idx) => {
+          // Build signoff entries for this attraction
+          const attractionCompletions = completions.filter((c) => c.attraction_id === report.attraction_id);
+          const signoffs: SignoffEntry[] = attractionCompletions
+            .map((c) => {
+              const section = sections.find((s) => s.id === c.section_id);
+              return section ? { section, completion: c } : null;
+            })
+            .filter((e): e is SignoffEntry => e !== null);
+
+          return (
+            <ReportPage
+              key={report.id}
+              report={report}
+              attraction={attractions.find((a) => a.id === report.attraction_id)}
+              signoffs={signoffs}
+              isLast={idx === reports.length - 1}
+            />
+          );
+        })}
       </div>
 
       <style>{`
