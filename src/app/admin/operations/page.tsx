@@ -6,7 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
-import type { Attraction, AttractionStatus, AttractionStatusLog } from '@/types/database';
+import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog } from '@/types/database';
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
+} from 'recharts';
 
 /* ── Helpers ── */
 
@@ -63,11 +66,151 @@ interface DelayIncident {
 interface AttractionOps {
   attraction: Attraction;
   currentStatus: AttractionStatus;
-  openedAt: string | null;   // first OPEN log today
-  closedAt: string | null;   // most recent CLOSED log today
+  openedAt: string | null;
+  closedAt: string | null;
   delays: DelayIncident[];
   totalDowntimeSecs: number;
   activeDelay: AttractionStatusLog | null;
+  history: AttractionHistory[];
+}
+
+/* ── Queue time sparkline ── */
+
+interface ChartPoint { t: number; wait: number | null; label: string }
+
+function formatHourLabel(ms: number): string {
+  const d = new Date(ms);
+  const h = d.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}${ampm}`;
+}
+
+function formatTooltipTime(ms: number): string {
+  const d = new Date(ms);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function QueueChart({
+  history,
+  delays,
+  openTime,
+  closeTime,
+}: {
+  history: AttractionHistory[];
+  delays: DelayIncident[];
+  openTime: string;   // "18:00"
+  closeTime: string;  // "23:00"
+}) {
+  if (!openTime || !closeTime) return null;
+
+  // Build x-axis domain from opening/closing times (today's date)
+  const today = new Date().toISOString().split('T')[0];
+  const [oh, om] = openTime.split(':').map(Number);
+  const [ch, cm] = closeTime.split(':').map(Number);
+  let domainStart = new Date(`${today}T${openTime}:00`).getTime();
+  let domainEnd   = new Date(`${today}T${closeTime}:00`).getTime();
+  if (domainEnd <= domainStart) domainEnd += 24 * 60 * 60 * 1000; // crosses midnight
+
+  // Filter history to within domain, map to chart points
+  const points: ChartPoint[] = history
+    .filter((h) => {
+      const t = new Date(h.recorded_at).getTime();
+      return t >= domainStart && t <= domainEnd + 60 * 60 * 1000; // +1h buffer
+    })
+    .map((h) => ({
+      t: new Date(h.recorded_at).getTime(),
+      wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
+      label: formatTooltipTime(new Date(h.recorded_at).getTime()),
+    }));
+
+  if (points.length === 0) return null;
+
+  // Build delay reference lines
+  const delayBands = delays.map((d) => ({
+    start: new Date(d.log.changed_at).getTime(),
+    end: d.log.resolved_at ? new Date(d.log.resolved_at).getTime() : Date.now(),
+  }));
+
+  // Tick marks at each hour
+  const ticks: number[] = [];
+  let tick = new Date(domainStart);
+  tick.setMinutes(0, 0, 0);
+  if (tick.getTime() < domainStart) tick.setHours(tick.getHours() + 1);
+  while (tick.getTime() <= domainEnd + 60 * 60 * 1000) {
+    ticks.push(tick.getTime());
+    tick = new Date(tick.getTime() + 60 * 60 * 1000);
+  }
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      <div style={{ fontSize: 11, color: '#666', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+        Queue time tonight
+      </div>
+      <ResponsiveContainer width="100%" height={90}>
+        <AreaChart data={points} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
+          <defs>
+            <linearGradient id={`grad-${history[0]?.attraction_id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="t"
+            type="number"
+            domain={[domainStart, domainEnd + 60 * 60 * 1000]}
+            ticks={ticks}
+            tickFormatter={formatHourLabel}
+            tick={{ fontSize: 10, fill: '#555' }}
+            axisLine={false}
+            tickLine={false}
+            scale="time"
+          />
+          <YAxis
+            dataKey="wait"
+            tick={{ fontSize: 10, fill: '#555' }}
+            axisLine={false}
+            tickLine={false}
+            allowDecimals={false}
+            width={32}
+            tickFormatter={(v) => `${v}m`}
+          />
+          <Tooltip
+            contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 6, fontSize: 12 }}
+            labelFormatter={(v) => formatTooltipTime(v as number)}
+            formatter={(v: unknown) => [`${v} min`, 'Wait time']}
+            itemStyle={{ color: '#22C55E' }}
+            labelStyle={{ color: '#888' }}
+          />
+          {/* Amber delay bands */}
+          {delayBands.map((band, i) => (
+            <ReferenceLine
+              key={i}
+              x={band.start}
+              stroke="#f0ad4e"
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+              opacity={0.6}
+            />
+          ))}
+          <Area
+            type="monotone"
+            dataKey="wait"
+            stroke="#22C55E"
+            strokeWidth={2}
+            fill={`url(#grad-${history[0]?.attraction_id})`}
+            connectNulls={false}
+            dot={false}
+            activeDot={{ r: 3, fill: '#22C55E' }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 /* ── Live delay timer ── */
@@ -99,8 +242,8 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
 
 /* ── Ops Card ── */
 
-function OpsCard({ ops }: { ops: AttractionOps }) {
-  const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay } = ops;
+function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: string; closeTime: string }) {
+  const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history } = ops;
 
   const statusColor = STATUS_COLORS[currentStatus] || '#888';
   const statusBg = STATUS_BG[currentStatus] || 'rgba(128,128,128,0.15)';
@@ -214,23 +357,37 @@ function OpsCard({ ops }: { ops: AttractionOps }) {
       {!openedAt && (
         <div style={{ fontSize: 13, color: '#555', fontStyle: 'italic' }}>No activity recorded today.</div>
       )}
+
+      {/* Queue time chart */}
+      {history.length > 0 && (
+        <div style={{ borderTop: '1px solid #2a2a2a', paddingTop: 16 }}>
+          <QueueChart
+            history={history}
+            delays={delays}
+            openTime={openTime}
+            closeTime={closeTime}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── Build ops data from logs ── */
 
-function buildOpsData(attractions: Attraction[], logs: AttractionStatusLog[]): AttractionOps[] {
+function buildOpsData(
+  attractions: Attraction[],
+  logs: AttractionStatusLog[],
+  history: AttractionHistory[],
+): AttractionOps[] {
   return attractions.map((attraction) => {
     const aLogs = logs.filter((l) => l.attraction_id === attraction.id);
+    const aHistory = history.filter((h) => h.attraction_id === attraction.id);
 
-    // First OPEN
     const firstOpen = aLogs.find((l) => l.status === 'OPEN') || null;
-    // Most recent CLOSED
     const closedLogs = aLogs.filter((l) => l.status === 'CLOSED');
     const lastClosed = closedLogs.length > 0 ? closedLogs[closedLogs.length - 1] : null;
 
-    // Delay incidents
     const delayLogs = aLogs.filter((l) => l.status === 'DELAYED');
     const delays: DelayIncident[] = delayLogs.map((log) => {
       const endTime = log.resolved_at || null;
@@ -240,10 +397,7 @@ function buildOpsData(attractions: Attraction[], logs: AttractionStatusLog[]): A
       return { log, durationSecs };
     });
 
-    // Total downtime (resolved delays only)
     const totalDowntimeSecs = delays.reduce((acc, d) => acc + (d.durationSecs ?? 0), 0);
-
-    // Active delay
     const activeDelay = delayLogs.find((l) => l.resolved_at === null) || null;
 
     return {
@@ -254,6 +408,7 @@ function buildOpsData(attractions: Attraction[], logs: AttractionStatusLog[]): A
       delays,
       totalDowntimeSecs,
       activeDelay,
+      history: aHistory,
     };
   });
 }
@@ -267,19 +422,40 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(true);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [logs, setLogs] = useState<AttractionStatusLog[]>([]);
+  const [history, setHistory] = useState<AttractionHistory[]>([]);
+  const [openTime, setOpenTime] = useState('');
+  const [closeTime, setCloseTime] = useState('');
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr());
   const [opsData, setOpsData] = useState<AttractionOps[]>([]);
 
   const fetchData = useCallback(async (dateStr: string) => {
-    const [attractionsRes, allLogs] = await Promise.all([
+    const start = new Date(`${dateStr}T00:00:00`).toISOString();
+    const end   = new Date(`${dateStr}T23:59:59`).toISOString();
+
+    const [attractionsRes, allLogs, historyRes, openRes, closeRes] = await Promise.all([
       supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
       getAllStatusLogs(dateStr),
+      supabase
+        .from('attraction_history')
+        .select('id,attraction_id,attraction_name,status,wait_time,recorded_at')
+        .gte('recorded_at', start)
+        .lte('recorded_at', end)
+        .order('recorded_at', { ascending: true }),
+      supabase.from('park_settings').select('value').eq('key', 'opening_time').single(),
+      supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
     ]);
 
     const attrs: Attraction[] = attractionsRes.data || [];
+    const hist: AttractionHistory[] = historyRes.data || [];
+    const open = openRes.data?.value || '';
+    const close = closeRes.data?.value || '';
+
     setAttractions(attrs);
     setLogs(allLogs);
-    setOpsData(buildOpsData(attrs, allLogs));
+    setHistory(hist);
+    setOpenTime(open);
+    setCloseTime(close);
+    setOpsData(buildOpsData(attrs, allLogs, hist));
   }, []);
 
   useEffect(() => {
@@ -304,8 +480,8 @@ export default function OperationsPage() {
 
   // Rebuild opsData when attractions update in realtime
   useEffect(() => {
-    setOpsData(buildOpsData(attractions, logs));
-  }, [attractions, logs]);
+    setOpsData(buildOpsData(attractions, logs, history));
+  }, [attractions, logs, history]);
 
   // Realtime subscription
   useEffect(() => {
@@ -378,7 +554,7 @@ export default function OperationsPage() {
         {/* Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {opsData.map((ops) => (
-            <OpsCard key={ops.attraction.id} ops={ops} />
+            <OpsCard key={ops.attraction.id} ops={ops} openTime={openTime} closeTime={closeTime} />
           ))}
           {opsData.length === 0 && (
             <div style={{ color: '#555', fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
