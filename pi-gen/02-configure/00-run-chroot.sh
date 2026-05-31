@@ -53,8 +53,29 @@ systemctl enable ssh
 systemctl disable userconf-pi 2>/dev/null || true
 rm -f /etc/ssh/sshd_config.d/rename_user.conf 2>/dev/null || true
 
+# Generate SSH host keys now (since we skip the firstboot script)
+ssh-keygen -A
+
 # Set pi user password for SSH access
 echo "pi:immersivecore" | chpasswd
+
+# Enable hardware watchdog (auto-reboot on system freeze)
+if [ -f /etc/watchdog.conf ]; then
+  sed -i 's/#watchdog-device/watchdog-device/' /etc/watchdog.conf
+  sed -i 's/#max-load-1/max-load-1/' /etc/watchdog.conf
+fi
+systemctl enable watchdog 2>/dev/null || true
+
+# Disable unnecessary services (free RAM & CPU)
+systemctl disable bluetooth 2>/dev/null || true
+systemctl disable cups 2>/dev/null || true
+systemctl disable avahi-daemon 2>/dev/null || true
+systemctl disable triggerhappy 2>/dev/null || true
+
+# Increase swap to 1GB (safety net for heavy pages)
+if [ -f /etc/dphys-swapfile ]; then
+  sed -i 's/CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
+fi
 
 # Set Plymouth theme
 plymouth-set-default-theme immersive-core 2>/dev/null || true
@@ -73,14 +94,18 @@ if [ -f "$CONFIG" ]; then
   if ! grep -q "^hdmi_force_hotplug=" "$CONFIG" 2>/dev/null; then
     echo "hdmi_force_hotplug=1" >> "$CONFIG"
   fi
+  if ! grep -q "^dtparam=watchdog=on" "$CONFIG" 2>/dev/null; then
+    echo "dtparam=watchdog=on" >> "$CONFIG"
+  fi
 fi
 
 # Boot cmdline tweaks — verbose boot for debugging (re-enable splash quiet once confirmed)
 CMDLINE="/boot/firmware/cmdline.txt"
 [ ! -f "$CMDLINE" ] && CMDLINE="/boot/cmdline.txt"
 if [ -f "$CMDLINE" ]; then
-  # Remove quiet/splash for verbose boot debugging
+  # Remove quiet/splash for verbose boot, remove firstboot init (we handle setup in chroot)
   sed -i 's/ quiet//g; s/ splash//g' "$CMDLINE"
+  sed -i 's/ init=[^ ]*//' "$CMDLINE"
   sed -i 's/console=tty1//' "$CMDLINE"
   if ! grep -q "vt.global_cursor_default=0" "$CMDLINE"; then
     sed -i 's/$/ vt.global_cursor_default=0/' "$CMDLINE"

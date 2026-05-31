@@ -8,8 +8,9 @@ User=kiosk
 Group=kiosk
 Type=simple
 ExecStart=/usr/bin/xinit /home/kiosk/kiosk.sh -- :0 -nolisten tcp vt7
-Restart=on-failure
-RestartSec=5
+Restart=always
+RestartSec=3
+StartLimitIntervalSec=0
 
 # Environment for X
 Environment=DISPLAY=:0

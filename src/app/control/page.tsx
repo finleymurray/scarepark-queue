@@ -73,6 +73,16 @@ function getTodayDateStr(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 /* ── Numeric Keypad Modal ── */
 function NumericKeypad({
   open,
@@ -198,6 +208,8 @@ export default function SupervisorDashboard() {
   const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [signoffStatus, setSignoffStatus] = useState<AttractionSignoffStatus | null>(null);
+  const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
+  const [delayElapsed, setDelayElapsed] = useState(0);
   const tabBarRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
@@ -386,6 +398,44 @@ export default function SupervisorDashboard() {
 
   // Selected attraction
   const selected = useMemo(() => rides.find((a) => a.id === selectedId) || null, [rides, selectedId]);
+
+  // Fetch delay start time when selected attraction is DELAYED
+  useEffect(() => {
+    if (!selected || selected.status !== 'DELAYED') {
+      setDelayStartedAt(null);
+      setDelayElapsed(0);
+      return;
+    }
+
+    let cancelled = false;
+    async function fetchDelay() {
+      const { data } = await supabase
+        .from('attraction_status_logs')
+        .select('changed_at')
+        .eq('attraction_id', selected!.id)
+        .eq('status', 'DELAYED')
+        .is('resolved_at', null)
+        .order('changed_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!cancelled && data) {
+        setDelayStartedAt(data.changed_at);
+        setDelayElapsed(Math.floor((Date.now() - new Date(data.changed_at).getTime()) / 1000));
+      }
+    }
+    fetchDelay();
+    return () => { cancelled = true; };
+  }, [selected?.id, selected?.status]);
+
+  // Tick the delay elapsed counter every second when delayed
+  useEffect(() => {
+    if (!delayStartedAt) return;
+    const interval = setInterval(() => {
+      setDelayElapsed(Math.floor((Date.now() - new Date(delayStartedAt).getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [delayStartedAt]);
 
   // Hourly slots
   const slots = useMemo(() => generateHourlySlots(openingTime, closingTime), [openingTime, closingTime]);
@@ -725,7 +775,9 @@ export default function SupervisorDashboard() {
                       selected.status === 'CLOSED' ? 'text-[#dc3545]' :
                       'text-[#f0ad4e]'
                     }`}>
-                      {selected.status}
+                      {selected.status === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : selected.status}
                     </div>
                   </div>
                 ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
@@ -733,7 +785,9 @@ export default function SupervisorDashboard() {
                     <div className={`text-4xl font-black ${
                       selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
                     }`}>
-                      {selected.status}
+                      {selected.status === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : selected.status}
                     </div>
                     <p className="text-white/30 text-xs mt-2">
                       {selected.status === 'CLOSED'

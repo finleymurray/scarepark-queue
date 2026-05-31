@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immersive Core — Admin UI Mockup</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+
+  /* ── Top Nav ── */
+  .topnav {
+    background: #111;
+    border-bottom: 1px solid #333;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topnav-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .topnav-logo {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 14px;
+    color: #fff;
+  }
+  .topnav-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .topnav-links {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .topnav-link {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #888;
+    text-decoration: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .topnav-link:hover { color: #e0e0e0; background: rgba(255,255,255,0.05); }
+  .topnav-link.active { color: #a855f7; border-bottom: 2px solid #a855f7; }
+  .topnav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-logout {
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-logout:hover { border-color: #888; color: #fff; }
+
+  /* ── Tab Switcher (mockup views) ── */
+  .mockup-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 28px;
+    background: #0e0e0e;
+    border-bottom: 1px solid #222;
+  }
+  .mockup-tab {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mockup-tab:hover { color: #aaa; background: rgba(255,255,255,0.03); }
+  .mockup-tab.active {
+    color: #fff;
+    background: #1a1a1a;
+    border-color: #333;
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 32px 28px; max-width: 1200px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* ── Section Headers ── */
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+
+  /* ═══════════════════════════════════════
+     1. DASHBOARD — Attraction Cards
+     ═══════════════════════════════════════ */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .dash-card {
+    background: #1E1E1E;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .dash-card:hover { border-color: #444; }
+
+  /* Status dropdown badge */
+  .status-badge {
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: filter 0.15s;
+  }
+  .status-badge:hover { filter: brightness(1.1); }
+  .status-badge.open { background: #22C55E; color: #000; }
+  .status-badge.closed { background: #dc3545; color: #fff; }
+  .status-badge.delayed { background: #f0ad4e; color: #000; }
+  .status-badge .arrow { font-size: 8px; }
+
+  /* Attraction name */
+  .dash-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* Hero wait time */
+  .dash-hero {
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    margin: 4px 0 0;
+  }
+  .dash-hero-unit {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.35);
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  /* Quick adjust buttons */
+  .dash-btns {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+  .dash-btn {
+    flex: 1;
+    padding: 14px 0;
+    font-size: 16px;
+    font-weight: 800;
+    border-radius: 10px;
+    border: 2px solid #22C55E;
+    background: transparent;
+    color: #22C55E;
+    cursor: pointer;
+    transition: all 0.15s;
+    touch-action: manipulation;
+  }
+  .dash-btn:hover { background: rgba(34,197,94,0.1); }
+  .dash-btn:active { background: rgba(34,197,94,0.2); transform: scale(0.97); }
+
+  /* Closed card variant */
+  .dash-card.is-closed .dash-hero { color: #dc3545; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+  .dash-card.is-closed .dash-hero-unit { display: none; }
+  .dash-card.is-closed .dash-btns { display: none; }
+
+  .dash-card.is-delayed .dash-hero { color: #f0ad4e; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+  .dash-card.is-delayed .dash-hero-unit { display: none; }
+  .dash-card.is-delayed .dash-btns { display: none; }
+
+
+  /* ═══════════════════════════════════════
+     2. USER MANAGEMENT
+     ═══════════════════════════════════════ */
+  .users-group { margin-bottom: 40px; }
+  .users-group-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .users-group-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.04em;
+  }
+  .badge-superadmin { background: #0a3d1f; color: #4caf50; }
+  .badge-supervisor { background: #3d3000; color: #ffc107; }
+  .badge-host { background: #1a1040; color: #a855f7; }
+
+  .users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 14px;
+  }
+  .user-card {
+    background: #1E1E1E;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.15s;
+  }
+  .user-card:hover { border-color: #444; }
+
+  .user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 2px solid;
+  }
+  .avatar-superadmin { background: rgba(10,61,31,0.6); color: #4caf50; border-color: rgba(76,175,80,0.3); }
+  .avatar-supervisor { background: rgba(61,48,0,0.6); color: #ffc107; border-color: rgba(255,193,7,0.3); }
+  .avatar-host { background: rgba(26,16,64,0.6); color: #a855f7; border-color: rgba(168,85,247,0.3); }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .user-email {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .user-action-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-edit {
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+  }
+  .btn-edit:hover { border-color: #888; color: #e0e0e0; }
+  .btn-delete {
+    background: rgba(220,53,69,0.12);
+    color: #f87171;
+  }
+  .btn-delete:hover { background: rgba(220,53,69,0.25); }
+
+
+  /* ═══════════════════════════════════════
+     3. SIGN-OFF CHECKLIST
+     ═══════════════════════════════════════ */
+  .signoff-container { max-width: 700px; margin: 0 auto; }
+
+  .signoff-section {
+    background: #1E1E1E;
+    border: 1px solid #333;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .signoff-section.active-section { border-color: rgba(168,85,247,0.5); }
+  .signoff-section.completed-section { border-color: rgba(76,175,80,0.3); }
+
+  .signoff-header {
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .signoff-header:hover { background: rgba(255,255,255,0.02); }
+
+  .signoff-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .signoff-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .signoff-number.purple { background: rgba(168,85,247,0.2); color: #a855f7; border: 2px solid rgba(168,85,247,0.4); }
+  .signoff-number.done { background: #0a3d1f; color: #4caf50; border: 2px solid rgba(76,175,80,0.3); }
+  .signoff-role {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e0e0e0;
+  }
+  .signoff-chevron {
+    color: #666;
+    font-size: 18px;
+    transition: transform 0.2s;
+  }
+  .signoff-section.open .signoff-chevron { transform: rotate(180deg); }
+
+  .signoff-body {
+    display: none;
+    padding: 0 22px 22px;
+  }
+  .signoff-section.open .signoff-body { display: block; }
+  .signoff-body-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin-bottom: 18px;
+  }
+
+  /* Toggle items */
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .toggle-item:hover { border-color: #444; }
+  .toggle-item.checked { border-color: rgba(76,175,80,0.3); }
+
+  /* Toggle switch */
+  .toggle-switch {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+    background: #333;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #888;
+    transition: all 0.2s;
+  }
+  .toggle-item.checked .toggle-switch {
+    background: #22C55E;
+  }
+  .toggle-item.checked .toggle-switch::after {
+    left: 27px;
+    background: #fff;
+  }
+
+  .toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ccc;
+    line-height: 1.4;
+  }
+
+  /* Progress bar */
+  .progress-container {
+    background: #1E1E1E;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+  }
+  .progress-pct {
+    font-size: 14px;
+    font-weight: 800;
+    color: #22C55E;
+  }
+  .progress-track {
+    height: 10px;
+    background: #222;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #a855f7 0%, #22C55E 100%);
+    width: 45%;
+    transition: width 0.5s ease;
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #a855f7, #22C55E);
+    filter: blur(8px);
+    opacity: 0.5;
+  }
+
+  /* Submit button */
+  .btn-submit {
+    width: 100%;
+    padding: 18px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    transition: filter 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .btn-submit:hover { filter: brightness(1.1); }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-submit svg { width: 18px; height: 18px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .dash-grid { grid-template-columns: 1fr; }
+    .users-grid { grid-template-columns: 1fr; }
+    .topnav-links { display: none; }
+    .panel { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP NAV ═══ -->
+<nav class="topnav">
+  <div class="topnav-left">
+    <div class="topnav-logo">IC</div>
+    <span class="topnav-title">Immersive Core</span>
+  </div>
+  <div class="topnav-links">
+    <a class="topnav-link" onclick="showTab('dashboard')">Home</a>
+    <a class="topnav-link active" onclick="showTab('dashboard')">Dashboards</a>
+    <a class="topnav-link" onclick="showTab('dashboard')">Rides</a>
+    <a class="topnav-link" onclick="showTab('dashboard')">Shows</a>
+    <a class="topnav-link" onclick="showTab('users')">Users</a>
+    <a class="topnav-link" onclick="showTab('dashboard')">Configuration</a>
+  </div>
+  <div class="topnav-right">
+    <button class="btn-logout">Log Out</button>
+  </div>
+</nav>
+
+<!-- ═══ MOCKUP TAB SWITCHER ═══ -->
+<div class="mockup-tabs">
+  <button class="mockup-tab active" onclick="showTab('dashboard')">Dashboard</button>
+  <button class="mockup-tab" onclick="showTab('users')">User Management</button>
+  <button class="mockup-tab" onclick="showTab('signoff')">Sign-Off Checklist</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     PANEL 1: DASHBOARD
+     ═══════════════════════════════════════════════ -->
+<div id="panel-dashboard" class="panel active">
+  <h2 class="section-title">Attraction wait times</h2>
+  <div class="dash-grid">
+
+    <!-- Card: Open -->
+    <div class="dash-card">
+      <button class="status-badge open">Open <span class="arrow">▼</span></button>
+      <div class="dash-name">The Bunker</div>
+      <div class="dash-hero">5</div>
+      <div class="dash-hero-unit">min</div>
+      <div class="dash-btns">
+        <button class="dash-btn">−5m</button>
+        <button class="dash-btn">+5m</button>
+      </div>
+    </div>
+
+    <!-- Card: Open -->
+    <div class="dash-card">
+      <button class="status-badge open">Open <span class="arrow">▼</span></button>
+      <div class="dash-name">Night Terrors</div>
+      <div class="dash-hero">5</div>
+      <div class="dash-hero-unit">min</div>
+      <div class="dash-btns">
+        <button class="dash-btn">−5m</button>
+        <button class="dash-btn">+5m</button>
+      </div>
+    </div>
+
+    <!-- Card: Open -->
+    <div class="dash-card">
+      <button class="status-badge open">Open <span class="arrow">▼</span></button>
+      <div class="dash-name">Drowned</div>
+      <div class="dash-hero">10</div>
+      <div class="dash-hero-unit">min</div>
+      <div class="dash-btns">
+        <button class="dash-btn">−5m</button>
+        <button class="dash-btn">+5m</button>
+      </div>
+    </div>
+
+    <!-- Card: Open -->
+    <div class="dash-card">
+      <button class="status-badge open">Open <span class="arrow">▼</span></button>
+      <div class="dash-name">Westlake Witch Trials</div>
+      <div class="dash-hero">15</div>
+      <div class="dash-hero-unit">min</div>
+      <div class="dash-btns">
+        <button class="dash-btn">−5m</button>
+        <button class="dash-btn">+5m</button>
+      </div>
+    </div>
+
+    <!-- Card: Open (low wait) -->
+    <div class="dash-card">
+      <button class="status-badge open">Open <span class="arrow">▼</span></button>
+      <div class="dash-name">Strings of Control</div>
+      <div class="dash-hero">0</div>
+      <div class="dash-hero-unit">min</div>
+      <div class="dash-btns">
+        <button class="dash-btn">−5m</button>
+        <button class="dash-btn">+5m</button>
+      </div>
+    </div>
+
+    <!-- Card: Closed -->
+    <div class="dash-card is-closed">
+      <button class="status-badge closed">Closed <span class="arrow">▼</span></button>
+      <div class="dash-name">Signal Loss</div>
+      <div class="dash-hero">Closed</div>
+      <div class="dash-hero-unit"></div>
+      <div class="dash-btns">
+        <button class="dash-btn">−5m</button>
+        <button class="dash-btn">+5m</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     PANEL 2: USER MANAGEMENT
+     ═══════════════════════════════════════════════ -->
+<div id="panel-users" class="panel">
+  <h2 class="section-title">User Management</h2>
+
+  <!-- Superadmins -->
+  <div class="users-group">
+    <div class="users-group-header">
+      <span>Superadmins</span>
+      <span class="users-group-badge badge-superadmin">Admin</span>
+    </div>
+    <div class="users-grid">
+      <div class="user-card">
+        <div class="user-avatar avatar-superadmin">FM</div>
+        <div class="user-info">
+          <div class="user-name">Frankie Maldonado</div>
+          <div class="user-email">frankie@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-superadmin">JD</div>
+        <div class="user-info">
+          <div class="user-name">Jocelyn Dokidis</div>
+          <div class="user-email">jocelyn@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-superadmin">PS</div>
+        <div class="user-info">
+          <div class="user-name">Peter Smith</div>
+          <div class="user-email">peter@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attraction Supervisors -->
+  <div class="users-group">
+    <div class="users-group-header">
+      <span>Attraction Supervisors</span>
+      <span class="users-group-badge badge-supervisor">Supervisor</span>
+    </div>
+    <div class="users-grid">
+      <div class="user-card">
+        <div class="user-avatar avatar-supervisor">CG</div>
+        <div class="user-info">
+          <div class="user-name">Cooper George</div>
+          <div class="user-email">cooper@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-supervisor">KS</div>
+        <div class="user-info">
+          <div class="user-name">Kaiya Stanton</div>
+          <div class="user-email">kaiya@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-supervisor">MB</div>
+        <div class="user-info">
+          <div class="user-name">Mart Butter</div>
+          <div class="user-email">mart@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attraction Hosts -->
+  <div class="users-group">
+    <div class="users-group-header">
+      <span>Attraction Hosts</span>
+      <span class="users-group-badge badge-host">Host</span>
+    </div>
+    <div class="users-grid">
+      <div class="user-card">
+        <div class="user-avatar avatar-host">DA</div>
+        <div class="user-info">
+          <div class="user-name">Desiree Ashley</div>
+          <div class="user-email">desiree@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-host">NH</div>
+        <div class="user-info">
+          <div class="user-name">Nathanael Haney</div>
+          <div class="user-email">nathanael@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-host">DM</div>
+        <div class="user-info">
+          <div class="user-name">Duesn Martin</div>
+          <div class="user-email">duesn@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-host">DS</div>
+        <div class="user-info">
+          <div class="user-name">Dorn Shacks</div>
+          <div class="user-email">dorn@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-host">JM</div>
+        <div class="user-info">
+          <div class="user-name">Jeamie Moroe</div>
+          <div class="user-email">jeamie@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar avatar-host">KS</div>
+        <div class="user-info">
+          <div class="user-name">Kaiya Stanton</div>
+          <div class="user-email">kaiya2@example.com</div>
+        </div>
+        <div class="user-actions">
+          <button class="user-action-btn btn-edit">✏️ Edit</button>
+          <button class="user-action-btn btn-delete">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     PANEL 3: SIGN-OFF CHECKLIST
+     ═══════════════════════════════════════════════ -->
+<div id="panel-signoff" class="panel">
+  <div class="signoff-container">
+    <h2 class="section-title">Sign-off Checklist</h2>
+
+    <!-- Section 1: Attraction Supervisor -->
+    <div class="signoff-section active-section open" onclick="toggleSection(this)">
+      <div class="signoff-header">
+        <div class="signoff-header-left">
+          <div class="signoff-number purple">1</div>
+          <div class="signoff-role">Attraction Supervisor</div>
+        </div>
+        <span class="signoff-chevron">▾</span>
+      </div>
+      <div class="signoff-body">
+        <hr class="signoff-body-divider">
+        <div class="toggle-item" onclick="event.stopPropagation(); toggleCheck(this)">
+          <div class="toggle-switch"></div>
+          <div class="toggle-label">Check all emergency stops and ensure container where necessary are in safe conditions.</div>
+        </div>
+        <div class="toggle-item" onclick="event.stopPropagation(); toggleCheck(this)">
+          <div class="toggle-switch"></div>
+          <div class="toggle-label">Check all emergency stops are non-salvageable for amount sign-off.</div>
+        </div>
+        <div class="toggle-item" onclick="event.stopPropagation(); toggleCheck(this)">
+          <div class="toggle-switch"></div>
+          <div class="toggle-label">Check all emergency stanosphere and almost event tasks.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Ride Operator -->
+    <div class="signoff-section open" onclick="toggleSection(this)">
+      <div class="signoff-header">
+        <div class="signoff-header-left">
+          <div class="signoff-number purple">2</div>
+          <div class="signoff-role">Ride Operator</div>
+        </div>
+        <span class="signoff-chevron">▾</span>
+      </div>
+      <div class="signoff-body">
+        <hr class="signoff-body-divider">
+        <div class="toggle-item" onclick="event.stopPropagation(); toggleCheck(this)">
+          <div class="toggle-switch"></div>
+          <div class="toggle-label">Check all ride operator own pure ride operator.</div>
+        </div>
+        <div class="toggle-item" onclick="event.stopPropagation(); toggleCheck(this)">
+          <div class="toggle-switch"></div>
+          <div class="toggle-label">Check all ride pre-open with the ride position.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-label">
+        <span class="progress-text">Progress</span>
+        <span class="progress-pct" id="progress-pct">45%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 45%"></div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button class="btn-submit" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+      Submit Sign-off
+    </button>
+
+  </div>
+</div>
+
+
+<script>
+  // Tab switching
+  function showTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.mockup-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    // Highlight correct tab
+    const tabs = document.querySelectorAll('.mockup-tab');
+    const map = { dashboard: 0, users: 1, signoff: 2 };
+    if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+  }
+
+  // Section toggle
+  function toggleSection(el) {
+    el.classList.toggle('open');
+  }
+
+  // Toggle check
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+    updateProgress();
+  }
+
+  // Update progress
+  function updateProgress() {
+    const total = document.querySelectorAll('#panel-signoff .toggle-item').length;
+    const checked = document.querySelectorAll('#panel-signoff .toggle-item.checked').length;
+    const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
+    // Enable submit when all done
+    document.querySelector('.btn-submit').disabled = (pct < 100);
+  }
+</script>
+
+</body>
+</html>

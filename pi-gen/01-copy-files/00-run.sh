@@ -17,8 +17,10 @@ install -m 644 files/autologin.conf "${ROOTFS_DIR}/etc/systemd/system/getty@tty1
 install -d "${ROOTFS_DIR}/etc/X11"
 install -m 644 files/Xwrapper.config "${ROOTFS_DIR}/etc/X11/Xwrapper.config"
 
-# Disable screen blanking
+# Disable screen blanking (runtime + persistent X11 config)
 install -m 644 files/disable-blanking.sh "${ROOTFS_DIR}/etc/profile.d/disable-blanking.sh"
+install -d "${ROOTFS_DIR}/etc/X11/xorg.conf.d"
+install -m 644 files/10-blanking.conf "${ROOTFS_DIR}/etc/X11/xorg.conf.d/10-blanking.conf"
 
 # Plymouth theme
 install -d "${ROOTFS_DIR}/usr/share/plymouth/themes/immersive-core"

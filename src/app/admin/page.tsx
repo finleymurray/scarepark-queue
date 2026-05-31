@@ -43,6 +43,16 @@ const STATUS_PILL_TEXT: Record<AttractionStatus, string> = {
   'AT CAPACITY': '#000',
 };
 
+function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
   const [h, m] = time.split(':');
@@ -504,8 +514,45 @@ const RideControl = React.memo(function RideControl({
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [customTime, setCustomTime] = useState('');
+  const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
+  const [delayElapsed, setDelayElapsed] = useState(0);
 
   const status = attraction.status as AttractionStatus;
+
+  // Fetch delay start time when DELAYED
+  useEffect(() => {
+    if (status !== 'DELAYED') {
+      setDelayStartedAt(null);
+      setDelayElapsed(0);
+      return;
+    }
+    let cancelled = false;
+    async function fetchDelay() {
+      const { data } = await supabase
+        .from('attraction_status_logs')
+        .select('changed_at')
+        .eq('attraction_id', attraction.id)
+        .eq('status', 'DELAYED')
+        .is('resolved_at', null)
+        .order('changed_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (!cancelled && data) {
+        setDelayStartedAt(data.changed_at);
+        setDelayElapsed(Math.floor((Date.now() - new Date(data.changed_at).getTime()) / 1000));
+      }
+    }
+    fetchDelay();
+    return () => { cancelled = true; };
+  }, [attraction.id, status]);
+
+  useEffect(() => {
+    if (!delayStartedAt) return;
+    const interval = setInterval(() => {
+      setDelayElapsed(Math.floor((Date.now() - new Date(delayStartedAt).getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [delayStartedAt]);
 
   async function handleUpdate(updates: Partial<Attraction>) {
     setSaving(true);
@@ -540,7 +587,7 @@ const RideControl = React.memo(function RideControl({
       )}
 
       {/* Status select — pill badge style */}
-      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <select
           key={`status-${attraction.id}-${status}`}
           value={status}
@@ -573,6 +620,11 @@ const RideControl = React.memo(function RideControl({
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        {status === 'DELAYED' && delayStartedAt && (
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#f0ad4e', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.05em' }}>
+            {formatElapsed(delayElapsed)}
+          </span>
+        )}
       </div>
 
       {/* Logo + Name — centred */}

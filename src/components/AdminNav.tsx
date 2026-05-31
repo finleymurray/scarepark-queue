@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 
 const PRIMARY_TABS = [
   { label: 'Attractions', href: '/admin' },
+  { label: 'Operations', href: '/admin/operations' },
   { label: 'Sign-Off', href: '/admin/signoff' },
   { label: 'Reports', href: '/admin/reports' },
 ];
