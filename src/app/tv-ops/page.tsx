@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
-import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 import type { Attraction, AttractionStatus, ThroughputLog, AttractionStatusLog } from '@/types/database';
 
 /* ── Helpers ── */
@@ -261,8 +260,6 @@ export default function TvOpsPage() {
       padding: '1.5vw',
       gap: '1.2vw',
     }}>
-      <ParkClosedOverlay />
-
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1vw' }}>
