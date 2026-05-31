@@ -387,7 +387,7 @@ function buildOpsData(
   logs: AttractionStatusLog[],
   history: AttractionHistory[],
 ): AttractionOps[] {
-  return attractions.map((attraction) => {
+  return attractions.filter((a) => a.attraction_type === 'ride').map((attraction) => {
     const aLogs = logs.filter((l) => l.attraction_id === attraction.id);
     const aHistory = history.filter((h) => h.attraction_id === attraction.id);
 
