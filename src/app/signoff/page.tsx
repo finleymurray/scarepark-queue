@@ -267,7 +267,7 @@ export default function SignoffPage() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated) {
-        router.push('/login');
+        router.push('/signoff/login');
         return;
       }
       setUserEmail(auth.email || '');
@@ -442,12 +442,26 @@ export default function SignoffPage() {
       />
 
       {/* Header */}
-      <div className="bg-[#111] border-b border-[#333] px-6 py-4 flex items-center justify-between shrink-0">
-        <a href="/signoff" className="flex items-center gap-3 no-underline">
-          <Image src="/logo.png" alt="Immersive Core" width={36} height={36} priority style={{ width: 36, height: 'auto' }} />
-          <h1 className="text-white text-lg font-semibold m-0">Sign-Off</h1>
+      <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <a href="/signoff" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+          <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
+          <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Sign-Off</h1>
         </a>
-        <span className="text-[#aaa] text-[13px]">{userEmail}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
+          {(displayName || userEmail) && (
+            <span title={userEmail} style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayName || userEmail}
+            </span>
+          )}
+          <button
+            onClick={async () => { await supabase.auth.signOut(); router.push('/signoff/login'); }}
+            style={{ background: 'none', border: '1px solid #555', color: '#aaa', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12, transition: 'border-color 0.15s, color 0.15s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#888'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#555'; e.currentTarget.style.color = '#aaa'; }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
 
       {/* Main Content — Scrollable */}
@@ -602,7 +616,7 @@ export default function SignoffPage() {
                           <path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
                         </svg>
                       )}
-                      {p}
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
                       {pSections.length > 0 && !closingLocked && (
                         <span className={`text-xs ${active ? 'opacity-50' : 'opacity-60'}`}>
                           {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
@@ -689,7 +703,7 @@ export default function SignoffPage() {
                       <button
                         onClick={() => !isCompleted && !locked && openSection(section.id)}
                         disabled={isCompleted || locked}
-                        className="w-full text-left px-6 py-5 flex items-center justify-between touch-manipulation bg-transparent border-none"
+                        className="w-full text-left px-6 py-6 flex items-center justify-between touch-manipulation bg-transparent border-none"
                         style={{ cursor: isCompleted || locked ? 'default' : 'pointer' }}
                       >
                         <div className="flex items-center gap-4">
@@ -713,11 +727,11 @@ export default function SignoffPage() {
                           )}
 
                           <div>
-                            <span className={`text-sm font-medium ${isCompleted ? 'text-[#4caf50]' : locked ? 'text-[#666]' : 'text-[#e0e0e0]'}`}>
+                            <span className={`text-base font-semibold ${isCompleted ? 'text-[#4caf50]' : locked ? 'text-[#666]' : 'text-white'}`}>
                               {section.name}
                             </span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[11px] text-[#888] font-medium">
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[12px] text-[#888] font-medium">
                                 {SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}
                               </span>
                               {isCompleted && completion && (
@@ -743,29 +757,29 @@ export default function SignoffPage() {
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div className="px-6 pb-6 border-t border-[#333]">
+                        <div className="px-6 pb-6 border-t border-[#2a2a2a]">
                           {sectionItems.length === 0 ? (
                             <p className="text-[#666] text-sm py-6">No checklist items for this section.</p>
                           ) : (
-                            <div className="py-4 flex flex-col gap-3">
+                            <div className="pt-5 pb-1 flex flex-col gap-3">
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-4 px-5 py-4 bg-[#161616] border rounded-[10px] cursor-pointer
-                                      transition-colors touch-manipulation ${checked ? 'border-[#4caf50]/30' : 'border-[#2a2a2a] hover:border-[#555]'}`}
+                                    className={`flex items-center gap-4 px-5 py-5 bg-[#161616] border rounded-[12px] cursor-pointer
+                                      transition-colors touch-manipulation ${checked ? 'border-[rgba(76,175,80,0.4)] bg-[#0d2414]' : 'border-[#2a2a2a] hover:border-[#444]'}`}
                                   >
-                                    <div style={{ width: 52, height: 28, borderRadius: 14, background: checked ? '#22C55E' : '#333', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
-                                      <div style={{ position: 'absolute', top: 3, left: checked ? 27 : 3, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : '#888', transition: 'all 0.2s' }} />
-                                    </div>
                                     <input
                                       type="checkbox"
                                       checked={checked}
                                       onChange={() => toggleItem(item.id)}
                                       className="hidden"
                                     />
-                                    <span className={`text-sm ${checked ? 'text-[#e0e0e0]' : 'text-[#e0e0e0]'}`}>
+                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? '#22C55E' : '#2a2a2a', border: `1.5px solid ${checked ? '#22C55E' : '#444'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
+                                      <div style={{ position: 'absolute', top: 3, left: checked ? 29 : 3, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : '#666', boxShadow: '0 1px 3px rgba(0,0,0,0.4)', transition: 'left 0.2s, background 0.2s' }} />
+                                    </div>
+                                    <span className={`text-[15px] font-medium leading-snug ${checked ? 'text-[#4caf50]' : 'text-[#e0e0e0]'}`}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -775,16 +789,30 @@ export default function SignoffPage() {
                           )}
 
                           {/* Sign off button */}
+                          {sectionItems.length > 0 && !allChecked && (
+                            <p className="text-[#666] text-[13px] text-center mt-5 mb-1">
+                              Complete all {sectionItems.length} items above to sign off
+                            </p>
+                          )}
                           <button
                             onClick={() => handleSignOffClick(section.id)}
                             disabled={!allChecked && sectionItems.length > 0}
-                            className="w-full mt-6 text-base font-semibold rounded-[12px] transition-colors touch-manipulation
-                                       flex items-center justify-center gap-2
-                                       disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', color: '#fff', minHeight: 56, padding: '16px 24px' }}
+                            className="w-full mt-4 text-base font-bold rounded-[12px] transition-all touch-manipulation
+                                       flex items-center justify-center gap-2.5
+                                       disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={{
+                              background: allChecked || sectionItems.length === 0
+                                ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
+                                : '#1a1a1a',
+                              border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #333',
+                              color: '#fff',
+                              minHeight: 60,
+                              padding: '18px 24px',
+                              boxShadow: allChecked || sectionItems.length === 0 ? '0 4px 20px rgba(168,85,247,0.35)' : 'none',
+                            }}
                           >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                              <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             Sign Off with PIN
                           </button>
