@@ -7,7 +7,7 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
-import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog } from '@/types/database';
+import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog, ThroughputLog } from '@/types/database';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
@@ -73,6 +73,7 @@ interface AttractionOps {
   totalDowntimeSecs: number;
   activeDelay: AttractionStatusLog | null;
   history: AttractionHistory[];
+  totalGuests: number;
 }
 
 /* ── Queue time sparkline ── */
@@ -244,7 +245,7 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
 /* ── Ops Card ── */
 
 function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: string; closeTime: string }) {
-  const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history } = ops;
+  const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests } = ops;
 
   const statusColor = STATUS_COLORS[currentStatus] || '#888';
   const statusBg = STATUS_BG[currentStatus] || 'rgba(128,128,128,0.15)';
@@ -314,6 +315,12 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
           <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Delay incidents</div>
           <div style={{ fontSize: 15, fontWeight: 600, color: delays.length > 0 ? '#f0ad4e' : '#555' }}>
             {delays.length > 0 ? delays.length : '—'}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Total guests</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: totalGuests > 0 ? '#fff' : '#555' }}>
+            {totalGuests > 0 ? totalGuests.toLocaleString() : '—'}
           </div>
         </div>
       </div>
@@ -386,10 +393,14 @@ function buildOpsData(
   attractions: Attraction[],
   logs: AttractionStatusLog[],
   history: AttractionHistory[],
+  throughput: ThroughputLog[],
 ): AttractionOps[] {
   return attractions.filter((a) => a.attraction_type === 'ride').map((attraction) => {
     const aLogs = logs.filter((l) => l.attraction_id === attraction.id);
     const aHistory = history.filter((h) => h.attraction_id === attraction.id);
+    const totalGuests = throughput
+      .filter((t) => t.attraction_id === attraction.id)
+      .reduce((sum, t) => sum + (t.guest_count || 0), 0);
 
     const firstOpen = aLogs.find((l) => l.status === 'OPEN') || null;
     const closedLogs = aLogs.filter((l) => l.status === 'CLOSED');
@@ -416,6 +427,7 @@ function buildOpsData(
       totalDowntimeSecs,
       activeDelay,
       history: aHistory,
+      totalGuests,
     };
   });
 }
@@ -430,6 +442,7 @@ export default function OperationsPage() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [logs, setLogs] = useState<AttractionStatusLog[]>([]);
   const [history, setHistory] = useState<AttractionHistory[]>([]);
+  const [throughput, setThroughput] = useState<ThroughputLog[]>([]);
   const [openTime, setOpenTime] = useState('');
   const [closeTime, setCloseTime] = useState('');
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr());
@@ -439,7 +452,7 @@ export default function OperationsPage() {
     const start = new Date(`${dateStr}T00:00:00`).toISOString();
     const end   = new Date(`${dateStr}T23:59:59`).toISOString();
 
-    const [attractionsRes, allLogs, historyRes, openRes, closeRes] = await Promise.all([
+    const [attractionsRes, allLogs, historyRes, throughputRes, openRes, closeRes] = await Promise.all([
       supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
       getAllStatusLogs(dateStr),
       supabase
@@ -448,21 +461,27 @@ export default function OperationsPage() {
         .gte('recorded_at', start)
         .lte('recorded_at', end)
         .order('recorded_at', { ascending: true }),
+      supabase
+        .from('throughput_logs')
+        .select('*')
+        .eq('log_date', dateStr),
       supabase.from('park_settings').select('value').eq('key', 'opening_time').single(),
       supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
     ]);
 
     const attrs: Attraction[] = attractionsRes.data || [];
     const hist: AttractionHistory[] = historyRes.data || [];
+    const tp: ThroughputLog[] = throughputRes.data || [];
     const open = openRes.data?.value || '';
     const close = closeRes.data?.value || '';
 
     setAttractions(attrs);
     setLogs(allLogs);
     setHistory(hist);
+    setThroughput(tp);
     setOpenTime(open);
     setCloseTime(close);
-    setOpsData(buildOpsData(attrs, allLogs, hist));
+    setOpsData(buildOpsData(attrs, allLogs, hist, tp));
   }, []);
 
   useEffect(() => {
@@ -485,29 +504,25 @@ export default function OperationsPage() {
     if (!loading) fetchData(selectedDate);
   }, [selectedDate]);
 
-  // Rebuild opsData when attractions update in realtime
+  // Rebuild opsData when any source data updates
   useEffect(() => {
-    setOpsData(buildOpsData(attractions, logs, history));
-  }, [attractions, logs, history]);
+    setOpsData(buildOpsData(attractions, logs, history, throughput));
+  }, [attractions, logs, history, throughput]);
 
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
-      .channel('ops-status-logs')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'attraction_status_logs' },
-        () => { fetchData(selectedDate); }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'attractions' },
+      .channel('ops-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attraction_status_logs' },
+        () => { fetchData(selectedDate); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'throughput_logs' },
+        () => { fetchData(selectedDate); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'attractions' },
         (payload) => {
           setAttractions((prev) =>
             prev.map((a) => (a.id === (payload.new as Attraction).id ? (payload.new as Attraction) : a))
           );
-        }
-      )
+        })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
