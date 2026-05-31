@@ -134,28 +134,58 @@ export default function ShowReportsPage() {
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 80px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>Show Reports</h2>
-          <button
-            onClick={() => fetchReports(selectedDate, selectedAttractionId)}
-            style={{
-              padding: '6px 12px',
-              background: '#161616',
-              border: '1px solid #2a2a2a',
-              borderRadius: 8,
-              color: '#888',
-              fontSize: 12,
-              cursor: 'pointer',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Refresh
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {submittedCount > 0 && (
+              <a
+                href={`/admin/reports/print?date=${selectedDate}&print=1`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '6px 14px',
+                  background: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  color: '#111',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  textDecoration: 'none',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                Export PDF ({submittedCount})
+              </a>
+            )}
+            <button
+              onClick={() => fetchReports(selectedDate, selectedAttractionId)}
+              style={{
+                padding: '6px 12px',
+                background: '#161616',
+                border: '1px solid #2a2a2a',
+                borderRadius: 8,
+                color: '#888',
+                fontSize: 12,
+                cursor: 'pointer',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* ── Filter Bar ── */}
