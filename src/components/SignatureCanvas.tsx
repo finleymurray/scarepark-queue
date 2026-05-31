@@ -98,7 +98,28 @@ export default function SignatureCanvas({
     const canvas = canvasRef.current;
     if (!canvas || !hasStrokes.current) return;
 
-    onSignatureChange(canvas.toDataURL('image/png'));
+    // Composite onto a white background before saving so the signature
+    // is visible on both dark screens and white printed paper.
+    const offscreen = document.createElement('canvas');
+    offscreen.width = canvas.width;
+    offscreen.height = canvas.height;
+    const offCtx = offscreen.getContext('2d')!;
+    offCtx.fillStyle = '#ffffff';
+    offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
+    offCtx.drawImage(canvas, 0, 0);
+
+    // The strokes are white on white — invert so they become black.
+    const imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+    const d = imageData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i]     = 255 - d[i];     // R
+      d[i + 1] = 255 - d[i + 1]; // G
+      d[i + 2] = 255 - d[i + 2]; // B
+      // leave alpha unchanged
+    }
+    offCtx.putImageData(imageData, 0, 0);
+
+    onSignatureChange(offscreen.toDataURL('image/png'));
   }, [onSignatureChange]);
 
   const handleClear = useCallback(() => {
