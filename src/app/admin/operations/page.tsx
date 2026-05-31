@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
+import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog } from '@/types/database';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
@@ -247,6 +248,8 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
 
   const statusColor = STATUS_COLORS[currentStatus] || '#888';
   const statusBg = STATUS_BG[currentStatus] || 'rgba(128,128,128,0.15)';
+  const logo = getAttractionLogo(attraction.slug);
+  const glow = getLogoGlow(attraction.slug);
 
   return (
     <div style={{
@@ -260,7 +263,11 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {logo && (
+            <img src={logo} alt="" aria-hidden width={40} height={40}
+              style={{ width: 40, height: 40, objectFit: 'contain', filter: glow || undefined }} />
+          )}
           <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>{attraction.name}</h3>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
