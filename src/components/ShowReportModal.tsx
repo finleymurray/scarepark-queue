@@ -53,6 +53,8 @@ interface DraftData {
   operationalReport: string;
   technicalReport: string;
   costumeReport: string;
+  constructionReport: string;
+  additionalNotes: string;
   savedAt: string;
 }
 
@@ -103,6 +105,8 @@ export default function ShowReportModal({
   const [operationalReport, setOperationalReport] = useState('');
   const [technicalReport, setTechnicalReport] = useState('');
   const [costumeReport, setCostumeReport] = useState('');
+  const [constructionReport, setConstructionReport] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [signature, setSignature] = useState<string | null>(null);
 
   // Existing report
@@ -140,6 +144,8 @@ export default function ShowReportModal({
         setOperationalReport(existing.operational_report || '');
         setTechnicalReport(existing.technical_report || '');
         setCostumeReport(existing.costume_report || '');
+        setConstructionReport(existing.construction_report || '');
+        setAdditionalNotes(existing.additional_notes || '');
         setExistingReport({
           submittedBy: existing.submitted_by_name || existing.submitted_by_email,
           submittedAt: existing.created_at,
@@ -152,6 +158,8 @@ export default function ShowReportModal({
           setOperationalReport(draft.operationalReport);
           setTechnicalReport(draft.technicalReport);
           setCostumeReport(draft.costumeReport);
+          setConstructionReport(draft.constructionReport || '');
+          setAdditionalNotes(draft.additionalNotes || '');
           setDraftInfo({ savedAt: draft.savedAt });
         } else {
           setOperationalReport('');
@@ -189,6 +197,8 @@ export default function ShowReportModal({
       operationalReport,
       technicalReport,
       costumeReport,
+      constructionReport,
+      additionalNotes,
     });
     setDraftSaved(true);
     setDraftInfo({ savedAt: new Date().toISOString() });
@@ -246,6 +256,8 @@ export default function ShowReportModal({
         operational_report: operationalReport || null,
         technical_report: technicalReport || null,
         costume_report: costumeReport || null,
+        construction_report: constructionReport || null,
+        additional_notes: additionalNotes || null,
         signature,
         submitted_by_email: pinUserEmail,
         submitted_by_name: pinUserName,
@@ -436,6 +448,18 @@ export default function ShowReportModal({
                 placeholder="Any costume issues or feedback..."
                 value={costumeReport}
                 onChange={setCostumeReport}
+              />
+              <TextArea
+                label="Construction Report"
+                placeholder="Any construction or set issues or feedback..."
+                value={constructionReport}
+                onChange={setConstructionReport}
+              />
+              <TextArea
+                label="Additional Notes"
+                placeholder="Anything else to note..."
+                value={additionalNotes}
+                onChange={setAdditionalNotes}
               />
             </div>
 

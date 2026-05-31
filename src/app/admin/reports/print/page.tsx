@@ -196,7 +196,7 @@ function ReportPage({
             </div>
 
             {/* ── Text Reports ── */}
-            {(report.operational_report || report.technical_report || report.costume_report) && (
+            {(report.operational_report || report.technical_report || report.costume_report || report.construction_report || report.additional_notes) && (
               <div className="section">
                 <h2 className="section-title">Reports</h2>
                 <div className="reports-grid">
@@ -216,6 +216,18 @@ function ReportPage({
                     <div className="report-text-box">
                       <div className="report-text-label">Costume</div>
                       <div className="report-text-body">{report.costume_report}</div>
+                    </div>
+                  )}
+                  {report.construction_report && (
+                    <div className="report-text-box">
+                      <div className="report-text-label">Construction</div>
+                      <div className="report-text-body">{report.construction_report}</div>
+                    </div>
+                  )}
+                  {report.additional_notes && (
+                    <div className="report-text-box">
+                      <div className="report-text-label">Additional Notes</div>
+                      <div className="report-text-body">{report.additional_notes}</div>
                     </div>
                   )}
                 </div>
