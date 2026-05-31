@@ -104,7 +104,7 @@ function ReportPage({
             <div className="page-header" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
               <div className="page-header-left">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="Immersive Core" className="header-logo" />
+                <img src="/logo-print.png" alt="Immersive Core" className="header-logo" />
                 <div>
                   <div className="header-company">Immersive Core</div>
                   <div className="header-doc-type">End of Night Show Report</div>
