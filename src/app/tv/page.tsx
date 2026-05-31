@@ -43,6 +43,11 @@ const TV_SCREENS = [
     name: 'TV5',
     description: 'Glitch logo montage',
   },
+  {
+    path: '/tv-ops',
+    name: 'Operations View',
+    description: 'Live ops dashboard — status, queue times, delays, guests',
+  },
 ];
 
 const QUEUE_DISPLAYS = [

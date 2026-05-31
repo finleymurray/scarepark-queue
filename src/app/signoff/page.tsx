@@ -273,10 +273,17 @@ export default function SignoffPage() {
       setUserEmail(auth.email || '');
       setDisplayName(auth.displayName || auth.email || '');
 
-      const { data: attractionsData } = await supabase
+      let attractionsQuery = supabase
         .from('attractions')
         .select('*')
         .order('sort_order', { ascending: true });
+
+      // Filter to assigned attractions (same as Field Control)
+      if (auth.allowedAttractions && auth.allowedAttractions.length > 0) {
+        attractionsQuery = attractionsQuery.in('id', auth.allowedAttractions);
+      }
+
+      const { data: attractionsData } = await attractionsQuery;
 
       if (attractionsData && attractionsData.length > 0) {
         setAttractions(attractionsData);
