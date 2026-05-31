@@ -467,22 +467,22 @@ export default function AnalyticsPage() {
   }, [filteredStatusLogs, attractions]);
 
   const tooltipStyle = {
-    backgroundColor: '#1E1E1E',
-    border: '1px solid #2a2a2a',
+    backgroundColor: '#0F172A',
+    border: '1px solid #1E3048',
     borderRadius: '6px',
-    color: '#fff',
+    color: '#F1F5F9',
   };
 
   if (!authenticated) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <h1 className="text-white/40 text-lg">Loading...</h1>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ background: '#070E1A' }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
@@ -493,7 +493,7 @@ export default function AnalyticsPage() {
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          style={{ padding: '8px 12px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+          style={{ padding: '8px 12px', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 6, color: '#F1F5F9', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
           className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
         />
         <div className="flex items-center gap-2">
@@ -502,7 +502,7 @@ export default function AnalyticsPage() {
             type="time"
             value={fromTime}
             onChange={(e) => setFromTime(e.target.value)}
-            style={{ padding: '8px 12px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+            style={{ padding: '8px 12px', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 6, color: '#F1F5F9', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
             className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
           />
         </div>
@@ -512,7 +512,7 @@ export default function AnalyticsPage() {
             type="time"
             value={toTime}
             onChange={(e) => setToTime(e.target.value)}
-            style={{ padding: '8px 12px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 6, color: '#fff', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
+            style={{ padding: '8px 12px', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 6, color: '#F1F5F9', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
             className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
           />
         </div>
@@ -520,8 +520,8 @@ export default function AnalyticsPage() {
           onClick={() => setRefreshKey((k) => k + 1)}
           style={{
             padding: '8px 14px',
-            background: '#1a1a1a',
-            border: '1px solid #2a2a2a',
+            background: '#0F172A',
+            border: '1px solid #1E3048',
             borderRadius: 6,
             color: '#888',
             fontSize: 12,
@@ -563,7 +563,7 @@ export default function AnalyticsPage() {
                     <h2 className="text-white text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
                     <ResponsiveContainer width="100%" height={500}>
                       <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1E3048" />
                         {statusPeriods.map((period, i) => (
                           <ReferenceArea
                             key={`${period.attractionName}-${period.start}-${i}`}
@@ -684,7 +684,7 @@ export default function AnalyticsPage() {
                   {/* Summary stats */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
                     {statusLogSummary.map((s) => (
-                      <div key={s.attractionId} style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 8, padding: 12 }}>
+                      <div key={s.attractionId} style={{ background: '#162032', border: '1px solid #1E3048', borderRadius: 8, padding: 12 }}>
                         <div className="text-white text-sm font-semibold mb-2">{s.name}</div>
                         <div className="text-[#888] text-xs space-y-1">
                           <div>Delays: <span className="text-[#f0ad4e] font-medium">{s.delayCount}</span></div>
@@ -764,7 +764,7 @@ export default function AnalyticsPage() {
                   <h2 className="text-white text-lg font-bold mb-4">Guest Throughput — {selectedDate}</h2>
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={throughputChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1E3048" />
                       <XAxis
                         dataKey="slot"
                         stroke="#fff"
@@ -806,7 +806,7 @@ export default function AnalyticsPage() {
                   <p className="text-[#888] text-xs mb-4">Lines show average wait time per slot. Bars show guest throughput.</p>
                   <ResponsiveContainer width="100%" height={450}>
                     <ComposedChart data={combinedChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1E3048" />
                       <XAxis
                         dataKey="slot"
                         stroke="#fff"

@@ -82,21 +82,21 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#1E1E1E', border: '1px solid #444', borderRadius: 14, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
-        <div className="text-[#dc3545] text-5xl mb-2">⚠</div>
+      <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 14, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
+        <div className="text-[#EF4444] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
-        <p className="text-[#888] text-sm">{message}</p>
+        <p className="text-[#94A3B8] text-sm">{message}</p>
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={onCancel}
-            className="px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
+            className="px-6 py-3 bg-transparent border border-[#1E3048] text-[#94A3B8] hover:border-[#2D4460]
                        rounded-md transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-6 py-3 bg-[#dc3545] hover:bg-[#c82333] text-white rounded-md
+            className="px-6 py-3 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md
                        transition-colors font-bold"
           >
             {confirmLabel}
@@ -133,9 +133,9 @@ function DelayReasonModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#1E1E1E', border: '1px solid #444', borderRadius: 14, padding: 24, maxWidth: 480, width: '100%' }}>
+      <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 14, padding: 24, maxWidth: 480, width: '100%' }}>
         <h2 className="text-white text-lg font-bold mb-1">Delay Reason</h2>
-        <p className="text-[#888] text-sm mb-5">
+        <p className="text-[#94A3B8] text-sm mb-5">
           Why is <span className="text-white font-medium">{attractionName}</span> being delayed?
         </p>
 
@@ -147,8 +147,8 @@ function DelayReasonModal({
               style={{
                 padding: '12px 8px',
                 borderRadius: 6,
-                border: selectedReason === reason ? '2px solid #f0ad4e' : '1px solid #333',
-                background: selectedReason === reason ? '#f0ad4e15' : '#111',
+                border: selectedReason === reason ? '2px solid #F59E0B' : '1px solid #1E3048',
+                background: selectedReason === reason ? '#F59E0B15' : '#070E1A',
                 color: selectedReason === reason ? '#f0ad4e' : '#ccc',
                 fontSize: 14,
                 fontWeight: selectedReason === reason ? 600 : 400,
@@ -170,15 +170,15 @@ function DelayReasonModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Additional details..."
-            className="w-full px-3 py-2.5 bg-[#111] border border-[#333] rounded-md text-white text-sm
-                       placeholder-white/30 focus:outline-none focus:border-[#f0ad4e] transition-colors"
+            className="w-full px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-white text-sm
+                       placeholder-[#475569] focus:outline-none focus:border-[#F59E0B] transition-colors"
           />
         </div>
 
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
+            className="flex-1 px-6 py-3 bg-transparent border border-[#1E3048] text-[#94A3B8] hover:border-[#2D4460]
                        rounded-md transition-colors font-medium"
           >
             Cancel
@@ -267,8 +267,8 @@ function EditableName({
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setValue(name); setEditing(false); }
         }}
-        className="text-white text-lg font-bold bg-[#1a1a1a] border border-[#444] rounded-md px-2 py-0.5 mr-2
-                   focus:outline-none focus:border-[#888] transition-colors min-w-0 flex-1"
+        className="text-[#F1F5F9] text-lg font-bold bg-[#070E1A] border border-[#1E3048] rounded-md px-2 py-0.5 mr-2
+                   focus:outline-none focus:border-[#3B82F6] transition-colors min-w-0 flex-1"
       />
     );
   }
@@ -276,11 +276,11 @@ function EditableName({
   return (
     <h3
       onClick={() => setEditing(true)}
-      className="text-white text-lg font-bold truncate mr-2 cursor-pointer hover:text-white/70 transition-colors"
+      className="text-[#F1F5F9] text-lg font-bold truncate mr-2 cursor-pointer hover:text-[#94A3B8] transition-colors"
       title="Click to edit name"
     >
       {name}
-      <svg className="w-3.5 h-3.5 inline-block ml-2 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-3.5 h-3.5 inline-block ml-2 text-[#475569]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     </h3>
@@ -309,8 +309,8 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
-      <h3 className="text-white text-lg font-bold mb-3">Add Attraction</h3>
+    <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24 }}>
+      <h3 className="text-[#F1F5F9] text-base font-semibold mb-3" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Add Attraction</h3>
 
       {/* Type toggle */}
       <div className="flex gap-2 mb-3">
@@ -318,8 +318,8 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onClick={() => setType('ride')}
           className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${
             type === 'ride'
-              ? 'bg-white text-black border-white'
-              : 'bg-transparent text-[#888] border-[#333]'
+              ? 'bg-[#2563EB] text-white border-[#2563EB]'
+              : 'bg-transparent text-[#94A3B8] border-[#1E3048]'
           }`}
         >
           Ride
@@ -328,8 +328,8 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onClick={() => setType('show')}
           className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${
             type === 'show'
-              ? 'bg-white text-black border-white'
-              : 'bg-transparent text-[#888] border-[#333]'
+              ? 'bg-[#2563EB] text-white border-[#2563EB]'
+              : 'bg-transparent text-[#94A3B8] border-[#1E3048]'
           }`}
         >
           Live Show
@@ -343,13 +343,13 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
           placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
-          className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                     placeholder-white/30 focus:outline-none focus:border-[#888] transition-colors"
+          className="flex-1 px-3 py-2 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                     placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors"
         />
         <button
           onClick={handleAdd}
           disabled={adding || !name.trim()}
-          className="btn-quick px-4 py-2 bg-[#22C55E] hover:bg-[#16a34a] text-black text-sm font-semibold
+          className="btn-quick px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold
                      rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {adding ? '...' : 'Add'}
@@ -357,7 +357,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
       </div>
 
       {error && (
-        <p className="text-[#dc3545] text-xs mt-2">{error}</p>
+        <p className="text-[#EF4444] text-xs mt-2">{error}</p>
       )}
     </div>
   );
@@ -397,25 +397,25 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, position: 'relative' }}>
+    <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white text-lg font-bold">Operating Hours</h3>
-        <span className="bg-white text-black text-xs font-bold px-2.5 py-1 rounded-full">INFO</span>
+        <h3 className="text-[#F1F5F9] text-base font-semibold" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Operating Hours</h3>
+        <span style={{ background: '#162032', color: '#94A3B8', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, letterSpacing: '0.04em' }}>INFO</span>
       </div>
 
       <div className="flex gap-4 text-center mb-3">
         <div className="flex-1">
-          <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Opens</span>
-          <div className="text-2xl font-bold tabular-nums mt-1 text-white">
+          <span style={{ color: '#475569', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Opens</span>
+          <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
             {openingTime || '--:--'}
           </div>
         </div>
-        <div className="text-white/30 self-center text-lg">—</div>
+        <div style={{ color: '#1E3048', alignSelf: 'center', fontSize: 18 }}>—</div>
         <div className="flex-1">
-          <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Closes</span>
-          <div className="text-2xl font-bold tabular-nums mt-1 text-white">
+          <span style={{ color: '#475569', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Closes</span>
+          <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
             {closingTime || '--:--'}
           </div>
         </div>
@@ -424,30 +424,30 @@ function OperatingHoursControl({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="block text-white/40 text-xs mb-1">Opening</label>
+            <label style={{ display: 'block', color: '#475569', fontSize: 11, marginBottom: 4 }}>Opening</label>
             <input
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                         focus:outline-none focus:border-[#6ea8fe] transition-colors"
+              className="w-full px-3 py-2 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                         focus:outline-none focus:border-[#3B82F6] transition-colors"
             />
           </div>
           <div className="flex-1">
-            <label className="block text-white/40 text-xs mb-1">Closing</label>
+            <label style={{ display: 'block', color: '#475569', fontSize: 11, marginBottom: 4 }}>Closing</label>
             <input
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                         focus:outline-none focus:border-[#6ea8fe] transition-colors"
+              className="w-full px-3 py-2 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                         focus:outline-none focus:border-[#3B82F6] transition-colors"
             />
           </div>
         </div>
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="w-full btn-quick px-4 py-2 bg-white text-black hover:bg-[#ddd] text-sm font-semibold
+          className="w-full btn-quick px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold
                      rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {saving ? 'Saving...' : 'Set Hours'}
@@ -472,7 +472,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('up')}
         disabled={isFirst}
-        className="p-1 text-white/30 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-[#475569] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move up"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -482,7 +482,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('down')}
         disabled={isLast}
-        className="p-1 text-white/30 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-[#475569] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move down"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -576,7 +576,7 @@ const RideControl = React.memo(function RideControl({
   }
 
   return (
-    <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
+    <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
       <SaveFeedback show={showSaved} />
 
       {/* Reorder buttons — top right corner */}
@@ -680,7 +680,7 @@ const RideControl = React.memo(function RideControl({
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
           className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                     hover:bg-[#162032] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           -5m
         </button>
@@ -688,7 +688,7 @@ const RideControl = React.memo(function RideControl({
           onClick={() => handleTimeAdjust(5)}
           disabled={saving}
           className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                     hover:bg-[#162032] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +5m
         </button>
@@ -696,7 +696,7 @@ const RideControl = React.memo(function RideControl({
           onClick={() => handleTimeAdjust(10)}
           disabled={saving}
           className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#222] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                     hover:bg-[#162032] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +10m
         </button>
@@ -712,15 +712,15 @@ const RideControl = React.memo(function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                     placeholder-white/30 focus:outline-none focus:border-[#6ea8fe] transition-colors
+          className="flex-1 px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                     placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors
                      [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                      [&::-webkit-outer-spin-button]:appearance-none"
         />
         <button
           onClick={handleSetTime}
           disabled={saving || !customTime}
-          className="btn-quick px-4 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white text-sm font-semibold
+          className="btn-quick px-4 py-2.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-sm font-semibold
                      rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Set
@@ -728,10 +728,10 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Remove */}
-      <div style={{ borderTop: '1px solid #222', paddingTop: 12, width: '100%' }}>
+      <div style={{ borderTop: '1px solid #162032', paddingTop: 12, width: '100%' }}>
         <button
           onClick={() => onDelete(attraction.id, attraction.name)}
-          className="w-full py-2 text-xs text-white/30 hover:text-[#d43518] hover:bg-[#d43518]/10
+          className="w-full py-2 text-xs text-[#475569] hover:text-[#EF4444] hover:bg-[#EF4444]/10
                      rounded-md transition-colors"
         >
           Remove Attraction
@@ -794,7 +794,7 @@ const ShowControl = React.memo(function ShowControl({
   }
 
   return (
-    <div style={{ background: 'rgba(88, 28, 135, 0.12)', border: '1px solid rgba(126, 34, 206, 0.3)', borderRadius: 14, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
+    <div style={{ background: 'rgba(88, 28, 135, 0.10)', border: '1px solid rgba(126, 34, 206, 0.25)', borderRadius: 12, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
       <SaveFeedback show={showSaved} />
 
       {/* Reorder buttons — top right corner */}
@@ -920,13 +920,13 @@ const ShowControl = React.memo(function ShowControl({
           value={newTime}
           onChange={(e) => setNewTime(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-          className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-md text-white text-sm
-                     focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+          className="flex-1 px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                     focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
         />
         <button
           onClick={handleAddTime}
           disabled={saving || !newTime || showTimes.includes(newTime)}
-          className="btn-quick px-4 py-2.5 bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold
+          className="btn-quick px-4 py-2.5 bg-purple-700/80 hover:bg-purple-600 text-white text-sm font-semibold
                      rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Add
@@ -937,7 +937,7 @@ const ShowControl = React.memo(function ShowControl({
         <button
           onClick={handleClearAll}
           disabled={saving}
-          className="w-full py-2 mb-3 text-xs text-purple-400/60 hover:text-purple-300 hover:bg-purple-900/20
+          className="w-full py-2 mb-3 text-xs text-purple-400/50 hover:text-purple-300 hover:bg-purple-900/20
                      rounded-md transition-colors disabled:opacity-30"
         >
           Clear All Times
@@ -1448,14 +1448,14 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <h1 className="text-white text-3xl font-bold">Loading Dashboard...</h1>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ background: '#070E1A' }}>
       {/* Close All Modal */}
       <ConfirmModal
         open={showCloseAll}
@@ -1499,25 +1499,25 @@ export default function AdminDashboard() {
       <main style={{ padding: '24px 20px' }}>
       {/* Quick Actions */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 40 }}>
-        <div style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
-          <h3 className="text-[#888] text-xs font-medium uppercase tracking-wider mb-4">Quick Actions</h3>
+        <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24 }}>
+          <h3 style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
               className="flex-1 btn-quick px-4 py-3.5 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded-md text-sm transition-colors disabled:opacity-50">
               {openingAll ? 'Opening...' : 'Open All Rides'}
             </button>
             <button onClick={() => setShowCloseAll(true)} disabled={closingAll}
-              className="flex-1 btn-quick px-4 py-3.5 bg-[#dc3545] hover:bg-[#c82333] text-white font-bold rounded-md text-sm transition-colors disabled:opacity-50">
+              className="flex-1 btn-quick px-4 py-3.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-md text-sm transition-colors disabled:opacity-50">
               {closingAll ? 'Closing...' : 'Close All Rides'}
             </button>
           </div>
-          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[#333]">
+          <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: '1px solid #1E3048' }}>
             <button onClick={handleToggleAutoSort}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#222] border border-[#444]'}`}>
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#162032] border border-[#1E3048]'}`}>
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
-            <span className="text-[#888] text-sm">
-              Auto-sort by wait time {autoSort ? <span className="text-[#22C55E] font-semibold">(ON)</span> : <span className="text-white/30">(OFF)</span>}
+            <span style={{ color: '#94A3B8', fontSize: 14 }}>
+              Auto-sort by wait time {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>(ON)</span> : <span style={{ color: '#475569' }}>(OFF)</span>}
             </span>
           </div>
         </div>

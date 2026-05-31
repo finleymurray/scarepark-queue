@@ -121,67 +121,67 @@ function NumericKeypad({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm bg-[#1E1E1E] border border-[#2a2a2a] p-6 space-y-4" style={{ borderRadius: 14 }}>
-        <div className="text-center">
-          <p className="text-white/50 text-xs uppercase tracking-wider font-medium">{slotLabel}</p>
-          <p className="text-white text-sm mt-1">Enter guest count</p>
+      <div style={{ width: '100%', maxWidth: 360, background: '#0F172A', border: '1px solid #1E3048', borderRadius: 14, padding: 24 }}>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <p style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{slotLabel}</p>
+          <p style={{ color: '#F1F5F9', fontSize: 14, marginTop: 4 }}>Enter guest count</p>
         </div>
 
         {/* Display */}
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-5 text-center">
-          <span className="text-white text-5xl font-bold tabular-nums">
+        <div style={{ background: '#070E1A', border: '1px solid #1E3048', borderRadius: 8, padding: '20px 16px', textAlign: 'center', marginBottom: 16 }}>
+          <span style={{ color: '#F1F5F9', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
             {display || '0'}
           </span>
         </div>
 
         {/* Keys */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
           {['1','2','3','4','5','6','7','8','9'].map((k) => (
             <button
               key={k}
               onClick={() => handleKey(k)}
-              className="py-4 text-2xl font-bold text-white bg-[#1a1a1a] rounded-md
-                         active:bg-[#222] transition-colors touch-manipulation"
+              style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 8 }}
+              className="active:bg-[#162032] transition-colors touch-manipulation"
             >
               {k}
             </button>
           ))}
           <button
             onClick={() => handleKey('clear')}
-            className="py-4 text-lg font-bold text-red-400 bg-[#1a1a1a] rounded-md
-                       active:bg-red-900/30 transition-colors touch-manipulation"
+            style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#EF4444', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 8 }}
+            className="active:bg-[#EF4444]/10 transition-colors touch-manipulation"
           >
             CLR
           </button>
           <button
             onClick={() => handleKey('0')}
-            className="py-4 text-2xl font-bold text-white bg-[#1a1a1a] rounded-md
-                       active:bg-[#222] transition-colors touch-manipulation"
+            style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 8 }}
+            className="active:bg-[#162032] transition-colors touch-manipulation"
           >
             0
           </button>
           <button
             onClick={() => handleKey('back')}
-            className="py-4 text-lg font-bold text-yellow-400 bg-[#1a1a1a] rounded-md
-                       active:bg-yellow-900/30 transition-colors touch-manipulation"
+            style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 8 }}
+            className="active:bg-[#F59E0B]/10 transition-colors touch-manipulation"
           >
             DEL
           </button>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-4 text-lg font-bold text-white/60 bg-[#111] rounded-md
-                       active:bg-[#222] transition-colors touch-manipulation"
+            style={{ flex: 1, padding: '14px 0', fontSize: 15, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #1E3048', borderRadius: 8 }}
+            className="active:bg-[#162032] transition-colors touch-manipulation"
           >
             Cancel
           </button>
           <button
             onClick={() => onConfirm(parseInt(display, 10) || 0)}
-            className="flex-1 py-4 text-lg font-bold text-black bg-white rounded-md
-                       active:bg-white/80 transition-colors touch-manipulation"
+            style={{ flex: 1, padding: '14px 0', fontSize: 15, fontWeight: 700, color: '#fff', background: '#2563EB', border: 'none', borderRadius: 8 }}
+            className="active:bg-[#1D4ED8] transition-colors touch-manipulation"
           >
             Confirm
           </button>
@@ -624,7 +624,7 @@ export default function SupervisorDashboard() {
 
   if (rides.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black px-6">
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
         <div className="text-center">
           <p className="text-white/60 text-lg mb-4">No rides configured.</p>
           <p className="text-white/30 text-sm">Ask a manager to add rides in the Admin panel.</p>
@@ -634,7 +634,7 @@ export default function SupervisorDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-black text-white overflow-hidden">
+    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#070E1A', color: '#F1F5F9' }}>
       {/* Numeric Keypad Modal */}
       <NumericKeypad
         open={keypadOpen}
@@ -648,12 +648,12 @@ export default function SupervisorDashboard() {
       />
 
       {/* Header — logo, user info & sign out */}
-      <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-          <Image src="/logo-control.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
-          <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
+      <div style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', height: 56, padding: '0 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <Image src="/logo-control.png" alt="CoreLink" width={28} height={28} priority style={{ width: 28, height: 'auto' }} />
+          <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Field Control</h1>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
           {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || userEmail}</span>}
           {'Notification' in (typeof window !== 'undefined' ? window : {}) && notifPermission !== 'denied' && (
             <button
@@ -678,8 +678,8 @@ export default function SupervisorDashboard() {
               href="/admin"
               style={{
                 background: 'none',
-                border: '1px solid #555',
-                color: '#aaa',
+                border: '1px solid #1E3048',
+                color: '#94A3B8',
                 padding: '4px 10px',
                 borderRadius: 4,
                 fontSize: 12,
@@ -687,11 +687,11 @@ export default function SupervisorDashboard() {
                 transition: 'border-color 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#888';
-                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.borderColor = '#2D4460';
+                e.currentTarget.style.color = '#F1F5F9';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#555';
+                e.currentTarget.style.borderColor = '#1E3048';
                 e.currentTarget.style.color = '#aaa';
               }}
             >
@@ -702,8 +702,8 @@ export default function SupervisorDashboard() {
             onClick={handleLogout}
             style={{
               background: 'none',
-              border: '1px solid #555',
-              color: '#aaa',
+              border: '1px solid #1E3048',
+              color: '#94A3B8',
               padding: '4px 10px',
               borderRadius: 4,
               cursor: 'pointer',
@@ -711,11 +711,11 @@ export default function SupervisorDashboard() {
               transition: 'border-color 0.15s, color 0.15s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#888';
-              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.borderColor = '#2D4460';
+              e.currentTarget.style.color = '#F1F5F9';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#555';
+              e.currentTarget.style.borderColor = '#1E3048';
               e.currentTarget.style.color = '#aaa';
             }}
           >
@@ -728,7 +728,7 @@ export default function SupervisorDashboard() {
       <div
         ref={tabBarRef}
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '8px 20px', flexShrink: 0, display: 'flex', gap: 4, overflowX: 'auto' }}
+        style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0 20px', flexShrink: 0, display: 'flex', gap: 0, overflowX: 'auto' }}
       >
         {rides.map((a) => {
           const isSelected = a.id === selectedId;
@@ -738,26 +738,26 @@ export default function SupervisorDashboard() {
               onClick={() => { setSelectedId(a.id); localStorage.setItem('ic-control-selected', a.id); }}
               style={{
                 flexShrink: 0,
-                color: isSelected ? '#fff' : '#aaa',
+                color: isSelected ? '#F1F5F9' : '#64748B',
                 fontSize: 14,
-                padding: '6px 12px',
-                borderRadius: 6,
-                background: isSelected ? '#222' : 'transparent',
+                fontWeight: isSelected ? 600 : 500,
+                padding: '14px 14px',
+                borderRadius: 0,
+                background: 'transparent',
                 border: 'none',
+                borderBottom: isSelected ? '2px solid #3B82F6' : '2px solid transparent',
                 cursor: 'pointer',
-                transition: 'background 0.2s, color 0.2s',
+                transition: 'color 0.15s, border-color 0.15s',
                 touchAction: 'manipulation',
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.background = '#222';
-                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.color = '#94A3B8';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#aaa';
+                  e.currentTarget.style.color = '#64748B';
                 }
               }}
             >
@@ -806,7 +806,7 @@ export default function SupervisorDashboard() {
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#555] text-[#ccc] text-xs font-semibold rounded-[8px] hover:border-[#888] hover:text-white transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#1E3048] text-[#94A3B8] text-xs font-semibold rounded-[8px] hover:border-[#2D4460] hover:text-[#F1F5F9] transition-colors"
                     >
                       Complete Sign Offs
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -814,14 +814,14 @@ export default function SupervisorDashboard() {
                   </>
                 ) : (
                   <>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d1010] text-[#d43518]">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d1010] text-[#EF4444]">
                       NOT SIGNED OFF
                     </span>
                     <a
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#555] text-[#ccc] text-xs font-semibold rounded-[8px] hover:border-[#888] hover:text-white transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#1E3048] text-[#94A3B8] text-xs font-semibold rounded-[8px] hover:border-[#2D4460] hover:text-[#F1F5F9] transition-colors"
                     >
                       Complete Sign Offs
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -834,11 +834,11 @@ export default function SupervisorDashboard() {
             {/* ── Queue Time Control ── */}
             <section style={{ marginBottom: 48 }}>
               <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-2 h-2 rounded-full bg-white" />
-                <h2 className="text-white/60 text-sm uppercase tracking-wider font-semibold">Queue Time</h2>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                <h2 style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
               </div>
 
-              <div className="bg-[#1E1E1E] border border-[#2a2a2a] rounded-[14px] p-8">
+              <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 14, padding: 32 }}>
                 {selected.attraction_type === 'show' ? (
                   <div className="text-center py-4">
                     <div className={`text-3xl font-black ${
@@ -916,14 +916,14 @@ export default function SupervisorDashboard() {
             {/* ── Hourly Throughput ── */}
             <section>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />
-                <h2 style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Hourly Throughput</h2>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                <h2 style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Hourly Throughput</h2>
               </div>
 
               {slots.length === 0 ? (
-                <div className="bg-[#1E1E1E] border border-[#2a2a2a] rounded-lg p-6 text-center">
-                  <p className="text-white/30 text-sm">Operating hours not set.</p>
-                  <p className="text-white/20 text-xs mt-1">Ask a manager to set hours in Admin.</p>
+                <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 8, padding: 24, textAlign: 'center' }}>
+                  <p style={{ color: '#475569', fontSize: 14 }}>Operating hours not set.</p>
+                  <p style={{ color: '#1E3048', fontSize: 12, marginTop: 4 }}>Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -974,29 +974,28 @@ export default function SupervisorDashboard() {
                         onMouseLeave={endPress}
                         onContextMenu={(e) => e.preventDefault()}
                         disabled={isFuture}
-                        style={{ minHeight: 72, padding: '0 24px', userSelect: 'none', WebkitUserSelect: 'none' }}
-                        className={`w-full flex items-center justify-between rounded-xl
-                                    transition-all touch-manipulation
-                          ${isCurrent
-                            ? 'bg-[#22C55E]/10 border-2 border-[#22C55E]'
-                            : isPast
-                              ? 'bg-[#1E1E1E] border border-[#2a2a2a] active:bg-[#222]'
-                              : 'bg-[#1E1E1E] border border-[#222] opacity-40 cursor-not-allowed'
-                          }`}
+                        style={{
+                          minHeight: 72, padding: '0 24px', userSelect: 'none', WebkitUserSelect: 'none',
+                          background: isCurrent ? 'rgba(59,130,246,0.08)' : '#0F172A',
+                          border: isCurrent ? '2px solid #3B82F6' : '1px solid #1E3048',
+                          opacity: isFuture ? 0.4 : 1,
+                          cursor: isFuture ? 'not-allowed' : 'pointer',
+                        }}
+                        className="w-full flex items-center justify-between rounded-xl transition-all touch-manipulation"
                       >
-                        <div className={`text-base font-semibold ${isCurrent ? 'text-[#22C55E]' : 'text-white/60'}`}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: isCurrent ? '#3B82F6' : '#94A3B8' }}>
                           {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
                         </div>
                         <div className="flex items-center gap-2">
                           {guestCount !== null ? (
                             <>
-                              <span className={`text-2xl font-black tabular-nums ${isCurrent ? 'text-[#22C55E]' : 'text-white'}`}>
+                              <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: isCurrent ? '#3B82F6' : '#F1F5F9' }}>
                                 {guestCount}
                               </span>
-                              <span className="text-white/20 text-xs">hold to edit</span>
+                              <span style={{ color: '#475569', fontSize: 11 }}>hold to edit</span>
                             </>
                           ) : (
-                            <span className={`text-base ${isCurrent ? 'text-[#22C55E]/40' : 'text-white/20'}`}>
+                            <span style={{ fontSize: 14, color: isCurrent ? '#3B82F6' : '#1E3048' }}>
                               {isFuture ? '—' : 'Tap to log'}
                             </span>
                           )}
@@ -1014,22 +1013,22 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer style={{ flexShrink: 0, background: '#1E1E1E', borderTop: '1px solid #2a2a2a', padding: '20px 24px' }}>
+        <footer style={{ flexShrink: 0, background: '#0F172A', borderTop: '1px solid #1E3048', padding: '20px 24px' }}>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">
+              <div style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
                 {selected.name} Tonight
               </div>
-              <div className="text-[#22C55E] text-2xl font-black tabular-nums">
+              <div style={{ color: '#22C55E', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
                 {guestsTonight.toLocaleString()}
-                <span className="text-white/30 text-sm ml-1.5">guests</span>
+                <span style={{ color: '#475569', fontSize: 13, marginLeft: 6 }}>guests</span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-white/40 text-xs uppercase tracking-wider font-medium mb-1">
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
                 Park Total
               </div>
-              <div className="text-white text-2xl font-black tabular-nums">
+              <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
                 {totalGuestsAllAttractions.toLocaleString()}
               </div>
             </div>

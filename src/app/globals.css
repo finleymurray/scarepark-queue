@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-border: #2a2a2a;
-  --color-border-hover: #555555;
-  --color-text-secondary: #888888;
-  --color-text-muted: #666666;
-  --color-surface: #1E1E1E;
-  --color-surface-hover: #1a1a1a;
-  --color-input: #1a1a1a;
+  --color-border: #1E3048;
+  --color-border-hover: #2D4460;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #475569;
+  --color-surface: #0F172A;
+  --color-surface-hover: #162032;
+  --color-input: #070E1A;
   --color-status-open: #22C55E;
-  --color-status-closed: #dc3545;
-  --color-status-delayed: #f0ad4e;
+  --color-status-closed: #EF4444;
+  --color-status-delayed: #F59E0B;
   --color-status-capacity: #F59E0B;
   --color-success: #22C55E;
-  --color-danger: #d43518;
+  --color-danger: #EF4444;
   --font-body: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -24,8 +24,8 @@
 }
 
 body {
-  background: #000000;
-  color: #e0e0e0;
+  background: #070E1A;
+  color: #F1F5F9;
   font-family: var(--font-body);
   overflow-x: hidden;
   line-height: 1.6;
@@ -53,9 +53,9 @@ body {
 
 /* Panel / Section styling */
 .panel {
-  background: #1E1E1E;
-  border: 1px solid #2a2a2a;
-  border-radius: 14px;
+  background: #0F172A;
+  border: 1px solid #1E3048;
+  border-radius: 12px;
 }
 
 /* Button styles */
@@ -68,32 +68,33 @@ body {
 
 /* Admin nav tabs */
 .admin-nav-tab {
-  color: #aaa;
+  color: #64748B;
   background: transparent;
-  transition: background 0.2s, color 0.2s;
+  transition: color 0.15s;
+  position: relative;
 }
 .admin-nav-tab:hover {
-  color: #fff;
-  background: #222;
+  color: #94A3B8;
+  background: transparent;
 }
 .admin-nav-tab-active {
-  color: #fff !important;
-  background: #222 !important;
+  color: #F1F5F9 !important;
+  background: transparent !important;
 }
 
 /* Admin nav dropdown items */
 .admin-nav-dropdown {
-  color: #aaa;
+  color: #64748B;
   background: transparent;
   transition: background 0.15s, color 0.15s;
 }
 .admin-nav-dropdown:hover {
-  color: #fff;
-  background: #222;
+  color: #94A3B8;
+  background: #162032;
 }
 .admin-nav-dropdown-active {
-  color: #fff !important;
-  background: #222 !important;
+  color: #F1F5F9 !important;
+  background: #162032 !important;
 }
 
 /* Admin nav sign out */
@@ -101,8 +102,8 @@ body {
   transition: border-color 0.15s, color 0.15s;
 }
 .admin-nav-signout:hover {
-  border-color: #888 !important;
-  color: #fff !important;
+  border-color: #2D4460 !important;
+  color: #F1F5F9 !important;
 }
 
 /* Scrollbar styling */
@@ -110,14 +111,14 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: #070E1A;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333333;
+  background: #1E3048;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555555;
+  background: #2D4460;
 }
 
 /* TV Grid — orientation-responsive layout */

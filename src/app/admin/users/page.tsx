@@ -27,7 +27,7 @@ function ConfirmModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070E1A]/70 px-4">
       <div className="bg-[#1E1E1E] border border-[#2a2a2a] p-8 w-full max-w-[400px]" style={{ borderRadius: 14 }}>
         <p className="text-[#e0e0e0] text-sm font-semibold mb-2">{title}</p>
         <p className="text-[#888] text-sm mb-5">{message}</p>
@@ -176,7 +176,7 @@ function UserFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" style={{ overflowY: 'auto' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070E1A]/80 px-4" style={{ overflowY: 'auto' }}>
       <div className="bg-[#1E1E1E] border border-[#2a2a2a] w-full max-w-lg my-8" style={{ borderRadius: 14 }} onClick={(e) => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#333]">
@@ -231,7 +231,7 @@ function UserFormModal({
                     disabled={!!editing}
                     placeholder="user@example.com"
                     className="w-full px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
-                               placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
+                               placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
                                disabled:opacity-40"
                   />
                 </div>
@@ -244,7 +244,7 @@ function UserFormModal({
                   onChange={(e) => setFormDisplayName(e.target.value)}
                   placeholder="e.g. John S."
                   className="w-full px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
-                             placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+                             placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
                 />
               </div>
               {!formPinOnly && (
@@ -291,7 +291,7 @@ function UserFormModal({
                     onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="0000"
                     className="flex-1 px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
-                               placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors
+                               placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
                                tracking-[0.4em] font-mono text-center text-lg"
                   />
                   <button
@@ -574,7 +574,7 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div className="flex h-screen items-center justify-center bg-[#070E1A]">
         <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
@@ -695,7 +695,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#070E1A]">
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <ConfirmModal

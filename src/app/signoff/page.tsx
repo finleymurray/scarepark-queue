@@ -116,27 +116,30 @@ function PinPadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm border border-[#333] rounded-[12px] p-8" style={{ background: '#1E1E1E' }}>
-        <p className="text-white text-center text-base font-semibold mb-1">Enter Your PIN</p>
-        <p className="text-[#888] text-center text-[13px] mb-6">
+      <div className="w-full max-w-sm rounded-[12px] p-8" style={{ background: '#0F172A', border: '1px solid #1E3048' }}>
+        <p style={{ color: '#F1F5F9', textAlign: 'center', fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Enter Your PIN</p>
+        <p style={{ color: '#94A3B8', textAlign: 'center', fontSize: 13, marginBottom: 24 }}>
           Requires: {SIGNOFF_ROLE_LABELS[requiredRole]}
         </p>
 
         {/* Dots */}
-        <div className="flex justify-center gap-4 mb-6">
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24 }}>
           {dots.map((filled, i) => (
             <div
               key={i}
-              className={`w-4 h-4 rounded-full border-2 transition-colors ${
-                filled ? 'bg-[#6ea8fe] border-[#6ea8fe]' : 'border-[#444] bg-transparent'
-              }`}
+              style={{
+                width: 16, height: 16, borderRadius: '50%',
+                background: filled ? '#F59E0B' : 'transparent',
+                border: `2px solid ${filled ? '#F59E0B' : '#1E3048'}`,
+                transition: 'background 0.15s, border-color 0.15s',
+              }}
             />
           ))}
         </div>
 
         {error && (
-          <div className="bg-[#2a1010] border border-[#d43518] rounded-[6px] px-3 py-2 mb-4">
-            <p className="text-[#f0a0a0] text-[13px] text-center">{error}</p>
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '8px 12px', marginBottom: 16 }}>
+            <p style={{ color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>{error}</p>
           </div>
         )}
 
@@ -146,35 +149,31 @@ function PinPadModal({
             <button
               key={d}
               onClick={() => handleDigit(d)}
-              className="text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[10px]
-                         active:bg-[#222] transition-colors touch-manipulation"
-              style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 10 }}
+              className="active:bg-[#162032] transition-colors touch-manipulation"
             >
               {d}
             </button>
           ))}
           <button
             onClick={handleBackspace}
-            className="text-lg font-bold text-[#ffc107] bg-[#1a1a1a] border border-[#333] rounded-[10px]
-                       active:bg-[#222] transition-colors touch-manipulation"
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 10 }}
+            className="active:bg-[#162032] transition-colors touch-manipulation"
           >
             DEL
           </button>
           <button
             onClick={() => handleDigit('0')}
-            className="text-2xl font-bold text-[#e0e0e0] bg-[#1a1a1a] border border-[#333] rounded-[10px]
-                       active:bg-[#222] transition-colors touch-manipulation"
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 10 }}
+            className="active:bg-[#162032] transition-colors touch-manipulation"
           >
             0
           </button>
           <button
             onClick={handleSubmit}
             disabled={pin.length < 4 || verifying}
-            className="text-lg font-bold text-black bg-white rounded-[10px]
-                       active:bg-[#ddd] transition-colors touch-manipulation disabled:opacity-50"
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#fff', background: '#D97706', border: 'none', borderRadius: 10 }}
+            className="active:bg-[#B45309] transition-colors touch-manipulation disabled:opacity-50"
           >
             {verifying ? '...' : '\u2713'}
           </button>
@@ -182,8 +181,8 @@ function PinPadModal({
 
         <button
           onClick={handleClose}
-          className="w-full py-3 text-[#ccc] text-sm font-medium border border-[#555] rounded-[6px]
-                     hover:border-[#888] hover:text-white transition-colors touch-manipulation"
+          style={{ width: '100%', padding: '12px', color: '#94A3B8', fontSize: 14, fontWeight: 500, border: '1px solid #1E3048', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
+          className="hover:border-[#2D4460] hover:text-[#F1F5F9] transition-colors touch-manipulation"
         >
           Cancel
         </button>
@@ -437,14 +436,14 @@ export default function SignoffPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
         <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-black text-[#e0e0e0] overflow-hidden" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#070E1A', color: '#F1F5F9', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* PIN Pad */}
       <PinPadModal
         open={showPinPad}
@@ -454,12 +453,12 @@ export default function SignoffPage() {
       />
 
       {/* Header */}
-      <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/signoff" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-          <Image src="/logo-signoff.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
-          <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Sign-Off</h1>
+      <div style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <a href="/signoff" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <Image src="/logo-signoff.png" alt="CoreLink Sign-Off" width={28} height={28} priority style={{ width: 28, height: 'auto' }} />
+          <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Sign-Off</h1>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
           {(displayName || userEmail) && (
             <span title={userEmail} className="hidden sm:block" style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName || userEmail}
@@ -467,9 +466,9 @@ export default function SignoffPage() {
           )}
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push('/signoff/login'); }}
-            style={{ background: 'none', border: '1px solid #555', color: '#aaa', padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 13, minHeight: 44, transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#888'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#555'; e.currentTarget.style.color = '#aaa'; }}
+            style={{ background: 'none', border: '1px solid #1E3048', color: '#94A3B8', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2D4460'; e.currentTarget.style.color = '#F1F5F9'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3048'; e.currentTarget.style.color = '#94A3B8'; }}
           >
             Sign out
           </button>
@@ -495,11 +494,11 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden rounded-[14px] border border-[#2a2a2a]
+                    className="relative overflow-hidden rounded-[14px] border border-[#1E3048]
                                transition-all duration-150 touch-manipulation flex flex-col
-                               hover:border-[#444] active:scale-[0.97] active:border-[#555]
+                               hover:border-[#F59E0B]/50 active:scale-[0.97]
                                focus:outline-none"
-                    style={{ background: '#1a1a1a' }}
+                    style={{ background: '#0F172A' }}
                   >
                     {/* Logo area */}
                     <div className="relative w-full" style={{ aspectRatio: '1' }}>
@@ -515,13 +514,13 @@ export default function SignoffPage() {
                             className="object-contain w-full h-full"
                             style={{ filter: glow || undefined }} />
                         ) : (
-                          <span className="text-[#888] text-4xl font-bold">{a.name.charAt(0)}</span>
+                          <span style={{ color: '#475569', fontSize: 36, fontWeight: 700 }}>{a.name.charAt(0)}</span>
                         )}
                       </div>
                     </div>
                     {/* Name label */}
                     <div className="px-3 pb-4 pt-1 text-center">
-                      <span className="text-[13px] font-semibold text-[#ccc] leading-tight">{a.name}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', lineHeight: 1.3 }}>{a.name}</span>
                     </div>
                   </button>
                 );
@@ -544,9 +543,8 @@ export default function SignoffPage() {
             {/* Back button */}
             <button
               onClick={goBackToGrid}
-              className="flex items-center gap-2 text-[#aaa] font-medium mb-6
-                         active:text-white transition-colors touch-manipulation"
-              style={{ minHeight: 44, fontSize: 15 }}
+              className="flex items-center gap-2 font-medium mb-6 active:text-[#F1F5F9] transition-colors touch-manipulation"
+              style={{ color: '#94A3B8', minHeight: 44, fontSize: 15 }}
             >
               <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                 <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -589,14 +587,14 @@ export default function SignoffPage() {
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="border border-[#2a2a2a] rounded-[16px] p-4 sm:p-8 mb-8" style={{ background: '#1a1a1a' }}>
-              <legend className="text-base font-semibold text-white px-3 flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-white text-black rounded-full text-sm font-bold">1</span>
+            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#0F172A', border: '1px solid #1E3048' }}>
+              <legend style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: '#F59E0B', color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700 }}>1</span>
                 Sign-Off Sections
               </legend>
 
-              {/* Phase tabs \u2014 full width */}
-              <div className="flex border-b border-[#2a2a2a] mb-6">
+              {/* Phase tabs */}
+              <div className="flex mb-6" style={{ borderBottom: '1px solid #1E3048' }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -615,8 +613,8 @@ export default function SignoffPage() {
                         ${closingLocked
                           ? 'text-[#444] cursor-not-allowed'
                           : active
-                            ? 'text-white'
-                            : 'text-[#666]'
+                            ? 'text-[#F1F5F9]'
+                            : 'text-[#475569]'
                         }`}
                       style={{ padding: '16px 8px', fontSize: 15, minHeight: 52 }}
                     >
@@ -632,7 +630,7 @@ export default function SignoffPage() {
                           {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
                         </span>
                       )}
-                      {active && <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-white rounded-full" />}
+                      {active && <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full" style={{ background: '#F59E0B' }} />}
                     </button>
                   );
                 })}
@@ -640,16 +638,16 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div className="bg-[#111] border border-[#2a2a2a] rounded-[12px] px-5 py-4" style={{ marginBottom: 20 }}>
+                <div style={{ background: '#070E1A', border: '1px solid #1E3048', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[#aaa] text-[15px] font-medium">
+                    <span style={{ color: '#94A3B8', fontSize: 15, fontWeight: 500 }}>
                       {completedSections}/{totalSections} sections signed off
                     </span>
                     {completedSections === totalSections && (
                       <span className="text-[12px] font-semibold px-2.5 py-0.5 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">COMPLETE</span>
                     )}
                   </div>
-                  <div style={{ position: 'relative', width: '100%', height: 10, background: '#222', borderRadius: 99, overflow: 'visible' }}>
+                  <div style={{ position: 'relative', width: '100%', height: 10, background: '#162032', borderRadius: 99, overflow: 'visible' }}>
                     {/* Glow layer */}
                     <div
                       style={{
@@ -660,8 +658,8 @@ export default function SignoffPage() {
                         borderRadius: 99,
                         width: `${(completedSections / totalSections) * 100}%`,
                         background: completedSections === totalSections
-                          ? '#4caf50'
-                          : 'linear-gradient(90deg, #a855f7, #22C55E)',
+                          ? '#22C55E'
+                          : 'linear-gradient(90deg, #D97706, #F59E0B)',
                         filter: 'blur(8px)',
                         opacity: 0.5,
                         transition: 'width 0.5s ease',
@@ -675,8 +673,8 @@ export default function SignoffPage() {
                         borderRadius: 99,
                         width: `${(completedSections / totalSections) * 100}%`,
                         background: completedSections === totalSections
-                          ? '#4caf50'
-                          : 'linear-gradient(90deg, #a855f7 0%, #22C55E 100%)',
+                          ? '#22C55E'
+                          : 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)',
                         transition: 'width 0.5s ease',
                       }}
                     />
@@ -706,8 +704,9 @@ export default function SignoffPage() {
                   return (
                     <div
                       key={section.id}
-                      className={`bg-[#1a1a1a] border rounded-[12px] overflow-hidden transition-colors
-                        ${isCompleted ? 'border-[rgba(76,175,80,0.3)]' : locked ? 'border-[#333] opacity-60' : isActive ? 'border-[rgba(168,85,247,0.5)]' : 'border-[#333]'}`}
+                      style={{ background: '#070E1A', borderRadius: 12, overflow: 'hidden' }}
+                      className={`border transition-colors
+                        ${isCompleted ? 'border-[rgba(34,197,94,0.3)]' : locked ? 'border-[#1E3048] opacity-60' : isActive ? 'border-[rgba(245,158,11,0.5)]' : 'border-[#1E3048]'}`}
                     >
                       {/* Section header — clickable if not completed and not locked */}
                       <button
@@ -731,13 +730,13 @@ export default function SignoffPage() {
                               </svg>
                             </div>
                           ) : (
-                            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: 'rgba(168,85,247,0.2)', color: '#a855f7', border: '2px solid rgba(168,85,247,0.4)' }}>
+                            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '2px solid rgba(245,158,11,0.3)' }}>
                               {idx + 1}
                             </span>
                           )}
 
                           <div>
-                            <span className={`text-base font-semibold ${isCompleted ? 'text-[#4caf50]' : locked ? 'text-[#666]' : 'text-white'}`}>
+                            <span style={{ fontSize: 15, fontWeight: 600, color: isCompleted ? '#22C55E' : locked ? '#475569' : '#F1F5F9' }}>
                               {section.name}
                             </span>
                             <div className="flex items-center gap-2 mt-1">
@@ -767,7 +766,7 @@ export default function SignoffPage() {
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div className="border-t border-[#2a2a2a]">
+                        <div style={{ borderTop: '1px solid #1E3048' }}>
                           {sectionItems.length === 0 ? (
                             <p className="text-[#666] text-sm py-6 px-6">No checklist items for this section.</p>
                           ) : (
@@ -777,15 +776,14 @@ export default function SignoffPage() {
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-4 px-4 py-4 border rounded-[12px] cursor-pointer
-                                      transition-all touch-manipulation ${checked ? 'border-[rgba(76,175,80,0.5)] bg-[#0a1f0e]' : 'border-[#2a2a2a] bg-[#111]'}`}
-                                    style={{ minHeight: 64 }}
+                                    style={{ minHeight: 64, borderRadius: 12, border: checked ? '1px solid rgba(245,158,11,0.4)' : '1px solid #1E3048', background: checked ? 'rgba(245,158,11,0.08)' : '#070E1A', display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', cursor: 'pointer' }}
+                                    className="transition-all touch-manipulation"
                                   >
                                     <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} className="hidden" />
-                                    <div style={{ width: 64, height: 34, borderRadius: 17, background: checked ? '#22C55E' : '#222', border: `2px solid ${checked ? '#22C55E' : '#3a3a3a'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
-                                      <div style={{ position: 'absolute', top: 3, left: checked ? 33 : 3, width: 26, height: 26, borderRadius: '50%', background: checked ? '#fff' : '#555', boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
+                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? '#F59E0B' : '#162032', border: `2px solid ${checked ? '#F59E0B' : '#1E3048'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
+                                      <div style={{ position: 'absolute', top: 2, left: checked ? 26 : 2, width: 22, height: 22, borderRadius: '50%', background: checked ? '#000' : '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
                                     </div>
-                                    <span className={`text-[16px] font-medium leading-snug flex-1 ${checked ? 'text-[#4caf50]' : 'text-[#e8e8e8]'}`}>
+                                    <span style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.3, flex: 1, color: checked ? '#F59E0B' : '#F1F5F9' }}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -795,7 +793,7 @@ export default function SignoffPage() {
                           )}
 
                           {/* Sign off button — sticky at bottom */}
-                          <div className="sticky bottom-0 px-4 py-4" style={{ background: 'linear-gradient(to bottom, transparent 0%, #1a1a1a 30%)' }}>
+                          <div className="sticky bottom-0 px-4 py-4" style={{ background: 'linear-gradient(to bottom, transparent 0%, #070E1A 30%)' }}>
                             {sectionItems.length > 0 && !allChecked && (
                               <p className="text-[#555] text-[13px] text-center mb-3">
                                 {sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length} item{sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length !== 1 ? 's' : ''} remaining
@@ -809,13 +807,13 @@ export default function SignoffPage() {
                                          disabled:opacity-25 disabled:cursor-not-allowed"
                               style={{
                                 background: allChecked || sectionItems.length === 0
-                                  ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-                                  : '#1f1f1f',
-                                border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #2a2a2a',
-                                color: '#fff',
+                                  ? 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
+                                  : '#0F172A',
+                                border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #1E3048',
+                                color: allChecked || sectionItems.length === 0 ? '#000' : '#475569',
                                 minHeight: 64,
                                 fontSize: 17,
-                                boxShadow: allChecked || sectionItems.length === 0 ? '0 6px 24px rgba(168,85,247,0.4)' : 'none',
+                                boxShadow: allChecked || sectionItems.length === 0 ? '0 6px 24px rgba(245,158,11,0.3)' : 'none',
                               }}
                             >
                               <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
@@ -834,18 +832,18 @@ export default function SignoffPage() {
 
             {/* ── Separator ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '8px 0 16px' }}>
-              <div style={{ flex: 1, height: 1, background: '#333' }} />
-              <span style={{ color: '#555', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
-              <div style={{ flex: 1, height: 1, background: '#333' }} />
+              <div style={{ flex: 1, height: 1, background: '#1E3048' }} />
+              <span style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
+              <div style={{ flex: 1, height: 1, background: '#1E3048' }} />
             </div>
 
             {/* ── End of Night Report Button ── */}
-            <fieldset className="border border-[#2a2a2a] rounded-[16px] p-4 sm:p-8 mb-8" style={{ background: '#1a1a1a' }}>
-              <legend className="text-base font-semibold text-white px-3 flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 bg-white text-black rounded-full text-sm font-bold">2</span>
+            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#0F172A', border: '1px solid #1E3048' }}>
+              <legend style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: '#F59E0B', color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700 }}>2</span>
                 Show Report
               </legend>
-              <p className="text-[#888] text-[15px] mb-4">
+              <p style={{ color: '#94A3B8', fontSize: 14, marginBottom: 16 }}>
                 Submit an end-of-night report for {selectedAttraction?.name || 'this attraction'}.
               </p>
               <button
@@ -853,8 +851,8 @@ export default function SignoffPage() {
                 style={{
                   width: '100%',
                   padding: '18px 24px',
-                  background: '#111',
-                  border: '1px solid #2a2a2a',
+                  background: '#070E1A',
+                  border: '1px solid #1E3048',
                   borderRadius: 12,
                   color: '#fff',
                   fontSize: 16,

@@ -75,35 +75,32 @@ export default function LoginPage() {
 
   if (checking) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-white/40 text-lg">Loading...</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-black px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
-            src="/logo.png"
-            alt="Immersive Core"
-            width={200}
-            height={60}
-            className="mb-3"
+            src="/logo-control.png"
+            alt="CoreLink"
+            width={44}
+            height={44}
             priority
+            style={{ width: 44, height: 'auto', marginBottom: 16 }}
           />
-          <div className="text-[13px] text-white/70 uppercase tracking-[8px] font-medium">
-            Network
-          </div>
+          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>CoreLink</h1>
+          <p style={{ color: '#475569', fontSize: 13, marginTop: 4, letterSpacing: '0.02em' }}>Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="panel p-8">
-          <h2 className="text-white text-lg font-semibold mb-6">Sign in</h2>
-
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
             <div>
-              <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Email
               </label>
               <input
@@ -112,12 +109,22 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: '#070E1A',
+                  border: '1px solid #1E3048',
+                  borderRadius: 8,
+                  color: '#F1F5F9',
+                  fontSize: 14,
+                  outline: 'none',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
-              <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Password
               </label>
               <input
@@ -126,28 +133,51 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="Enter password"
-                className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#444] rounded-md text-white text-sm
-                           placeholder-[#666] focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)] transition-colors"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: '#070E1A',
+                  border: '1px solid #1E3048',
+                  borderRadius: 8,
+                  color: '#F1F5F9',
+                  fontSize: 14,
+                  outline: 'none',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
 
           {error && (
-            <p className="text-[#dc3545] text-sm mt-4">{error}</p>
+            <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 16 }}>{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-6 px-4 py-2.5 bg-white text-black text-sm font-semibold rounded-md
-                       hover:bg-[#e0e0e0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              background: '#2563EB',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              borderRadius: 8,
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.5 : 1,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!loading) (e.target as HTMLButtonElement).style.background = '#1D4ED8'; }}
+            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = '#2563EB'; }}
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <div style={{ marginTop: 16, textAlign: 'center' }}>
-          <Link href="/privacy" style={{ color: '#555', fontSize: 11, textDecoration: 'none' }}>
+          <Link href="/privacy" style={{ color: '#475569', fontSize: 11, textDecoration: 'none' }}>
             Privacy Policy
           </Link>
         </div>

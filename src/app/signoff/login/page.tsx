@@ -43,38 +43,38 @@ export default function SignoffLoginPage() {
 
   if (checking) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-white/40 text-lg">Loading...</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-black px-6">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-10">
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
-            src="/logo.png"
-            alt="Immersive Core"
-            width={64}
-            height={64}
-            className="mb-4"
+            src="/logo-signoff.png"
+            alt="CoreLink"
+            width={48}
+            height={48}
             priority
+            style={{ width: 48, height: 'auto', marginBottom: 16 }}
           />
-          <h1 className="text-white text-xl font-semibold tracking-tight mb-1">Sign-Off</h1>
-          <p className="text-[#666] text-sm">Sign in to access the sign-off system</p>
+          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Sign-Off</h1>
+          <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>CoreLink Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#1E1E1E', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
+        <form onSubmit={handleSubmit} style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
           {error && (
-            <div className="bg-[#2a1010] border border-[#d43518] rounded-[6px] px-3 py-2.5 mb-5">
-              <p className="text-[#f0a0a0] text-sm text-center">{error}</p>
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 12px', marginBottom: 20 }}>
+              <p style={{ color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>{error}</p>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
             <div>
-              <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Email
               </label>
               <input
@@ -83,12 +83,22 @@ export default function SignoffLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@immersivecore.network"
-                className="w-full px-3 py-3 bg-[#111] border border-[#333] rounded-[8px] text-white text-sm
-                           placeholder-[#555] focus:outline-none focus:border-[#555] focus:bg-[#161616] transition-colors"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: '#070E1A',
+                  border: '1px solid #1E3048',
+                  borderRadius: 8,
+                  color: '#F1F5F9',
+                  fontSize: 14,
+                  outline: 'none',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#F59E0B'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.15)'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
-              <label className="block text-[#888] text-xs font-medium mb-1.5 uppercase tracking-wider">
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Password
               </label>
               <input
@@ -97,8 +107,18 @@ export default function SignoffLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full px-3 py-3 bg-[#111] border border-[#333] rounded-[8px] text-white text-sm
-                           placeholder-[#555] focus:outline-none focus:border-[#555] focus:bg-[#161616] transition-colors"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: '#070E1A',
+                  border: '1px solid #1E3048',
+                  borderRadius: 8,
+                  color: '#F1F5F9',
+                  fontSize: 14,
+                  outline: 'none',
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#F59E0B'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.15)'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
@@ -106,8 +126,21 @@ export default function SignoffLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-6 py-3 bg-white text-black text-sm font-semibold rounded-[8px]
-                       hover:bg-[#e0e0e0] active:bg-[#ccc] disabled:opacity-50 transition-colors"
+            style={{
+              width: '100%',
+              padding: '11px 16px',
+              background: '#D97706',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              borderRadius: 8,
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.5 : 1,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!loading) (e.target as HTMLButtonElement).style.background = '#B45309'; }}
+            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = '#D97706'; }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>

@@ -69,23 +69,23 @@ export default function AdminNav({
 
   return (
     <>
-      {/* Header bar — logo, user info & sign out */}
-      <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 0' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+      {/* Header bar */}
+      <div style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0 0', height: 56, display: 'flex', alignItems: 'center' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <Image
               src="/logo-admin.png"
-              alt="Immersive Core"
-              width={36}
-              height={36}
+              alt="CoreLink Admin"
+              width={28}
+              height={28}
               priority
-              style={{ width: 36, height: 'auto' }}
+              style={{ width: 28, height: 'auto' }}
             />
-            <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Admin</h1>
+            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#475569' }}>
             {userEmail && (
-              <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#94A3B8' }}>
                 {displayName || userEmail}
               </span>
             )}
@@ -94,12 +94,13 @@ export default function AdminNav({
               className="admin-nav-signout"
               style={{
                 background: 'none',
-                border: '1px solid #555',
-                color: '#aaa',
+                border: '1px solid #1E3048',
+                color: '#94A3B8',
                 padding: '4px 10px',
-                borderRadius: 4,
+                borderRadius: 6,
                 cursor: 'pointer',
                 fontSize: 12,
+                fontWeight: 500,
               }}
             >
               Sign out
@@ -108,12 +109,12 @@ export default function AdminNav({
         </div>
       </div>
 
-      {/* Nav tabs — horizontally scrollable on mobile */}
+      {/* Nav tabs */}
       <div
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#111', borderBottom: '1px solid #333', padding: '8px 0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
+        style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
       >
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 0 }}>
           {PRIMARY_TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
@@ -124,9 +125,11 @@ export default function AdminNav({
                 style={{
                   textDecoration: 'none',
                   fontSize: 14,
-                  padding: '6px 12px',
-                  borderRadius: 6,
+                  fontWeight: active ? 600 : 500,
+                  padding: '14px 14px',
                   flexShrink: 0,
+                  borderBottom: active ? '2px solid #EF4444' : '2px solid transparent',
+                  transition: 'color 0.15s, border-color 0.15s',
                 }}
               >
                 {tab.label}
@@ -142,16 +145,19 @@ export default function AdminNav({
               style={{
                 border: 'none',
                 fontSize: 14,
-                padding: '6px 12px',
-                borderRadius: 6,
+                fontWeight: (moreIsActive || moreOpen) ? 600 : 500,
+                padding: '14px 14px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 4,
+                borderBottom: moreIsActive ? '2px solid #EF4444' : '2px solid transparent',
+                transition: 'color 0.15s, border-color 0.15s',
+                background: 'transparent',
               }}
             >
               {activeMoreLabel || 'More'}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.6, transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5, transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
                 <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
@@ -159,10 +165,10 @@ export default function AdminNav({
             {moreOpen && (
               <div style={{
                 position: 'absolute',
-                top: 'calc(100% + 6px)',
+                top: 'calc(100% + 4px)',
                 left: 0,
-                background: '#1a1a1a',
-                border: '1px solid #333',
+                background: '#0F172A',
+                border: '1px solid #1E3048',
                 borderRadius: 8,
                 padding: '4px 0',
                 minWidth: 150,
@@ -182,6 +188,7 @@ export default function AdminNav({
                         padding: '8px 16px',
                         textDecoration: 'none',
                         fontSize: 14,
+                        fontWeight: active ? 600 : 400,
                       }}
                     >
                       {tab.label}
@@ -195,7 +202,7 @@ export default function AdminNav({
           {/* External links — hidden in standalone PWA mode */}
           {!isStandalone && (
             <>
-              <div style={{ width: 1, height: 20, background: '#333', margin: '0 4px', flexShrink: 0 }} />
+              <div style={{ width: 1, height: 16, background: '#1E3048', margin: '0 8px', flexShrink: 0 }} />
 
               {EXTERNAL_LINKS.map((link) => (
                 <a
@@ -206,17 +213,18 @@ export default function AdminNav({
                   className="admin-nav-tab"
                   style={{
                     textDecoration: 'none',
-                    fontSize: 14,
-                    padding: '6px 12px',
-                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    padding: '14px 12px',
                     flexShrink: 0,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 5,
+                    gap: 4,
+                    borderBottom: '2px solid transparent',
                   }}
                 >
                   {link.label}
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.5 }}>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.4 }}>
                     <path d="M3.5 1.5H10.5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M10.5 1.5L1.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

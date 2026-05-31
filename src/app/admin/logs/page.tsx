@@ -125,7 +125,7 @@ function ClearDataModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: 8, padding: 24, maxWidth: 520, width: '100%' }}>
+      <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24, maxWidth: 520, width: '100%' }}>
         {result ? (
           <>
             <h2 className="text-white text-lg font-bold mb-4">Data Cleared</h2>
@@ -159,8 +159,8 @@ function ClearDataModal({
                 type="date"
                 value={clearDate}
                 onChange={(e) => setClearDate(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#111] border border-[#333] rounded-md text-white text-sm
-                           focus:outline-none focus:border-[#dc3545] transition-colors [color-scheme:dark]"
+                className="w-full px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                           focus:outline-none focus:border-[#EF4444] transition-colors [color-scheme:dark]"
               />
             </div>
 
@@ -176,13 +176,13 @@ function ClearDataModal({
                   <label
                     key={table.key}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors hover:bg-[#222]"
-                    style={{ background: selectedTables.has(table.key) ? '#dc354515' : 'transparent' }}
+                    style={{ background: selectedTables.has(table.key) ? '#EF444415' : 'transparent' }}
                   >
                     <input
                       type="checkbox"
                       checked={selectedTables.has(table.key)}
                       onChange={() => toggleTable(table.key)}
-                      className="accent-[#dc3545] w-4 h-4"
+                      className="accent-[#EF4444] w-4 h-4"
                     />
                     <span className={`text-sm ${selectedTables.has(table.key) ? 'text-white font-medium' : 'text-[#888]'}`}>
                       {table.label}
@@ -202,8 +202,8 @@ function ClearDataModal({
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full px-3 py-2.5 bg-[#111] border border-[#333] rounded-md text-white text-sm
-                             placeholder-white/20 focus:outline-none focus:border-[#dc3545] transition-colors"
+                  className="w-full px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                             placeholder-[#475569] focus:outline-none focus:border-[#EF4444] transition-colors"
                   autoComplete="off"
                 />
               </div>
@@ -212,7 +212,7 @@ function ClearDataModal({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-transparent border border-[#333] text-white hover:border-[#555]
+                className="flex-1 px-6 py-3 bg-transparent border border-[#1E3048] text-[#94A3B8] hover:border-[#2D4460]
                            rounded-md transition-colors font-medium"
               >
                 Cancel
@@ -223,7 +223,7 @@ function ClearDataModal({
                 style={{
                   flex: 1,
                   padding: '12px 24px',
-                  background: canConfirm ? '#dc3545' : '#333',
+                  background: canConfirm ? '#DC2626' : '#1E3048',
                   color: canConfirm ? '#fff' : '#666',
                   fontWeight: 700,
                   borderRadius: 6,
@@ -342,14 +342,14 @@ export default function LogsPage() {
 
   if (loading && logs.length === 0) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div style={{ minHeight: '100vh', background: '#070E1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-white text-xl font-semibold animate-pulse">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div style={{ minHeight: '100vh', background: '#070E1A', color: '#F1F5F9' }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -359,8 +359,8 @@ export default function LogsPage() {
             onClick={() => applyFilters(filterAttraction, filterType)}
             style={{
               padding: '6px 12px',
-              background: '#161616',
-              border: '1px solid #2a2a2a',
+              background: '#0F172A',
+              border: '1px solid #1E3048',
               borderRadius: 8,
               color: '#888',
               fontSize: 12,
@@ -384,7 +384,7 @@ export default function LogsPage() {
           <select
             value={filterAttraction}
             onChange={(e) => applyFilters(e.target.value, filterType)}
-            className="bg-[#1a1a1a] border border-[#333] text-white rounded-lg px-4 py-2 text-sm focus:border-white/30 focus:outline-none"
+            style={{ background: '#070E1A', border: '1px solid #1E3048', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
           >
             <option value="">All Attractions</option>
             {attractions.map((a) => (
@@ -395,7 +395,7 @@ export default function LogsPage() {
           <select
             value={filterType}
             onChange={(e) => applyFilters(filterAttraction, e.target.value)}
-            className="bg-[#1a1a1a] border border-[#333] text-white rounded-lg px-4 py-2 text-sm focus:border-white/30 focus:outline-none"
+            style={{ background: '#070E1A', border: '1px solid #1E3048', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
           >
             <option value="">All Types</option>
             <option value="queue_time_change">Queue Time</option>
@@ -411,11 +411,11 @@ export default function LogsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-[#111] border border-[#333] rounded-lg overflow-hidden">
+        <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 8, overflow: 'hidden' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#333] text-white/50 text-xs uppercase tracking-wider">
+                <tr style={{ borderBottom: '1px solid #1E3048', color: '#475569', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   <th className="text-left px-4 py-3 font-medium">Time</th>
                   <th className="text-left px-4 py-3 font-medium">Attraction</th>
                   <th className="text-left px-4 py-3 font-medium">Action</th>
@@ -432,7 +432,7 @@ export default function LogsPage() {
                   </tr>
                 )}
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-[#222] hover:bg-[#1a1a1a] transition-colors">
+                  <tr key={log.id} style={{ borderBottom: '1px solid #162032' }} className="hover:bg-[#162032] transition-colors">
                     <td className="px-4 py-3 text-white/60 whitespace-nowrap tabular-nums text-xs">
                       {formatTimestamp(log.created_at)}
                     </td>
@@ -482,8 +482,7 @@ export default function LogsPage() {
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              className="px-6 py-2.5 bg-[#1a1a1a] border border-[#333] rounded-lg text-white/70 text-sm font-medium
-                         hover:border-white/30 hover:text-white transition-colors disabled:opacity-50"
+              style={{ padding: '8px 24px', background: '#0F172A', border: '1px solid #1E3048', borderRadius: 8, color: '#94A3B8', fontSize: 14, fontWeight: 500, cursor: 'pointer' }} className="hover:border-[#2D4460] hover:text-[#F1F5F9] transition-colors disabled:opacity-50"
             >
               {loadingMore ? 'Loading...' : 'Load More'}
             </button>
@@ -495,7 +494,7 @@ export default function LogsPage() {
           <div className="mt-12 pt-6 border-t border-[#222]">
             <button
               onClick={() => setShowClearData(true)}
-              className="px-4 py-2.5 bg-transparent border border-[#dc3545]/30 text-[#dc3545] hover:bg-[#dc3545]/10
+              className="px-4 py-2.5 bg-transparent border border-[#EF4444]/30 text-[#EF4444] hover:bg-[#EF4444]/10
                          rounded-md text-xs font-medium transition-colors"
             >
               Clear Test Data...

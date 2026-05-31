@@ -61,9 +61,9 @@ function getPathLabel(path: string | null): string | null {
 /* ── Styles ── */
 
 const cardStyle: React.CSSProperties = {
-  background: '#1E1E1E',
-  border: '1px solid #2a2a2a',
-  borderRadius: 14,
+  background: '#0F172A',
+  border: '1px solid #1E3048',
+  borderRadius: 12,
   padding: 20,
 };
 
@@ -76,10 +76,10 @@ const statCardStyle: React.CSSProperties = {
 };
 
 const selectStyle: React.CSSProperties = {
-  background: '#161616',
-  border: '1px solid #2a2a2a',
+  background: '#070E1A',
+  border: '1px solid #1E3048',
   borderRadius: 8,
-  color: '#ccc',
+  color: '#94A3B8',
   fontSize: 13,
   padding: '6px 10px',
   width: '100%',
@@ -209,7 +209,7 @@ export default function ScreensPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div style={{ minHeight: '100vh', background: '#070E1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-white/60 text-lg">Loading...</div>
       </div>
     );
@@ -220,25 +220,25 @@ export default function ScreensPage() {
   const managedAssigned = managedScreens.filter((s) => s.assigned_path).length;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div style={{ minHeight: '100vh', background: '#070E1A', color: '#F1F5F9' }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Screen Controller</h2>
-            <p style={{ fontSize: 14, color: '#888', marginTop: 4, marginBottom: 0 }}>
-              Manage and assign display screens. Point each Pi to <code style={{ background: '#2a2a2a', padding: '1px 5px', borderRadius: 3, fontSize: 13 }}>/screen</code> to register.
+            <p style={{ fontSize: 14, color: '#94A3B8', marginTop: 4, marginBottom: 0 }}>
+              Manage and assign display screens. Point each Pi to <code style={{ background: '#162032', padding: '1px 5px', borderRadius: 3, fontSize: 13 }}>/screen</code> to register.
             </p>
           </div>
           <button
             onClick={() => fetchData()}
             style={{
               padding: '6px 12px',
-              background: '#161616',
-              border: '1px solid #2a2a2a',
+              background: '#0F172A',
+              border: '1px solid #1E3048',
               borderRadius: 8,
-              color: '#888',
+              color: '#94A3B8',
               fontSize: 12,
               cursor: 'pointer',
               fontWeight: 600,
@@ -263,7 +263,7 @@ export default function ScreensPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: parkClosed ? '1px solid #EF444440' : '1px solid #2a2a2a',
+          border: parkClosed ? '1px solid #EF444440' : '1px solid #1E3048',
           transition: 'border-color 0.3s ease',
         }}>
           <div>
@@ -307,19 +307,19 @@ export default function ScreensPage() {
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           <div style={statCardStyle}>
             <div style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{managedScreens.length}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Registered</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Registered</div>
           </div>
           <div style={statCardStyle}>
             <div style={{ fontSize: 28, fontWeight: 800, color: '#22C55E' }}>{managedOnline}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Online</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Online</div>
           </div>
           <div style={statCardStyle}>
             <div style={{ fontSize: 28, fontWeight: 800, color: '#8B5CF6' }}>{managedAssigned}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assigned</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assigned</div>
           </div>
           <div style={statCardStyle}>
             <div style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{managedScreens.length - managedAssigned}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Awaiting</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Awaiting</div>
           </div>
         </div>
 
@@ -327,9 +327,9 @@ export default function ScreensPage() {
         {managedScreens.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 20px', marginBottom: 32 }}>
             <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>📺</div>
-            <p style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>No screens registered yet</p>
-            <p style={{ color: '#555', fontSize: 13 }}>
-              Open <code style={{ background: '#2a2a2a', padding: '1px 5px', borderRadius: 3 }}>/screen</code> on a device to register it.
+            <p style={{ color: '#94A3B8', fontSize: 15, marginBottom: 4 }}>No screens registered yet</p>
+            <p style={{ color: '#475569', fontSize: 13 }}>
+              Open <code style={{ background: '#162032', padding: '1px 5px', borderRadius: 3 }}>/screen</code> on a device to register it.
             </p>
           </div>
         ) : (
@@ -411,7 +411,7 @@ function ManagedScreenCard({
                 placeholder="Enter screen name..."
                 style={{
                   fontSize: 16, fontWeight: 700, color: '#fff',
-                  background: '#161616', border: '1px solid #8B5CF6',
+                  background: '#0F172A', border: '1px solid #8B5CF6',
                   borderRadius: 6, padding: '2px 8px', width: '100%',
                   outline: 'none',
                 }}
@@ -429,7 +429,7 @@ function ManagedScreenCard({
                   {screen.label || screen.code}
                 </div>
                 {screen.label && (
-                  <div style={{ fontSize: 11, color: '#555', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: '#475569', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
                     {screen.code}
                   </div>
                 )}
@@ -486,7 +486,7 @@ function ManagedScreenCard({
           )}
           {screen.current_page && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>Showing:</span>
+              <span style={{ fontSize: 11, color: '#475569', fontWeight: 600 }}>Showing:</span>
               <span style={{ fontSize: 11, color: '#999' }}>{getPathLabel(screen.current_page)}</span>
             </div>
           )}
@@ -495,7 +495,7 @@ function ManagedScreenCard({
 
       {/* Path assignment / reassignment */}
       <div style={{ marginBottom: 8 }}>
-        <label style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>
+        <label style={{ fontSize: 11, color: '#475569', display: 'block', marginBottom: 4 }}>
           {screen.assigned_path ? 'Reassign Display' : 'Assign Display'}
         </label>
         <select
@@ -511,9 +511,9 @@ function ManagedScreenCard({
       </div>
 
       {/* Last seen */}
-      <div style={{ fontSize: 11, color: '#666' }}>
+      <div style={{ fontSize: 11, color: '#475569' }}>
         Last seen: {timeAgo(screen.last_seen)}
-        {screen.name && <span style={{ marginLeft: 8, color: '#555' }}>({screen.name})</span>}
+        {screen.name && <span style={{ marginLeft: 8, color: '#475569' }}>({screen.name})</span>}
       </div>
 
       <style>{`

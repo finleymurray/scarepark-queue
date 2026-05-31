@@ -10,34 +10,35 @@ export default function NotFound() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        background: '#000',
+        background: '#070E1A',
         padding: '24px',
         textAlign: 'center',
       }}
     >
       <Image
-        src="/logo.png"
-        alt="Immersive Core"
-        width={48}
-        height={48}
+        src="/logo-control.png"
+        alt="CoreLink"
+        width={40}
+        height={40}
         priority
-        style={{ width: 48, height: 'auto', marginBottom: 32, opacity: 0.6 }}
+        style={{ width: 40, height: 'auto', marginBottom: 32 }}
       />
       <h1
         style={{
-          color: '#fff',
+          color: '#3B82F6',
           fontSize: '6rem',
-          fontWeight: 900,
+          fontWeight: 800,
           lineHeight: 1,
           margin: 0,
+          letterSpacing: '-0.03em',
         }}
       >
         404
       </h1>
       <p
         style={{
-          color: 'rgba(255,255,255,0.4)',
-          fontSize: '1.1rem',
+          color: '#475569',
+          fontSize: '1rem',
           fontWeight: 500,
           marginTop: 12,
           marginBottom: 32,
@@ -48,13 +49,14 @@ export default function NotFound() {
       <Link
         href="/admin"
         style={{
-          color: '#aaa',
+          color: '#94A3B8',
           fontSize: 14,
           textDecoration: 'none',
-          border: '1px solid #333',
+          border: '1px solid #1E3048',
           padding: '10px 24px',
           borderRadius: 8,
           transition: 'border-color 0.15s, color 0.15s',
+          fontWeight: 500,
         }}
       >
         Go to Admin
