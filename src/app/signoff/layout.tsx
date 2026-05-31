@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   manifest: '/manifest-signoff.json',
-  title: 'Immersive Core — Sign-Off',
+  title: 'Sign-Off',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'IC Sign-Off',
+    title: 'Sign-Off',
   },
   icons: {
+    icon: '/favicons/signoff.ico',
     apple: '/icons/signoff-512.png',
   },
 };

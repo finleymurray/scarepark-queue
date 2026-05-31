@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   manifest: '/manifest-control.json',
-  title: 'Immersive Core — Control',
+  title: 'Field Control',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'IC Control',
+    title: 'Field Control',
   },
   icons: {
+    icon: '/favicons/control.ico',
     apple: '/icons/control-512.png',
   },
 };
