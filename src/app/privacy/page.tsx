@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function PrivacyPolicy() {
   return (
-    <div style={{ minHeight: '100vh', background: '#070E1A', color: '#94A3B8', padding: '24px 20px' }}>
+    <div style={{ minHeight: '100vh', background: '#000000', color: '#94A3B8', padding: '24px 20px' }}>
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>

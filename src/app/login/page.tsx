@@ -75,14 +75,14 @@ export default function LoginPage() {
 
   if (checking) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
         <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
@@ -97,7 +97,7 @@ export default function LoginPage() {
           <p style={{ color: '#475569', fontSize: 13, marginTop: 4, letterSpacing: '0.02em' }}>Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
+        <form onSubmit={handleSubmit} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
             <div>
               <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -112,15 +112,15 @@ export default function LoginPage() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: '#070E1A',
-                  border: '1px solid #1E3048',
+                  background: '#000000',
+                  border: '1px solid #2a2a2a',
                   borderRadius: 8,
                   color: '#F1F5F9',
                   fontSize: 14,
                   outline: 'none',
                 }}
                 onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
@@ -136,15 +136,15 @@ export default function LoginPage() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: '#070E1A',
-                  border: '1px solid #1E3048',
+                  background: '#000000',
+                  border: '1px solid #2a2a2a',
                   borderRadius: 8,
                   color: '#F1F5F9',
                   fontSize: 14,
                   outline: 'none',
                 }}
                 onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>

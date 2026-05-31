@@ -43,14 +43,14 @@ export default function ControlLoginPage() {
 
   if (checking) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
         <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
@@ -65,7 +65,7 @@ export default function ControlLoginPage() {
           <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>CoreLink Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
+        <form onSubmit={handleSubmit} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
           {error && (
             <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 12px', marginBottom: 20 }}>
               <p style={{ color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>{error}</p>
@@ -86,15 +86,15 @@ export default function ControlLoginPage() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: '#070E1A',
-                  border: '1px solid #1E3048',
+                  background: '#000000',
+                  border: '1px solid #2a2a2a',
                   borderRadius: 8,
                   color: '#F1F5F9',
                   fontSize: 14,
                   outline: 'none',
                 }}
                 onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
@@ -110,15 +110,15 @@ export default function ControlLoginPage() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: '#070E1A',
-                  border: '1px solid #1E3048',
+                  background: '#000000',
+                  border: '1px solid #2a2a2a',
                   borderRadius: 8,
                   color: '#F1F5F9',
                   fontSize: 14,
                   outline: 'none',
                 }}
                 onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>

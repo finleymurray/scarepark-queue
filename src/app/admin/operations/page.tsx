@@ -182,7 +182,7 @@ function QueueChart({
             tickFormatter={(v) => `${v}m`}
           />
           <Tooltip
-            contentStyle={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 6, fontSize: 12 }}
+            contentStyle={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 6, fontSize: 12 }}
             labelFormatter={(v) => formatTooltipTime(v as number)}
             formatter={(v: unknown) => [`${v} min`, 'Wait time']}
             itemStyle={{ color: '#22C55E' }}
@@ -254,8 +254,8 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
 
   return (
     <div style={{
-      background: '#0F172A',
-      border: '1px solid #1E3048',
+      background: '#111111',
+      border: '1px solid #2a2a2a',
       borderRadius: 14,
       padding: 24,
       display: 'flex',
@@ -348,7 +348,7 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
                   {formatTimestamp(incident.log.changed_at)}
                 </span>
                 {incident.log.reason && (
-                  <span style={{ fontSize: 12, color: '#aaa', background: '#162032', borderRadius: 4, padding: '2px 8px' }}>
+                  <span style={{ fontSize: 12, color: '#aaa', background: '#1a1a1a', borderRadius: 4, padding: '2px 8px' }}>
                     {incident.log.reason}
                   </span>
                 )}
@@ -374,7 +374,7 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
 
       {/* Queue time chart */}
       {history.length > 0 && (
-        <div style={{ borderTop: '1px solid #1E3048', paddingTop: 16 }}>
+        <div style={{ borderTop: '1px solid #2a2a2a', paddingTop: 16 }}>
           <QueueChart
             history={history}
             delays={delays}
@@ -535,7 +535,7 @@ export default function OperationsPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070E1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: '#475569', fontSize: 14 }}>Loading…</div>
       </div>
     );
@@ -561,8 +561,8 @@ export default function OperationsPage() {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             style={{
-              background: '#0F172A',
-              border: '1px solid #1E3048',
+              background: '#111111',
+              border: '1px solid #2a2a2a',
               color: '#F1F5F9',
               borderRadius: 8,
               padding: '8px 12px',

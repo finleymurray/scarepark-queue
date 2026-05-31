@@ -27,7 +27,7 @@ function ConfirmModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070E1A]/70 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
       <div className="bg-[#1E1E1E] border border-[#2a2a2a] p-8 w-full max-w-[400px]" style={{ borderRadius: 14 }}>
         <p className="text-[#e0e0e0] text-sm font-semibold mb-2">{title}</p>
         <p className="text-[#888] text-sm mb-5">{message}</p>
@@ -176,7 +176,7 @@ function UserFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070E1A]/80 px-4" style={{ overflowY: 'auto' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/80 px-4" style={{ overflowY: 'auto' }}>
       <div className="bg-[#1E1E1E] border border-[#2a2a2a] w-full max-w-lg my-8" style={{ borderRadius: 14 }} onClick={(e) => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#333]">
@@ -574,7 +574,7 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#070E1A]">
+      <div className="flex h-screen items-center justify-center bg-[#000000]">
         <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
@@ -695,7 +695,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070E1A]">
+    <div className="min-h-screen bg-[#000000]">
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <ConfirmModal

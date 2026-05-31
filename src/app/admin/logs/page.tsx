@@ -125,7 +125,7 @@ function ClearDataModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24, maxWidth: 520, width: '100%' }}>
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24, maxWidth: 520, width: '100%' }}>
         {result ? (
           <>
             <h2 className="text-white text-lg font-bold mb-4">Data Cleared</h2>
@@ -159,7 +159,7 @@ function ClearDataModal({
                 type="date"
                 value={clearDate}
                 onChange={(e) => setClearDate(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                className="w-full px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                            focus:outline-none focus:border-[#EF4444] transition-colors [color-scheme:dark]"
               />
             </div>
@@ -202,7 +202,7 @@ function ClearDataModal({
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+                  className="w-full px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                              placeholder-[#475569] focus:outline-none focus:border-[#EF4444] transition-colors"
                   autoComplete="off"
                 />
@@ -212,7 +212,7 @@ function ClearDataModal({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-transparent border border-[#1E3048] text-[#94A3B8] hover:border-[#2D4460]
+                className="flex-1 px-6 py-3 bg-transparent border border-[#2a2a2a] text-[#94A3B8] hover:border-[#444444]
                            rounded-md transition-colors font-medium"
               >
                 Cancel
@@ -223,7 +223,7 @@ function ClearDataModal({
                 style={{
                   flex: 1,
                   padding: '12px 24px',
-                  background: canConfirm ? '#DC2626' : '#1E3048',
+                  background: canConfirm ? '#DC2626' : '#2a2a2a',
                   color: canConfirm ? '#fff' : '#666',
                   fontWeight: 700,
                   borderRadius: 6,
@@ -342,14 +342,14 @@ export default function LogsPage() {
 
   if (loading && logs.length === 0) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070E1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-white text-xl font-semibold animate-pulse">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070E1A', color: '#F1F5F9' }}>
+    <div style={{ minHeight: '100vh', background: '#000000', color: '#F1F5F9' }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -359,8 +359,8 @@ export default function LogsPage() {
             onClick={() => applyFilters(filterAttraction, filterType)}
             style={{
               padding: '6px 12px',
-              background: '#0F172A',
-              border: '1px solid #1E3048',
+              background: '#111111',
+              border: '1px solid #2a2a2a',
               borderRadius: 8,
               color: '#888',
               fontSize: 12,
@@ -384,7 +384,7 @@ export default function LogsPage() {
           <select
             value={filterAttraction}
             onChange={(e) => applyFilters(e.target.value, filterType)}
-            style={{ background: '#070E1A', border: '1px solid #1E3048', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
+            style={{ background: '#000000', border: '1px solid #2a2a2a', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
           >
             <option value="">All Attractions</option>
             {attractions.map((a) => (
@@ -395,7 +395,7 @@ export default function LogsPage() {
           <select
             value={filterType}
             onChange={(e) => applyFilters(filterAttraction, e.target.value)}
-            style={{ background: '#070E1A', border: '1px solid #1E3048', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
+            style={{ background: '#000000', border: '1px solid #2a2a2a', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
           >
             <option value="">All Types</option>
             <option value="queue_time_change">Queue Time</option>
@@ -411,11 +411,11 @@ export default function LogsPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, overflow: 'hidden' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: '1px solid #1E3048', color: '#475569', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                <tr style={{ borderBottom: '1px solid #2a2a2a', color: '#475569', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   <th className="text-left px-4 py-3 font-medium">Time</th>
                   <th className="text-left px-4 py-3 font-medium">Attraction</th>
                   <th className="text-left px-4 py-3 font-medium">Action</th>
@@ -432,7 +432,7 @@ export default function LogsPage() {
                   </tr>
                 )}
                 {logs.map((log) => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #162032' }} className="hover:bg-[#162032] transition-colors">
+                  <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a' }} className="hover:bg-[#1a1a1a] transition-colors">
                     <td className="px-4 py-3 text-white/60 whitespace-nowrap tabular-nums text-xs">
                       {formatTimestamp(log.created_at)}
                     </td>
@@ -482,7 +482,7 @@ export default function LogsPage() {
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              style={{ padding: '8px 24px', background: '#0F172A', border: '1px solid #1E3048', borderRadius: 8, color: '#94A3B8', fontSize: 14, fontWeight: 500, cursor: 'pointer' }} className="hover:border-[#2D4460] hover:text-[#F1F5F9] transition-colors disabled:opacity-50"
+              style={{ padding: '8px 24px', background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#94A3B8', fontSize: 14, fontWeight: 500, cursor: 'pointer' }} className="hover:border-[#444444] hover:text-[#F1F5F9] transition-colors disabled:opacity-50"
             >
               {loadingMore ? 'Loading...' : 'Load More'}
             </button>

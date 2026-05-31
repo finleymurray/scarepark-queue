@@ -10,7 +10,7 @@ export default function NotFound() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        background: '#070E1A',
+        background: '#000000',
         padding: '24px',
         textAlign: 'center',
       }}
@@ -52,7 +52,7 @@ export default function NotFound() {
           color: '#94A3B8',
           fontSize: 14,
           textDecoration: 'none',
-          border: '1px solid #1E3048',
+          border: '1px solid #2a2a2a',
           padding: '10px 24px',
           borderRadius: 8,
           transition: 'border-color 0.15s, color 0.15s',

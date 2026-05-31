@@ -116,7 +116,7 @@ function PinPadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm rounded-[12px] p-8" style={{ background: '#0F172A', border: '1px solid #1E3048' }}>
+      <div className="w-full max-w-sm rounded-[12px] p-8" style={{ background: '#111111', border: '1px solid #2a2a2a' }}>
         <p style={{ color: '#F1F5F9', textAlign: 'center', fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Enter Your PIN</p>
         <p style={{ color: '#94A3B8', textAlign: 'center', fontSize: 13, marginBottom: 24 }}>
           Requires: {SIGNOFF_ROLE_LABELS[requiredRole]}
@@ -130,7 +130,7 @@ function PinPadModal({
               style={{
                 width: 16, height: 16, borderRadius: '50%',
                 background: filled ? '#F59E0B' : 'transparent',
-                border: `2px solid ${filled ? '#F59E0B' : '#1E3048'}`,
+                border: `2px solid ${filled ? '#F59E0B' : '#2a2a2a'}`,
                 transition: 'background 0.15s, border-color 0.15s',
               }}
             />
@@ -149,23 +149,23 @@ function PinPadModal({
             <button
               key={d}
               onClick={() => handleDigit(d)}
-              style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 10 }}
-              className="active:bg-[#162032] transition-colors touch-manipulation"
+              style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 10 }}
+              className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
             >
               {d}
             </button>
           ))}
           <button
             onClick={handleBackspace}
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 10 }}
-            className="active:bg-[#162032] transition-colors touch-manipulation"
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 10 }}
+            className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
           >
             DEL
           </button>
           <button
             onClick={() => handleDigit('0')}
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#070E1A', border: '1px solid #1E3048', borderRadius: 10 }}
-            className="active:bg-[#162032] transition-colors touch-manipulation"
+            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 10 }}
+            className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
           >
             0
           </button>
@@ -181,8 +181,8 @@ function PinPadModal({
 
         <button
           onClick={handleClose}
-          style={{ width: '100%', padding: '12px', color: '#94A3B8', fontSize: 14, fontWeight: 500, border: '1px solid #1E3048', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
-          className="hover:border-[#2D4460] hover:text-[#F1F5F9] transition-colors touch-manipulation"
+          style={{ width: '100%', padding: '12px', color: '#94A3B8', fontSize: 14, fontWeight: 500, border: '1px solid #2a2a2a', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
+          className="hover:border-[#444444] hover:text-[#F1F5F9] transition-colors touch-manipulation"
         >
           Cancel
         </button>
@@ -436,14 +436,14 @@ export default function SignoffPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
         <div className="text-[#888] text-sm">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#070E1A', color: '#F1F5F9', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#000000', color: '#F1F5F9', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* PIN Pad */}
       <PinPadModal
         open={showPinPad}
@@ -453,7 +453,7 @@ export default function SignoffPage() {
       />
 
       {/* Header */}
-      <div style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/signoff" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <Image src="/logo-signoff.png" alt="CoreLink Sign-Off" width={28} height={28} priority style={{ width: 28, height: 'auto' }} />
           <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Sign-Off</h1>
@@ -466,9 +466,9 @@ export default function SignoffPage() {
           )}
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push('/signoff/login'); }}
-            style={{ background: 'none', border: '1px solid #1E3048', color: '#94A3B8', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2D4460'; e.currentTarget.style.color = '#F1F5F9'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1E3048'; e.currentTarget.style.color = '#94A3B8'; }}
+            style={{ background: 'none', border: '1px solid #2a2a2a', color: '#94A3B8', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444444'; e.currentTarget.style.color = '#F1F5F9'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
           >
             Sign out
           </button>
@@ -494,11 +494,11 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden rounded-[14px] border border-[#1E3048]
+                    className="relative overflow-hidden rounded-[14px] border border-[#2a2a2a]
                                transition-all duration-150 touch-manipulation flex flex-col
                                hover:border-[#F59E0B]/50 active:scale-[0.97]
                                focus:outline-none"
-                    style={{ background: '#0F172A' }}
+                    style={{ background: '#111111' }}
                   >
                     {/* Logo area */}
                     <div className="relative w-full" style={{ aspectRatio: '1' }}>
@@ -587,14 +587,14 @@ export default function SignoffPage() {
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#0F172A', border: '1px solid #1E3048' }}>
+            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#111111', border: '1px solid #2a2a2a' }}>
               <legend style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: '#F59E0B', color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700 }}>1</span>
                 Sign-Off Sections
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex mb-6" style={{ borderBottom: '1px solid #1E3048' }}>
+              <div className="flex mb-6" style={{ borderBottom: '1px solid #2a2a2a' }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -638,7 +638,7 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div style={{ background: '#070E1A', border: '1px solid #1E3048', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
                   <div className="flex items-center justify-between mb-3">
                     <span style={{ color: '#94A3B8', fontSize: 15, fontWeight: 500 }}>
                       {completedSections}/{totalSections} sections signed off
@@ -647,7 +647,7 @@ export default function SignoffPage() {
                       <span className="text-[12px] font-semibold px-2.5 py-0.5 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">COMPLETE</span>
                     )}
                   </div>
-                  <div style={{ position: 'relative', width: '100%', height: 10, background: '#162032', borderRadius: 99, overflow: 'visible' }}>
+                  <div style={{ position: 'relative', width: '100%', height: 10, background: '#1a1a1a', borderRadius: 99, overflow: 'visible' }}>
                     {/* Glow layer */}
                     <div
                       style={{
@@ -704,9 +704,9 @@ export default function SignoffPage() {
                   return (
                     <div
                       key={section.id}
-                      style={{ background: '#070E1A', borderRadius: 12, overflow: 'hidden' }}
+                      style={{ background: '#000000', borderRadius: 12, overflow: 'hidden' }}
                       className={`border transition-colors
-                        ${isCompleted ? 'border-[rgba(34,197,94,0.3)]' : locked ? 'border-[#1E3048] opacity-60' : isActive ? 'border-[rgba(245,158,11,0.5)]' : 'border-[#1E3048]'}`}
+                        ${isCompleted ? 'border-[rgba(34,197,94,0.3)]' : locked ? 'border-[#2a2a2a] opacity-60' : isActive ? 'border-[rgba(245,158,11,0.5)]' : 'border-[#2a2a2a]'}`}
                     >
                       {/* Section header — clickable if not completed and not locked */}
                       <button
@@ -766,7 +766,7 @@ export default function SignoffPage() {
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div style={{ borderTop: '1px solid #1E3048' }}>
+                        <div style={{ borderTop: '1px solid #2a2a2a' }}>
                           {sectionItems.length === 0 ? (
                             <p className="text-[#666] text-sm py-6 px-6">No checklist items for this section.</p>
                           ) : (
@@ -776,14 +776,14 @@ export default function SignoffPage() {
                                 return (
                                   <label
                                     key={item.id}
-                                    style={{ minHeight: 64, borderRadius: 12, border: checked ? '1px solid rgba(245,158,11,0.4)' : '1px solid #1E3048', background: checked ? 'rgba(245,158,11,0.08)' : '#070E1A', display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', cursor: 'pointer' }}
+                                    style={{ minHeight: 64, borderRadius: 12, border: checked ? '1px solid rgba(34,197,94,0.4)' : '1px solid #2a2a2a', background: checked ? 'rgba(34,197,94,0.08)' : '#000000', display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', cursor: 'pointer' }}
                                     className="transition-all touch-manipulation"
                                   >
                                     <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} className="hidden" />
-                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? '#F59E0B' : '#162032', border: `2px solid ${checked ? '#F59E0B' : '#1E3048'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
-                                      <div style={{ position: 'absolute', top: 2, left: checked ? 26 : 2, width: 22, height: 22, borderRadius: '50%', background: checked ? '#000' : '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
+                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? '#22C55E' : '#1a1a1a', border: `2px solid ${checked ? '#22C55E' : '#2a2a2a'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
+                                      <div style={{ position: 'absolute', top: 2, left: checked ? 26 : 2, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
                                     </div>
-                                    <span style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.3, flex: 1, color: checked ? '#F59E0B' : '#F1F5F9' }}>
+                                    <span style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.3, flex: 1, color: checked ? '#22C55E' : '#F1F5F9' }}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -793,7 +793,7 @@ export default function SignoffPage() {
                           )}
 
                           {/* Sign off button — sticky at bottom */}
-                          <div className="sticky bottom-0 px-4 py-4" style={{ background: 'linear-gradient(to bottom, transparent 0%, #070E1A 30%)' }}>
+                          <div className="sticky bottom-0 px-4 py-4" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000000 30%)' }}>
                             {sectionItems.length > 0 && !allChecked && (
                               <p className="text-[#555] text-[13px] text-center mb-3">
                                 {sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length} item{sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length !== 1 ? 's' : ''} remaining
@@ -808,8 +808,8 @@ export default function SignoffPage() {
                               style={{
                                 background: allChecked || sectionItems.length === 0
                                   ? 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
-                                  : '#0F172A',
-                                border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #1E3048',
+                                  : '#111111',
+                                border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #2a2a2a',
                                 color: allChecked || sectionItems.length === 0 ? '#000' : '#475569',
                                 minHeight: 64,
                                 fontSize: 17,
@@ -832,13 +832,13 @@ export default function SignoffPage() {
 
             {/* ── Separator ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '8px 0 16px' }}>
-              <div style={{ flex: 1, height: 1, background: '#1E3048' }} />
+              <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
               <span style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
-              <div style={{ flex: 1, height: 1, background: '#1E3048' }} />
+              <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
             </div>
 
             {/* ── End of Night Report Button ── */}
-            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#0F172A', border: '1px solid #1E3048' }}>
+            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#111111', border: '1px solid #2a2a2a' }}>
               <legend style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: '#F59E0B', color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700 }}>2</span>
                 Show Report
@@ -851,8 +851,8 @@ export default function SignoffPage() {
                 style={{
                   width: '100%',
                   padding: '18px 24px',
-                  background: '#070E1A',
-                  border: '1px solid #1E3048',
+                  background: '#000000',
+                  border: '1px solid #2a2a2a',
                   borderRadius: 12,
                   color: '#fff',
                   fontSize: 16,

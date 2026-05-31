@@ -41,8 +41,8 @@ function ConfirmModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070E1A]/80 px-4">
-      <div style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, width: '100%', maxWidth: 420 }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/80 px-4">
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, width: '100%', maxWidth: 420 }}>
         <p className="text-white text-sm font-semibold mb-1">{title}</p>
         <p className="text-[#888] text-sm mb-6">{message}</p>
         <div className="flex gap-3">
@@ -122,31 +122,31 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
 
   return (
     <>
-      <div style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <label className="text-[#ccc] text-[13px] font-medium shrink-0">Date</label>
-          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ padding: '8px 12px', background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors" />
+          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors" />
           {!isToday && (<button onClick={() => setSelectedDate(getTodayDateStr())} className="px-3 py-2 border border-[#555] text-[#ccc] text-xs font-medium rounded-[6px] hover:border-[#888] hover:text-white transition-colors">Today</button>)}
-          <div style={{ width: 1, height: 24, background: '#1E3048' }} className="hidden sm:block" />
+          <div style={{ width: 1, height: 24, background: '#2a2a2a' }} className="hidden sm:block" />
           <label className="text-[#ccc] text-[13px] font-medium shrink-0">Attraction</label>
-          <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
+          <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
             <option value="all">All Attractions</option>
             {attractions.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
           </select>
         </div>
       </div>
 
-      <div style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
         <div className="flex items-center gap-12 flex-wrap">
           <div><span className="text-[#888] text-xs uppercase tracking-wider block mb-1">Total</span><div className="text-white text-2xl font-bold">{totalSections}</div></div>
           <div><span className="text-[#888] text-xs uppercase tracking-wider block mb-1">Completed</span><div className="text-[#4caf50] text-2xl font-bold">{completedSections}</div></div>
           <div><span className="text-[#888] text-xs uppercase tracking-wider block mb-1">Waiting</span><div className={`text-2xl font-bold ${waitingSections > 0 ? 'text-[#ffc107]' : 'text-[#4caf50]'}`}>{waitingSections}</div></div>
-          {totalSections > 0 && (<div className="flex-1 min-w-[120px]"><div style={{ position: 'relative', width: '100%', height: 8, background: '#070E1A', borderRadius: 4, overflow: 'hidden' }}><div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, filter: 'blur(6px)', opacity: 0.6, transition: 'width 0.5s' }} /><div style={{ position: 'relative', height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, transition: 'width 0.5s' }} /></div></div>)}
+          {totalSections > 0 && (<div className="flex-1 min-w-[120px]"><div style={{ position: 'relative', width: '100%', height: 8, background: '#000000', borderRadius: 4, overflow: 'hidden' }}><div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, filter: 'blur(6px)', opacity: 0.6, transition: 'width 0.5s' }} /><div style={{ position: 'relative', height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, transition: 'width 0.5s' }} /></div></div>)}
         </div>
       </div>
 
       {loadingHistory && <div className="text-[#888] text-sm text-center py-8">Loading...</div>}
-      {!loadingHistory && totalSections === 0 && (<div style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, textAlign: 'center' }}><p className="text-[#666] text-sm">No sign-off sections found for this date/attraction.</p></div>)}
+      {!loadingHistory && totalSections === 0 && (<div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, textAlign: 'center' }}><p className="text-[#666] text-sm">No sign-off sections found for this date/attraction.</p></div>)}
 
       {!loadingHistory && attractionIds.map((attrId, attrIndex) => {
         const attraction = attractionMap.get(attrId);
@@ -164,7 +164,7 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
                   const completion = completionMap.get(section.id);
                   const isCompleted = !!completion;
                   return (
-                    <div key={section.id} style={{ background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, padding: '24px 28px' }} className="flex items-center gap-5">
+                    <div key={section.id} style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, padding: '24px 28px' }} className="flex items-center gap-5">
                       {isCompleted ? (<div className="w-6 h-6 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0"><GreenCheckIcon size={13} /></div>) : (<EmptyCircleIcon />)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -186,7 +186,7 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
         const attrTotal = attrSections.length;
 
         return (
-          <fieldset key={attrId} style={{ border: '1px solid #2a2a2a', borderRadius: 16, padding: '32px 40px', marginBottom: 40, background: '#0F172A' }}>
+          <fieldset key={attrId} style={{ border: '1px solid #2a2a2a', borderRadius: 16, padding: '32px 40px', marginBottom: 40, background: '#111111' }}>
             <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
               <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">{attrIndex + 1}</span>
               {attraction?.name || 'Unknown'}
@@ -343,19 +343,19 @@ export default function SignoffConfigPage() {
 
   const selectedAttraction = attractions.find((a) => a.id === selectedAttractionId);
 
-  if (loading) return (<div className="flex h-screen items-center justify-center bg-[#070E1A]"><div className="text-[#888] text-sm">Loading...</div></div>);
+  if (loading) return (<div className="flex h-screen items-center justify-center bg-[#000000]"><div className="text-[#888] text-sm">Loading...</div></div>);
 
   return (
-    <div className="min-h-screen bg-[#070E1A]">
+    <div className="min-h-screen bg-[#000000]">
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
       <ConfirmModal open={!!deleteTarget} title={`Delete "${deleteTarget?.name}"?`} message={deleteTarget?.type === 'section' ? 'This will also remove all checklist items in this section. This cannot be undone.' : 'This checklist item will be permanently removed.'} confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
 
       {showCopyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070E1A]/80 px-4">
-          <div style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, width: '100%', maxWidth: 420 }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/80 px-4">
+          <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, width: '100%', maxWidth: 420 }}>
             <p className="text-white text-sm font-semibold mb-2">Copy Sections From Another Attraction</p>
             <p className="text-[#888] text-[13px] mb-8">This will replace all existing sections and checklist items for <strong className="text-[#e0e0e0]">{selectedAttraction?.name}</strong>.</p>
-            <select value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none', marginBottom: 32 }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
+            <select value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none', marginBottom: 32 }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
               <option value="">Select an attraction...</option>
               {attractions.filter((a) => a.id !== selectedAttractionId).map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
             </select>
@@ -416,10 +416,10 @@ export default function SignoffConfigPage() {
 
         {activeTab === 'config' && (
           <>
-            <div style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
+            <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <label className="text-[#ccc] text-[13px] font-medium shrink-0">Attraction</label>
-                <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
+                <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
                   {attractions.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
                 </select>
                 <button onClick={() => setShowCopyModal(true)} className="px-4 py-2.5 border border-[#555] text-[#ccc] text-sm font-medium rounded-[6px] hover:border-[#888] hover:text-white transition-colors shrink-0">Copy from...</button>
@@ -429,7 +429,7 @@ export default function SignoffConfigPage() {
             {PHASES.map((phase, phaseIndex) => {
               const phaseSections = sections.filter((s) => s.phase === phase);
               return (
-                <fieldset key={phase} style={{ border: '1px solid #2a2a2a', borderRadius: 16, padding: '32px 40px', marginBottom: 48, background: '#0F172A' }}>
+                <fieldset key={phase} style={{ border: '1px solid #2a2a2a', borderRadius: 16, padding: '32px 40px', marginBottom: 48, background: '#111111' }}>
                   <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
                     <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">{phaseIndex + 1}</span>
                     {`${phase.charAt(0).toUpperCase() + phase.slice(1)} Sections`}
@@ -437,7 +437,7 @@ export default function SignoffConfigPage() {
                   </legend>
 
                   {addingSectionPhase === phase && (
-                    <div style={{ background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, padding: 32, marginBottom: 32 }}>
+                    <div style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, padding: 32, marginBottom: 32 }}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                         <div>
                           <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Section Name</label>
@@ -463,7 +463,7 @@ export default function SignoffConfigPage() {
                     {phaseSections.map((section, sectionIdx) => {
                       const sectionItems = getItemsForSection(section.id);
                       return (
-                        <div key={section.id} style={{ background: '#070E1A', border: '1px solid #2a2a2a', borderRadius: 6, overflow: 'hidden' }}>
+                        <div key={section.id} style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, overflow: 'hidden' }}>
                           <div className="flex items-center justify-between" style={{ padding: '20px 28px', borderBottom: '1px solid #2a2a2a' }}>
                             {editingSectionId === section.id ? (
                               <div className="flex-1 flex items-center gap-3 flex-wrap">
@@ -527,7 +527,7 @@ export default function SignoffConfigPage() {
                           <div className="px-7 pb-7 pt-4" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {sectionItems.length === 0 && (<p className="text-[#666] text-xs py-1">No checklist items yet.</p>)}
                             {sectionItems.map((item) => (
-                              <div key={item.id} style={{ background: '#0F172A', border: '1px solid #2a2a2a', borderRadius: 8, padding: '20px 24px' }} className="flex items-center gap-4">
+                              <div key={item.id} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, padding: '20px 24px' }} className="flex items-center gap-4">
                                 <div className="w-5 h-5 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0"><GreenCheckIcon size={11} /></div>
                                 {editingItemId === item.id ? (
                                   <div className="flex-1 flex items-center gap-2">

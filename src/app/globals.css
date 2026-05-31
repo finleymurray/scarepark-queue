@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-border: #1E3048;
-  --color-border-hover: #2D4460;
+  --color-border: #2a2a2a;
+  --color-border-hover: #444444;
   --color-text-secondary: #94A3B8;
   --color-text-muted: #475569;
-  --color-surface: #0F172A;
-  --color-surface-hover: #162032;
-  --color-input: #070E1A;
+  --color-surface: #111111;
+  --color-surface-hover: #1a1a1a;
+  --color-input: #000000;
   --color-status-open: #22C55E;
   --color-status-closed: #EF4444;
   --color-status-delayed: #F59E0B;
@@ -24,7 +24,7 @@
 }
 
 body {
-  background: #070E1A;
+  background: #000000;
   color: #F1F5F9;
   font-family: var(--font-body);
   overflow-x: hidden;
@@ -53,8 +53,8 @@ body {
 
 /* Panel / Section styling */
 .panel {
-  background: #0F172A;
-  border: 1px solid #1E3048;
+  background: #111111;
+  border: 1px solid #2a2a2a;
   border-radius: 12px;
 }
 
@@ -90,11 +90,11 @@ body {
 }
 .admin-nav-dropdown:hover {
   color: #94A3B8;
-  background: #162032;
+  background: #1a1a1a;
 }
 .admin-nav-dropdown-active {
   color: #F1F5F9 !important;
-  background: #162032 !important;
+  background: #1a1a1a !important;
 }
 
 /* Admin nav sign out */
@@ -102,7 +102,7 @@ body {
   transition: border-color 0.15s, color 0.15s;
 }
 .admin-nav-signout:hover {
-  border-color: #2D4460 !important;
+  border-color: #444444 !important;
   color: #F1F5F9 !important;
 }
 
@@ -111,14 +111,14 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #070E1A;
+  background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E3048;
+  background: #2a2a2a;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2D4460;
+  background: #444444;
 }
 
 /* TV Grid — orientation-responsive layout */

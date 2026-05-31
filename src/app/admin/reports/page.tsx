@@ -121,14 +121,14 @@ export default function ShowReportsPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070E1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: '#888', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070E1A' }}>
+    <div style={{ minHeight: '100vh', background: '#000000' }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 80px' }}>
@@ -189,7 +189,7 @@ export default function ShowReportsPage() {
         </div>
 
         {/* ── Filter Bar ── */}
-        <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           <label style={{ color: '#ccc', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Date</label>
           <input
             type="date"
@@ -197,8 +197,8 @@ export default function ShowReportsPage() {
             onChange={(e) => setSelectedDate(e.target.value)}
             style={{
               padding: '8px 12px',
-              background: '#070E1A',
-              border: '1px solid #1E3048',
+              background: '#000000',
+              border: '1px solid #2a2a2a',
               borderRadius: 6,
               color: '#F1F5F9',
               fontSize: 14,
@@ -233,8 +233,8 @@ export default function ShowReportsPage() {
               flex: 1,
               minWidth: 140,
               padding: '8px 12px',
-              background: '#070E1A',
-              border: '1px solid #1E3048',
+              background: '#000000',
+              border: '1px solid #2a2a2a',
               borderRadius: 6,
               color: '#F1F5F9',
               fontSize: 14,
@@ -249,7 +249,7 @@ export default function ShowReportsPage() {
         </div>
 
         {/* ── Summary Stats ── */}
-        <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
+        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
           <div>
             <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Submitted</span>
             <div style={{ color: '#4caf50', fontSize: 24, fontWeight: 700 }}>{submittedCount}</div>
@@ -283,7 +283,7 @@ export default function ShowReportsPage() {
 
         {/* ── Reports ── */}
         {displayedAttractions.length === 0 && (
-          <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 40, textAlign: 'center' }}>
+          <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 40, textAlign: 'center' }}>
             <p style={{ color: '#666', fontSize: 14 }}>No attractions found.</p>
           </div>
         )}
@@ -296,11 +296,11 @@ export default function ShowReportsPage() {
             <fieldset
               key={attraction.id}
               style={{
-                border: '1px solid #1E3048',
+                border: '1px solid #2a2a2a',
                 borderRadius: 12,
                 padding: '24px 28px',
                 marginBottom: 20,
-                background: '#0F172A',
+                background: '#111111',
                 opacity: hasReport ? 1 : 0.65,
               }}
             >
@@ -381,7 +381,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
           <SubLabel text="Hourly Throughput" />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 6 }}>
             {hourlyThroughput.map((slot) => (
-              <div key={`${slot.slot_start}-${slot.slot_end}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', background: '#070E1A', borderRadius: 6, fontSize: 13 }}>
+              <div key={`${slot.slot_start}-${slot.slot_end}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', background: '#000000', borderRadius: 6, fontSize: 13 }}>
                 <span style={{ color: '#888' }}>{formatTime24(slot.slot_start)} – {formatTime24(slot.slot_end)}</span>
                 <span style={{ color: '#fff', fontWeight: 700 }}>{slot.guest_count}</span>
               </div>
@@ -395,7 +395,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
         <div>
           <SubLabel text="Delays" />
           {delays.map((d, i) => (
-            <div key={i} style={{ padding: '8px 12px', background: '#070E1A', borderRadius: 6, marginBottom: 6, borderLeft: '3px solid #F59E0B' }}>
+            <div key={i} style={{ padding: '8px 12px', background: '#000000', borderRadius: 6, marginBottom: 6, borderLeft: '3px solid #F59E0B' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B', background: '#F59E0B22', padding: '2px 8px', borderRadius: 4 }}>
                   {d.reason || 'Unknown'}
@@ -429,7 +429,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
       {/* Signature */}
       <div>
         <SubLabel text="Signature" />
-        <div style={{ background: '#070E1A', borderRadius: 8, padding: 12, display: 'inline-block' }}>
+        <div style={{ background: '#000000', borderRadius: 8, padding: 12, display: 'inline-block' }}>
           <img
             src={report.signature}
             alt="Supervisor signature"
@@ -458,7 +458,7 @@ function SubLabel({ text }: { text: string }) {
 
 function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div style={{ flex: 1, minWidth: 100, background: '#070E1A', borderRadius: 8, padding: '12px 14px', textAlign: 'center' }}>
+    <div style={{ flex: 1, minWidth: 100, background: '#000000', borderRadius: 8, padding: '12px 14px', textAlign: 'center' }}>
       <div style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{label}</div>
       <div style={{ color, fontSize: 20, fontWeight: 800 }}>{value}</div>
     </div>
@@ -467,7 +467,7 @@ function MiniStat({ label, value, color }: { label: string; value: string; color
 
 function ReportBlock({ label, text, borderColor }: { label: string; text: string; borderColor: string }) {
   return (
-    <div style={{ padding: '10px 14px', background: '#070E1A', borderRadius: 8, borderLeft: `3px solid ${borderColor}` }}>
+    <div style={{ padding: '10px 14px', background: '#000000', borderRadius: 8, borderLeft: `3px solid ${borderColor}` }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: borderColor, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 13, color: '#ddd', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{text}</div>
     </div>

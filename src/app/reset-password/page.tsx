@@ -91,8 +91,8 @@ export default function ResetPasswordPage() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px 12px',
-    background: '#070E1A',
-    border: '1px solid #1E3048',
+    background: '#000000',
+    border: '1px solid #2a2a2a',
     borderRadius: 8,
     color: '#F1F5F9',
     fontSize: 14,
@@ -101,7 +101,7 @@ export default function ResetPasswordPage() {
 
   if (!ready) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
         <div style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
           <Image
             src="/logo-control.png"
@@ -112,7 +112,7 @@ export default function ResetPasswordPage() {
             style={{ width: 40, height: 'auto', marginBottom: 24, display: 'block', margin: '0 auto 24px' }}
           />
           {verifyError ? (
-            <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
+            <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
               <p style={{ color: '#EF4444', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Link expired or invalid</p>
               <p style={{ color: '#475569', fontSize: 13, marginBottom: 16 }}>{verifyError}</p>
               <a href="/login" style={{ color: '#3B82F6', fontSize: 14, textDecoration: 'none' }}>Back to sign in</a>
@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
         <div style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
           <Image
             src="/logo-control.png"
@@ -137,7 +137,7 @@ export default function ResetPasswordPage() {
             priority
             style={{ width: 40, height: 'auto', marginBottom: 24, display: 'block', margin: '0 auto 24px' }}
           />
-          <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
+          <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
             <p style={{ color: '#22C55E', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Password updated</p>
             <p style={{ color: '#475569', fontSize: 13 }}>Redirecting to sign in...</p>
           </div>
@@ -147,7 +147,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A', padding: '0 24px' }}>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
@@ -162,7 +162,7 @@ export default function ResetPasswordPage() {
           <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 28 }}>
+        <form onSubmit={handleSubmit} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
           <h2 style={{ color: '#F1F5F9', fontSize: 16, fontWeight: 700, marginBottom: 20 }}>
             {isInvite ? 'Set your password' : 'Set new password'}
           </h2>
@@ -180,7 +180,7 @@ export default function ResetPasswordPage() {
                 placeholder="At least 6 characters"
                 style={inputStyle}
                 onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
@@ -195,7 +195,7 @@ export default function ResetPasswordPage() {
                 placeholder="Re-enter password"
                 style={inputStyle}
                 onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#1E3048'; e.target.style.boxShadow = 'none'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>

@@ -82,14 +82,14 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 14, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
         <div className="text-[#EF4444] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
         <p className="text-[#94A3B8] text-sm">{message}</p>
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={onCancel}
-            className="px-6 py-3 bg-transparent border border-[#1E3048] text-[#94A3B8] hover:border-[#2D4460]
+            className="px-6 py-3 bg-transparent border border-[#2a2a2a] text-[#94A3B8] hover:border-[#444444]
                        rounded-md transition-colors font-medium"
           >
             Cancel
@@ -133,7 +133,7 @@ function DelayReasonModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 14, padding: 24, maxWidth: 480, width: '100%' }}>
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, maxWidth: 480, width: '100%' }}>
         <h2 className="text-white text-lg font-bold mb-1">Delay Reason</h2>
         <p className="text-[#94A3B8] text-sm mb-5">
           Why is <span className="text-white font-medium">{attractionName}</span> being delayed?
@@ -147,8 +147,8 @@ function DelayReasonModal({
               style={{
                 padding: '12px 8px',
                 borderRadius: 6,
-                border: selectedReason === reason ? '2px solid #F59E0B' : '1px solid #1E3048',
-                background: selectedReason === reason ? '#F59E0B15' : '#070E1A',
+                border: selectedReason === reason ? '2px solid #F59E0B' : '1px solid #2a2a2a',
+                background: selectedReason === reason ? '#F59E0B15' : '#000000',
                 color: selectedReason === reason ? '#f0ad4e' : '#ccc',
                 fontSize: 14,
                 fontWeight: selectedReason === reason ? 600 : 400,
@@ -170,7 +170,7 @@ function DelayReasonModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Additional details..."
-            className="w-full px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-white text-sm
+            className="w-full px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-white text-sm
                        placeholder-[#475569] focus:outline-none focus:border-[#F59E0B] transition-colors"
           />
         </div>
@@ -178,7 +178,7 @@ function DelayReasonModal({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-6 py-3 bg-transparent border border-[#1E3048] text-[#94A3B8] hover:border-[#2D4460]
+            className="flex-1 px-6 py-3 bg-transparent border border-[#2a2a2a] text-[#94A3B8] hover:border-[#444444]
                        rounded-md transition-colors font-medium"
           >
             Cancel
@@ -267,7 +267,7 @@ function EditableName({
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setValue(name); setEditing(false); }
         }}
-        className="text-[#F1F5F9] text-lg font-bold bg-[#070E1A] border border-[#1E3048] rounded-md px-2 py-0.5 mr-2
+        className="text-[#F1F5F9] text-lg font-bold bg-[#000000] border border-[#2a2a2a] rounded-md px-2 py-0.5 mr-2
                    focus:outline-none focus:border-[#3B82F6] transition-colors min-w-0 flex-1"
       />
     );
@@ -309,7 +309,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
   }
 
   return (
-    <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24 }}>
+    <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24 }}>
       <h3 className="text-[#F1F5F9] text-base font-semibold mb-3" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Add Attraction</h3>
 
       {/* Type toggle */}
@@ -319,7 +319,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${
             type === 'ride'
               ? 'bg-[#2563EB] text-white border-[#2563EB]'
-              : 'bg-transparent text-[#94A3B8] border-[#1E3048]'
+              : 'bg-transparent text-[#94A3B8] border-[#2a2a2a]'
           }`}
         >
           Ride
@@ -329,7 +329,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${
             type === 'show'
               ? 'bg-[#2563EB] text-white border-[#2563EB]'
-              : 'bg-transparent text-[#94A3B8] border-[#1E3048]'
+              : 'bg-transparent text-[#94A3B8] border-[#2a2a2a]'
           }`}
         >
           Live Show
@@ -343,7 +343,7 @@ function AddAttractionForm({ onAdd }: { onAdd: (name: string, type: AttractionTy
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
           placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
-          className="flex-1 px-3 py-2 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+          className="flex-1 px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                      placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors"
         />
         <button
@@ -397,12 +397,12 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24, position: 'relative' }}>
+    <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[#F1F5F9] text-base font-semibold" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Operating Hours</h3>
-        <span style={{ background: '#162032', color: '#94A3B8', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, letterSpacing: '0.04em' }}>INFO</span>
+        <span style={{ background: '#1a1a1a', color: '#94A3B8', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, letterSpacing: '0.04em' }}>INFO</span>
       </div>
 
       <div className="flex gap-4 text-center mb-3">
@@ -412,7 +412,7 @@ function OperatingHoursControl({
             {openingTime || '--:--'}
           </div>
         </div>
-        <div style={{ color: '#1E3048', alignSelf: 'center', fontSize: 18 }}>—</div>
+        <div style={{ color: '#2a2a2a', alignSelf: 'center', fontSize: 18 }}>—</div>
         <div className="flex-1">
           <span style={{ color: '#475569', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Closes</span>
           <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
@@ -429,7 +429,7 @@ function OperatingHoursControl({
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+              className="w-full px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                          focus:outline-none focus:border-[#3B82F6] transition-colors"
             />
           </div>
@@ -439,7 +439,7 @@ function OperatingHoursControl({
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+              className="w-full px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                          focus:outline-none focus:border-[#3B82F6] transition-colors"
             />
           </div>
@@ -576,7 +576,7 @@ const RideControl = React.memo(function RideControl({
   }
 
   return (
-    <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
+    <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
       <SaveFeedback show={showSaved} />
 
       {/* Reorder buttons — top right corner */}
@@ -680,7 +680,7 @@ const RideControl = React.memo(function RideControl({
           onClick={() => handleTimeAdjust(-5)}
           disabled={saving || attraction.wait_time <= 0}
           className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#162032] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                     hover:bg-[#1a1a1a] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           -5m
         </button>
@@ -688,7 +688,7 @@ const RideControl = React.memo(function RideControl({
           onClick={() => handleTimeAdjust(5)}
           disabled={saving}
           className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#162032] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                     hover:bg-[#1a1a1a] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +5m
         </button>
@@ -696,7 +696,7 @@ const RideControl = React.memo(function RideControl({
           onClick={() => handleTimeAdjust(10)}
           disabled={saving}
           className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#162032] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+                     hover:bg-[#1a1a1a] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
         >
           +10m
         </button>
@@ -712,7 +712,7 @@ const RideControl = React.memo(function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+          className="flex-1 px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                      placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors
                      [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                      [&::-webkit-outer-spin-button]:appearance-none"
@@ -728,7 +728,7 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Remove */}
-      <div style={{ borderTop: '1px solid #162032', paddingTop: 12, width: '100%' }}>
+      <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 12, width: '100%' }}>
         <button
           onClick={() => onDelete(attraction.id, attraction.name)}
           className="w-full py-2 text-xs text-[#475569] hover:text-[#EF4444] hover:bg-[#EF4444]/10
@@ -920,7 +920,7 @@ const ShowControl = React.memo(function ShowControl({
           value={newTime}
           onChange={(e) => setNewTime(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-          className="flex-1 px-3 py-2.5 bg-[#070E1A] border border-[#1E3048] rounded-md text-[#F1F5F9] text-sm
+          className="flex-1 px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
                      focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
         />
         <button
@@ -1448,14 +1448,14 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#070E1A' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
         <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#070E1A' }}>
+    <div className="min-h-screen" style={{ background: '#000000' }}>
       {/* Close All Modal */}
       <ConfirmModal
         open={showCloseAll}
@@ -1499,7 +1499,7 @@ export default function AdminDashboard() {
       <main style={{ padding: '24px 20px' }}>
       {/* Quick Actions */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 40 }}>
-        <div style={{ background: '#0F172A', border: '1px solid #1E3048', borderRadius: 12, padding: 24 }}>
+        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24 }}>
           <h3 style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
@@ -1511,9 +1511,9 @@ export default function AdminDashboard() {
               {closingAll ? 'Closing...' : 'Close All Rides'}
             </button>
           </div>
-          <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: '1px solid #1E3048' }}>
+          <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: '1px solid #2a2a2a' }}>
             <button onClick={handleToggleAutoSort}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#162032] border border-[#1E3048]'}`}>
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#1a1a1a] border border-[#2a2a2a]'}`}>
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
             <span style={{ color: '#94A3B8', fontSize: 14 }}>

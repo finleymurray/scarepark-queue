@@ -332,7 +332,7 @@ export default function ScreenController() {
   if (status === 'booting' || status === 'registering') {
     return (
       <div style={{
-        width: '100vw', height: '100vh', background: '#070E1A',
+        width: '100vw', height: '100vh', background: '#000000',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: 'rgba(241,245,249,0.3)', fontSize: '2vw',
         fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
@@ -345,7 +345,7 @@ export default function ScreenController() {
   // ── Render: waiting for assignment ──
   return (
     <div style={{
-      width: '100vw', height: '100vh', background: '#070E1A',
+      width: '100vw', height: '100vh', background: '#000000',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       overflow: 'hidden',

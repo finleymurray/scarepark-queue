@@ -70,7 +70,7 @@ export default function AdminNav({
   return (
     <>
       {/* Header bar */}
-      <div style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0 0', height: 56, display: 'flex', alignItems: 'center' }}>
+      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 0', height: 56, display: 'flex', alignItems: 'center' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <Image
@@ -94,7 +94,7 @@ export default function AdminNav({
               className="admin-nav-signout"
               style={{
                 background: 'none',
-                border: '1px solid #1E3048',
+                border: '1px solid #2a2a2a',
                 color: '#94A3B8',
                 padding: '4px 10px',
                 borderRadius: 6,
@@ -112,7 +112,7 @@ export default function AdminNav({
       {/* Nav tabs */}
       <div
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#0F172A', borderBottom: '1px solid #1E3048', padding: '0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
+        style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
       >
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 0 }}>
           {PRIMARY_TABS.map((tab) => {
@@ -167,8 +167,8 @@ export default function AdminNav({
                 position: 'absolute',
                 top: 'calc(100% + 4px)',
                 left: 0,
-                background: '#0F172A',
-                border: '1px solid #1E3048',
+                background: '#111111',
+                border: '1px solid #2a2a2a',
                 borderRadius: 8,
                 padding: '4px 0',
                 minWidth: 150,
@@ -202,7 +202,7 @@ export default function AdminNav({
           {/* External links — hidden in standalone PWA mode */}
           {!isStandalone && (
             <>
-              <div style={{ width: 1, height: 16, background: '#1E3048', margin: '0 8px', flexShrink: 0 }} />
+              <div style={{ width: 1, height: 16, background: '#2a2a2a', margin: '0 8px', flexShrink: 0 }} />
 
               {EXTERNAL_LINKS.map((link) => (
                 <a
