@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import SignatureCanvas from './SignatureCanvas';
 import { fetchReportData, getExistingReport, submitShowReport } from '@/lib/showReport';
+import { verifyPin } from '@/lib/signoff';
 import type { HourlyThroughputSnapshot, DelaySnapshot } from '@/types/database';
 
 interface ShowReportModalProps {
@@ -109,6 +110,16 @@ export default function ShowReportModal({
   // Draft info
   const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null);
 
+  // PIN verification — submitter identity
+  const [pinVerified, setPinVerified] = useState(false);
+  const [pinUserName, setPinUserName] = useState('');
+  const [pinUserEmail, setPinUserEmail] = useState('');
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinVerifying, setPinVerifying] = useState(false);
+  const [pinFailedAttempts, setPinFailedAttempts] = useState(0);
+  const [pinLockedUntil, setPinLockedUntil] = useState<number | null>(null);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -162,6 +173,13 @@ export default function ShowReportModal({
       setSubmitted(false);
       setDraftSaved(false);
       setSignature(null);
+      setPinVerified(false);
+      setPinUserName('');
+      setPinUserEmail('');
+      setPinInput('');
+      setPinError('');
+      setPinFailedAttempts(0);
+      setPinLockedUntil(null);
       loadData();
     }
   }, [open, loadData]);
@@ -177,8 +195,42 @@ export default function ShowReportModal({
     setTimeout(() => setDraftSaved(false), 2000);
   };
 
+  async function handlePinDigit(d: string) {
+    if (pinLockedUntil && Date.now() < pinLockedUntil) return;
+    const next = (pinInput + d).slice(0, 4);
+    setPinInput(next);
+    setPinError('');
+
+    if (next.length === 4) {
+      setPinVerifying(true);
+      const result = await verifyPin(next);
+      setPinVerifying(false);
+      setPinInput('');
+
+      if (!result.valid) {
+        const attempts = pinFailedAttempts + 1;
+        setPinFailedAttempts(attempts);
+        if (attempts >= 5) {
+          const lockDuration = 60000 * Math.pow(2, Math.floor((attempts - 5) / 5));
+          setPinLockedUntil(Date.now() + lockDuration);
+          setPinError(`Too many attempts. Locked for ${lockDuration / 1000}s.`);
+        } else {
+          setPinError(result.error || 'Invalid PIN');
+        }
+        return;
+      }
+
+      setPinVerified(true);
+      setPinUserName(result.userName);
+      setPinUserEmail(result.userEmail);
+      setPinError('');
+      setPinFailedAttempts(0);
+      setPinLockedUntil(null);
+    }
+  }
+
   const handleSubmit = async () => {
-    if (!signature) return;
+    if (!signature || !pinVerified) return;
 
     setSubmitting(true);
     setError(null);
@@ -195,8 +247,8 @@ export default function ShowReportModal({
         technical_report: technicalReport || null,
         costume_report: costumeReport || null,
         signature,
-        submitted_by_email: userEmail,
-        submitted_by_name: displayName,
+        submitted_by_email: pinUserEmail,
+        submitted_by_name: pinUserName,
       },
       attractionName,
     );
@@ -387,15 +439,84 @@ export default function ShowReportModal({
               />
             </div>
 
-            {/* ── Section 5: Signature ── */}
-            <SectionLabel label="Supervisor Signature" />
-            <div style={{ marginBottom: 24 }}>
-              <SignatureCanvas
-                width={Math.min(560, typeof window !== 'undefined' ? window.innerWidth - 72 : 560)}
-                height={180}
-                onSignatureChange={setSignature}
-              />
-            </div>
+            {/* ── Section 5: PIN Verification ── */}
+            <SectionLabel label="Verify Identity" />
+            {!pinVerified ? (
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ color: '#888', fontSize: 13, marginBottom: 16 }}>
+                  Enter your PIN to identify yourself as the submitter. This will be logged against your name.
+                </p>
+
+                {/* PIN dots */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 16 }}>
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <div key={i} style={{
+                      width: 18, height: 18, borderRadius: '50%',
+                      background: i < pinInput.length ? '#6ea8fe' : 'transparent',
+                      border: `2px solid ${i < pinInput.length ? '#6ea8fe' : '#444'}`,
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }} />
+                  ))}
+                </div>
+
+                {pinError && (
+                  <div style={{ background: '#2a1010', border: '1px solid #d43518', borderRadius: 6, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#f0a0a0', textAlign: 'center' }}>
+                    {pinError}
+                  </div>
+                )}
+
+                {pinVerifying && (
+                  <div style={{ textAlign: 'center', color: '#888', fontSize: 13, marginBottom: 12 }}>Verifying…</div>
+                )}
+
+                {/* Keypad */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, maxWidth: 280, margin: '0 auto' }}>
+                  {['1','2','3','4','5','6','7','8','9'].map((d) => (
+                    <button key={d} onClick={() => handlePinDigit(d)}
+                      style={{ aspectRatio: '1', fontSize: 22, fontWeight: 700, color: '#e0e0e0', background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {d}
+                    </button>
+                  ))}
+                  <button onClick={() => setPinInput((p) => p.slice(0, -1))}
+                    style={{ aspectRatio: '1', fontSize: 14, fontWeight: 700, color: '#ffc107', background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    DEL
+                  </button>
+                  <button onClick={() => handlePinDigit('0')}
+                    style={{ aspectRatio: '1', fontSize: 22, fontWeight: 700, color: '#e0e0e0', background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    0
+                  </button>
+                  <div /> {/* spacer */}
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8L6.5 11.5L13 4.5" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div>
+                  <span style={{ color: '#4caf50', fontSize: 14, fontWeight: 600 }}>{pinUserName}</span>
+                  <span style={{ color: '#666', fontSize: 13 }}> — verified</span>
+                </div>
+                <button onClick={() => { setPinVerified(false); setPinInput(''); setSignature(null); }}
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#666', fontSize: 12, cursor: 'pointer', padding: '2px 6px' }}>
+                  Change
+                </button>
+              </div>
+            )}
+
+            {/* ── Section 6: Signature (only once PIN verified) ── */}
+            {pinVerified && (
+              <>
+                <SectionLabel label="Signature" />
+                <div style={{ marginBottom: 24 }}>
+                  <SignatureCanvas
+                    width={Math.min(560, typeof window !== 'undefined' ? window.innerWidth - 72 : 560)}
+                    height={180}
+                    onSignatureChange={setSignature}
+                  />
+                </div>
+              </>
+            )}
 
             {/* ── Error ── */}
             {error && (
@@ -410,13 +531,8 @@ export default function ShowReportModal({
                 onClick={handleSaveDraft}
                 disabled={submitting || submitted}
                 style={{
-                  flex: 1,
-                  padding: '14px 16px',
-                  borderRadius: 12,
-                  border: '1px solid #444',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: submitting || submitted ? 'not-allowed' : 'pointer',
+                  flex: 1, padding: '14px 16px', borderRadius: 12, border: '1px solid #444',
+                  fontSize: 14, fontWeight: 600, cursor: submitting || submitted ? 'not-allowed' : 'pointer',
                   background: draftSaved ? '#1a3a2a' : '#1a1a1a',
                   color: draftSaved ? '#22C55E' : '#ccc',
                   transition: 'background 0.2s, color 0.2s',
@@ -426,31 +542,17 @@ export default function ShowReportModal({
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={!signature || submitting || submitted}
+                disabled={!signature || !pinVerified || submitting || submitted}
                 style={{
-                  flex: 2,
-                  padding: '14px 24px',
-                  borderRadius: 12,
-                  border: 'none',
-                  fontSize: 16,
-                  fontWeight: 700,
-                  cursor: !signature || submitting || submitted ? 'not-allowed' : 'pointer',
-                  background: submitted
-                    ? '#22C55E'
-                    : !signature
-                      ? '#333'
-                      : '#dc3545',
-                  color: submitted || signature ? '#fff' : '#666',
+                  flex: 2, padding: '14px 24px', borderRadius: 12, border: 'none',
+                  fontSize: 16, fontWeight: 700,
+                  cursor: !signature || !pinVerified || submitting || submitted ? 'not-allowed' : 'pointer',
+                  background: submitted ? '#22C55E' : (!signature || !pinVerified) ? '#333' : '#dc3545',
+                  color: submitted || (signature && pinVerified) ? '#fff' : '#666',
                   transition: 'background 0.2s, color 0.2s',
                 }}
               >
-                {submitted
-                  ? '✓ Report Submitted'
-                  : submitting
-                    ? 'Submitting...'
-                    : existingReport
-                      ? 'Update Report'
-                      : 'Submit Report'}
+                {submitted ? '✓ Report Submitted' : submitting ? 'Submitting...' : existingReport ? 'Update Report' : 'Submit Report'}
               </button>
             </div>
           </>

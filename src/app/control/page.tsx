@@ -229,7 +229,7 @@ export default function SupervisorDashboard() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || !auth.role) {
-        router.push('/login');
+        router.push('/control/login');
         return;
       }
       // Store email, display name and role for display
@@ -558,7 +558,7 @@ export default function SupervisorDashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push('/control/login');
   }
 
   if (loading) {
