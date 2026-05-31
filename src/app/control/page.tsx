@@ -210,6 +210,44 @@ export default function SupervisorDashboard() {
   const [signoffStatus, setSignoffStatus] = useState<AttractionSignoffStatus | null>(null);
   const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
   const [delayElapsed, setDelayElapsed] = useState(0);
+
+  // Push notifications — per-device opt-in stored in localStorage
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+  const notifEnabledRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('ic-notif-enabled') === 'true';
+    const perm = 'Notification' in window ? Notification.permission : 'denied';
+    setNotifEnabled(saved && perm === 'granted');
+    setNotifPermission(perm as NotificationPermission);
+    notifEnabledRef.current = saved && perm === 'granted';
+  }, []);
+
+  async function handleNotifToggle() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'denied') {
+      alert('Notifications are blocked in your browser settings. Enable them for this site and try again.');
+      return;
+    }
+    if (!notifEnabled) {
+      const perm = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
+      setNotifPermission(perm);
+      if (perm === 'granted') {
+        setNotifEnabled(true);
+        notifEnabledRef.current = true;
+        localStorage.setItem('ic-notif-enabled', 'true');
+        new Notification('IC Field Control', { body: 'Status change notifications enabled.', icon: '/logo-control.png' });
+      }
+    } else {
+      setNotifEnabled(false);
+      notifEnabledRef.current = false;
+      localStorage.setItem('ic-notif-enabled', 'false');
+    }
+  }
+
   const tabBarRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
@@ -250,10 +288,11 @@ export default function SupervisorDashboard() {
 
       if (!attractionsRes.error && attractionsRes.data) {
         setAttractions(attractionsRes.data);
+        // Restore last-selected attraction, fall back to first ride
+        const saved = localStorage.getItem('ic-control-selected');
+        const savedExists = saved && attractionsRes.data.find((a: Attraction) => a.id === saved);
         const firstRide = attractionsRes.data.find((a: Attraction) => a.attraction_type !== 'show');
-        if (firstRide) {
-          setSelectedId(firstRide.id);
-        }
+        setSelectedId(savedExists ? saved : (firstRide?.id ?? null));
       }
 
       if (settingsRes.data) {
@@ -273,11 +312,25 @@ export default function SupervisorDashboard() {
           { event: '*', schema: 'public', table: 'attractions' },
           (payload) => {
             if (payload.eventType === 'UPDATE') {
-              setAttractions((prev) =>
-                prev.map((a) =>
-                  a.id === (payload.new as Attraction).id ? (payload.new as Attraction) : a
-                )
-              );
+              const updated = payload.new as Attraction;
+              setAttractions((prev) => {
+                // Fire push notification on status change if enabled
+                const old = prev.find((a) => a.id === updated.id);
+                if (notifEnabledRef.current && old && old.status !== updated.status) {
+                  const statusMessages: Partial<Record<string, string>> = {
+                    DELAYED: 'Technical delay in progress',
+                    CLOSED: 'Attraction is now closed',
+                    'AT CAPACITY': 'At capacity — queue paused',
+                    OPEN: 'Attraction is back open',
+                  };
+                  new Notification(`${updated.name} — ${updated.status}`, {
+                    body: statusMessages[updated.status] || updated.status,
+                    icon: '/logo-control.png',
+                    tag: `status-${updated.id}`, // replaces previous notif for same attraction
+                  });
+                }
+                return prev.map((a) => a.id === updated.id ? updated : a);
+              });
             } else if (payload.eventType === 'INSERT') {
               setAttractions((prev) =>
                 [...prev, payload.new as Attraction].sort((a, b) => a.sort_order - b.sort_order)
@@ -602,6 +655,24 @@ export default function SupervisorDashboard() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
           {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || userEmail}</span>}
+          {'Notification' in (typeof window !== 'undefined' ? window : {}) && notifPermission !== 'denied' && (
+            <button
+              onClick={handleNotifToggle}
+              title={notifEnabled ? 'Notifications on — click to disable' : 'Enable status notifications'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 4, color: notifEnabled ? '#22C55E' : '#555', transition: 'color 0.15s', lineHeight: 1 }}
+            >
+              {notifEnabled ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" opacity="0.4"/>
+                  <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )}
+            </button>
+          )}
           {userRole === 'admin' && (
             <a
               href="/admin"
@@ -664,7 +735,7 @@ export default function SupervisorDashboard() {
           return (
             <button
               key={a.id}
-              onClick={() => setSelectedId(a.id)}
+              onClick={() => { setSelectedId(a.id); localStorage.setItem('ic-control-selected', a.id); }}
               style={{
                 flexShrink: 0,
                 color: isSelected ? '#fff' : '#aaa',

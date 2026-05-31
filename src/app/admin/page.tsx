@@ -1524,6 +1524,48 @@ export default function AdminDashboard() {
         <OperatingHoursControl openingTime={openingTime} closingTime={closingTime} onUpdateOpening={handleOpeningTimeUpdate} onUpdateClosing={handleClosingTimeUpdate} />
       </div>
 
+      {/* ── Sign-off completion banners ── */}
+      {(() => {
+        const rides = attractions.filter((a) => a.attraction_type !== 'show');
+        if (rides.length === 0 || signoffStatuses.size === 0) return null;
+
+        const allOpeningSigned = rides.every((a) => {
+          const s = signoffStatuses.get(a.id);
+          return s && s.openingTotal > 0 && s.openingCompleted === s.openingTotal;
+        });
+        const allClosingSigned = rides.every((a) => {
+          const s = signoffStatuses.get(a.id);
+          return s && s.closingTotal > 0 && s.closingCompleted === s.closingTotal;
+        });
+
+        if (!allOpeningSigned && !allClosingSigned) return null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+            {allOpeningSigned && (
+              <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" stroke="#22C55E" strokeWidth="1.5"/>
+                  <path d="M5 8L7 10L11 6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ color: '#22C55E', fontSize: 14, fontWeight: 600 }}>All Opening Sign-Offs Complete</span>
+                <span style={{ color: '#22C55E', opacity: 0.6, fontSize: 13 }}>— All {rides.length} attractions signed off for opening</span>
+              </div>
+            )}
+            {allClosingSigned && (
+              <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" stroke="#22C55E" strokeWidth="1.5"/>
+                  <path d="M5 8L7 10L11 6" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ color: '#22C55E', fontSize: 14, fontWeight: 600 }}>All Closing Sign-Offs Complete</span>
+                <span style={{ color: '#22C55E', opacity: 0.6, fontSize: 13 }}>— All {rides.length} attractions signed off for closing</span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {attractions.map((attraction, idx) =>
           attraction.attraction_type === 'show' ? (

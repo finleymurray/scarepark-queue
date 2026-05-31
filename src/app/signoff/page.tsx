@@ -287,7 +287,11 @@ export default function SignoffPage() {
 
       if (attractionsData && attractionsData.length > 0) {
         setAttractions(attractionsData);
-        // Do NOT auto-select — show attraction grid first
+        // Restore last-selected attraction if it's still in the allowed list
+        const saved = localStorage.getItem('ic-signoff-selected');
+        if (saved && attractionsData.find((a: Attraction) => a.id === saved)) {
+          setSelectedAttractionId(saved);
+        }
       }
 
       setLoading(false);
@@ -325,6 +329,7 @@ export default function SignoffPage() {
 
   function selectAttraction(id: string) {
     setSelectedAttractionId(id);
+    localStorage.setItem('ic-signoff-selected', id);
     setPhase('opening');
     setActiveSectionId(null);
     setCheckedItems(new Set());
