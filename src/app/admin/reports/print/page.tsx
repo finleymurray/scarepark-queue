@@ -574,9 +574,6 @@ function PrintContent() {
         .signature-img {
           height: 60px; max-width: 220px; object-fit: contain;
           border-bottom: 1.5px solid #333; padding-bottom: 4px;
-          /* Invert legacy white-on-transparent signatures to black for print */
-          filter: invert(1);
-          background: white;
         }
         .signature-blank { width: 220px; height: 60px; border-bottom: 1.5px solid #333; }
         .signature-meta { padding-bottom: 4px; }

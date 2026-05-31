@@ -30,7 +30,10 @@ export default function SignatureCanvas({
     if (!ctx) return;
 
     ctx.scale(dpr, dpr);
-    ctx.strokeStyle = '#ffffff';
+    // Dark ink so the stored PNG is readable on both screen and white paper
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = '#111111';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -98,28 +101,7 @@ export default function SignatureCanvas({
     const canvas = canvasRef.current;
     if (!canvas || !hasStrokes.current) return;
 
-    // Composite onto a white background before saving so the signature
-    // is visible on both dark screens and white printed paper.
-    const offscreen = document.createElement('canvas');
-    offscreen.width = canvas.width;
-    offscreen.height = canvas.height;
-    const offCtx = offscreen.getContext('2d')!;
-    offCtx.fillStyle = '#ffffff';
-    offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
-    offCtx.drawImage(canvas, 0, 0);
-
-    // The strokes are white on white — invert so they become black.
-    const imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
-    const d = imageData.data;
-    for (let i = 0; i < d.length; i += 4) {
-      d[i]     = 255 - d[i];     // R
-      d[i + 1] = 255 - d[i + 1]; // G
-      d[i + 2] = 255 - d[i + 2]; // B
-      // leave alpha unchanged
-    }
-    offCtx.putImageData(imageData, 0, 0);
-
-    onSignatureChange(offscreen.toDataURL('image/png'));
+    onSignatureChange(canvas.toDataURL('image/png'));
   }, [onSignatureChange]);
 
   const handleClear = useCallback(() => {
@@ -128,7 +110,8 @@ export default function SignatureCanvas({
     if (!canvas || !ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
     hasStrokes.current = false;
     onSignatureChange(null);
   }, [onSignatureChange]);
@@ -148,8 +131,8 @@ export default function SignatureCanvas({
         style={{
           width,
           height,
-          background: '#1a1a1a',
-          border: '1px solid #333',
+          background: '#fff',
+          border: '1px solid #444',
           borderRadius: 8,
           touchAction: 'none',
           cursor: 'crosshair',
