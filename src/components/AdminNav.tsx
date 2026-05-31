@@ -69,11 +69,11 @@ export default function AdminNav({
   return (
     <>
       {/* Header bar — logo, user info & sign out */}
-      <div style={{ background: '#111', borderBottom: '1px solid #333', padding: '12px 0' }}>
+      <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
             <Image
-              src="/logo.png"
+              src="/logo-admin.png"
               alt="Immersive Core"
               width={36}
               height={36}

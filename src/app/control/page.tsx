@@ -547,7 +547,7 @@ export default function SupervisorDashboard() {
       {/* Header — logo, user info & sign out */}
       <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-          <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
+          <Image src="/logo-control.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
           <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Field Control</h1>
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>

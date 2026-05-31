@@ -444,7 +444,7 @@ export default function SignoffPage() {
       {/* Header */}
       <div style={{ background: '#1E1E1E', borderBottom: '1px solid #2a2a2a', padding: '12px 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <a href="/signoff" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-          <Image src="/logo.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
+          <Image src="/logo-signoff.png" alt="Immersive Core" width={32} height={32} priority style={{ width: 32, height: 'auto' }} />
           <h1 style={{ color: '#fff', fontSize: 18, fontWeight: 600, margin: 0 }}>Sign-Off</h1>
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
