@@ -449,13 +449,13 @@ export default function SignoffPage() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#aaa' }}>
           {(displayName || userEmail) && (
-            <span title={userEmail} style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span title={userEmail} className="hidden sm:block" style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName || userEmail}
             </span>
           )}
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push('/signoff/login'); }}
-            style={{ background: 'none', border: '1px solid #555', color: '#aaa', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12, transition: 'border-color 0.15s, color 0.15s' }}
+            style={{ background: 'none', border: '1px solid #555', color: '#aaa', padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 13, minHeight: 44, transition: 'border-color 0.15s, color 0.15s' }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#888'; e.currentTarget.style.color = '#fff'; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#555'; e.currentTarget.style.color = '#aaa'; }}
           >
@@ -470,10 +470,10 @@ export default function SignoffPage() {
         {/* Attraction Grid (no attraction selected)      */}
         {/* ────────────────────────────────────────────── */}
         {!selectedAttractionId && (
-          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '32px 24px' }}>
-            <p className="text-[#888] text-sm text-center mb-8">Select an attraction to begin sign-off</p>
+          <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
+            <p className="text-[#666] text-sm text-center mb-6">Select an attraction to begin sign-off</p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {attractions.map((a) => {
                 const logo = getAttractionLogo(a.slug);
                 const glow = getLogoGlow(a.slug);
@@ -483,36 +483,33 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden rounded-[12px] border border-[#333]
-                               transition-all duration-200 touch-manipulation
-                               hover:border-[#555] active:scale-[0.97]
-                               focus:outline-none focus:border-[#6ea8fe] focus:shadow-[0_0_0_2px_rgba(110,168,254,0.2)]"
-                    style={{ aspectRatio: '1', background: '#1E1E1E' }}
+                    className="relative overflow-hidden rounded-[14px] border border-[#2a2a2a]
+                               transition-all duration-150 touch-manipulation flex flex-col
+                               hover:border-[#444] active:scale-[0.97] active:border-[#555]
+                               focus:outline-none"
+                    style={{ background: '#1a1a1a' }}
                   >
-                    {/* Subtle glow radial gradient */}
-                    {glowRgb && (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          background: `radial-gradient(circle at center, rgba(${glowRgb}, 0.12) 0%, transparent 70%)`,
-                        }}
-                      />
-                    )}
-
-                    {/* Logo */}
-                    <div className="relative z-10 flex items-center justify-center h-full p-3">
-                      {logo ? (
-                        <img
-                          src={logo}
-                          alt={a.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="object-contain w-full h-full"
-                          style={{ filter: glow || undefined }}
+                    {/* Logo area */}
+                    <div className="relative w-full" style={{ aspectRatio: '1' }}>
+                      {glowRgb && (
+                        <div
+                          className="absolute inset-0"
+                          style={{ background: `radial-gradient(circle at center, rgba(${glowRgb}, 0.15) 0%, transparent 70%)` }}
                         />
-                      ) : (
-                        <span className="text-[#888] text-3xl font-bold">{a.name.charAt(0)}</span>
                       )}
+                      <div className="relative z-10 flex items-center justify-center w-full h-full p-4">
+                        {logo ? (
+                          <img src={logo} alt={a.name} loading="lazy" decoding="async"
+                            className="object-contain w-full h-full"
+                            style={{ filter: glow || undefined }} />
+                        ) : (
+                          <span className="text-[#888] text-4xl font-bold">{a.name.charAt(0)}</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Name label */}
+                    <div className="px-3 pb-4 pt-1 text-center">
+                      <span className="text-[13px] font-semibold text-[#ccc] leading-tight">{a.name}</span>
                     </div>
                   </button>
                 );
@@ -531,34 +528,35 @@ export default function SignoffPage() {
         {/* Sign-Off View (attraction selected)           */}
         {/* ────────────────────────────────────────────── */}
         {selectedAttraction && (
-          <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '40px 28px' }}>
+          <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: '16px 20px 40px' }}>
             {/* Back button */}
             <button
               onClick={goBackToGrid}
-              className="flex items-center gap-2 text-[#aaa] text-sm font-medium mb-8
-                         hover:text-white transition-colors touch-manipulation"
+              className="flex items-center gap-2 text-[#aaa] font-medium mb-6
+                         active:text-white transition-colors touch-manipulation"
+              style={{ minHeight: 44, fontSize: 15 }}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                 <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               All Attractions
             </button>
 
-            {/* ── Attraction Logo (centered, large) ── */}
+            {/* ── Attraction Logo (centered) ── */}
             {(() => {
               const logo = getAttractionLogo(selectedAttraction.slug);
               const glow = getLogoGlow(selectedAttraction.slug);
               return logo ? (
-                <div className="flex justify-center mb-10">
+                <div className="flex justify-center mb-6">
                   <img src={logo} alt={selectedAttraction.name} loading="lazy" decoding="async"
-                       className="object-contain w-[120px] sm:w-[180px]"
-                       style={{ height: 'auto', maxHeight: 120, filter: glow || undefined }} />
+                       className="object-contain w-[100px] sm:w-[140px]"
+                       style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
                 </div>
               ) : null;
             })()}
 
             {/* ── Sign-Off Status Badge ── */}
-            <div className="mb-12 flex flex-col items-center gap-3">
+            <div className="mb-8 flex flex-col items-center gap-2">
               {fullySignedOff ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -579,14 +577,14 @@ export default function SignoffPage() {
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10" style={{ background: '#1E1E1E' }}>
-              <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
-                <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">1</span>
+            <fieldset className="border border-[#2a2a2a] rounded-[16px] p-4 sm:p-8 mb-8" style={{ background: '#1a1a1a' }}>
+              <legend className="text-base font-semibold text-white px-3 flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-white text-black rounded-full text-sm font-bold">1</span>
                 Sign-Off Sections
               </legend>
 
-              {/* Phase tabs */}
-              <div className="flex border-b border-[#333]" style={{ marginBottom: 28 }}>
+              {/* Phase tabs \u2014 full width */}
+              <div className="flex border-b border-[#2a2a2a] mb-6">
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -601,28 +599,28 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`flex items-center gap-2.5 text-sm font-semibold capitalize transition-colors touch-manipulation relative
+                      className={`flex-1 flex items-center justify-center gap-2 font-semibold transition-colors touch-manipulation relative
                         ${closingLocked
                           ? 'text-[#444] cursor-not-allowed'
                           : active
                             ? 'text-white'
-                            : 'text-[#888] hover:text-white'
+                            : 'text-[#666]'
                         }`}
-                      style={{ padding: '14px 24px' }}
+                      style={{ padding: '16px 8px', fontSize: 15, minHeight: 52 }}
                     >
                       {closingLocked && (
-                        <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                        <svg width="15" height="15" viewBox="0 0 12 12" fill="none">
                           <rect x="2" y="5.5" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                           <path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
                         </svg>
                       )}
                       {p.charAt(0).toUpperCase() + p.slice(1)}
                       {pSections.length > 0 && !closingLocked && (
-                        <span className={`text-xs ${active ? 'opacity-50' : 'opacity-60'}`}>
+                        <span className={`text-sm font-medium ${active ? 'text-[#888]' : 'text-[#555]'}`}>
                           {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
                         </span>
                       )}
-                      {active && <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-white rounded-full" />}
+                      {active && <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-white rounded-full" />}
                     </button>
                   );
                 })}
@@ -630,9 +628,9 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div className="bg-[#1a1a1a] border border-[#333] rounded-[10px] px-6 py-5" style={{ marginBottom: 24 }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[#888] text-[13px]">
+                <div className="bg-[#111] border border-[#2a2a2a] rounded-[12px] px-5 py-4" style={{ marginBottom: 20 }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[#aaa] text-[15px] font-medium">
                       {completedSections}/{totalSections} sections signed off
                     </span>
                     {completedSections === totalSections && (
@@ -683,7 +681,7 @@ export default function SignoffPage() {
               )}
 
               {/* Section cards */}
-              <div className="flex flex-col" style={{ gap: 16 }}>
+              <div className="flex flex-col" style={{ gap: 12 }}>
                 {phaseSections.map((section, idx) => {
                   const completion = completions.get(section.id);
                   const isCompleted = !!completion;
@@ -757,29 +755,25 @@ export default function SignoffPage() {
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div className="px-6 pb-6 border-t border-[#2a2a2a]">
+                        <div className="border-t border-[#2a2a2a]">
                           {sectionItems.length === 0 ? (
-                            <p className="text-[#666] text-sm py-6">No checklist items for this section.</p>
+                            <p className="text-[#666] text-sm py-6 px-6">No checklist items for this section.</p>
                           ) : (
-                            <div className="pt-5 pb-1 flex flex-col gap-3">
+                            <div className="px-4 pt-4 pb-2 flex flex-col gap-3">
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    className={`flex items-center gap-4 px-5 py-5 bg-[#161616] border rounded-[12px] cursor-pointer
-                                      transition-colors touch-manipulation ${checked ? 'border-[rgba(76,175,80,0.4)] bg-[#0d2414]' : 'border-[#2a2a2a] hover:border-[#444]'}`}
+                                    className={`flex items-center gap-4 px-4 py-4 border rounded-[12px] cursor-pointer
+                                      transition-all touch-manipulation ${checked ? 'border-[rgba(76,175,80,0.5)] bg-[#0a1f0e]' : 'border-[#2a2a2a] bg-[#111]'}`}
+                                    style={{ minHeight: 64 }}
                                   >
-                                    <input
-                                      type="checkbox"
-                                      checked={checked}
-                                      onChange={() => toggleItem(item.id)}
-                                      className="hidden"
-                                    />
-                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? '#22C55E' : '#2a2a2a', border: `1.5px solid ${checked ? '#22C55E' : '#444'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
-                                      <div style={{ position: 'absolute', top: 3, left: checked ? 29 : 3, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : '#666', boxShadow: '0 1px 3px rgba(0,0,0,0.4)', transition: 'left 0.2s, background 0.2s' }} />
+                                    <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} className="hidden" />
+                                    <div style={{ width: 64, height: 34, borderRadius: 17, background: checked ? '#22C55E' : '#222', border: `2px solid ${checked ? '#22C55E' : '#3a3a3a'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
+                                      <div style={{ position: 'absolute', top: 3, left: checked ? 33 : 3, width: 26, height: 26, borderRadius: '50%', background: checked ? '#fff' : '#555', boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
                                     </div>
-                                    <span className={`text-[15px] font-medium leading-snug ${checked ? 'text-[#4caf50]' : 'text-[#e0e0e0]'}`}>
+                                    <span className={`text-[16px] font-medium leading-snug flex-1 ${checked ? 'text-[#4caf50]' : 'text-[#e8e8e8]'}`}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -788,34 +782,36 @@ export default function SignoffPage() {
                             </div>
                           )}
 
-                          {/* Sign off button */}
-                          {sectionItems.length > 0 && !allChecked && (
-                            <p className="text-[#666] text-[13px] text-center mt-5 mb-1">
-                              Complete all {sectionItems.length} items above to sign off
-                            </p>
-                          )}
-                          <button
-                            onClick={() => handleSignOffClick(section.id)}
-                            disabled={!allChecked && sectionItems.length > 0}
-                            className="w-full mt-4 text-base font-bold rounded-[12px] transition-all touch-manipulation
-                                       flex items-center justify-center gap-2.5
-                                       disabled:opacity-30 disabled:cursor-not-allowed"
-                            style={{
-                              background: allChecked || sectionItems.length === 0
-                                ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-                                : '#1a1a1a',
-                              border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #333',
-                              color: '#fff',
-                              minHeight: 60,
-                              padding: '18px 24px',
-                              boxShadow: allChecked || sectionItems.length === 0 ? '0 4px 20px rgba(168,85,247,0.35)' : 'none',
-                            }}
-                          >
-                            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                              <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            Sign Off with PIN
-                          </button>
+                          {/* Sign off button — sticky at bottom */}
+                          <div className="sticky bottom-0 px-4 py-4" style={{ background: 'linear-gradient(to bottom, transparent 0%, #1a1a1a 30%)' }}>
+                            {sectionItems.length > 0 && !allChecked && (
+                              <p className="text-[#555] text-[13px] text-center mb-3">
+                                {sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length} item{sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length !== 1 ? 's' : ''} remaining
+                              </p>
+                            )}
+                            <button
+                              onClick={() => handleSignOffClick(section.id)}
+                              disabled={!allChecked && sectionItems.length > 0}
+                              className="w-full text-base font-bold rounded-[14px] transition-all touch-manipulation
+                                         flex items-center justify-center gap-3
+                                         disabled:opacity-25 disabled:cursor-not-allowed"
+                              style={{
+                                background: allChecked || sectionItems.length === 0
+                                  ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
+                                  : '#1f1f1f',
+                                border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #2a2a2a',
+                                color: '#fff',
+                                minHeight: 64,
+                                fontSize: 17,
+                                boxShadow: allChecked || sectionItems.length === 0 ? '0 6px 24px rgba(168,85,247,0.4)' : 'none',
+                              }}
+                            >
+                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                                <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              Sign Off with PIN
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -825,37 +821,38 @@ export default function SignoffPage() {
             </fieldset>
 
             {/* ── Separator ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '12px 0 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '8px 0 16px' }}>
               <div style={{ flex: 1, height: 1, background: '#333' }} />
               <span style={{ color: '#555', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
               <div style={{ flex: 1, height: 1, background: '#333' }} />
             </div>
 
             {/* ── End of Night Report Button ── */}
-            <fieldset className="border border-[#333] rounded-[16px] p-6 sm:p-10 mb-10" style={{ background: '#1E1E1E' }}>
-              <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
-                <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">2</span>
+            <fieldset className="border border-[#2a2a2a] rounded-[16px] p-4 sm:p-8 mb-8" style={{ background: '#1a1a1a' }}>
+              <legend className="text-base font-semibold text-white px-3 flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-white text-black rounded-full text-sm font-bold">2</span>
                 Show Report
               </legend>
-              <p className="text-[#888] text-sm mb-5">
+              <p className="text-[#888] text-[15px] mb-4">
                 Submit an end-of-night report for {selectedAttraction?.name || 'this attraction'}.
               </p>
               <button
                 onClick={() => setShowReportOpen(true)}
                 style={{
                   width: '100%',
-                  padding: '14px 24px',
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: 10,
+                  padding: '18px 24px',
+                  background: '#111',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: 12,
                   color: '#fff',
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: 600,
+                  minHeight: 60,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 10,
+                  gap: 12,
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
