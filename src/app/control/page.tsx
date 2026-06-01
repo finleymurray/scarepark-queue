@@ -124,7 +124,7 @@ function NumericKeypad({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
       <div style={{ width: '100%', maxWidth: 360, background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <p style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{slotLabel}</p>
+          <p style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{slotLabel}</p>
           <p style={{ color: '#F1F5F9', fontSize: 14, marginTop: 4 }}>Enter guest count</p>
         </div>
 
@@ -895,7 +895,7 @@ export default function SupervisorDashboard() {
             <section style={{ marginBottom: 48 }}>
               <div className="flex items-center gap-2.5 mb-5">
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                <h2 style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
+                <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
               </div>
 
               <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
@@ -997,13 +997,13 @@ export default function SupervisorDashboard() {
             <section>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                <h2 style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Hourly Throughput</h2>
+                <h2 style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Hourly Throughput</h2>
               </div>
 
               {slots.length === 0 ? (
                 <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, padding: 24, textAlign: 'center' }}>
-                  <p style={{ color: '#475569', fontSize: 14 }}>Operating hours not set.</p>
-                  <p style={{ color: '#2a2a2a', fontSize: 12, marginTop: 4 }}>Ask a manager to set hours in Admin.</p>
+                  <p style={{ color: '#94A3B8', fontSize: 14 }}>Operating hours not set.</p>
+                  <p style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>Ask a manager to set hours in Admin.</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1072,7 +1072,7 @@ export default function SupervisorDashboard() {
                               <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: isCurrent ? '#3B82F6' : '#F1F5F9' }}>
                                 {guestCount}
                               </span>
-                              <span style={{ color: '#475569', fontSize: 11 }}>hold to edit</span>
+                              <span style={{ color: '#94A3B8', fontSize: 11 }}>hold to edit</span>
                             </>
                           ) : (
                             <span style={{ fontSize: 14, color: isCurrent ? '#3B82F6' : '#2a2a2a' }}>
@@ -1110,7 +1110,7 @@ export default function SupervisorDashboard() {
             <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <p style={{ margin: 0, color: '#F1F5F9', fontSize: 16, fontWeight: 700 }}>Show Report — {selected.name}</p>
-                <p style={{ margin: 0, color: '#475569', fontSize: 11, marginTop: 2 }}>
+                <p style={{ margin: 0, color: '#94A3B8', fontSize: 11, marginTop: 2 }}>
                   {notesSaving === 'saving' ? 'Saving...' :
                    notesSaving === 'saved' && notesLastSaved ? `Saved ${new Date(notesLastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
                    notesSaving === 'error' ? 'Save failed' :
@@ -1126,7 +1126,7 @@ export default function SupervisorDashboard() {
             </div>
             {/* Drawer body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ margin: 0, color: '#475569', fontSize: 12 }}>Notes auto-save every 2 seconds. Submit final report via Sign-Off.</p>
+              <p style={{ margin: 0, color: '#94A3B8', fontSize: 12 }}>Notes auto-save every 2 seconds. Submit final report via Sign-Off.</p>
               {([
                 { key: 'operational_report', label: 'Operational' },
                 { key: 'technical_report', label: 'Technical' },
@@ -1135,7 +1135,7 @@ export default function SupervisorDashboard() {
                 { key: 'additional_notes', label: 'Additional Notes' },
               ] as { key: keyof typeof notesData; label: string }[]).map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ display: 'block', color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
                   <textarea
                     value={notesData[key]}
                     onChange={(e) => handleNotesChange(key, e.target.value)}
@@ -1159,16 +1159,16 @@ export default function SupervisorDashboard() {
         <footer style={{ flexShrink: 0, background: '#111111', borderTop: '1px solid #2a2a2a', padding: '20px 24px' }}>
           <div className="flex items-center justify-between">
             <div>
-              <div style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
+              <div style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
                 {selected.name} Tonight
               </div>
               <div style={{ color: '#22C55E', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
                 {guestsTonight.toLocaleString()}
-                <span style={{ color: '#475569', fontSize: 13, marginLeft: 6 }}>guests</span>
+                <span style={{ color: '#94A3B8', fontSize: 13, marginLeft: 6 }}>guests</span>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ color: '#475569', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
+              <div style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
                 Park Total
               </div>
               <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>

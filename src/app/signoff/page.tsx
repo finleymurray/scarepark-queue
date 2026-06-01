@@ -524,7 +524,7 @@ export default function SignoffPage() {
                             className="object-contain w-full h-full"
                             style={{ filter: glow || undefined }} />
                         ) : (
-                          <span style={{ color: '#475569', fontSize: 36, fontWeight: 700 }}>{a.name.charAt(0)}</span>
+                          <span style={{ color: '#94A3B8', fontSize: 36, fontWeight: 700 }}>{a.name.charAt(0)}</span>
                         )}
                       </div>
                     </div>
@@ -624,7 +624,7 @@ export default function SignoffPage() {
                           ? 'text-[#444] cursor-not-allowed'
                           : active
                             ? 'text-[#F1F5F9]'
-                            : 'text-[#475569]'
+                            : 'text-[#94A3B8]'
                         }`}
                       style={{ padding: '16px 8px', fontSize: 15, minHeight: 52 }}
                     >
@@ -843,7 +843,7 @@ export default function SignoffPage() {
             {/* ── Separator ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '8px 0 16px' }}>
               <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
-              <span style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
+              <span style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
               <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
             </div>
 

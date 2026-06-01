@@ -328,7 +328,7 @@ export default function ScreensPage() {
           <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 20px', marginBottom: 32 }}>
             <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>📺</div>
             <p style={{ color: '#94A3B8', fontSize: 15, marginBottom: 4 }}>No screens registered yet</p>
-            <p style={{ color: '#475569', fontSize: 13 }}>
+            <p style={{ color: '#94A3B8', fontSize: 13 }}>
               Open <code style={{ background: '#1a1a1a', padding: '1px 5px', borderRadius: 3 }}>/screen</code> on a device to register it.
             </p>
           </div>
@@ -429,7 +429,7 @@ function ManagedScreenCard({
                   {screen.label || screen.code}
                 </div>
                 {screen.label && (
-                  <div style={{ fontSize: 11, color: '#475569', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
                     {screen.code}
                   </div>
                 )}
@@ -486,7 +486,7 @@ function ManagedScreenCard({
           )}
           {screen.current_page && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, color: '#475569', fontWeight: 600 }}>Showing:</span>
+              <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Showing:</span>
               <span style={{ fontSize: 11, color: '#999' }}>{getPathLabel(screen.current_page)}</span>
             </div>
           )}
@@ -495,7 +495,7 @@ function ManagedScreenCard({
 
       {/* Path assignment / reassignment */}
       <div style={{ marginBottom: 8 }}>
-        <label style={{ fontSize: 11, color: '#475569', display: 'block', marginBottom: 4 }}>
+        <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 4 }}>
           {screen.assigned_path ? 'Reassign Display' : 'Assign Display'}
         </label>
         <select
@@ -511,9 +511,9 @@ function ManagedScreenCard({
       </div>
 
       {/* Last seen */}
-      <div style={{ fontSize: 11, color: '#475569' }}>
+      <div style={{ fontSize: 11, color: '#94A3B8' }}>
         Last seen: {timeAgo(screen.last_seen)}
-        {screen.name && <span style={{ marginLeft: 8, color: '#475569' }}>({screen.name})</span>}
+        {screen.name && <span style={{ marginLeft: 8, color: '#94A3B8' }}>({screen.name})</span>}
       </div>
 
       <style>{`

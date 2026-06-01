@@ -183,7 +183,7 @@ function UserFormModal({
           <h3 className="text-[#F1F5F9] text-base font-semibold">
             {editing ? 'Edit User' : 'Add User'}
           </h3>
-          <button onClick={onCancel} className="text-[#475569] hover:text-[#F1F5F9] transition-colors p-1 rounded">
+          <button onClick={onCancel} className="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors p-1 rounded">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
@@ -209,14 +209,14 @@ function UserFormModal({
               />
               <div>
                 <span className="text-[#F1F5F9] text-sm font-medium">PIN-only user</span>
-                <p className="text-[#475569] text-xs mt-0.5">No email/password login — sign-off only</p>
+                <p className="text-[#94A3B8] text-xs mt-0.5">No email/password login — sign-off only</p>
               </div>
             </label>
           )}
 
           {/* Basic info section */}
           <div>
-            <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-3">Basic Info</p>
+            <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-3">Basic Info</p>
             <div className="space-y-3">
               {!formPinOnly && (
                 <div>
@@ -257,7 +257,7 @@ function UserFormModal({
                             ? r === 'admin'
                               ? 'bg-red-950/60 text-red-400 shadow-sm'
                               : 'bg-blue-950/60 text-blue-400 shadow-sm'
-                            : 'text-[#475569] hover:text-[#94A3B8]'
+                            : 'text-[#94A3B8] hover:text-[#94A3B8]'
                           }`}
                       >
                         {r}
@@ -273,7 +273,7 @@ function UserFormModal({
 
           {/* Sign-off section */}
           <div>
-            <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-3">Sign-Off</p>
+            <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-3">Sign-Off</p>
             <div className="space-y-3">
               <div>
                 <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">4-Digit PIN</label>
@@ -337,8 +337,8 @@ function UserFormModal({
             <>
               <div className="border-t border-[#2a2a2a]" />
               <div>
-                <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-1">Allowed Attractions</p>
-                <p className="text-[#475569] text-xs mb-3">Leave empty for all attractions.</p>
+                <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-1">Allowed Attractions</p>
+                <p className="text-[#94A3B8] text-xs mb-3">Leave empty for all attractions.</p>
                 <div className="space-y-1.5">
                   {rides.map((a) => {
                     const checked = formAttractions.includes(a.id);
@@ -607,7 +607,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#000]">
-        <div className="text-[#475569] text-sm">Loading...</div>
+        <div className="text-[#94A3B8] text-sm">Loading...</div>
       </div>
     );
   }
@@ -653,21 +653,21 @@ export default function UsersPage() {
               {roleBadge.label}
             </span>
             {isYou && (
-              <span style={{ fontSize: 10, padding: '2px 6px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#475569', borderRadius: 4, fontWeight: 500 }}>you</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#94A3B8', borderRadius: 4, fontWeight: 500 }}>you</span>
             )}
           </div>
           {/* Row 2: email / sign-off roles / attractions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
             {!pinOnly && (
-              <span style={{ color: '#475569', fontSize: 12 }}>{user.email}</span>
+              <span style={{ color: '#94A3B8', fontSize: 12 }}>{user.email}</span>
             )}
             {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
-              <span style={{ color: '#475569', fontSize: 12 }}>
+              <span style={{ color: '#94A3B8', fontSize: 12 }}>
                 {pin.signoff_roles.map((r) => SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r).join(' · ')}
               </span>
             )}
             {user.role !== 'admin' && (
-              <span style={{ color: '#2a2a2a', fontSize: 12 }}>
+              <span style={{ color: '#64748B', fontSize: 12 }}>
                 {getAttractionNames(user.allowed_attractions)}
               </span>
             )}
@@ -677,12 +677,12 @@ export default function UsersPage() {
         {/* PIN reveal — always visible */}
         {pin?.pin && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#475569', letterSpacing: '0.2em', minWidth: 40, textAlign: 'center' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#94A3B8', letterSpacing: '0.2em', minWidth: 40, textAlign: 'center' }}>
               {pinRevealed ? pin.pin : '••••'}
             </span>
             <button
               onClick={() => togglePinReveal(user.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 2, display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 2, display: 'flex', alignItems: 'center' }}
               title={pinRevealed ? 'Hide PIN' : 'Show PIN'}
             >
               {pinRevealed ? (
@@ -705,7 +705,7 @@ export default function UsersPage() {
           {!isYou && (
             <button
               onClick={() => setDeleteTarget(user)}
-              className="px-2.5 py-1 text-[12px] font-medium text-[#475569] hover:text-red-400 transition-colors rounded"
+              className="px-2.5 py-1 text-[12px] font-medium text-[#94A3B8] hover:text-red-400 transition-colors rounded"
             >
               Delete
             </button>
@@ -755,22 +755,30 @@ export default function UsersPage() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex items-center gap-1 mb-5 border-b border-[#2a2a2a] pb-0">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, background: '#111', border: '1px solid #1a1a1a', borderRadius: 10, padding: 4 }}>
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px
-                ${activeTab === tab.key
-                  ? 'border-[#3B82F6] text-[#F1F5F9]'
-                  : 'border-transparent text-[#475569] hover:text-[#94A3B8]'
-                }`}
+              style={{
+                flex: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '8px 12px',
+                borderRadius: 7,
+                fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
+                border: 'none', cursor: 'pointer',
+                background: activeTab === tab.key ? '#1E1E1E' : 'transparent',
+                color: activeTab === tab.key ? '#F1F5F9' : '#94A3B8',
+                transition: 'background 0.15s, color 0.15s',
+                boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+              }}
             >
               {tab.label}
-              <span
-                className={`text-[11px] px-1.5 py-0.5 rounded font-semibold
-                  ${activeTab === tab.key ? 'bg-[#3B82F6]/20 text-[#60a5fa]' : 'bg-[#1a1a1a] text-[#475569]'}`}
-              >
+              <span style={{
+                fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
+                background: activeTab === tab.key ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
+                color: activeTab === tab.key ? '#60A5FA' : '#64748B',
+              }}>
                 {tab.count}
               </span>
             </button>
@@ -780,12 +788,12 @@ export default function UsersPage() {
         {/* User list */}
         {users.length === 0 ? (
           <div className="bg-[#111] border border-[#2a2a2a] p-16 text-center rounded-xl">
-            <p className="text-[#475569] text-sm">No users configured yet.</p>
-            <p className="text-[#2a2a2a] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
+            <p className="text-[#94A3B8] text-sm">No users configured yet.</p>
+            <p className="text-[#64748B] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="bg-[#111] border border-[#2a2a2a] p-12 text-center rounded-xl">
-            <p className="text-[#475569] text-sm">No users in this category.</p>
+            <p className="text-[#94A3B8] text-sm">No users in this category.</p>
           </div>
         ) : (
           <div style={{ border: '1px solid #1a1a1a', borderRadius: 12, overflow: 'hidden' }}>
@@ -798,7 +806,7 @@ export default function UsersPage() {
         )}
 
         <div className="mt-12 text-center">
-          <Link href="/privacy" className="text-[#2a2a2a] text-[11px] no-underline hover:text-[#555]">
+          <Link href="/privacy" className="text-[#64748B] text-[11px] no-underline hover:text-[#555]">
             Privacy Policy
           </Link>
         </div>

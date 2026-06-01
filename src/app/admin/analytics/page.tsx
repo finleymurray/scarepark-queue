@@ -87,8 +87,8 @@ const GRID_STROKE = 'rgba(255,255,255,0.04)';
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <p className="text-[#475569] text-sm">{message}</p>
-      <p className="text-[#2a2a2a] text-xs mt-1">Data is captured automatically when staff update queue times.</p>
+      <p className="text-[#94A3B8] text-sm">{message}</p>
+      <p className="text-[#64748B] text-xs mt-1">Data is captured automatically when staff update queue times.</p>
     </div>
   );
 }
@@ -522,7 +522,7 @@ export default function AnalyticsPage() {
   if (!authenticated) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
-        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
+        <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
@@ -545,7 +545,7 @@ export default function AnalyticsPage() {
               style={{ padding: '7px 12px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
             />
             <div className="flex items-center gap-2">
-              <span className="text-[#475569] text-xs font-medium">From</span>
+              <span className="text-[#94A3B8] text-xs font-medium">From</span>
               <input
                 type="time"
                 value={fromTime}
@@ -554,7 +554,7 @@ export default function AnalyticsPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[#475569] text-xs font-medium">To</span>
+              <span className="text-[#94A3B8] text-xs font-medium">To</span>
               <input
                 type="time"
                 value={toTime}
@@ -588,16 +588,22 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex items-center gap-1 border-b border-[#2a2a2a] mb-6">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24, background: '#111', border: '1px solid #1a1a1a', borderRadius: 10, padding: 4 }}>
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px
-                ${activeTab === tab.key
-                  ? 'border-[#3B82F6] text-[#F1F5F9]'
-                  : 'border-transparent text-[#475569] hover:text-[#94A3B8]'
-                }`}
+              style={{
+                flex: 1,
+                padding: '9px 16px',
+                borderRadius: 7,
+                fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
+                border: 'none', cursor: 'pointer',
+                background: activeTab === tab.key ? '#1E1E1E' : 'transparent',
+                color: activeTab === tab.key ? '#F1F5F9' : '#94A3B8',
+                transition: 'background 0.15s, color 0.15s',
+                boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+              }}
             >
               {tab.label}
             </button>
@@ -606,7 +612,7 @@ export default function AnalyticsPage() {
 
         {loading ? (
           <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-16 text-center">
-            <p className="text-[#475569] text-sm">Loading historical data...</p>
+            <p className="text-[#94A3B8] text-sm">Loading historical data...</p>
           </div>
         ) : !hasData && activeTab !== 'summary' ? (
           <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
@@ -680,7 +686,7 @@ export default function AnalyticsPage() {
                     {/* Status band legend */}
                     {statusPeriods.length > 0 && (
                       <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#2a2a2a]">
-                        <span className="text-[#475569] text-[10px] font-semibold uppercase tracking-wider">Shaded:</span>
+                        <span className="text-[#94A3B8] text-[10px] font-semibold uppercase tracking-wider">Shaded:</span>
                         {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
                           <div key={status} className="flex items-center gap-1.5">
                             <div className="w-3 h-2.5 rounded-sm" style={{ backgroundColor: STATUS_BAND_COLORS[status] }} />
@@ -705,7 +711,7 @@ export default function AnalyticsPage() {
                   <>
                     {/* Total guests */}
                     <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-5">
-                      <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-1">Total Guests</p>
+                      <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-1">Total Guests</p>
                       <p className="text-[#F1F5F9] text-3xl font-bold">
                         {filteredThroughput.reduce((s, l) => s + l.guest_count, 0).toLocaleString()}
                       </p>
@@ -754,7 +760,7 @@ export default function AnalyticsPage() {
                     {combinedChartData.length > 0 && combinedAttractionNames.length > 0 && (
                       <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
                         <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Wait Time vs Throughput</h3>
-                        <p className="text-[#475569] text-xs mb-5">Lines: avg wait time per slot. Bars: guest throughput.</p>
+                        <p className="text-[#94A3B8] text-xs mb-5">Lines: avg wait time per slot. Bars: guest throughput.</p>
                         <ResponsiveContainer width="100%" height={280}>
                           <ComposedChart data={combinedChartData}>
                             <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
@@ -867,11 +873,11 @@ export default function AnalyticsPage() {
                             <table className="w-full text-sm">
                               <thead>
                                 <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
-                                  <th className="text-left text-[#475569] font-medium py-2 pr-4 whitespace-nowrap text-xs">Attraction</th>
+                                  <th className="text-left text-[#94A3B8] font-medium py-2 pr-4 whitespace-nowrap text-xs">Attraction</th>
                                   {allSlots.map((slot) => {
                                     const [start, end] = slot.split('|');
                                     return (
-                                      <th key={slot} className="text-center text-[#475569] font-medium py-2 px-2 whitespace-nowrap text-xs">
+                                      <th key={slot} className="text-center text-[#94A3B8] font-medium py-2 px-2 whitespace-nowrap text-xs">
                                         {start}–{end}
                                       </th>
                                     );
@@ -917,7 +923,7 @@ export default function AnalyticsPage() {
                               <tfoot>
                                 <tr style={{ borderTop: '1px solid #2a2a2a' }}>
                                   <td className="py-3 pr-4">
-                                    <span className="text-[#475569] font-semibold text-sm">Park Total</span>
+                                    <span className="text-[#94A3B8] font-semibold text-sm">Park Total</span>
                                   </td>
                                   {allSlots.map((slot) => {
                                     const total = slotTotals.get(slot) || 0;
@@ -998,7 +1004,7 @@ export default function AnalyticsPage() {
                           {statusLogSummary.map((s) => (
                             <div key={s.attractionId} style={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 10, padding: 14 }}>
                               <div className="text-[#F1F5F9] text-sm font-semibold mb-2">{s.name}</div>
-                              <div className="text-[#475569] text-xs space-y-1.5">
+                              <div className="text-[#94A3B8] text-xs space-y-1.5">
                                 <div>Delays: <span className="text-[#94A3B8] font-semibold">{s.delayCount || '—'}</span></div>
                                 <div>Avg delay: <span className="text-[#94A3B8] font-semibold">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : '—'}</span></div>
                                 <div>Total downtime: <span className="text-[#94A3B8] font-semibold">{s.totalDowntimeMinutes > 0 ? `${s.totalDowntimeMinutes} min` : '—'}</span></div>
@@ -1015,7 +1021,7 @@ export default function AnalyticsPage() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid #2a2a2a', color: '#475569' }}>
+                            <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid #2a2a2a', color: '#94A3B8' }}>
                               <th className="text-left px-3 py-2 font-medium">Time</th>
                               <th className="text-left px-3 py-2 font-medium">Attraction</th>
                               <th className="text-left px-3 py-2 font-medium">Transition</th>
@@ -1039,15 +1045,15 @@ export default function AnalyticsPage() {
 
                               return (
                                 <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
-                                  <td className="px-3 py-2 text-[#475569] tabular-nums text-xs whitespace-nowrap">
+                                  <td className="px-3 py-2 text-[#94A3B8] tabular-nums text-xs whitespace-nowrap">
                                     {new Date(log.changed_at).toLocaleTimeString('en-GB', {
                                       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
                                     })}
                                   </td>
                                   <td className="px-3 py-2 text-[#F1F5F9] font-medium">{name}</td>
                                   <td className="px-3 py-2">
-                                    <span className="text-[#475569]">{log.previous_status || '?'}</span>
-                                    <span className="text-[#2a2a2a] mx-1">&rarr;</span>
+                                    <span className="text-[#94A3B8]">{log.previous_status || '?'}</span>
+                                    <span className="text-[#64748B] mx-1">&rarr;</span>
                                     <span
                                       className="font-medium"
                                       style={{ color: STATUS_LABEL_COLORS[log.status] || '#F1F5F9' }}
@@ -1056,15 +1062,15 @@ export default function AnalyticsPage() {
                                     </span>
                                   </td>
                                   <td className="px-3 py-2 text-[#f0ad4e] text-xs">
-                                    {log.reason || <span className="text-[#2a2a2a]">—</span>}
+                                    {log.reason || <span className="text-[#64748B]">—</span>}
                                     {log.notes && (
-                                      <span className="text-[#475569] ml-1" title={log.notes}>*</span>
+                                      <span className="text-[#94A3B8] ml-1" title={log.notes}>*</span>
                                     )}
                                   </td>
-                                  <td className="px-3 py-2 text-[#475569] tabular-nums text-xs">
-                                    {durationMin !== null ? `${durationMin} min` : <span className="text-[#2a2a2a]">—</span>}
+                                  <td className="px-3 py-2 text-[#94A3B8] tabular-nums text-xs">
+                                    {durationMin !== null ? `${durationMin} min` : <span className="text-[#64748B]">—</span>}
                                   </td>
-                                  <td className="px-3 py-2 text-[#475569] text-xs">{log.changed_by}</td>
+                                  <td className="px-3 py-2 text-[#94A3B8] text-xs">{log.changed_by}</td>
                                 </tr>
                               );
                             })}
@@ -1091,7 +1097,7 @@ export default function AnalyticsPage() {
                     { label: 'Attractions Open', value: String(summaryStats.attractionsOpen) },
                   ].map((stat) => (
                     <div key={stat.label} style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '20px 20px 18px' }}>
-                      <p style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{stat.label}</p>
+                      <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{stat.label}</p>
                       <p style={{ color: '#F1F5F9', fontSize: 26, fontWeight: 700, lineHeight: 1 }}>{stat.value}</p>
                     </div>
                   ))}
@@ -1106,7 +1112,7 @@ export default function AnalyticsPage() {
                         <thead>
                           <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
                             {['Attraction', 'Delays', 'Avg Delay', 'Total Downtime'].map((h) => (
-                              <th key={h} className="text-left px-3 py-2 text-[#475569] text-xs font-semibold uppercase tracking-wider">{h}</th>
+                              <th key={h} className="text-left px-3 py-2 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -1114,9 +1120,9 @@ export default function AnalyticsPage() {
                           {statusLogSummary.map((s) => (
                             <tr key={s.attractionId} style={{ borderBottom: '1px solid #1a1a1a' }}>
                               <td className="px-3 py-3 text-[#F1F5F9] font-medium">{s.name}</td>
-                              <td className="px-3 py-3 text-[#94A3B8]">{s.delayCount > 0 ? s.delayCount : <span className="text-[#2a2a2a]">—</span>}</td>
-                              <td className="px-3 py-3 text-[#94A3B8]">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : <span className="text-[#2a2a2a]">—</span>}</td>
-                              <td className="px-3 py-3 text-[#94A3B8]">{s.totalDowntimeMinutes > 0 ? `${s.totalDowntimeMinutes} min` : <span className="text-[#2a2a2a]">—</span>}</td>
+                              <td className="px-3 py-3 text-[#94A3B8]">{s.delayCount > 0 ? s.delayCount : <span className="text-[#64748B]">—</span>}</td>
+                              <td className="px-3 py-3 text-[#94A3B8]">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : <span className="text-[#64748B]">—</span>}</td>
+                              <td className="px-3 py-3 text-[#94A3B8]">{s.totalDowntimeMinutes > 0 ? `${s.totalDowntimeMinutes} min` : <span className="text-[#64748B]">—</span>}</td>
                             </tr>
                           ))}
                         </tbody>

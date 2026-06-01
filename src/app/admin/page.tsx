@@ -280,7 +280,7 @@ function EditableName({
       title="Click to edit name"
     >
       {name}
-      <svg className="w-3.5 h-3.5 inline-block ml-2 text-[#475569]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-3.5 h-3.5 inline-block ml-2 text-[#94A3B8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     </h3>
@@ -407,14 +407,14 @@ function OperatingHoursControl({
 
       <div className="flex gap-4 text-center mb-3">
         <div className="flex-1">
-          <span style={{ color: '#475569', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Opens</span>
+          <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Opens</span>
           <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
             {openingTime || '--:--'}
           </div>
         </div>
-        <div style={{ color: '#2a2a2a', alignSelf: 'center', fontSize: 18 }}>—</div>
+        <div style={{ color: '#64748B', alignSelf: 'center', fontSize: 18 }}>—</div>
         <div className="flex-1">
-          <span style={{ color: '#475569', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Closes</span>
+          <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Closes</span>
           <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
             {closingTime || '--:--'}
           </div>
@@ -424,7 +424,7 @@ function OperatingHoursControl({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="flex-1">
-            <label style={{ display: 'block', color: '#475569', fontSize: 11, marginBottom: 4 }}>Opening</label>
+            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, marginBottom: 4 }}>Opening</label>
             <input
               type="time"
               value={openValue}
@@ -434,7 +434,7 @@ function OperatingHoursControl({
             />
           </div>
           <div className="flex-1">
-            <label style={{ display: 'block', color: '#475569', fontSize: 11, marginBottom: 4 }}>Closing</label>
+            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, marginBottom: 4 }}>Closing</label>
             <input
               type="time"
               value={closeValue}
@@ -472,7 +472,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('up')}
         disabled={isFirst}
-        className="p-1 text-[#475569] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-[#94A3B8] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move up"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -482,7 +482,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('down')}
         disabled={isLast}
-        className="p-1 text-[#475569] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-[#94A3B8] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move down"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -732,7 +732,7 @@ const RideControl = React.memo(function RideControl({
       <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 12, width: '100%' }}>
         <button
           onClick={() => onDelete(attraction.id, attraction.name)}
-          className="w-full py-2 text-xs text-[#475569] hover:text-[#EF4444] hover:bg-[#EF4444]/10
+          className="w-full py-2 text-xs text-[#94A3B8] hover:text-[#EF4444] hover:bg-[#EF4444]/10
                      rounded-md transition-colors"
         >
           Remove Attraction
@@ -1451,7 +1451,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
-        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
+        <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
@@ -1502,7 +1502,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 40 }}>
         <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24 }}>
-          <h3 style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>Quick Actions</h3>
+          <h3 style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>Quick Actions</h3>
           <div className="flex gap-3">
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
               className="flex-1 btn-quick px-4 py-3.5 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded-md text-sm transition-colors disabled:opacity-50">
@@ -1519,7 +1519,7 @@ export default function AdminDashboard() {
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
             <span style={{ color: '#94A3B8', fontSize: 14 }}>
-              Auto-sort by wait time {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>(ON)</span> : <span style={{ color: '#475569' }}>(OFF)</span>}
+              Auto-sort by wait time {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>(ON)</span> : <span style={{ color: '#94A3B8' }}>(OFF)</span>}
             </span>
           </div>
         </div>

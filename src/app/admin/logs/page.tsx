@@ -415,7 +415,7 @@ export default function LogsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: '1px solid #2a2a2a', color: '#475569', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                <tr style={{ borderBottom: '1px solid #2a2a2a', color: '#94A3B8', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   <th className="text-left px-4 py-3 font-medium">Time</th>
                   <th className="text-left px-4 py-3 font-medium">Attraction</th>
                   <th className="text-left px-4 py-3 font-medium">Action</th>

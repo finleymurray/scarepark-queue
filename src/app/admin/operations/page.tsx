@@ -158,7 +158,7 @@ function QueueChart({
 
   return (
     <div style={{ marginTop: 4 }}>
-      <div style={{ fontSize: 11, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+      <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Queue time tonight
       </div>
       <ResponsiveContainer width="100%" height={90}>
@@ -540,7 +540,7 @@ export default function OperationsPage() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#475569', fontSize: 14 }}>Loading…</div>
+        <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading…</div>
       </div>
     );
   }
@@ -556,7 +556,7 @@ export default function OperationsPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>Operations</h1>
-            <p style={{ color: '#475569', fontSize: 13, margin: '4px 0 0' }}>
+            <p style={{ color: '#94A3B8', fontSize: 13, margin: '4px 0 0' }}>
               {isToday ? "Tonight's operational picture" : `Operational picture for ${selectedDate}`}
             </p>
           </div>

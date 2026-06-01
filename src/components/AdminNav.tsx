@@ -83,7 +83,7 @@ export default function AdminNav({
             />
             <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#475569' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
             {userEmail && (
               <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#94A3B8' }}>
                 {displayName || userEmail}
