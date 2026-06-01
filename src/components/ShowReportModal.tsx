@@ -230,6 +230,12 @@ export default function ShowReportModal({
         return;
       }
 
+      // Check attraction access — null means all attractions permitted
+      if (result.allowedAttractions !== null && !result.allowedAttractions.includes(attractionId)) {
+        setPinError(`You don't have access to submit reports for this attraction.`);
+        return;
+      }
+
       setPinVerified(true);
       setPinUserName(result.userName);
       setPinUserEmail(result.userEmail);

@@ -28,11 +28,13 @@ function PinPadModal({
   onVerified,
   onCancel,
   requiredRole,
+  attractionId,
 }: {
   open: boolean;
   onVerified: (userName: string, userEmail: string) => void;
   onCancel: () => void;
   requiredRole: SignoffRoleKey;
+  attractionId: string;
 }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -85,6 +87,13 @@ function PinPadModal({
 
     if (!result.signoffRoles.includes(requiredRole)) {
       setError(`You don't have the "${SIGNOFF_ROLE_LABELS[requiredRole]}" role.`);
+      setPin('');
+      return;
+    }
+
+    // Check attraction access — null means all attractions permitted
+    if (result.allowedAttractions !== null && !result.allowedAttractions.includes(attractionId)) {
+      setError(`You don't have access to sign off this attraction.`);
       setPin('');
       return;
     }
@@ -450,6 +459,7 @@ export default function SignoffPage() {
         onVerified={handlePinVerified}
         onCancel={() => { setShowPinPad(false); setPinSectionId(null); }}
         requiredRole={(sections.find((s) => s.id === pinSectionId)?.role_key as SignoffRoleKey) || 'supervisor'}
+        attractionId={selectedAttractionId}
       />
 
       {/* Header */}

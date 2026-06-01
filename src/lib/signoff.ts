@@ -22,6 +22,7 @@ export interface PinVerifyResult {
   userName: string;
   userEmail: string;
   signoffRoles: SignoffRoleKey[];
+  allowedAttractions: string[] | null; // null = all attractions
 }
 
 export interface PinVerifyFailure {
@@ -33,7 +34,7 @@ export interface PinVerifyFailure {
 export async function verifyPin(pin: string): Promise<PinVerifyResult | PinVerifyFailure> {
   const { data, error } = await supabase
     .from('signoff_pins')
-    .select('signoff_roles, user_roles!inner(display_name, email)')
+    .select('signoff_roles, user_roles!inner(display_name, email, allowed_attractions)')
     .eq('pin', pin)
     .limit(1)
     .maybeSingle();
@@ -47,7 +48,10 @@ export async function verifyPin(pin: string): Promise<PinVerifyResult | PinVerif
     return { valid: false, error: 'Invalid PIN.' };
   }
 
-  const row = data as unknown as { signoff_roles: SignoffRoleKey[]; user_roles: { display_name: string | null; email: string } };
+  const row = data as unknown as {
+    signoff_roles: SignoffRoleKey[];
+    user_roles: { display_name: string | null; email: string; allowed_attractions: string[] | null };
+  };
   const userRoles = row.user_roles;
   const isPinOnly = userRoles.email.endsWith('@signoff.local');
 
@@ -56,6 +60,7 @@ export async function verifyPin(pin: string): Promise<PinVerifyResult | PinVerif
     userName: userRoles.display_name || userRoles.email,
     userEmail: isPinOnly ? (userRoles.display_name || 'PIN user') : userRoles.email,
     signoffRoles: row.signoff_roles,
+    allowedAttractions: userRoles.allowed_attractions ?? null,
   };
 }
 
