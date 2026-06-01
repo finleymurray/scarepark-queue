@@ -128,13 +128,49 @@ export async function fetchReportData(
 /**
  * Submit (upsert) a show report. Returns success/error status.
  */
+export async function saveShowReportDraft(
+  attractionId: string,
+  _attractionName: string,
+  dateStr: string,
+  notes: {
+    operational_report?: string | null;
+    technical_report?: string | null;
+    costume_report?: string | null;
+    construction_report?: string | null;
+    additional_notes?: string | null;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('show_reports')
+    .upsert({
+      attraction_id: attractionId,
+      report_date: dateStr,
+      is_draft: true,
+      draft_updated_at: new Date().toISOString(),
+      total_operating_minutes: 0,
+      total_guests: 0,
+      hourly_throughput: [],
+      delays: [],
+      signature: null,
+      submitted_by_email: '',
+      submitted_by_name: '',
+      ...notes,
+    }, { onConflict: 'attraction_id,report_date' });
+
+  if (error) {
+    if (process.env.NODE_ENV === 'development') console.error('Draft save error:', error);
+    return { success: false, error: 'Failed to save draft.' };
+  }
+  return { success: true };
+}
+
 export async function submitShowReport(
   report: Omit<ShowReport, 'id' | 'created_at'>,
   attractionName: string,
 ): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase
     .from('show_reports')
-    .upsert(report, { onConflict: 'attraction_id,report_date' });
+    .upsert({ ...report, is_draft: false }, { onConflict: 'attraction_id,report_date' });
 
   if (error) {
     if (process.env.NODE_ENV === 'development') console.error('Show report submit error:', error);

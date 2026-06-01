@@ -103,15 +103,19 @@ export default function ShowReportsPage() {
   }, [selectedDate, selectedAttractionId, fetchReports]);
 
   /* ── Derived data ── */
-  const attractionMap = new Map(attractions.map((a) => [a.id, a]));
+  // Build maps for submitted and draft reports separately
+  const submittedReportMap = new Map(reports.filter((r) => !r.is_draft).map((r) => [r.attraction_id, r]));
+  const draftReportMap = new Map(reports.filter((r) => r.is_draft).map((r) => [r.attraction_id, r]));
+  // reportMap = any report (for backward compat)
   const reportMap = new Map(reports.map((r) => [r.attraction_id, r]));
 
   // Filter attractions based on dropdown selection
   const displayedAttractions = selectedAttractionId === 'all'
     ? attractions
     : attractions.filter((a) => a.id === selectedAttractionId);
-  const submittedCount = displayedAttractions.filter((a) => reportMap.has(a.id)).length;
-  const pendingCount = displayedAttractions.length - submittedCount;
+  const submittedCount = displayedAttractions.filter((a) => submittedReportMap.has(a.id)).length;
+  const draftCount = displayedAttractions.filter((a) => draftReportMap.has(a.id) && !submittedReportMap.has(a.id)).length;
+  const pendingCount = displayedAttractions.length - submittedCount - draftCount;
   const isToday = selectedDate === getTodayDateStr();
 
   const handleLogout = async () => {
@@ -255,6 +259,10 @@ export default function ShowReportsPage() {
             <div style={{ color: '#4caf50', fontSize: 24, fontWeight: 700 }}>{submittedCount}</div>
           </div>
           <div>
+            <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Drafts</span>
+            <div style={{ color: draftCount > 0 ? '#F59E0B' : '#666', fontSize: 24, fontWeight: 700 }}>{draftCount}</div>
+          </div>
+          <div>
             <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Pending</span>
             <div style={{ color: pendingCount > 0 ? '#ffc107' : '#4caf50', fontSize: 24, fontWeight: 700 }}>{pendingCount}</div>
           </div>
@@ -289,19 +297,22 @@ export default function ShowReportsPage() {
         )}
 
         {displayedAttractions.map((attraction, idx) => {
-          const report = reportMap.get(attraction.id);
-          const hasReport = !!report;
+          const submittedReport = submittedReportMap.get(attraction.id);
+          const draftReport = draftReportMap.get(attraction.id);
+          const report = submittedReport || draftReport;
+          const hasSubmitted = !!submittedReport;
+          const hasDraft = !hasSubmitted && !!draftReport;
 
           return (
             <fieldset
               key={attraction.id}
               style={{
-                border: '1px solid #2a2a2a',
+                border: `1px solid ${hasSubmitted ? '#22C55E33' : hasDraft ? '#F59E0B33' : '#2a2a2a'}`,
                 borderRadius: 12,
                 padding: '24px 28px',
                 marginBottom: 20,
                 background: '#111111',
-                opacity: hasReport ? 1 : 0.65,
+                opacity: report ? 1 : 0.65,
               }}
             >
               <legend style={{ color: '#fff', fontSize: 16, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -320,42 +331,58 @@ export default function ShowReportsPage() {
                   {idx + 1}
                 </span>
                 {attraction.name}
-                {hasReport ? (
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '3px 10px',
-                    borderRadius: 12,
-                    background: '#0a3d1f',
-                    color: '#4caf50',
-                  }}>
+                {hasSubmitted ? (
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#0a3d1f', color: '#22C55E' }}>
                     SUBMITTED
                   </span>
+                ) : hasDraft ? (
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#3d2500', color: '#F59E0B' }}>
+                    DRAFT
+                  </span>
                 ) : (
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '3px 10px',
-                    borderRadius: 12,
-                    background: '#3d3000',
-                    color: '#ffc107',
-                  }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 12, background: '#3d3000', color: '#ffc107' }}>
                     NOT YET SUBMITTED
                   </span>
                 )}
               </legend>
 
-              {!hasReport ? (
+              {!report ? (
                 <div style={{ color: '#666', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
                   Awaiting report from supervisor
                 </div>
+              ) : hasDraft ? (
+                <DraftDetail report={draftReport!} />
               ) : (
-                <ReportDetail report={report} />
+                <ReportDetail report={submittedReport!} />
               )}
             </fieldset>
           );
         })}
       </main>
+    </div>
+  );
+}
+
+/* ── Draft Detail Component ── */
+
+function DraftDetail({ report }: { report: ShowReport }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+      <div style={{ background: '#1a1000', border: '1px solid #F59E0B33', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#F59E0B' }}>
+        Draft in progress — not yet submitted.
+        {report.draft_updated_at && ` Last updated: ${formatTimestamp(report.draft_updated_at)}`}
+      </div>
+      {(report.operational_report || report.technical_report || report.costume_report || report.construction_report || report.additional_notes) ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {report.operational_report && <ReportBlock label="Operational Report" text={report.operational_report} borderColor="#6ea8fe" />}
+          {report.technical_report && <ReportBlock label="Technical Report" text={report.technical_report} borderColor="#f0ad4e" />}
+          {report.costume_report && <ReportBlock label="Costume Report" text={report.costume_report} borderColor="#c084fc" />}
+          {report.construction_report && <ReportBlock label="Construction Report" text={report.construction_report} borderColor="#34d399" />}
+          {report.additional_notes && <ReportBlock label="Additional Notes" text={report.additional_notes} borderColor="#94A3B8" />}
+        </div>
+      ) : (
+        <div style={{ color: '#666', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>No notes written yet.</div>
+      )}
     </div>
   );
 }
@@ -427,16 +454,18 @@ function ReportDetail({ report }: { report: ShowReport }) {
       )}
 
       {/* Signature */}
-      <div>
-        <SubLabel text="Signature" />
-        <div style={{ background: '#000000', borderRadius: 8, padding: 12, display: 'inline-block' }}>
-          <img
-            src={report.signature}
-            alt="Supervisor signature"
-            style={{ maxWidth: 300, height: 'auto', display: 'block' }}
-          />
+      {report.signature && (
+        <div>
+          <SubLabel text="Signature" />
+          <div style={{ background: '#000000', borderRadius: 8, padding: 12, display: 'inline-block' }}>
+            <img
+              src={report.signature}
+              alt="Supervisor signature"
+              style={{ maxWidth: 300, height: 'auto', display: 'block' }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Metadata */}
       <div style={{ fontSize: 12, color: '#666', borderTop: '1px solid #2a2a2a', paddingTop: 12 }}>

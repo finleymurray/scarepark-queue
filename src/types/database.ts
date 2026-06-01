@@ -181,8 +181,10 @@ export interface ShowReport {
   costume_report: string | null;
   construction_report: string | null;
   additional_notes: string | null;
-  signature: string;
+  signature: string | null;
   submitted_by_email: string;
   submitted_by_name: string;
+  is_draft: boolean;
+  draft_updated_at: string | null;
   created_at: string;
 }

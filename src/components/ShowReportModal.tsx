@@ -113,6 +113,8 @@ export default function ShowReportModal({
   const [existingReport, setExistingReport] = useState<{ submittedBy: string; submittedAt: string } | null>(null);
   // Draft info
   const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null);
+  // Draft from Field Control
+  const [draftFromField, setDraftFromField] = useState(false);
 
   // PIN verification — submitter identity
   const [pinVerified, setPinVerified] = useState(false);
@@ -139,7 +141,7 @@ export default function ShowReportModal({
       setHourlyThroughput(reportData.hourlyThroughput);
       setDelays(reportData.delays);
 
-      if (existing) {
+      if (existing && !existing.is_draft) {
         // Existing submitted report takes priority
         setOperationalReport(existing.operational_report || '');
         setTechnicalReport(existing.technical_report || '');
@@ -151,6 +153,17 @@ export default function ShowReportModal({
           submittedAt: existing.created_at,
         });
         setDraftInfo(null);
+        setDraftFromField(false);
+      } else if (existing && existing.is_draft) {
+        // DB draft from Field Control notes
+        setOperationalReport(existing.operational_report || '');
+        setTechnicalReport(existing.technical_report || '');
+        setCostumeReport(existing.costume_report || '');
+        setConstructionReport(existing.construction_report || '');
+        setAdditionalNotes(existing.additional_notes || '');
+        setExistingReport(null);
+        setDraftInfo(existing.draft_updated_at ? { savedAt: existing.draft_updated_at } : null);
+        setDraftFromField(true);
       } else {
         // Check for local draft
         const draft = loadDraftFromStorage(attractionId, dateStr);
@@ -168,6 +181,7 @@ export default function ShowReportModal({
           setDraftInfo(null);
         }
         setExistingReport(null);
+        setDraftFromField(false);
       }
     } catch {
       setError('Failed to load report data');
@@ -181,6 +195,7 @@ export default function ShowReportModal({
       setSubmitted(false);
       setDraftSaved(false);
       setSignature(null);
+      setDraftFromField(false);
       setPinVerified(false);
       setPinUserName('');
       setPinUserEmail('');
@@ -267,6 +282,8 @@ export default function ShowReportModal({
         signature,
         submitted_by_email: pinUserEmail,
         submitted_by_name: pinUserName,
+        is_draft: false,
+        draft_updated_at: null,
       },
       attractionName,
     );
@@ -338,7 +355,16 @@ export default function ShowReportModal({
           </div>
         )}
 
-        {!existingReport && draftInfo && (
+        {!existingReport && draftFromField && (
+          <div style={{ background: '#1a1a1a', border: '1px solid #22C55E33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#22C55E', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            Notes pre-loaded from Field Control — review before submitting.
+          </div>
+        )}
+        {!existingReport && !draftFromField && draftInfo && (
           <div style={{ background: '#1a1a1a', border: '1px solid #6ea8fe33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#6ea8fe', display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />

@@ -10,6 +10,7 @@ import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
+import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
 
 /* ── Helpers ── */
 
@@ -210,6 +211,19 @@ export default function SupervisorDashboard() {
   const [signoffStatus, setSignoffStatus] = useState<AttractionSignoffStatus | null>(null);
   const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
   const [delayElapsed, setDelayElapsed] = useState(0);
+
+  // Notes drawer
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesData, setNotesData] = useState({
+    operational_report: '',
+    technical_report: '',
+    costume_report: '',
+    construction_report: '',
+    additional_notes: '',
+  });
+  const [notesSaving, setNotesSaving] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [notesLastSaved, setNotesLastSaved] = useState<string | null>(null);
 
   // Push notifications — per-device opt-in stored in localStorage
   const [notifEnabled, setNotifEnabled] = useState(false);
@@ -420,6 +434,48 @@ export default function SupervisorDashboard() {
       if (channel) supabase.removeChannel(channel);
     };
   }, [selectedId]);
+
+  // Load existing notes when drawer opens or selectedId changes while open
+  useEffect(() => {
+    if (!notesOpen || !selectedId) return;
+    let cancelled = false;
+    async function loadNotes() {
+      const today = new Date().toISOString().split('T')[0];
+      const existing = await getExistingReport(selectedId!, today);
+      if (!cancelled && existing) {
+        setNotesData({
+          operational_report: existing.operational_report || '',
+          technical_report: existing.technical_report || '',
+          costume_report: existing.costume_report || '',
+          construction_report: existing.construction_report || '',
+          additional_notes: existing.additional_notes || '',
+        });
+      } else if (!cancelled) {
+        setNotesData({ operational_report: '', technical_report: '', costume_report: '', construction_report: '', additional_notes: '' });
+      }
+    }
+    loadNotes();
+    return () => { cancelled = true; };
+  }, [notesOpen, selectedId]);
+
+  // Auto-save notes with 2s debounce
+  function handleNotesChange(field: keyof typeof notesData, value: string) {
+    setNotesData((prev) => ({ ...prev, [field]: value }));
+    setNotesSaving('saving');
+    if (notesSaveTimer.current) clearTimeout(notesSaveTimer.current);
+    notesSaveTimer.current = setTimeout(async () => {
+      if (!selectedId || !selected) return;
+      const today = new Date().toISOString().split('T')[0];
+      const updated = { ...notesData, [field]: value };
+      const result = await saveShowReportDraft(selectedId, selected.name, today, updated);
+      if (result.success) {
+        setNotesSaving('saved');
+        setNotesLastSaved(new Date().toISOString());
+      } else {
+        setNotesSaving('error');
+      }
+    }, 2000);
+  }
 
   // Fetch throughput logs for today
   const fetchThroughputLogs = useCallback(async () => {
@@ -913,6 +969,26 @@ export default function SupervisorDashboard() {
               </div>
             </section>
 
+            {/* ── Field Notes Button ── */}
+            {selected.attraction_type !== 'show' && (
+              <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setNotesOpen(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 20px',
+                    background: '#111111', border: '1px solid #2a2a2a', borderRadius: 10,
+                    color: '#94A3B8', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+                >
+                  📝 Field Notes
+                </button>
+              </div>
+            )}
+
             {/* ── Hourly Throughput ── */}
             <section>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
@@ -1010,6 +1086,69 @@ export default function SupervisorDashboard() {
           </>
         )}
       </div>
+
+      {/* ── Field Notes Drawer ── */}
+      {notesOpen && selected && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.85)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setNotesOpen(false); }}
+        >
+          <div
+            style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              height: '85%', background: '#111111',
+              borderTop: '1px solid #2a2a2a',
+              borderRadius: '16px 16px 0 0',
+              display: 'flex', flexDirection: 'column',
+            }}
+          >
+            {/* Drawer header */}
+            <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ margin: 0, color: '#F1F5F9', fontSize: 16, fontWeight: 700 }}>Field Notes — {selected.name}</p>
+                <p style={{ margin: 0, color: '#475569', fontSize: 11, marginTop: 2 }}>
+                  {notesSaving === 'saving' ? 'Saving...' :
+                   notesSaving === 'saved' && notesLastSaved ? `Saved ${new Date(notesLastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
+                   notesSaving === 'error' ? 'Save failed' :
+                   'Auto-saves every 2 seconds'}
+                </p>
+              </div>
+              <button
+                onClick={() => setNotesOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+            {/* Drawer body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ margin: 0, color: '#475569', fontSize: 12 }}>Notes auto-save every 2 seconds. Submit final report via Sign-Off.</p>
+              {([
+                { key: 'operational_report', label: 'Operational' },
+                { key: 'technical_report', label: 'Technical' },
+                { key: 'costume_report', label: 'Costume' },
+                { key: 'construction_report', label: 'Construction' },
+                { key: 'additional_notes', label: 'Additional Notes' },
+              ] as { key: keyof typeof notesData; label: string }[]).map(({ key, label }) => (
+                <div key={key}>
+                  <label style={{ display: 'block', color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <textarea
+                    value={notesData[key]}
+                    onChange={(e) => handleNotesChange(key, e.target.value)}
+                    rows={4}
+                    placeholder={`${label} notes...`}
+                    style={{
+                      width: '100%', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8,
+                      color: '#F1F5F9', fontSize: 14, padding: '10px 12px', resize: 'vertical',
+                      fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
