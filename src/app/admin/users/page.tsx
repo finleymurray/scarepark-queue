@@ -633,98 +633,69 @@ export default function UsersPage() {
     return (
       <div
         key={user.id}
-        className="flex items-center gap-4 px-4 py-3 bg-[#111] border border-[#2a2a2a] rounded-xl hover:border-[#3a3a3a] transition-colors group"
-        style={{ minHeight: 64 }}
+        style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}
       >
         {/* Avatar */}
         <div
-          className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
-          style={{ background: avatarBg.bg, color: avatarBg.color, border: `1.5px solid ${avatarBg.border}` }}
+          style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: avatarBg.bg, color: avatarBg.color, border: `1.5px solid ${avatarBg.border}` }}
         >
           {(user.display_name || user.email).charAt(0).toUpperCase()}
         </div>
 
-        {/* Name + email */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[#F1F5F9] text-[15px] font-semibold truncate">
+        {/* Name + meta — takes remaining space */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Row 1: name + role badge + "you" chip */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ color: '#F1F5F9', fontSize: 14, fontWeight: 600 }}>
               {user.display_name || (pinOnly ? 'PIN User' : user.email.split('@')[0])}
             </span>
-            {isYou && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-[#1a1a1a] border border-[#2a2a2a] text-[#475569] rounded font-medium flex-shrink-0">
-                you
-              </span>
-            )}
-          </div>
-          {!pinOnly && (
-            <p className="text-[#475569] text-[13px] truncate">{user.email}</p>
-          )}
-          {pinOnly && (
-            <p className="text-[#475569] text-[13px]">PIN Only</p>
-          )}
-        </div>
-
-        {/* Role badge */}
-        <div className="flex-shrink-0 hidden sm:block">
-          <span
-            className="text-[11px] px-2 py-1 rounded-full font-semibold"
-            style={{ background: roleBadge.bg, color: roleBadge.color }}
-          >
-            {roleBadge.label}
-          </span>
-        </div>
-
-        {/* Sign-off roles */}
-        {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
-          <div className="hidden lg:flex items-center gap-1 flex-shrink-0">
-            {pin.signoff_roles.slice(0, 2).map((r) => (
-              <span key={r} className="text-[10px] px-2 py-0.5 bg-[#1a1a1a] border border-[#2a2a2a] text-[#475569] rounded-full">
-                {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
-              </span>
-            ))}
-            {pin.signoff_roles.length > 2 && (
-              <span className="text-[10px] text-[#475569]">+{pin.signoff_roles.length - 2}</span>
-            )}
-          </div>
-        )}
-
-        {/* Attractions */}
-        {user.role !== 'admin' && (
-          <div className="hidden xl:block flex-shrink-0 max-w-[140px]">
-            <span className="text-[11px] text-[#475569] truncate block">
-              {getAttractionNames(user.allowed_attractions)}
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', padding: '2px 7px', borderRadius: 4, background: roleBadge.bg, color: roleBadge.color }}>
+              {roleBadge.label}
             </span>
+            {isYou && (
+              <span style={{ fontSize: 10, padding: '2px 6px', background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#475569', borderRadius: 4, fontWeight: 500 }}>you</span>
+            )}
           </div>
-        )}
+          {/* Row 2: email / sign-off roles / attractions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+            {!pinOnly && (
+              <span style={{ color: '#475569', fontSize: 12 }}>{user.email}</span>
+            )}
+            {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
+              <span style={{ color: '#475569', fontSize: 12 }}>
+                {pin.signoff_roles.map((r) => SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r).join(' · ')}
+              </span>
+            )}
+            {user.role !== 'admin' && (
+              <span style={{ color: '#2a2a2a', fontSize: 12 }}>
+                {getAttractionNames(user.allowed_attractions)}
+              </span>
+            )}
+          </div>
+        </div>
 
-        {/* PIN reveal */}
+        {/* PIN reveal — always visible */}
         {pin?.pin && (
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="font-mono text-[13px] text-[#475569] tracking-widest w-10 text-center">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#475569', letterSpacing: '0.2em', minWidth: 40, textAlign: 'center' }}>
               {pinRevealed ? pin.pin : '••••'}
             </span>
             <button
               onClick={() => togglePinReveal(user.id)}
-              className="text-[#475569] hover:text-[#94A3B8] transition-colors p-0.5"
-              title={pinRevealed ? 'Hide PIN' : 'Reveal PIN'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 2, display: 'flex', alignItems: 'center' }}
+              title={pinRevealed ? 'Hide PIN' : 'Show PIN'}
             >
               {pinRevealed ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/>
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/></svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               )}
             </button>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions — always visible */}
+        <div className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={() => startEdit(user)}
             className="px-2.5 py-1 text-[12px] font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors rounded"
@@ -817,8 +788,12 @@ export default function UsersPage() {
             <p className="text-[#475569] text-sm">No users in this category.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filteredUsers.map(renderUserRow)}
+          <div style={{ border: '1px solid #1a1a1a', borderRadius: 12, overflow: 'hidden' }}>
+            {filteredUsers.map((user, idx) => (
+              <div key={user.id} style={{ borderTop: idx === 0 ? 'none' : '1px solid #1a1a1a' }}>
+                {renderUserRow(user)}
+              </div>
+            ))}
           </div>
         )}
 

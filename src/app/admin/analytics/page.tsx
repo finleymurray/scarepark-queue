@@ -998,10 +998,10 @@ export default function AnalyticsPage() {
                           {statusLogSummary.map((s) => (
                             <div key={s.attractionId} style={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 10, padding: 14 }}>
                               <div className="text-[#F1F5F9] text-sm font-semibold mb-2">{s.name}</div>
-                              <div className="text-[#475569] text-xs space-y-1">
-                                <div>Delays: <span className="text-[#f0ad4e] font-semibold">{s.delayCount}</span></div>
-                                <div>Avg delay: <span className="text-[#94A3B8] font-semibold">{s.avgDelayMinutes} min</span></div>
-                                <div>Total downtime: <span className="text-red-400 font-semibold">{s.totalDowntimeMinutes} min</span></div>
+                              <div className="text-[#475569] text-xs space-y-1.5">
+                                <div>Delays: <span className="text-[#94A3B8] font-semibold">{s.delayCount || '—'}</span></div>
+                                <div>Avg delay: <span className="text-[#94A3B8] font-semibold">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : '—'}</span></div>
+                                <div>Total downtime: <span className="text-[#94A3B8] font-semibold">{s.totalDowntimeMinutes > 0 ? `${s.totalDowntimeMinutes} min` : '—'}</span></div>
                               </div>
                             </div>
                           ))}
@@ -1083,16 +1083,16 @@ export default function AnalyticsPage() {
                 {/* Key stat cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                   {[
-                    { label: 'Total Guests', value: summaryStats.totalGuests.toLocaleString(), color: '#22C55E' },
-                    { label: 'Avg Wait Time', value: summaryStats.avgWait > 0 ? `${summaryStats.avgWait} min` : '—', color: '#3B82F6' },
-                    { label: 'Total Downtime', value: summaryStats.totalDowntime > 0 ? `${summaryStats.totalDowntime} min` : '0 min', color: '#EF4444' },
-                    { label: 'Uptime %', value: summaryStats.uptimePct !== null ? `${summaryStats.uptimePct}%` : '—', color: '#22C55E' },
-                    { label: 'Delay Incidents', value: String(summaryStats.delayIncidents), color: '#F59E0B' },
-                    { label: 'Attractions Open', value: String(summaryStats.attractionsOpen), color: '#8B5CF6' },
+                    { label: 'Total Guests', value: summaryStats.totalGuests.toLocaleString() },
+                    { label: 'Avg Wait Time', value: summaryStats.avgWait > 0 ? `${summaryStats.avgWait} min` : '—' },
+                    { label: 'Total Downtime', value: summaryStats.totalDowntime > 0 ? `${summaryStats.totalDowntime} min` : '—' },
+                    { label: 'Uptime', value: summaryStats.uptimePct !== null ? `${summaryStats.uptimePct}%` : '—' },
+                    { label: 'Delay Incidents', value: String(summaryStats.delayIncidents) },
+                    { label: 'Attractions Open', value: String(summaryStats.attractionsOpen) },
                   ].map((stat) => (
-                    <div key={stat.label} className="bg-[#111] border border-[#2a2a2a] rounded-xl p-5">
-                      <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-2">{stat.label}</p>
-                      <p className="text-[#F1F5F9] text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                    <div key={stat.label} style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '20px 20px 18px' }}>
+                      <p style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{stat.label}</p>
+                      <p style={{ color: '#F1F5F9', fontSize: 26, fontWeight: 700, lineHeight: 1 }}>{stat.value}</p>
                     </div>
                   ))}
                 </div>
@@ -1113,10 +1113,10 @@ export default function AnalyticsPage() {
                         <tbody>
                           {statusLogSummary.map((s) => (
                             <tr key={s.attractionId} style={{ borderBottom: '1px solid #1a1a1a' }}>
-                              <td className="px-3 py-2.5 text-[#F1F5F9] font-medium">{s.name}</td>
-                              <td className="px-3 py-2.5 text-[#f0ad4e] font-semibold">{s.delayCount}</td>
-                              <td className="px-3 py-2.5 text-[#94A3B8]">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : '—'}</td>
-                              <td className="px-3 py-2.5 text-red-400 font-semibold">{s.totalDowntimeMinutes} min</td>
+                              <td className="px-3 py-3 text-[#F1F5F9] font-medium">{s.name}</td>
+                              <td className="px-3 py-3 text-[#94A3B8]">{s.delayCount > 0 ? s.delayCount : <span className="text-[#2a2a2a]">—</span>}</td>
+                              <td className="px-3 py-3 text-[#94A3B8]">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : <span className="text-[#2a2a2a]">—</span>}</td>
+                              <td className="px-3 py-3 text-[#94A3B8]">{s.totalDowntimeMinutes > 0 ? `${s.totalDowntimeMinutes} min` : <span className="text-[#2a2a2a]">—</span>}</td>
                             </tr>
                           ))}
                         </tbody>
