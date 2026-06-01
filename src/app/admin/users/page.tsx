@@ -175,189 +175,185 @@ function UserFormModal({
     }
   }
 
+  const inputStyle = {
+    width: '100%', padding: '10px 14px',
+    background: '#000', border: '1px solid #2a2a2a', borderRadius: 8,
+    color: '#F1F5F9', fontSize: 14, outline: 'none',
+  } as const;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" style={{ overflowY: 'auto' }}>
-      <div className="bg-[#111] border border-[#2a2a2a] w-full max-w-[520px] my-8 rounded-xl" onClick={(e) => e.stopPropagation()}>
-        {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a2a]">
-          <h3 className="text-[#F1F5F9] text-base font-semibold">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', padding: '16px', overflowY: 'auto' }}>
+      <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 16, width: '100%', maxWidth: 560, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }} onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0' }}>
+          <h3 style={{ color: '#F1F5F9', fontSize: 18, fontWeight: 700, margin: 0 }}>
             {editing ? 'Edit User' : 'Add User'}
           </h3>
-          <button onClick={onCancel} className="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors p-1 rounded">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+          <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: 4, display: 'flex', borderRadius: 6 }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 5L13 13M13 5L5 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        {/* Scrollable body */}
+        <div style={{ overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
           {formError && (
-            <div className="bg-red-950/40 border border-red-700/40 rounded-lg p-3">
-              <p className="text-red-300 text-sm">{formError}</p>
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px' }}>
+              <p style={{ color: '#FCA5A5', fontSize: 13, margin: 0 }}>{formError}</p>
             </div>
           )}
 
-          {/* PIN-only toggle */}
+          {/* ── User type toggle ── */}
           {!editing && (
-            <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-[#000] border border-[#2a2a2a] rounded-lg hover:border-[#3B82F6]/40 transition-colors">
-              <input
-                type="checkbox"
-                checked={formPinOnly}
-                onChange={(e) => setFormPinOnly(e.target.checked)}
-                className="w-4 h-4"
-                style={{ accentColor: '#3B82F6' }}
-              />
-              <div>
-                <span className="text-[#F1F5F9] text-sm font-medium">PIN-only user</span>
-                <p className="text-[#94A3B8] text-xs mt-0.5">No email/password login — sign-off only</p>
+            <div>
+              <p style={{ color: '#64748B', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>User Type</p>
+              <div style={{ display: 'flex', background: '#000', border: '1px solid #2a2a2a', borderRadius: 10, padding: 4, gap: 4 }}>
+                {[
+                  { value: false, label: 'Email User', desc: 'Can log into Field Control & Admin' },
+                  { value: true,  label: 'PIN Only',   desc: 'Sign-off only, no app login' },
+                ].map(({ value, label, desc }) => (
+                  <button key={label} onClick={() => setFormPinOnly(value)}
+                    style={{
+                      flex: 1, padding: '10px 14px', borderRadius: 7, border: 'none', cursor: 'pointer', textAlign: 'left',
+                      background: formPinOnly === value ? '#1a1a1a' : 'transparent',
+                      boxShadow: formPinOnly === value ? '0 1px 3px rgba(0,0,0,0.5)' : 'none',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <div style={{ color: formPinOnly === value ? '#F1F5F9' : '#64748B', fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{label}</div>
+                    <div style={{ color: formPinOnly === value ? '#64748B' : '#374151', fontSize: 11 }}>{desc}</div>
+                  </button>
+                ))}
               </div>
-            </label>
+            </div>
           )}
 
-          {/* Basic info section */}
-          <div>
-            <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-3">Basic Info</p>
-            <div className="space-y-3">
-              {!formPinOnly && (
-                <div>
-                  <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Email</label>
-                  <input
-                    type="email"
-                    value={formEmail}
-                    onChange={(e) => setFormEmail(e.target.value)}
-                    disabled={!!editing}
-                    placeholder="user@example.com"
-                    className="w-full px-3.5 py-2.5 bg-[#000] border border-[#2a2a2a] rounded-lg text-[#F1F5F9] text-sm
-                               placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
-                               disabled:opacity-40"
-                  />
-                </div>
-              )}
+          {/* ── Basic info ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ color: '#64748B', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Basic Info</p>
+
+            {!formPinOnly && (
               <div>
-                <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Display Name</label>
-                <input
-                  type="text"
-                  value={formDisplayName}
-                  onChange={(e) => setFormDisplayName(e.target.value)}
-                  placeholder="e.g. John S."
-                  className="w-full px-3.5 py-2.5 bg-[#000] border border-[#2a2a2a] rounded-lg text-[#F1F5F9] text-sm
-                             placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
+                <label style={{ display: 'block', color: '#94A3B8', fontSize: 12, fontWeight: 500, marginBottom: 6 }}>Email</label>
+                <input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)}
+                  disabled={!!editing} placeholder="user@example.com"
+                  style={{ ...inputStyle, opacity: editing ? 0.4 : 1 }}
+                  onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.12)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
-              {!formPinOnly && (
-                <div>
-                  <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Role</label>
-                  <div className="flex gap-2 p-1 bg-[#000] border border-[#2a2a2a] rounded-lg">
-                    {(['supervisor', 'admin'] as const).map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setFormRole(r)}
-                        className={`flex-1 py-2 rounded-md text-sm font-medium capitalize transition-all
-                          ${formRole === r
-                            ? r === 'admin'
-                              ? 'bg-red-950/60 text-red-400 shadow-sm'
-                              : 'bg-blue-950/60 text-blue-400 shadow-sm'
-                            : 'text-[#94A3B8] hover:text-[#94A3B8]'
-                          }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            )}
+
+            <div>
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 12, fontWeight: 500, marginBottom: 6 }}>Display Name</label>
+              <input type="text" value={formDisplayName} onChange={(e) => setFormDisplayName(e.target.value)}
+                placeholder="e.g. Jane S." style={inputStyle}
+                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.12)'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+              />
             </div>
-          </div>
 
-          <div className="border-t border-[#2a2a2a]" />
-
-          {/* Sign-off section */}
-          <div>
-            <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-3">Sign-Off</p>
-            <div className="space-y-3">
+            {!formPinOnly && (
               <div>
-                <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">4-Digit PIN</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={4}
-                    value={formPin}
-                    onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="0000"
-                    className="flex-1 px-3.5 py-2.5 bg-[#000] border border-[#2a2a2a] rounded-lg text-[#F1F5F9] text-sm
-                               placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
-                               tracking-[0.4em] font-mono text-center text-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const pin = String(Math.floor(1000 + Math.random() * 9000));
-                      setFormPin(pin);
-                    }}
-                    className="px-3.5 py-2.5 border border-[#2a2a2a] rounded-lg text-[#94A3B8] text-xs font-semibold
-                               hover:border-[#555] hover:text-[#F1F5F9] transition-colors whitespace-nowrap"
-                  >
-                    Generate
-                  </button>
+                <label style={{ display: 'block', color: '#94A3B8', fontSize: 12, fontWeight: 500, marginBottom: 6 }}>App Role</label>
+                <div style={{ display: 'flex', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, padding: 4, gap: 4 }}>
+                  {(['supervisor', 'admin'] as const).map((r) => (
+                    <button key={r} onClick={() => setFormRole(r)}
+                      style={{
+                        flex: 1, padding: '9px 0', borderRadius: 6, border: 'none', cursor: 'pointer',
+                        fontSize: 13, fontWeight: 600, textTransform: 'capitalize',
+                        background: formRole === r ? (r === 'admin' ? 'rgba(239,68,68,0.12)' : 'rgba(59,130,246,0.12)') : 'transparent',
+                        color: formRole === r ? (r === 'admin' ? '#F87171' : '#60A5FA') : '#64748B',
+                        transition: 'all 0.15s',
+                      }}>
+                      {r === 'supervisor' ? 'Supervisor' : 'Admin'}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Roles</label>
-                <div className="space-y-1.5">
-                  {ALL_SIGNOFF_ROLES.map((role) => {
-                    const checked = formSignoffRoles.includes(role);
-                    return (
-                      <button
-                        key={role}
-                        onClick={() => toggleSignoffRole(role)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left transition-colors border
-                          ${checked ? 'bg-emerald-950/40 border-emerald-700/40 text-emerald-400' : 'bg-[#000] border-[#2a2a2a] text-[#94A3B8] hover:border-[#555]'}`}
-                      >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors
-                          ${checked ? 'bg-emerald-600' : 'border border-[#555]'}`}>
-                          {checked && (
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-sm">{SIGNOFF_ROLE_LABELS[role]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            )}
+          </div>
+
+          <div style={{ height: 1, background: '#1a1a1a' }} />
+
+          {/* ── Sign-off PIN & Roles ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ color: '#64748B', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Sign-Off</p>
+
+            <div>
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 12, fontWeight: 500, marginBottom: 6 }}>4-Digit PIN</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={4}
+                  value={formPin} onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="——"
+                  style={{ ...inputStyle, flex: 1, fontFamily: 'monospace', fontSize: 22, fontWeight: 700, letterSpacing: '0.5em', textAlign: 'center', paddingLeft: 0 }}
+                  onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.12)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button type="button" onClick={() => setFormPin(String(Math.floor(1000 + Math.random() * 9000)))}
+                  style={{ padding: '10px 16px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#94A3B8', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  Generate
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', color: '#94A3B8', fontSize: 12, fontWeight: 500, marginBottom: 8 }}>Sign-Off Roles</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {ALL_SIGNOFF_ROLES.map((role) => {
+                  const checked = formSignoffRoles.includes(role);
+                  return (
+                    <button key={role} onClick={() => toggleSignoffRole(role)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                        background: checked ? 'rgba(34,197,94,0.08)' : '#000',
+                        border: `1px solid ${checked ? 'rgba(34,197,94,0.25)' : '#2a2a2a'}`,
+                        borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                      }}>
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: checked ? '#22C55E' : 'transparent',
+                        border: checked ? 'none' : '1.5px solid #3a3a3a',
+                      }}>
+                        {checked && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: checked ? '#86EFAC' : '#94A3B8' }}>{SIGNOFF_ROLE_LABELS[role]}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Allowed attractions (supervisors only) */}
+          {/* ── Allowed attractions ── */}
           {(formRole === 'supervisor' || formPinOnly) && (
             <>
-              <div className="border-t border-[#2a2a2a]" />
+              <div style={{ height: 1, background: '#1a1a1a' }} />
               <div>
-                <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-1">Allowed Attractions</p>
-                <p className="text-[#94A3B8] text-xs mb-3">Leave empty for all attractions.</p>
-                <div className="space-y-1.5">
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <p style={{ color: '#64748B', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Allowed Attractions</p>
+                  <span style={{ color: '#374151', fontSize: 11 }}>Leave empty for all</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                   {rides.map((a) => {
                     const checked = formAttractions.includes(a.id);
                     return (
-                      <button
-                        key={a.id}
-                        onClick={() => toggleAttraction(a.id)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left transition-colors border
-                          ${checked ? 'bg-[#111] border-[#555] text-[#F1F5F9]' : 'bg-[#000] border-[#2a2a2a] text-[#94A3B8] hover:border-[#555]'}`}
-                      >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors
-                          ${checked ? 'bg-emerald-600' : 'border border-[#555]'}`}>
-                          {checked && (
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
+                      <button key={a.id} onClick={() => toggleAttraction(a.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                          background: checked ? 'rgba(59,130,246,0.08)' : '#000',
+                          border: `1px solid ${checked ? 'rgba(59,130,246,0.25)' : '#2a2a2a'}`,
+                          borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                        }}>
+                        <div style={{
+                          width: 16, height: 16, borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: checked ? '#3B82F6' : 'transparent',
+                          border: checked ? 'none' : '1.5px solid #3a3a3a',
+                        }}>
+                          {checked && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </div>
-                        <span className="text-sm">{a.name}</span>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: checked ? '#93C5FD' : '#94A3B8' }}>{a.name}</span>
                       </button>
                     );
                   })}
@@ -367,22 +363,15 @@ function UserFormModal({
           )}
         </div>
 
-        {/* Modal footer */}
-        <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a]">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2.5 border border-[#2a2a2a] text-[#94A3B8] text-sm font-medium
-                       rounded-lg hover:border-[#555] hover:text-[#F1F5F9] transition-colors"
-          >
+        {/* Footer */}
+        <div style={{ display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #1a1a1a' }}>
+          <button onClick={onCancel}
+            style={{ flex: 1, padding: '11px 0', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, color: '#94A3B8', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Cancel
           </button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="flex-1 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-sm font-semibold rounded-lg
-                       transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create User'}
+          <button onClick={handleSubmit} disabled={saving}
+            style={{ flex: 2, padding: '11px 0', background: saving ? '#1D4ED8' : '#2563EB', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'background 0.15s' }}>
+            {saving ? 'Saving…' : editing ? 'Save Changes' : 'Create User'}
           </button>
         </div>
       </div>
@@ -786,7 +775,9 @@ export default function UsersPage() {
           </div>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-sm font-semibold rounded-lg transition-colors flex-shrink-0"
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', background: '#2563EB', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0, boxShadow: '0 1px 3px rgba(37,99,235,0.3)', letterSpacing: '-0.01em' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1D4ED8'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#2563EB'; }}
           >
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
