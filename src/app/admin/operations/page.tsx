@@ -100,35 +100,28 @@ function formatTooltipTime(ms: number): string {
 function QueueChart({
   history,
   delays,
-  openTime,
-  closeTime,
 }: {
   history: AttractionHistory[];
   delays: DelayIncident[];
-  openTime: string;   // "18:00"
-  closeTime: string;  // "23:00"
 }) {
-  if (!openTime || !closeTime) return null;
+  if (history.length === 0) return null;
 
-  // Build x-axis domain from opening/closing times (today's date)
-  const today = new Date().toISOString().split('T')[0];
-  const [oh, om] = openTime.split(':').map(Number);
-  const [ch, cm] = closeTime.split(':').map(Number);
-  let domainStart = new Date(`${today}T${openTime}:00`).getTime();
-  let domainEnd   = new Date(`${today}T${closeTime}:00`).getTime();
-  if (domainEnd <= domainStart) domainEnd += 24 * 60 * 60 * 1000; // crosses midnight
+  // Derive domain from actual recorded data — not park_settings.
+  // This means historical nights with different hours always show correctly.
+  const timestamps = history.map((h) => new Date(h.recorded_at).getTime());
+  const rawStart = Math.min(...timestamps);
+  const rawEnd   = Math.max(...timestamps);
 
-  // Filter history to within domain, map to chart points
-  const points: ChartPoint[] = history
-    .filter((h) => {
-      const t = new Date(h.recorded_at).getTime();
-      return t >= domainStart && t <= domainEnd + 60 * 60 * 1000; // +1h buffer
-    })
-    .map((h) => ({
-      t: new Date(h.recorded_at).getTime(),
-      wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
-      label: formatTooltipTime(new Date(h.recorded_at).getTime()),
-    }));
+  // Floor start to the hour, ceil end to the hour + 15 min buffer
+  const domainStart = Math.floor(rawStart / 3_600_000) * 3_600_000;
+  const domainEnd   = Math.ceil(rawEnd   / 3_600_000) * 3_600_000 + 15 * 60_000;
+
+  // Map to chart points — all history points in range
+  const points: ChartPoint[] = history.map((h) => ({
+    t: new Date(h.recorded_at).getTime(),
+    wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
+    label: formatTooltipTime(new Date(h.recorded_at).getTime()),
+  }));
 
   if (points.length === 0) return null;
 
@@ -138,14 +131,12 @@ function QueueChart({
     end: d.log.resolved_at ? new Date(d.log.resolved_at).getTime() : Date.now(),
   }));
 
-  // Tick marks at each hour
+  // Tick marks at each hour across the actual operational window
   const ticks: number[] = [];
-  let tick = new Date(domainStart);
-  tick.setMinutes(0, 0, 0);
-  if (tick.getTime() < domainStart) tick.setHours(tick.getHours() + 1);
-  while (tick.getTime() <= domainEnd + 60 * 60 * 1000) {
-    ticks.push(tick.getTime());
-    tick = new Date(tick.getTime() + 60 * 60 * 1000);
+  let tick = domainStart;
+  while (tick <= domainEnd) {
+    ticks.push(tick);
+    tick += 3_600_000;
   }
 
   return (
@@ -164,7 +155,7 @@ function QueueChart({
           <XAxis
             dataKey="t"
             type="number"
-            domain={[domainStart, domainEnd + 60 * 60 * 1000]}
+            domain={[domainStart, domainEnd]}
             ticks={ticks}
             tickFormatter={formatHourLabel}
             tick={{ fontSize: 10, fill: '#475569' }}
@@ -244,7 +235,7 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
 
 /* ── Ops Card ── */
 
-function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: string; closeTime: string }) {
+function OpsCard({ ops }: { ops: AttractionOps }) {
   const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests } = ops;
 
   const statusColor = STATUS_COLORS[currentStatus] || '#888';
@@ -378,8 +369,6 @@ function OpsCard({ ops, openTime, closeTime }: { ops: AttractionOps; openTime: s
           <QueueChart
             history={history}
             delays={delays}
-            openTime={openTime}
-            closeTime={closeTime}
           />
         </div>
       )}
@@ -443,8 +432,6 @@ export default function OperationsPage() {
   const [logs, setLogs] = useState<AttractionStatusLog[]>([]);
   const [history, setHistory] = useState<AttractionHistory[]>([]);
   const [throughput, setThroughput] = useState<ThroughputLog[]>([]);
-  const [openTime, setOpenTime] = useState('');
-  const [closeTime, setCloseTime] = useState('');
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr());
   const [opsData, setOpsData] = useState<AttractionOps[]>([]);
 
@@ -452,7 +439,7 @@ export default function OperationsPage() {
     const start = new Date(`${dateStr}T00:00:00`).toISOString();
     const end   = new Date(`${dateStr}T23:59:59`).toISOString();
 
-    const [attractionsRes, allLogs, historyRes, throughputRes, openRes, closeRes] = await Promise.all([
+    const [attractionsRes, allLogs, historyRes, throughputRes] = await Promise.all([
       supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
       getAllStatusLogs(dateStr),
       supabase
@@ -465,22 +452,16 @@ export default function OperationsPage() {
         .from('throughput_logs')
         .select('*')
         .eq('log_date', dateStr),
-      supabase.from('park_settings').select('value').eq('key', 'opening_time').single(),
-      supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
     ]);
 
     const attrs: Attraction[] = attractionsRes.data || [];
     const hist: AttractionHistory[] = historyRes.data || [];
     const tp: ThroughputLog[] = throughputRes.data || [];
-    const open = openRes.data?.value || '';
-    const close = closeRes.data?.value || '';
 
     setAttractions(attrs);
     setLogs(allLogs);
     setHistory(hist);
     setThroughput(tp);
-    setOpenTime(open);
-    setCloseTime(close);
     setOpsData(buildOpsData(attrs, allLogs, hist, tp));
   }, []);
 
@@ -576,7 +557,7 @@ export default function OperationsPage() {
         {/* Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {opsData.map((ops) => (
-            <OpsCard key={ops.attraction.id} ops={ops} openTime={openTime} closeTime={closeTime} />
+            <OpsCard key={ops.attraction.id} ops={ops} />
           ))}
           {opsData.length === 0 && (
             <div style={{ color: '#555', fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
