@@ -401,6 +401,7 @@ export default function UsersPage() {
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [pinData, setPinData] = useState<Map<string, SignoffPin>>(new Map());
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal state
   const [showForm, setShowForm] = useState(false);
@@ -590,10 +591,23 @@ export default function UsersPage() {
   ];
 
   const filteredUsers = sortedUsers.filter((u) => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'admin') return u.role === 'admin' && !isPinOnlyUser(u);
-    if (activeTab === 'supervisor') return u.role === 'supervisor' && !isPinOnlyUser(u);
-    if (activeTab === 'pin') return isPinOnlyUser(u);
+    const tabMatch = activeTab === 'all' ? true
+      : activeTab === 'admin' ? (u.role === 'admin' && !isPinOnlyUser(u))
+      : activeTab === 'supervisor' ? (u.role === 'supervisor' && !isPinOnlyUser(u))
+      : isPinOnlyUser(u);
+
+    if (!tabMatch) return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const pin = pinData.get(u.id);
+      return (
+        (u.display_name || '').toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (pin?.signoff_roles || []).some((r) => r.toLowerCase().includes(q))
+      );
+    }
+
     return true;
   });
 
@@ -741,11 +755,38 @@ export default function UsersPage() {
 
       <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px' }}>
         {/* Page header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[#F1F5F9] text-2xl font-bold">Users</h2>
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <h2 className="text-[#F1F5F9] text-2xl font-bold flex-shrink-0">Users</h2>
+          {/* Search */}
+          <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <circle cx="9" cy="9" r="7"/><path d="M16 16l-3.5-3.5"/>
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or email…"
+              style={{
+                width: '100%', paddingLeft: 32, paddingRight: searchQuery ? 32 : 12,
+                paddingTop: 8, paddingBottom: 8,
+                background: '#111', border: '1px solid #2a2a2a', borderRadius: 8,
+                color: '#F1F5F9', fontSize: 13, outline: 'none',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')}
+                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 2, display: 'flex' }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            )}
+          </div>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-sm font-semibold rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-sm font-semibold rounded-lg transition-colors flex-shrink-0"
           >
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
