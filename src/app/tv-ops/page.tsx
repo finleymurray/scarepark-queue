@@ -21,9 +21,21 @@ function formatElapsed(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function formatTime12h(time: string): string {
+/** Format a HH:MM string (e.g. from park_settings) as 12h local time */
+function formatHHMM(time: string): string {
   if (!time) return '';
   const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+/** Format an ISO timestamp as 12h local time — uses browser local timezone */
+function formatISOTime(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const h = d.getHours();
+  const m = d.getMinutes();
   const ampm = h >= 12 ? 'PM' : 'AM';
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
@@ -166,7 +178,7 @@ function OpsCard({
         {openedAt && (
           <div>
             <div style={{ color: '#555', fontSize: '0.65vw', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.1vw' }}>Opened</div>
-            <div style={{ color: '#ccc', fontSize: '1vw', fontWeight: 700 }}>{formatTime12h(openedAt.slice(11, 16))}</div>
+            <div style={{ color: '#ccc', fontSize: '1vw', fontWeight: 700 }}>{formatISOTime(openedAt)}</div>
           </div>
         )}
       </div>
@@ -290,7 +302,7 @@ export default function TvOpsPage() {
           )}
           {closingTime && (
             <div style={{ background: '#111', border: '1px solid #222', borderRadius: '0.5vw', padding: '0.4vw 0.9vw', fontSize: '0.85vw', color: '#666', fontWeight: 600 }}>
-              Closes {formatTime12h(closingTime)}
+              Closes {formatHHMM(closingTime)}
             </div>
           )}
           <div style={{ fontSize: '1vw', fontWeight: 700, color: '#fff', textAlign: 'right', marginLeft: '0.5vw' }}>

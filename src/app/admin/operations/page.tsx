@@ -100,23 +100,40 @@ function formatTooltipTime(ms: number): string {
 function QueueChart({
   history,
   delays,
+  dateStr,
+  openTime,
+  closeTime,
 }: {
   history: AttractionHistory[];
   delays: DelayIncident[];
+  dateStr: string;
+  openTime: string;
+  closeTime: string;
 }) {
   if (history.length === 0) return null;
 
-  // Derive domain from actual recorded data — not park_settings.
-  // This means historical nights with different hours always show correctly.
-  const timestamps = history.map((h) => new Date(h.recorded_at).getTime());
-  const rawStart = Math.min(...timestamps);
-  const rawEnd   = Math.max(...timestamps);
+  // Build domain from park hours for the selected date so the x-axis always
+  // spans the full operating window even early in the night with sparse data.
+  // Fall back to the data bounds if park hours aren't configured.
+  let domainStart: number;
+  let domainEnd: number;
 
-  // Floor start to the hour, ceil end to the hour + 15 min buffer
-  const domainStart = Math.floor(rawStart / 3_600_000) * 3_600_000;
-  const domainEnd   = Math.ceil(rawEnd   / 3_600_000) * 3_600_000 + 15 * 60_000;
+  if (openTime && closeTime) {
+    // Parse park hours as local time on the selected date
+    domainStart = new Date(`${dateStr}T${openTime}:00`).getTime();
+    domainEnd   = new Date(`${dateStr}T${closeTime}:00`).getTime();
+    // Handle crossing midnight
+    if (domainEnd <= domainStart) domainEnd += 24 * 60 * 60 * 1000;
+    // Add 1 hour buffer after close for queue clearance
+    domainEnd += 60 * 60 * 1000;
+  } else {
+    // Fallback: derive from data
+    const timestamps = history.map((h) => new Date(h.recorded_at).getTime());
+    domainStart = Math.floor(Math.min(...timestamps) / 3_600_000) * 3_600_000;
+    domainEnd   = Math.ceil(Math.max(...timestamps)  / 3_600_000) * 3_600_000 + 15 * 60_000;
+  }
 
-  // Map to chart points — all history points in range
+  // Map to chart points
   const points: ChartPoint[] = history.map((h) => ({
     t: new Date(h.recorded_at).getTime(),
     wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
@@ -125,15 +142,15 @@ function QueueChart({
 
   if (points.length === 0) return null;
 
-  // Build delay reference lines
+  // Delay reference lines
   const delayBands = delays.map((d) => ({
     start: new Date(d.log.changed_at).getTime(),
     end: d.log.resolved_at ? new Date(d.log.resolved_at).getTime() : Date.now(),
   }));
 
-  // Tick marks at each hour across the actual operational window
+  // Hourly ticks across the full operating window
   const ticks: number[] = [];
-  let tick = domainStart;
+  let tick = Math.floor(domainStart / 3_600_000) * 3_600_000;
   while (tick <= domainEnd) {
     ticks.push(tick);
     tick += 3_600_000;
@@ -235,7 +252,7 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
 
 /* ── Ops Card ── */
 
-function OpsCard({ ops }: { ops: AttractionOps }) {
+function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; dateStr: string; openTime: string; closeTime: string }) {
   const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests } = ops;
 
   const statusColor = STATUS_COLORS[currentStatus] || '#888';
@@ -369,6 +386,9 @@ function OpsCard({ ops }: { ops: AttractionOps }) {
           <QueueChart
             history={history}
             delays={delays}
+            dateStr={dateStr}
+            openTime={openTime}
+            closeTime={closeTime}
           />
         </div>
       )}
@@ -432,6 +452,8 @@ export default function OperationsPage() {
   const [logs, setLogs] = useState<AttractionStatusLog[]>([]);
   const [history, setHistory] = useState<AttractionHistory[]>([]);
   const [throughput, setThroughput] = useState<ThroughputLog[]>([]);
+  const [openTime, setOpenTime] = useState('');
+  const [closeTime, setCloseTime] = useState('');
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr());
   const [opsData, setOpsData] = useState<AttractionOps[]>([]);
 
@@ -439,7 +461,7 @@ export default function OperationsPage() {
     const start = new Date(`${dateStr}T00:00:00`).toISOString();
     const end   = new Date(`${dateStr}T23:59:59`).toISOString();
 
-    const [attractionsRes, allLogs, historyRes, throughputRes] = await Promise.all([
+    const [attractionsRes, allLogs, historyRes, throughputRes, openRes, closeRes] = await Promise.all([
       supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
       getAllStatusLogs(dateStr),
       supabase
@@ -448,10 +470,9 @@ export default function OperationsPage() {
         .gte('recorded_at', start)
         .lte('recorded_at', end)
         .order('recorded_at', { ascending: true }),
-      supabase
-        .from('throughput_logs')
-        .select('*')
-        .eq('log_date', dateStr),
+      supabase.from('throughput_logs').select('*').eq('log_date', dateStr),
+      supabase.from('park_settings').select('value').eq('key', 'opening_time').single(),
+      supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
     ]);
 
     const attrs: Attraction[] = attractionsRes.data || [];
@@ -462,6 +483,8 @@ export default function OperationsPage() {
     setLogs(allLogs);
     setHistory(hist);
     setThroughput(tp);
+    setOpenTime(openRes.data?.value || '');
+    setCloseTime(closeRes.data?.value || '');
     setOpsData(buildOpsData(attrs, allLogs, hist, tp));
   }, []);
 
@@ -557,7 +580,7 @@ export default function OperationsPage() {
         {/* Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {opsData.map((ops) => (
-            <OpsCard key={ops.attraction.id} ops={ops} />
+            <OpsCard key={ops.attraction.id} ops={ops} dateStr={selectedDate} openTime={openTime} closeTime={closeTime} />
           ))}
           {opsData.length === 0 && (
             <div style={{ color: '#555', fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
