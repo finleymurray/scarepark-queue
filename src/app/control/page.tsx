@@ -984,7 +984,7 @@ export default function SupervisorDashboard() {
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
                 >
-                  📝 Field Notes
+                  📝 Show Report
                 </button>
               </div>
             )}
@@ -1105,7 +1105,7 @@ export default function SupervisorDashboard() {
             {/* Drawer header */}
             <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <p style={{ margin: 0, color: '#F1F5F9', fontSize: 16, fontWeight: 700 }}>Field Notes — {selected.name}</p>
+                <p style={{ margin: 0, color: '#F1F5F9', fontSize: 16, fontWeight: 700 }}>Show Report — {selected.name}</p>
                 <p style={{ margin: 0, color: '#475569', fontSize: 11, marginTop: 2 }}>
                   {notesSaving === 'saving' ? 'Saving...' :
                    notesSaving === 'saved' && notesLastSaved ? `Saved ${new Date(notesLastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :

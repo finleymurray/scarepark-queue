@@ -71,6 +71,28 @@ function formatSlotTime(time: string): string {
   return `${hour12}:${m || '00'} ${ampm}`;
 }
 
+type AnalyticsTab = 'queue' | 'throughput' | 'statuslog' | 'summary';
+
+const CHART_TOOLTIP_STYLE = {
+  backgroundColor: '#111',
+  border: '1px solid #2a2a2a',
+  borderRadius: '8px',
+  color: '#F1F5F9',
+  fontSize: 12,
+};
+
+const AXIS_TICK_STYLE = { fill: '#475569', fontSize: 11 };
+const GRID_STROKE = 'rgba(255,255,255,0.04)';
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <p className="text-[#475569] text-sm">{message}</p>
+      <p className="text-[#2a2a2a] text-xs mt-1">Data is captured automatically when staff update queue times.</p>
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
@@ -88,6 +110,7 @@ export default function AnalyticsPage() {
   const [fromTime, setFromTime] = useState('00:00');
   const [toTime, setToTime] = useState('23:59');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>('queue');
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -466,12 +489,35 @@ export default function AnalyticsPage() {
     });
   }, [filteredStatusLogs, attractions]);
 
-  const tooltipStyle = {
-    backgroundColor: '#111111',
-    border: '1px solid #2a2a2a',
-    borderRadius: '6px',
-    color: '#F1F5F9',
-  };
+  // Summary stats
+  const summaryStats = useMemo(() => {
+    const totalGuests = filteredThroughput.reduce((s, l) => s + l.guest_count, 0);
+    const waitTimes = filteredHistory.filter((h) => h.status === 'OPEN' && h.wait_time > 0).map((h) => h.wait_time);
+    const avgWait = waitTimes.length > 0 ? Math.round(waitTimes.reduce((s, v) => s + v, 0) / waitTimes.length) : 0;
+    const totalDowntime = statusLogSummary ? statusLogSummary.reduce((s, a) => s + a.totalDowntimeMinutes, 0) : 0;
+    const delayIncidents = statusLogSummary ? statusLogSummary.reduce((s, a) => s + a.delayCount, 0) : 0;
+    const totalMinutes = (() => {
+      const [fh, fm] = fromTime.split(':').map(Number);
+      const [th, tm] = toTime.split(':').map(Number);
+      return (th * 60 + tm) - (fh * 60 + fm);
+    })();
+    const uptimePct = totalMinutes > 0 ? Math.max(0, Math.round(((totalMinutes - totalDowntime) / totalMinutes) * 100)) : null;
+    const attractionsOpen = attractions.filter((a) => a.status === 'OPEN').length;
+
+    return { totalGuests, avgWait, totalDowntime, delayIncidents, uptimePct, attractionsOpen };
+  }, [filteredThroughput, filteredHistory, statusLogSummary, fromTime, toTime, attractions]);
+
+  // suppress unused warning for openingTime — it's fetched for future use
+  void openingTime;
+
+  const tooltipStyle = CHART_TOOLTIP_STYLE;
+
+  const TABS: { key: AnalyticsTab; label: string }[] = [
+    { key: 'queue', label: 'Queue Times' },
+    { key: 'throughput', label: 'Throughput' },
+    { key: 'statuslog', label: 'Status Log' },
+    { key: 'summary', label: 'Summary' },
+  ];
 
   if (!authenticated) {
     return (
@@ -481,89 +527,104 @@ export default function AnalyticsPage() {
     );
   }
 
+  const hasData = chartData.length > 0 || filteredThroughput.length > 0 || filteredStatusLogs.length > 0;
+
   return (
     <div className="min-h-screen" style={{ background: '#000000' }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
-      {/* Date + time range picker */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        <label className="text-[#888] text-sm font-medium">Date:</label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#F1F5F9', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
-          className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
-        />
-        <div className="flex items-center gap-2">
-          <label className="text-[#888] text-sm font-medium">From:</label>
-          <input
-            type="time"
-            value={fromTime}
-            onChange={(e) => setFromTime(e.target.value)}
-            style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#F1F5F9', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
-            className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-[#888] text-sm font-medium">To:</label>
-          <input
-            type="time"
-            value={toTime}
-            onChange={(e) => setToTime(e.target.value)}
-            style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#F1F5F9', fontSize: 14, outline: 'none', colorScheme: 'dark' }}
-            className="text-sm focus:outline-none focus:border-[#6ea8fe] transition-colors"
-          />
-        </div>
-        <button
-          onClick={() => setRefreshKey((k) => k + 1)}
-          style={{
-            padding: '8px 14px',
-            background: '#111111',
-            border: '1px solid #2a2a2a',
-            borderRadius: 6,
-            color: '#888',
-            fontSize: 12,
-            cursor: 'pointer',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Refresh
-        </button>
-      </div>
-
-      {/* Charts */}
-      {loading ? (
-        <div className="panel p-12 text-center">
-          <p className="text-[#888] text-lg">Loading historical data...</p>
-        </div>
-      ) : (
-        <>
-          {chartData.length === 0 && filteredThroughput.length === 0 ? (
-            <div className="panel p-12 text-center mb-6">
-              <p className="text-[#666] text-lg">No data recorded for this night.</p>
-              <p className="text-[#444] text-sm mt-2">
-                Data is captured automatically when staff update queue times.
-              </p>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Page header row */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <h2 className="text-[#F1F5F9] text-2xl font-bold">Analytics</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ padding: '7px 12px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-[#475569] text-xs font-medium">From</span>
+              <input
+                type="time"
+                value={fromTime}
+                onChange={(e) => setFromTime(e.target.value)}
+                style={{ padding: '7px 10px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
+              />
             </div>
-          ) : (
-            <>
-              {/* ── Wait Time Line Chart ── */}
-              {chartData.length > 0 && (
-                <>
-                  <div className="panel p-4 sm:p-6 mb-6">
-                    <h2 className="text-white text-lg font-bold mb-4">Wait Times — {selectedDate}</h2>
-                    <ResponsiveContainer width="100%" height={500}>
+            <div className="flex items-center gap-2">
+              <span className="text-[#475569] text-xs font-medium">To</span>
+              <input
+                type="time"
+                value={toTime}
+                onChange={(e) => setToTime(e.target.value)}
+                style={{ padding: '7px 10px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
+              />
+            </div>
+            <button
+              onClick={() => setRefreshKey((k) => k + 1)}
+              style={{
+                padding: '7px 12px',
+                background: '#111',
+                border: '1px solid #2a2a2a',
+                borderRadius: 8,
+                color: '#94A3B8',
+                fontSize: 12,
+                cursor: 'pointer',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <path d="M14 8A6 6 0 1 1 8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M8 0L10.5 2.5L8 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex items-center gap-1 border-b border-[#2a2a2a] mb-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px
+                ${activeTab === tab.key
+                  ? 'border-[#3B82F6] text-[#F1F5F9]'
+                  : 'border-transparent text-[#475569] hover:text-[#94A3B8]'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-16 text-center">
+            <p className="text-[#475569] text-sm">Loading historical data...</p>
+          </div>
+        ) : !hasData && activeTab !== 'summary' ? (
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+            <EmptyState message="No data recorded for this date." />
+          </div>
+        ) : (
+          <>
+            {/* ── Queue Times Tab ── */}
+            {activeTab === 'queue' && (
+              <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                {chartData.length === 0 ? (
+                  <EmptyState message="No wait time data for this date." />
+                ) : (
+                  <>
+                    <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Wait Times — {selectedDate}</h3>
+                    <ResponsiveContainer width="100%" height={280}>
                       <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                         {statusPeriods.map((period, i) => (
                           <ReferenceArea
                             key={`${period.attractionName}-${period.start}-${i}`}
@@ -579,18 +640,18 @@ export default function AnalyticsPage() {
                           type="number"
                           domain={['dataMin', 'dataMax']}
                           tickFormatter={(ts) => formatTimeShort(Number(ts))}
-                          stroke="#fff"
-                          tick={{ fill: '#fff', fontSize: 12 }}
+                          stroke="transparent"
+                          tick={AXIS_TICK_STYLE}
                         />
                         <YAxis
-                          stroke="#fff"
-                          tick={{ fill: '#fff', fontSize: 12 }}
+                          stroke="transparent"
+                          tick={AXIS_TICK_STYLE}
                           label={{
                             value: 'Wait (min)',
                             angle: -90,
                             position: 'insideLeft',
-                            fill: '#fff',
-                            style: { fontSize: 12 },
+                            fill: '#475569',
+                            style: { fontSize: 11 },
                           }}
                         />
                         <Tooltip
@@ -601,7 +662,7 @@ export default function AnalyticsPage() {
                             return [`${value} min`, name];
                           }}
                         />
-                        <Legend wrapperStyle={{ color: '#fff' }} />
+                        <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 12 }} />
                         {attractionNames.map((name, i) => (
                           <Line
                             key={name}
@@ -616,384 +677,463 @@ export default function AnalyticsPage() {
                       </LineChart>
                     </ResponsiveContainer>
 
-                    {/* Legend for status bands */}
-                    <div className="flex items-center gap-6 mt-4 pt-4" style={{ borderTop: '1px solid #2a2a2a' }}>
-                      <span className="text-[#888] text-xs font-medium uppercase tracking-wider">Shaded areas:</span>
-                      {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
-                        <div key={status} className="flex items-center gap-2">
-                          <div
-                            className="w-4 h-3 rounded-sm"
-                            style={{ backgroundColor: STATUS_BAND_COLORS[status] }}
-                          />
-                          <span className="text-xs font-medium" style={{ color }}>{status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Status timeline */}
-                  <div className="panel p-4 sm:p-6 mb-6">
-                    <h2 className="text-white text-lg font-bold mb-4">Status Timeline</h2>
-                    {statusPeriods.length === 0 ? (
-                      <p className="text-[#666] text-sm">All attractions were open for the entire night.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {attractionNames.map((name) => {
-                          const periods = statusPeriods.filter((p) => p.attractionName === name);
-                          if (periods.length === 0) return null;
-                          return (
-                            <div key={name}>
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <div
-                                  className="w-3 h-3 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: colorMap.get(name) }}
-                                />
-                                <span className="text-white text-sm font-semibold">{name}</span>
-                              </div>
-                              <div className="flex flex-wrap gap-2 ml-5">
-                                {periods.map((p, i) => (
-                                  <div
-                                    key={i}
-                                    className="text-xs font-medium px-3 py-1.5 rounded border"
-                                    style={{
-                                      color: STATUS_LABEL_COLORS[p.status] || '#fff',
-                                      borderColor: (STATUS_LABEL_COLORS[p.status] || '#fff') + '40',
-                                      backgroundColor: (STATUS_BAND_COLORS[p.status] || '#ffffff10'),
-                                    }}
-                                  >
-                                    {p.status} — {formatTimeShort(p.start)} to {formatTimeShort(p.end)}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
+                    {/* Status band legend */}
+                    {statusPeriods.length > 0 && (
+                      <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#2a2a2a]">
+                        <span className="text-[#475569] text-[10px] font-semibold uppercase tracking-wider">Shaded:</span>
+                        {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
+                          <div key={status} className="flex items-center gap-1.5">
+                            <div className="w-3 h-2.5 rounded-sm" style={{ backgroundColor: STATUS_BAND_COLORS[status] }} />
+                            <span className="text-[11px] font-medium" style={{ color }}>{status}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Throughput Tab ── */}
+            {activeTab === 'throughput' && (
+              <div className="space-y-4">
+                {filteredThroughput.length === 0 ? (
+                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+                    <EmptyState message="No throughput data logged for this date." />
                   </div>
-                </>
-              )}
+                ) : (
+                  <>
+                    {/* Total guests */}
+                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-5">
+                      <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-1">Total Guests</p>
+                      <p className="text-[#F1F5F9] text-3xl font-bold">
+                        {filteredThroughput.reduce((s, l) => s + l.guest_count, 0).toLocaleString()}
+                      </p>
+                    </div>
 
-              {/* ── Structured Status Change Log ── */}
-              {filteredStatusLogs.length > 0 && statusLogSummary && (
-                <div className="panel p-4 sm:p-6 mb-6">
-                  <h2 className="text-white text-lg font-bold mb-4">
-                    Status Change Log — {selectedDate}
-                  </h2>
+                    {/* Bar chart */}
+                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                      <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Guest Throughput — {selectedDate}</h3>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <BarChart data={throughputChartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                          <XAxis
+                            dataKey="slot"
+                            stroke="transparent"
+                            tick={AXIS_TICK_STYLE}
+                            angle={-30}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis
+                            stroke="transparent"
+                            tick={AXIS_TICK_STYLE}
+                            label={{
+                              value: 'Guests',
+                              angle: -90,
+                              position: 'insideLeft',
+                              fill: '#475569',
+                              style: { fontSize: 11 },
+                            }}
+                          />
+                          <Tooltip contentStyle={tooltipStyle} />
+                          <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 12 }} />
+                          {throughputAttractionNames.map((name, i) => (
+                            <Bar
+                              key={name}
+                              dataKey={name}
+                              fill={LINE_COLORS[i % LINE_COLORS.length]}
+                              radius={[3, 3, 0, 0]}
+                            />
+                          ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
 
-                  {/* Summary stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
-                    {statusLogSummary.map((s) => (
-                      <div key={s.attractionId} style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8, padding: 12 }}>
-                        <div className="text-white text-sm font-semibold mb-2">{s.name}</div>
-                        <div className="text-[#888] text-xs space-y-1">
-                          <div>Delays: <span className="text-[#f0ad4e] font-medium">{s.delayCount}</span></div>
-                          <div>Avg delay: <span className="text-white font-medium">{s.avgDelayMinutes} min</span></div>
-                          <div>Total downtime: <span className="text-[#dc3545] font-medium">{s.totalDowntimeMinutes} min</span></div>
+                    {/* Combined chart */}
+                    {combinedChartData.length > 0 && combinedAttractionNames.length > 0 && (
+                      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                        <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Wait Time vs Throughput</h3>
+                        <p className="text-[#475569] text-xs mb-5">Lines: avg wait time per slot. Bars: guest throughput.</p>
+                        <ResponsiveContainer width="100%" height={280}>
+                          <ComposedChart data={combinedChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                            <XAxis
+                              dataKey="slot"
+                              stroke="transparent"
+                              tick={AXIS_TICK_STYLE}
+                              angle={-30}
+                              textAnchor="end"
+                              height={60}
+                            />
+                            <YAxis
+                              yAxisId="left"
+                              stroke="transparent"
+                              tick={AXIS_TICK_STYLE}
+                              label={{
+                                value: 'Wait (min)',
+                                angle: -90,
+                                position: 'insideLeft',
+                                fill: '#475569',
+                                style: { fontSize: 11 },
+                              }}
+                            />
+                            <YAxis
+                              yAxisId="right"
+                              orientation="right"
+                              stroke="transparent"
+                              tick={AXIS_TICK_STYLE}
+                              label={{
+                                value: 'Guests',
+                                angle: 90,
+                                position: 'insideRight',
+                                fill: '#475569',
+                                style: { fontSize: 11 },
+                              }}
+                            />
+                            <Tooltip contentStyle={tooltipStyle} />
+                            <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 12 }} />
+                            {combinedAttractionNames.map((name, i) => (
+                              <Bar
+                                key={`bar-${name}`}
+                                yAxisId="right"
+                                dataKey={`${name} (guests)`}
+                                fill={LINE_COLORS[i % LINE_COLORS.length]}
+                                fillOpacity={0.35}
+                                radius={[2, 2, 0, 0]}
+                              />
+                            ))}
+                            {combinedAttractionNames.map((name, i) => (
+                              <Line
+                                key={`line-${name}`}
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey={`${name} (wait)`}
+                                stroke={LINE_COLORS[i % LINE_COLORS.length]}
+                                strokeWidth={2.5}
+                                dot={{ r: 3, fill: LINE_COLORS[i % LINE_COLORS.length] }}
+                                connectNulls={false}
+                              />
+                            ))}
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    {/* Throughput summary table */}
+                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                      <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Throughput Summary</h3>
+                      {(() => {
+                        const idToLogs = new Map<string, ThroughputLog[]>();
+                        for (const log of filteredThroughput) {
+                          if (!idToLogs.has(log.attraction_id)) idToLogs.set(log.attraction_id, []);
+                          idToLogs.get(log.attraction_id)!.push(log);
+                        }
+
+                        const idToName = new Map<string, string>();
+                        for (const a of attractions) {
+                          idToName.set(a.id, a.name);
+                        }
+                        for (const h of filteredHistory) {
+                          if (!idToName.has(h.attraction_id)) {
+                            idToName.set(h.attraction_id, h.attraction_name);
+                          }
+                        }
+
+                        const allSlots = Array.from(
+                          new Set(filteredThroughput.map((l) => `${l.slot_start}|${l.slot_end}`))
+                        ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
+
+                        const attractionIds = Array.from(idToLogs.keys());
+                        const parkTotal = filteredThroughput.reduce((sum, l) => sum + l.guest_count, 0);
+
+                        const logLookups = new Map<string, Map<string, ThroughputLog>>();
+                        for (const id of attractionIds) {
+                          const slotMap = new Map<string, ThroughputLog>();
+                          for (const l of idToLogs.get(id)!) {
+                            slotMap.set(`${l.slot_start}|${l.slot_end}`, l);
+                          }
+                          logLookups.set(id, slotMap);
+                        }
+
+                        const slotTotals = new Map<string, number>();
+                        for (const l of filteredThroughput) {
+                          const key = `${l.slot_start}|${l.slot_end}`;
+                          slotTotals.set(key, (slotTotals.get(key) || 0) + l.guest_count);
+                        }
+
+                        return (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                                  <th className="text-left text-[#475569] font-medium py-2 pr-4 whitespace-nowrap text-xs">Attraction</th>
+                                  {allSlots.map((slot) => {
+                                    const [start, end] = slot.split('|');
+                                    return (
+                                      <th key={slot} className="text-center text-[#475569] font-medium py-2 px-2 whitespace-nowrap text-xs">
+                                        {start}–{end}
+                                      </th>
+                                    );
+                                  })}
+                                  <th className="text-center text-[#F1F5F9] font-semibold py-2 pl-4 whitespace-nowrap text-xs">Total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {attractionIds.map((id) => {
+                                  const logs = idToLogs.get(id)!;
+                                  const name = idToName.get(id) || id.slice(0, 8);
+                                  const total = logs.reduce((sum, l) => sum + l.guest_count, 0);
+                                  const nameColor = colorMap.get(name) || LINE_COLORS[attractionIds.indexOf(id) % LINE_COLORS.length];
+                                  const slotMap = logLookups.get(id)!;
+
+                                  return (
+                                    <tr key={id} style={{ borderBottom: '1px solid #2a2a2a' }}>
+                                      <td className="py-2 pr-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: nameColor }} />
+                                          <span className="text-[#F1F5F9] text-sm font-medium">{name}</span>
+                                        </div>
+                                      </td>
+                                      {allSlots.map((slot) => {
+                                        const log = slotMap.get(slot);
+                                        return (
+                                          <td key={slot} className="text-center py-2 px-2">
+                                            {log && log.guest_count > 0 ? (
+                                              <span className="text-[#F1F5F9] font-medium">{log.guest_count}</span>
+                                            ) : (
+                                              <span className="text-white/20">—</span>
+                                            )}
+                                          </td>
+                                        );
+                                      })}
+                                      <td className="text-center py-2 pl-4">
+                                        <span className="text-[#F1F5F9] font-bold">{total}</span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                              <tfoot>
+                                <tr style={{ borderTop: '1px solid #2a2a2a' }}>
+                                  <td className="py-3 pr-4">
+                                    <span className="text-[#475569] font-semibold text-sm">Park Total</span>
+                                  </td>
+                                  {allSlots.map((slot) => {
+                                    const total = slotTotals.get(slot) || 0;
+                                    return (
+                                      <td key={slot} className="text-center py-3 px-2">
+                                        <span className="text-[#94A3B8] font-semibold">{total > 0 ? total : '—'}</span>
+                                      </td>
+                                    );
+                                  })}
+                                  <td className="text-center py-3 pl-4">
+                                    <span className="text-[#F1F5F9] font-black text-base">{parkTotal}</span>
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Status Log Tab ── */}
+            {activeTab === 'statuslog' && (
+              <div className="space-y-4">
+                {filteredStatusLogs.length === 0 ? (
+                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+                    <EmptyState message="No status changes recorded for this date." />
+                  </div>
+                ) : (
+                  <>
+                    {/* Status timeline */}
+                    {statusPeriods.length > 0 && (
+                      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                        <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Status Timeline</h3>
+                        <div className="space-y-3">
+                          {attractionNames.map((name) => {
+                            const periods = statusPeriods.filter((p) => p.attractionName === name);
+                            if (periods.length === 0) return null;
+                            return (
+                              <div key={name}>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <div
+                                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: colorMap.get(name) }}
+                                  />
+                                  <span className="text-[#F1F5F9] text-sm font-semibold">{name}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2 ml-4">
+                                  {periods.map((p, i) => (
+                                    <div
+                                      key={i}
+                                      className="text-xs font-medium px-3 py-1.5 rounded-lg border"
+                                      style={{
+                                        color: STATUS_LABEL_COLORS[p.status] || '#F1F5F9',
+                                        borderColor: (STATUS_LABEL_COLORS[p.status] || '#F1F5F9') + '40',
+                                        backgroundColor: (STATUS_BAND_COLORS[p.status] || '#ffffff10'),
+                                      }}
+                                    >
+                                      {p.status} — {formatTimeShort(p.start)} to {formatTimeShort(p.end)}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
 
-                  {/* Detailed log table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid #2a2a2a', color: 'rgba(255,255,255,0.5)' }}>
-                          <th className="text-left px-3 py-2 font-medium">Time</th>
-                          <th className="text-left px-3 py-2 font-medium">Attraction</th>
-                          <th className="text-left px-3 py-2 font-medium">Transition</th>
-                          <th className="text-left px-3 py-2 font-medium">Reason</th>
-                          <th className="text-left px-3 py-2 font-medium">Duration</th>
-                          <th className="text-left px-3 py-2 font-medium">Changed By</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredStatusLogs.map((log, i) => {
-                          const idToName = new Map<string, string>();
-                          for (const a of attractions) idToName.set(a.id, a.name);
-                          const name = idToName.get(log.attraction_id) || log.attraction_id.slice(0, 8);
-                          const nextLog = filteredStatusLogs.slice(i + 1).find(
-                            (l) => l.attraction_id === log.attraction_id,
-                          );
-                          const durationMs = nextLog
-                            ? new Date(nextLog.changed_at).getTime() - new Date(log.changed_at).getTime()
-                            : null;
-                          const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null;
+                    {/* Summary stats */}
+                    {statusLogSummary && (
+                      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                        <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Downtime Summary</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                          {statusLogSummary.map((s) => (
+                            <div key={s.attractionId} style={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 10, padding: 14 }}>
+                              <div className="text-[#F1F5F9] text-sm font-semibold mb-2">{s.name}</div>
+                              <div className="text-[#475569] text-xs space-y-1">
+                                <div>Delays: <span className="text-[#f0ad4e] font-semibold">{s.delayCount}</span></div>
+                                <div>Avg delay: <span className="text-[#94A3B8] font-semibold">{s.avgDelayMinutes} min</span></div>
+                                <div>Total downtime: <span className="text-red-400 font-semibold">{s.totalDowntimeMinutes} min</span></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                          return (
-                            <tr key={log.id} style={{ borderBottom: '1px solid #2a2a2a' }}>
-                              <td className="px-3 py-2 text-white/60 tabular-nums text-xs whitespace-nowrap">
-                                {new Date(log.changed_at).toLocaleTimeString('en-GB', {
-                                  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-                                })}
-                              </td>
-                              <td className="px-3 py-2 text-white font-medium">{name}</td>
-                              <td className="px-3 py-2">
-                                <span className="text-white/40">{log.previous_status || '?'}</span>
-                                <span className="text-white/20 mx-1">&rarr;</span>
-                                <span
-                                  className="font-medium"
-                                  style={{ color: STATUS_LABEL_COLORS[log.status] || '#fff' }}
-                                >
-                                  {log.status}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2 text-[#f0ad4e] text-xs">
-                                {log.reason || <span className="text-white/20">—</span>}
-                                {log.notes && (
-                                  <span className="text-white/40 ml-1" title={log.notes}>*</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-white/60 tabular-nums text-xs">
-                                {durationMin !== null ? `${durationMin} min` : <span className="text-white/20">—</span>}
-                              </td>
-                              <td className="px-3 py-2 text-white/40 text-xs">{log.changed_by}</td>
+                    {/* Detailed log table */}
+                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                      <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Status Change Log — {selectedDate}</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid #2a2a2a', color: '#475569' }}>
+                              <th className="text-left px-3 py-2 font-medium">Time</th>
+                              <th className="text-left px-3 py-2 font-medium">Attraction</th>
+                              <th className="text-left px-3 py-2 font-medium">Transition</th>
+                              <th className="text-left px-3 py-2 font-medium">Reason</th>
+                              <th className="text-left px-3 py-2 font-medium">Duration</th>
+                              <th className="text-left px-3 py-2 font-medium">Changed By</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                          </thead>
+                          <tbody>
+                            {filteredStatusLogs.map((log, i) => {
+                              const idToName = new Map<string, string>();
+                              for (const a of attractions) idToName.set(a.id, a.name);
+                              const name = idToName.get(log.attraction_id) || log.attraction_id.slice(0, 8);
+                              const nextLog = filteredStatusLogs.slice(i + 1).find(
+                                (l) => l.attraction_id === log.attraction_id,
+                              );
+                              const durationMs = nextLog
+                                ? new Date(nextLog.changed_at).getTime() - new Date(log.changed_at).getTime()
+                                : null;
+                              const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null;
+
+                              return (
+                                <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                                  <td className="px-3 py-2 text-[#475569] tabular-nums text-xs whitespace-nowrap">
+                                    {new Date(log.changed_at).toLocaleTimeString('en-GB', {
+                                      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                                    })}
+                                  </td>
+                                  <td className="px-3 py-2 text-[#F1F5F9] font-medium">{name}</td>
+                                  <td className="px-3 py-2">
+                                    <span className="text-[#475569]">{log.previous_status || '?'}</span>
+                                    <span className="text-[#2a2a2a] mx-1">&rarr;</span>
+                                    <span
+                                      className="font-medium"
+                                      style={{ color: STATUS_LABEL_COLORS[log.status] || '#F1F5F9' }}
+                                    >
+                                      {log.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-[#f0ad4e] text-xs">
+                                    {log.reason || <span className="text-[#2a2a2a]">—</span>}
+                                    {log.notes && (
+                                      <span className="text-[#475569] ml-1" title={log.notes}>*</span>
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2 text-[#475569] tabular-nums text-xs">
+                                    {durationMin !== null ? `${durationMin} min` : <span className="text-[#2a2a2a]">—</span>}
+                                  </td>
+                                  <td className="px-3 py-2 text-[#475569] text-xs">{log.changed_by}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Summary Tab ── */}
+            {activeTab === 'summary' && (
+              <div className="space-y-4">
+                {/* Key stat cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                  {[
+                    { label: 'Total Guests', value: summaryStats.totalGuests.toLocaleString(), color: '#22C55E' },
+                    { label: 'Avg Wait Time', value: summaryStats.avgWait > 0 ? `${summaryStats.avgWait} min` : '—', color: '#3B82F6' },
+                    { label: 'Total Downtime', value: summaryStats.totalDowntime > 0 ? `${summaryStats.totalDowntime} min` : '0 min', color: '#EF4444' },
+                    { label: 'Uptime %', value: summaryStats.uptimePct !== null ? `${summaryStats.uptimePct}%` : '—', color: '#22C55E' },
+                    { label: 'Delay Incidents', value: String(summaryStats.delayIncidents), color: '#F59E0B' },
+                    { label: 'Attractions Open', value: String(summaryStats.attractionsOpen), color: '#8B5CF6' },
+                  ].map((stat) => (
+                    <div key={stat.label} className="bg-[#111] border border-[#2a2a2a] rounded-xl p-5">
+                      <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-2">{stat.label}</p>
+                      <p className="text-[#F1F5F9] text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                    </div>
+                  ))}
                 </div>
-              )}
 
-              {/* ── Throughput Bar Chart ── */}
-              {throughputChartData.length > 0 && (
-                <div className="panel p-4 sm:p-6 mb-6">
-                  <h2 className="text-white text-lg font-bold mb-4">Guest Throughput — {selectedDate}</h2>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={throughputChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-                      <XAxis
-                        dataKey="slot"
-                        stroke="#fff"
-                        tick={{ fill: '#fff', fontSize: 11 }}
-                        angle={-30}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        stroke="#fff"
-                        tick={{ fill: '#fff', fontSize: 12 }}
-                        label={{
-                          value: 'Guests',
-                          angle: -90,
-                          position: 'insideLeft',
-                          fill: '#fff',
-                          style: { fontSize: 12 },
-                        }}
-                      />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Legend wrapperStyle={{ color: '#fff' }} />
-                      {throughputAttractionNames.map((name, i) => (
-                        <Bar
-                          key={name}
-                          dataKey={name}
-                          fill={LINE_COLORS[i % LINE_COLORS.length]}
-                          radius={[2, 2, 0, 0]}
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-
-              {/* ── Combined Wait Time + Throughput Chart ── */}
-              {combinedChartData.length > 0 && combinedAttractionNames.length > 0 && (
-                <div className="panel p-4 sm:p-6 mb-6">
-                  <h2 className="text-white text-lg font-bold mb-2">Wait Time vs Throughput — {selectedDate}</h2>
-                  <p className="text-[#888] text-xs mb-4">Lines show average wait time per slot. Bars show guest throughput.</p>
-                  <ResponsiveContainer width="100%" height={450}>
-                    <ComposedChart data={combinedChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-                      <XAxis
-                        dataKey="slot"
-                        stroke="#fff"
-                        tick={{ fill: '#fff', fontSize: 11 }}
-                        angle={-30}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        yAxisId="left"
-                        stroke="#fff"
-                        tick={{ fill: '#fff', fontSize: 12 }}
-                        label={{
-                          value: 'Wait (min)',
-                          angle: -90,
-                          position: 'insideLeft',
-                          fill: '#fff',
-                          style: { fontSize: 12 },
-                        }}
-                      />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="#fff"
-                        tick={{ fill: '#fff', fontSize: 12 }}
-                        label={{
-                          value: 'Guests',
-                          angle: 90,
-                          position: 'insideRight',
-                          fill: '#fff',
-                          style: { fontSize: 12 },
-                        }}
-                      />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Legend wrapperStyle={{ color: '#fff' }} />
-                      {combinedAttractionNames.map((name, i) => (
-                        <Bar
-                          key={`bar-${name}`}
-                          yAxisId="right"
-                          dataKey={`${name} (guests)`}
-                          fill={LINE_COLORS[i % LINE_COLORS.length]}
-                          fillOpacity={0.35}
-                          radius={[2, 2, 0, 0]}
-                        />
-                      ))}
-                      {combinedAttractionNames.map((name, i) => (
-                        <Line
-                          key={`line-${name}`}
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey={`${name} (wait)`}
-                          stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                          strokeWidth={2.5}
-                          dot={{ r: 3, fill: LINE_COLORS[i % LINE_COLORS.length] }}
-                          connectNulls={false}
-                        />
-                      ))}
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-
-              {/* ── Throughput Summary Table ── */}
-              <div className="panel p-4 sm:p-6">
-                <h2 className="text-white text-lg font-bold mb-4">Throughput Summary — {selectedDate}</h2>
-                {filteredThroughput.length === 0 ? (
-                  <p className="text-[#666] text-sm">No throughput data logged for this night.</p>
-                ) : (() => {
-                  const idToLogs = new Map<string, ThroughputLog[]>();
-                  for (const log of filteredThroughput) {
-                    if (!idToLogs.has(log.attraction_id)) idToLogs.set(log.attraction_id, []);
-                    idToLogs.get(log.attraction_id)!.push(log);
-                  }
-
-                  const idToName = new Map<string, string>();
-                  for (const a of attractions) {
-                    idToName.set(a.id, a.name);
-                  }
-                  for (const h of filteredHistory) {
-                    if (!idToName.has(h.attraction_id)) {
-                      idToName.set(h.attraction_id, h.attraction_name);
-                    }
-                  }
-
-                  const allSlots = Array.from(
-                    new Set(filteredThroughput.map((l) => `${l.slot_start}|${l.slot_end}`))
-                  ).sort((a, b) => a.split('|')[0].localeCompare(b.split('|')[0]));
-
-                  const attractionIds = Array.from(idToLogs.keys());
-                  const parkTotal = filteredThroughput.reduce((sum, l) => sum + l.guest_count, 0);
-
-                  // Build per-attraction lookup maps for O(1) slot access
-                  const logLookups = new Map<string, Map<string, ThroughputLog>>();
-                  for (const id of attractionIds) {
-                    const slotMap = new Map<string, ThroughputLog>();
-                    for (const l of idToLogs.get(id)!) {
-                      slotMap.set(`${l.slot_start}|${l.slot_end}`, l);
-                    }
-                    logLookups.set(id, slotMap);
-                  }
-
-                  // Pre-compute slot totals
-                  const slotTotals = new Map<string, number>();
-                  for (const l of filteredThroughput) {
-                    const key = `${l.slot_start}|${l.slot_end}`;
-                    slotTotals.set(key, (slotTotals.get(key) || 0) + l.guest_count);
-                  }
-
-                  return (
+                {/* Per-attraction summary */}
+                {statusLogSummary && statusLogSummary.length > 0 && (
+                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                    <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Per-Attraction Summary</h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
-                            <th className="text-left text-[#888] font-medium py-2 pr-4 whitespace-nowrap">Attraction</th>
-                            {allSlots.map((slot) => {
-                              const [start, end] = slot.split('|');
-                              return (
-                                <th key={slot} className="text-center text-[#888] font-medium py-2 px-2 whitespace-nowrap">
-                                  {start}–{end}
-                                </th>
-                              );
-                            })}
-                            <th className="text-center text-white font-semibold py-2 pl-4 whitespace-nowrap">Total</th>
+                            {['Attraction', 'Delays', 'Avg Delay', 'Total Downtime'].map((h) => (
+                              <th key={h} className="text-left px-3 py-2 text-[#475569] text-xs font-semibold uppercase tracking-wider">{h}</th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {attractionIds.map((id) => {
-                            const logs = idToLogs.get(id)!;
-                            const name = idToName.get(id) || id.slice(0, 8);
-                            const total = logs.reduce((sum, l) => sum + l.guest_count, 0);
-                            const nameColor = colorMap.get(name) || LINE_COLORS[attractionIds.indexOf(id) % LINE_COLORS.length];
-                            const slotMap = logLookups.get(id)!;
-
-                            return (
-                              <tr key={id} style={{ borderBottom: '1px solid #2a2a2a' }}>
-                                <td className="py-2 pr-4 whitespace-nowrap">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: nameColor }} />
-                                    <span className="text-white text-sm font-medium">{name}</span>
-                                  </div>
-                                </td>
-                                {allSlots.map((slot) => {
-                                  const log = slotMap.get(slot);
-                                  return (
-                                    <td key={slot} className="text-center py-2 px-2">
-                                      {log && log.guest_count > 0 ? (
-                                        <span className="text-white font-medium">{log.guest_count}</span>
-                                      ) : (
-                                        <span className="text-white/20">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                })}
-                                <td className="text-center py-2 pl-4">
-                                  <span className="text-white font-bold">{total}</span>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          {statusLogSummary.map((s) => (
+                            <tr key={s.attractionId} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                              <td className="px-3 py-2.5 text-[#F1F5F9] font-medium">{s.name}</td>
+                              <td className="px-3 py-2.5 text-[#f0ad4e] font-semibold">{s.delayCount}</td>
+                              <td className="px-3 py-2.5 text-[#94A3B8]">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : '—'}</td>
+                              <td className="px-3 py-2.5 text-red-400 font-semibold">{s.totalDowntimeMinutes} min</td>
+                            </tr>
+                          ))}
                         </tbody>
-                        <tfoot>
-                          <tr style={{ borderTop: '1px solid #2a2a2a' }}>
-                            <td className="py-3 pr-4">
-                              <span className="text-[#888] font-semibold text-sm">Park Total</span>
-                            </td>
-                            {allSlots.map((slot) => {
-                              const total = slotTotals.get(slot) || 0;
-                              return (
-                                <td key={slot} className="text-center py-3 px-2">
-                                  <span className="text-[#888] font-semibold">{total > 0 ? total : '—'}</span>
-                                </td>
-                              );
-                            })}
-                            <td className="text-center py-3 pl-4">
-                              <span className="text-white font-black text-base">{parkTotal}</span>
-                            </td>
-                          </tr>
-                        </tfoot>
                       </table>
                     </div>
-                  );
-                })()}
+                  </div>
+                )}
+
+                {!hasData && (
+                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+                    <EmptyState message="No data recorded for this date." />
+                  </div>
+                )}
               </div>
-            </>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
       </main>
     </div>
   );

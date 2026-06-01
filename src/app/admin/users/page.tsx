@@ -27,21 +27,21 @@ function ConfirmModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
-      <div className="bg-[#1E1E1E] border border-[#2a2a2a] p-8 w-full max-w-[400px]" style={{ borderRadius: 14 }}>
-        <p className="text-[#e0e0e0] text-sm font-semibold mb-2">{title}</p>
-        <p className="text-[#888] text-sm mb-5">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="bg-[#111] border border-[#2a2a2a] p-6 w-full max-w-[400px] rounded-xl">
+        <p className="text-[#F1F5F9] text-sm font-semibold mb-1.5">{title}</p>
+        <p className="text-[#94A3B8] text-sm mb-5">{message}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-5 py-2.5 border border-[#555] text-[#ccc] hover:border-[#888] hover:text-white
-                       rounded-[6px] text-sm font-semibold transition-colors"
+            className="flex-1 px-4 py-2.5 border border-[#2a2a2a] text-[#94A3B8] hover:border-[#555] hover:text-[#F1F5F9]
+                       rounded-lg text-sm font-medium transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-5 py-2.5 bg-[#d43518] hover:bg-[#b52d14] text-white rounded-[6px]
+            className="flex-1 px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30 rounded-lg
                        text-sm font-semibold transition-colors"
           >
             {confirmLabel}
@@ -176,91 +176,88 @@ function UserFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/80 px-4" style={{ overflowY: 'auto' }}>
-      <div className="bg-[#1E1E1E] border border-[#2a2a2a] w-full max-w-lg my-8" style={{ borderRadius: 14 }} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4" style={{ overflowY: 'auto' }}>
+      <div className="bg-[#111] border border-[#2a2a2a] w-full max-w-[520px] my-8 rounded-xl" onClick={(e) => e.stopPropagation()}>
         {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#333]">
-          <h3 className="text-[#e0e0e0] text-base font-semibold">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a2a]">
+          <h3 className="text-[#F1F5F9] text-base font-semibold">
             {editing ? 'Edit User' : 'Add User'}
           </h3>
-          <button onClick={onCancel} className="text-[#666] hover:text-[#e0e0e0] transition-colors p-1">
+          <button onClick={onCancel} className="text-[#475569] hover:text-[#F1F5F9] transition-colors p-1 rounded">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
 
-        <div className="px-6 py-6 space-y-6" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <div className="px-6 py-5 space-y-5" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {formError && (
-            <div className="bg-[#2a1010] border border-[#d43518] rounded-[6px] p-3">
-              <p className="text-[#f0a0a0] text-sm">{formError}</p>
+            <div className="bg-red-950/40 border border-red-700/40 rounded-lg p-3">
+              <p className="text-red-300 text-sm">{formError}</p>
             </div>
           )}
 
           {/* PIN-only toggle */}
           {!editing && (
-            <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-[#1a1a1a] border border-[#333] rounded-[6px]">
+            <label className="flex items-center gap-3 cursor-pointer px-4 py-3 bg-[#000] border border-[#2a2a2a] rounded-lg hover:border-[#3B82F6]/40 transition-colors">
               <input
                 type="checkbox"
                 checked={formPinOnly}
                 onChange={(e) => setFormPinOnly(e.target.checked)}
                 className="w-4 h-4"
-                style={{ accentColor: '#6ea8fe' }}
+                style={{ accentColor: '#3B82F6' }}
               />
               <div>
-                <span className="text-[#e0e0e0] text-sm font-medium">PIN-only user</span>
-                <p className="text-[#888] text-xs mt-0.5">No email/password login — sign-off only</p>
+                <span className="text-[#F1F5F9] text-sm font-medium">PIN-only user</span>
+                <p className="text-[#475569] text-xs mt-0.5">No email/password login — sign-off only</p>
               </div>
             </label>
           )}
 
-          {/* Section 1: Basic info */}
-          <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
-            <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">1</span>
-              Basic Info
-            </legend>
-            <div className="space-y-4">
+          {/* Basic info section */}
+          <div>
+            <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-3">Basic Info</p>
+            <div className="space-y-3">
               {!formPinOnly && (
                 <div>
-                  <label className="block text-[#ccc] text-[13px] font-medium mb-2">Email</label>
+                  <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Email</label>
                   <input
                     type="email"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     disabled={!!editing}
                     placeholder="user@example.com"
-                    className="w-full px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
-                               placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
+                    className="w-full px-3.5 py-2.5 bg-[#000] border border-[#2a2a2a] rounded-lg text-[#F1F5F9] text-sm
+                               placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
                                disabled:opacity-40"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-[#ccc] text-[13px] font-medium mb-2">Display Name</label>
+                <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Display Name</label>
                 <input
                   type="text"
                   value={formDisplayName}
                   onChange={(e) => setFormDisplayName(e.target.value)}
                   placeholder="e.g. John S."
-                  className="w-full px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
-                             placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#000] border border-[#2a2a2a] rounded-lg text-[#F1F5F9] text-sm
+                             placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
                 />
               </div>
               {!formPinOnly && (
                 <div>
-                  <label className="block text-[#ccc] text-[13px] font-medium mb-2">Role</label>
-                  <div className="flex gap-2">
+                  <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Role</label>
+                  <div className="flex gap-2 p-1 bg-[#000] border border-[#2a2a2a] rounded-lg">
                     {(['supervisor', 'admin'] as const).map((r) => (
                       <button
                         key={r}
                         onClick={() => setFormRole(r)}
-                        className={`flex-1 py-3.5 rounded-[6px] text-sm font-semibold capitalize transition-colors border
+                        className={`flex-1 py-2 rounded-md text-sm font-medium capitalize transition-all
                           ${formRole === r
                             ? r === 'admin'
-                              ? 'bg-[#0a3d1f] border-[#0a3d1f] text-[#4caf50]'
-                              : 'bg-[#1a1a1a] border-[#555] text-[#e0e0e0]'
-                            : 'bg-[#111] border-[#333] text-[#666]'
+                              ? 'bg-red-950/60 text-red-400 shadow-sm'
+                              : 'bg-blue-950/60 text-blue-400 shadow-sm'
+                            : 'text-[#475569] hover:text-[#94A3B8]'
                           }`}
                       >
                         {r}
@@ -270,17 +267,16 @@ function UserFormModal({
                 </div>
               )}
             </div>
-          </fieldset>
+          </div>
 
-          {/* Section 2: Sign-off */}
-          <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
-            <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">2</span>
-              Sign-Off
-            </legend>
-            <div className="space-y-4">
+          <div className="border-t border-[#2a2a2a]" />
+
+          {/* Sign-off section */}
+          <div>
+            <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-3">Sign-Off</p>
+            <div className="space-y-3">
               <div>
-                <label className="block text-[#ccc] text-[13px] font-medium mb-2">4-Digit PIN</label>
+                <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">4-Digit PIN</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -290,8 +286,8 @@ function UserFormModal({
                     value={formPin}
                     onChange={(e) => setFormPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="0000"
-                    className="flex-1 px-4 py-3.5 bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#e0e0e0] text-sm
-                               placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
+                    className="flex-1 px-3.5 py-2.5 bg-[#000] border border-[#2a2a2a] rounded-lg text-[#F1F5F9] text-sm
+                               placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors
                                tracking-[0.4em] font-mono text-center text-lg"
                   />
                   <button
@@ -300,99 +296,101 @@ function UserFormModal({
                       const pin = String(Math.floor(1000 + Math.random() * 9000));
                       setFormPin(pin);
                     }}
-                    className="px-4 py-3.5 border border-[#555] rounded-[6px] text-[#ccc] text-xs font-semibold
-                               hover:border-[#888] hover:text-white transition-colors whitespace-nowrap"
+                    className="px-3.5 py-2.5 border border-[#2a2a2a] rounded-lg text-[#94A3B8] text-xs font-semibold
+                               hover:border-[#555] hover:text-[#F1F5F9] transition-colors whitespace-nowrap"
                   >
                     Generate
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-[#ccc] text-[13px] font-medium mb-2">Roles</label>
-                <div className="grid grid-cols-1 gap-2">
+                <label className="block text-[#94A3B8] text-[13px] font-medium mb-1.5">Roles</label>
+                <div className="space-y-1.5">
                   {ALL_SIGNOFF_ROLES.map((role) => {
                     const checked = formSignoffRoles.includes(role);
                     return (
                       <button
                         key={role}
                         onClick={() => toggleSignoffRole(role)}
-                        className={`flex items-center gap-3 px-5 py-4 rounded-[6px] text-left transition-colors border
-                          ${checked ? 'bg-[#0a3d1f] border-[#4caf50] text-[#4caf50]' : 'bg-[#1a1a1a] border-[#333] text-[#888]'}`}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left transition-colors border
+                          ${checked ? 'bg-emerald-950/40 border-emerald-700/40 text-emerald-400' : 'bg-[#000] border-[#2a2a2a] text-[#94A3B8] hover:border-[#555]'}`}
                       >
-                        <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
-                          ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#555]'}`}>
+                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors
+                          ${checked ? 'bg-emerald-600' : 'border border-[#555]'}`}>
                           {checked && (
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                               <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           )}
                         </div>
-                        <span className="text-sm font-medium">{SIGNOFF_ROLE_LABELS[role]}</span>
+                        <span className="text-sm">{SIGNOFF_ROLE_LABELS[role]}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
             </div>
-          </fieldset>
+          </div>
 
-          {/* Section 3: Allowed attractions (supervisors only) */}
+          {/* Allowed attractions (supervisors only) */}
           {(formRole === 'supervisor' || formPinOnly) && (
-            <fieldset className="border border-[#333] rounded-[8px] p-5 mb-5 bg-[#111]">
-              <legend className="text-sm font-semibold text-white px-2 flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-6 h-6 bg-white text-black rounded-full text-xs font-bold">3</span>
-                Allowed Attractions
-              </legend>
-              <p className="text-[#888] text-xs mb-2">Leave empty for all attractions.</p>
-              <div className="grid grid-cols-1 gap-2">
-                {rides.map((a) => {
-                  const checked = formAttractions.includes(a.id);
-                  return (
-                    <button
-                      key={a.id}
-                      onClick={() => toggleAttraction(a.id)}
-                      className={`flex items-center gap-3 px-5 py-4 rounded-[6px] text-left transition-colors border
-                        ${checked ? 'bg-[#1a1a1a] border-[#555] text-[#e0e0e0]' : 'bg-[#111] border-[#333] text-[#666]'}`}
-                    >
-                      <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
-                        ${checked ? 'bg-[#4caf50]' : 'border-2 border-[#555]'}`}>
-                        {checked && (
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-sm font-medium">{a.name}</span>
-                    </button>
-                  );
-                })}
+            <>
+              <div className="border-t border-[#2a2a2a]" />
+              <div>
+                <p className="text-[#475569] text-xs font-semibold uppercase tracking-wider mb-1">Allowed Attractions</p>
+                <p className="text-[#475569] text-xs mb-3">Leave empty for all attractions.</p>
+                <div className="space-y-1.5">
+                  {rides.map((a) => {
+                    const checked = formAttractions.includes(a.id);
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => toggleAttraction(a.id)}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left transition-colors border
+                          ${checked ? 'bg-[#111] border-[#555] text-[#F1F5F9]' : 'bg-[#000] border-[#2a2a2a] text-[#94A3B8] hover:border-[#555]'}`}
+                      >
+                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors
+                          ${checked ? 'bg-emerald-600' : 'border border-[#555]'}`}>
+                          {checked && (
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm">{a.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </fieldset>
+            </>
           )}
         </div>
 
         {/* Modal footer */}
-        <div className="flex gap-3 px-6 py-5 border-t border-[#333]">
+        <div className="flex gap-3 px-6 py-4 border-t border-[#2a2a2a]">
           <button
             onClick={onCancel}
-            className="flex-1 py-3.5 border border-[#555] text-[#ccc] text-sm font-semibold
-                       rounded-[6px] hover:border-[#888] hover:text-white transition-colors"
+            className="flex-1 py-2.5 border border-[#2a2a2a] text-[#94A3B8] text-sm font-medium
+                       rounded-lg hover:border-[#555] hover:text-[#F1F5F9] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 py-3.5 bg-white text-black text-sm font-bold rounded-[6px]
-                       hover:bg-[#ddd] transition-colors disabled:opacity-50"
+            className="flex-1 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-sm font-semibold rounded-lg
+                       transition-colors disabled:opacity-50"
           >
-            {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
+            {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create User'}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
+type FilterTab = 'all' | 'admin' | 'supervisor' | 'pin';
 
 export default function UsersPage() {
   const router = useRouter();
@@ -402,11 +400,14 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserRole[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [pinData, setPinData] = useState<Map<string, SignoffPin>>(new Map());
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   // Modal state
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<UserRole | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRole | null>(null);
+  // PIN reveal state: set of user IDs with PIN visible
+  const [revealedPins, setRevealedPins] = useState<Set<string>>(new Set());
 
   const fetchUsers = useCallback(async () => {
     const [usersRes, pinsRes] = await Promise.all([
@@ -567,135 +568,184 @@ export default function UsersPage() {
       .join(', ');
   }
 
+  function togglePinReveal(userId: string) {
+    setRevealedPins((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }
+
   // Group users
   const admins = users.filter((u) => u.role === 'admin' && !isPinOnlyUser(u));
   const supervisors = users.filter((u) => u.role === 'supervisor' && !isPinOnlyUser(u));
   const pinOnlyUsers = users.filter((u) => isPinOnlyUser(u));
 
+  // Sorted unified list: admins first, supervisors, pin-only, alphabetical within group
+  const sortedUsers = [
+    ...admins.sort((a, b) => (a.display_name || a.email).localeCompare(b.display_name || b.email)),
+    ...supervisors.sort((a, b) => (a.display_name || a.email).localeCompare(b.display_name || b.email)),
+    ...pinOnlyUsers.sort((a, b) => (a.display_name || a.email).localeCompare(b.display_name || b.email)),
+  ];
+
+  const filteredUsers = sortedUsers.filter((u) => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'admin') return u.role === 'admin' && !isPinOnlyUser(u);
+    if (activeTab === 'supervisor') return u.role === 'supervisor' && !isPinOnlyUser(u);
+    if (activeTab === 'pin') return isPinOnlyUser(u);
+    return true;
+  });
+
+  const tabs: { key: FilterTab; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: users.length },
+    { key: 'admin', label: 'Admin', count: admins.length },
+    { key: 'supervisor', label: 'Supervisor', count: supervisors.length },
+    { key: 'pin', label: 'PIN Only', count: pinOnlyUsers.length },
+  ];
+
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#000000]">
-        <div className="text-[#888] text-sm">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-[#000]">
+        <div className="text-[#475569] text-sm">Loading...</div>
       </div>
     );
   }
 
-  function renderUserCard(user: UserRole) {
+  function renderUserRow(user: UserRole) {
     const pin = pinData.get(user.id);
     const pinOnly = isPinOnlyUser(user);
     const isYou = user.email === userEmail;
+    const pinRevealed = revealedPins.has(user.id);
+
+    const avatarBg = user.role === 'admin' && !pinOnly
+      ? { bg: 'rgba(220,38,38,0.15)', color: '#f87171', border: 'rgba(220,38,38,0.3)' }
+      : pinOnly
+        ? { bg: 'rgba(100,100,100,0.15)', color: '#94A3B8', border: 'rgba(100,100,100,0.3)' }
+        : { bg: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: 'rgba(59,130,246,0.3)' };
+
+    const roleBadge = user.role === 'admin' && !pinOnly
+      ? { bg: 'rgba(220,38,38,0.1)', color: '#f87171', label: 'Admin' }
+      : pinOnly
+        ? { bg: 'rgba(100,100,100,0.1)', color: '#94A3B8', label: 'PIN Only' }
+        : { bg: 'rgba(59,130,246,0.1)', color: '#60a5fa', label: 'Supervisor' };
 
     return (
       <div
         key={user.id}
-        className="bg-[#1E1E1E] border border-[#2a2a2a] transition-colors hover:border-[#555]"
-        style={{ padding: 32, borderRadius: 12 }}
+        className="flex items-center gap-4 px-4 py-3 bg-[#111] border border-[#2a2a2a] rounded-xl hover:border-[#3a3a3a] transition-colors group"
+        style={{ minHeight: 64 }}
       >
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center gap-5">
-            {/* Avatar */}
-            <div style={
-              user.role === 'admin' && !pinOnly
-                ? { width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, background: 'rgba(10,61,31,0.6)', color: '#4caf50', border: '2px solid rgba(76,175,80,0.3)' }
-                : pinOnly
-                  ? { width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, background: 'rgba(26,16,64,0.6)', color: '#a855f7', border: '2px solid rgba(168,85,247,0.3)' }
-                  : { width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0, background: 'rgba(61,48,0,0.6)', color: '#ffc107', border: '2px solid rgba(255,193,7,0.3)' }
-            }>
-              {(user.display_name || user.email).charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[#e0e0e0] text-sm font-semibold">
-                  {user.display_name || (pinOnly ? 'PIN User' : user.email.split('@')[0])}
-                </span>
-                {isYou && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#222] text-[#888] rounded font-medium">you</span>
-                )}
-              </div>
-              {!pinOnly && (
-                <p className="text-[#666] text-xs mt-0.5">{user.email}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => startEdit(user)}
-              className="px-3 py-1.5 text-xs font-medium rounded-[6px]
-                         hover:border-[#555] hover:text-[#e0e0e0] transition-colors"
-              style={{ background: 'transparent', border: '1px solid #444', color: '#888' }}
-            >
-              Edit
-            </button>
-            {!isYou && (
-              <button
-                onClick={() => setDeleteTarget(user)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-[6px]
-                           hover:brightness-125 transition-colors"
-                style={{ background: 'rgba(220,53,69,0.12)', color: '#f87171', border: 'none' }}
-              >
-                Delete
-              </button>
-            )}
-          </div>
+        {/* Avatar */}
+        <div
+          className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+          style={{ background: avatarBg.bg, color: avatarBg.color, border: `1.5px solid ${avatarBg.border}` }}
+        >
+          {(user.display_name || user.email).charAt(0).toUpperCase()}
         </div>
 
-        {/* Info row */}
-        <div className="flex flex-wrap gap-3 items-center">
-          {/* Role badge */}
-          <span className={`text-[10px] px-2 py-1 rounded-[12px] font-semibold uppercase
-            ${user.role === 'admin' && !pinOnly ? 'bg-[#0a3d1f] text-[#4caf50]' : pinOnly ? 'bg-[#1a1040] text-[#a855f7]' : 'bg-[#3d3000] text-[#ffc107]'}`}>
-            {pinOnly ? 'PIN only' : user.role}
-          </span>
-
-          {/* PIN display */}
-          {pin?.pin ? (
-            <span className="text-[10px] px-2 py-1 rounded-[12px] font-mono font-semibold bg-[#1a1a1a] text-[#888] tracking-widest border border-[#333]">
-              PIN: {pin.pin}
+        {/* Name + email */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[#F1F5F9] text-[15px] font-semibold truncate">
+              {user.display_name || (pinOnly ? 'PIN User' : user.email.split('@')[0])}
             </span>
-          ) : null}
-
-          {/* Attraction access */}
-          {user.role !== 'admin' && (
-            <span className="text-[10px] px-2 py-1 rounded-[12px] font-medium bg-[#1a1a1a] text-[#666] border border-[#333]">
-              {getAttractionNames(user.allowed_attractions)}
-            </span>
+            {isYou && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-[#1a1a1a] border border-[#2a2a2a] text-[#475569] rounded font-medium flex-shrink-0">
+                you
+              </span>
+            )}
+          </div>
+          {!pinOnly && (
+            <p className="text-[#475569] text-[13px] truncate">{user.email}</p>
           )}
+          {pinOnly && (
+            <p className="text-[#475569] text-[13px]">PIN Only</p>
+          )}
+        </div>
+
+        {/* Role badge */}
+        <div className="flex-shrink-0 hidden sm:block">
+          <span
+            className="text-[11px] px-2 py-1 rounded-full font-semibold"
+            style={{ background: roleBadge.bg, color: roleBadge.color }}
+          >
+            {roleBadge.label}
+          </span>
         </div>
 
         {/* Sign-off roles */}
         {pin && pin.signoff_roles && pin.signoff_roles.length > 0 && (
-          <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t border-[#333]">
-            {pin.signoff_roles.map((r) => (
-              <span key={r} className="text-[10px] px-2 py-1 bg-[#0a3d1f] text-[#4caf50] rounded-[12px] font-medium">
+          <div className="hidden lg:flex items-center gap-1 flex-shrink-0">
+            {pin.signoff_roles.slice(0, 2).map((r) => (
+              <span key={r} className="text-[10px] px-2 py-0.5 bg-[#1a1a1a] border border-[#2a2a2a] text-[#475569] rounded-full">
                 {SIGNOFF_ROLE_LABELS[r as SignoffRoleKey] || r}
               </span>
             ))}
+            {pin.signoff_roles.length > 2 && (
+              <span className="text-[10px] text-[#475569]">+{pin.signoff_roles.length - 2}</span>
+            )}
           </div>
         )}
-      </div>
-    );
-  }
 
-  function renderGroup(label: string, groupUsers: UserRole[], badgeColor: string, badgeTextColor: string) {
-    if (groupUsers.length === 0) return null;
-    return (
-      <div style={{ marginBottom: 80 }}>
-        <div className="flex items-center gap-3" style={{ marginBottom: 28 }}>
-          <span className="text-[10px] px-2.5 py-1 rounded-[12px] font-bold uppercase"
-                style={{ background: badgeColor, color: badgeTextColor }}>
-            {label}
-          </span>
-          <span className="text-[#666] text-xs">{groupUsers.length}</span>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24 }}>
-          {groupUsers.map(renderUserCard)}
+        {/* Attractions */}
+        {user.role !== 'admin' && (
+          <div className="hidden xl:block flex-shrink-0 max-w-[140px]">
+            <span className="text-[11px] text-[#475569] truncate block">
+              {getAttractionNames(user.allowed_attractions)}
+            </span>
+          </div>
+        )}
+
+        {/* PIN reveal */}
+        {pin?.pin && (
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="font-mono text-[13px] text-[#475569] tracking-widest w-10 text-center">
+              {pinRevealed ? pin.pin : '••••'}
+            </span>
+            <button
+              onClick={() => togglePinReveal(user.id)}
+              className="text-[#475569] hover:text-[#94A3B8] transition-colors p-0.5"
+              title={pinRevealed ? 'Hide PIN' : 'Reveal PIN'}
+            >
+              {pinRevealed ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => startEdit(user)}
+            className="px-2.5 py-1 text-[12px] font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors rounded"
+          >
+            Edit
+          </button>
+          {!isYou && (
+            <button
+              onClick={() => setDeleteTarget(user)}
+              className="px-2.5 py-1 text-[12px] font-medium text-[#475569] hover:text-red-400 transition-colors rounded"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#000000]">
+    <div className="min-h-screen bg-[#000]">
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <ConfirmModal
@@ -718,37 +768,62 @@ export default function UsersPage() {
         isPinOnlyUser={isPinOnlyUser}
       />
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 28px' }}>
+      <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px' }}>
         {/* Page header */}
-        <div className="flex items-center justify-between mb-10">
-          <h2 className="text-[#e0e0e0] text-2xl font-bold">Users</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-[#F1F5F9] text-2xl font-bold">Users</h2>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-7 py-4 bg-white text-black text-sm font-bold rounded-[6px]
-                       hover:bg-[#ddd] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-sm font-semibold rounded-lg transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
             Add User
           </button>
         </div>
 
+        {/* Filter tabs */}
+        <div className="flex items-center gap-1 mb-5 border-b border-[#2a2a2a] pb-0">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px
+                ${activeTab === tab.key
+                  ? 'border-[#3B82F6] text-[#F1F5F9]'
+                  : 'border-transparent text-[#475569] hover:text-[#94A3B8]'
+                }`}
+            >
+              {tab.label}
+              <span
+                className={`text-[11px] px-1.5 py-0.5 rounded font-semibold
+                  ${activeTab === tab.key ? 'bg-[#3B82F6]/20 text-[#60a5fa]' : 'bg-[#1a1a1a] text-[#475569]'}`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* User list */}
         {users.length === 0 ? (
-          <div className="bg-[#1E1E1E] border border-[#2a2a2a] p-20 text-center" style={{ borderRadius: 12 }}>
-            <p className="text-[#666] text-sm">No users configured yet.</p>
-            <p className="text-[#444] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
+          <div className="bg-[#111] border border-[#2a2a2a] p-16 text-center rounded-xl">
+            <p className="text-[#475569] text-sm">No users configured yet.</p>
+            <p className="text-[#2a2a2a] text-xs mt-2">Click &ldquo;Add User&rdquo; to get started.</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="bg-[#111] border border-[#2a2a2a] p-12 text-center rounded-xl">
+            <p className="text-[#475569] text-sm">No users in this category.</p>
           </div>
         ) : (
-          <>
-            {renderGroup('Admins', admins, '#0a3d1f', '#4caf50')}
-            {renderGroup('Supervisors', supervisors, '#3d3000', '#ffc107')}
-            {renderGroup('PIN-Only', pinOnlyUsers, '#1a1040', '#a855f7')}
-          </>
+          <div className="space-y-2">
+            {filteredUsers.map(renderUserRow)}
+          </div>
         )}
 
-        <div className="mt-14 text-center">
-          <Link href="/privacy" className="text-[#333] text-[11px] no-underline hover:text-[#555]">
+        <div className="mt-12 text-center">
+          <Link href="/privacy" className="text-[#2a2a2a] text-[11px] no-underline hover:text-[#555]">
             Privacy Policy
           </Link>
         </div>
