@@ -651,16 +651,17 @@ const RideControl = React.memo(function RideControl({
       {signoffStatus && (
         <div style={{ marginBottom: 4 }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
-              SIGNED OFF
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Signed Off
             </span>
           ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
-            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
-              {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+              {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} Signed Off
             </span>
           ) : (
-            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d1010] text-[#d43518]">
-              NOT SIGNED OFF
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+              Not Signed Off
             </span>
           )}
         </div>
@@ -867,16 +868,17 @@ const ShowControl = React.memo(function ShowControl({
       {signoffStatus && (
         <div style={{ marginBottom: 8 }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#0a3d1f] text-[#4caf50]">
-              SIGNED OFF
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Signed Off
             </span>
           ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
-            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d3000] text-[#f0ad4e]">
-              {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+              {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} Signed Off
             </span>
           ) : (
-            <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-[#3d1010] text-[#d43518]">
-              NOT SIGNED OFF
+            <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+              Not Signed Off
             </span>
           )}
         </div>

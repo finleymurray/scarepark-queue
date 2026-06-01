@@ -847,40 +847,44 @@ export default function SupervisorDashboard() {
 
             {/* ── Sign-Off Status ── */}
             {signoffStatus && (
-              <div className="mb-6 flex flex-col items-center gap-2">
+              <div className="mb-6 flex flex-col items-center gap-3">
                 {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#0a3d1f] text-[#4caf50]">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#4caf50" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    SIGNED OFF
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Signed Off
                   </span>
                 ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
                   <>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d3000] text-[#f0ad4e]">
-                      {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} SIGNED OFF
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+                      {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} Signed Off
                     </span>
                     <a
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#2a2a2a] text-[#94A3B8] text-xs font-semibold rounded-[8px] hover:border-[#444444] hover:text-[#F1F5F9] transition-colors"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: '#111', border: '1px solid #2a2a2a', color: '#94A3B8', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#F1F5F9'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
                     >
-                      Complete Sign Offs
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Complete Sign-Offs
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2H10V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </a>
                   </>
                 ) : (
                   <>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#3d1010] text-[#EF4444]">
-                      NOT SIGNED OFF
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+                      Not Signed Off
                     </span>
                     <a
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#2a2a2a] text-[#94A3B8] text-xs font-semibold rounded-[8px] hover:border-[#444444] hover:text-[#F1F5F9] transition-colors"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: '#111', border: '1px solid #2a2a2a', color: '#94A3B8', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#F1F5F9'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
                     >
-                      Complete Sign Offs
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2.5H11.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 2.5L2.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Complete Sign-Offs
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2H10V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </a>
                   </>
                 )}
