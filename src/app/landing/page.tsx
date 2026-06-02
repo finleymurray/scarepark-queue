@@ -9,7 +9,7 @@ const APPS = [
     id: 'control',
     href: '/control',
     logo: '/logo-control.png',
-    name: 'Field Control',
+    name: 'Control',
     description: 'Manage queue times, dispatch groups, log throughput',
     accent: '#3B82F6',
     accentBg: 'rgba(59,130,246,0.08)',
@@ -85,42 +85,43 @@ export default function LandingPage() {
       minHeight: '100vh', background: '#000',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      padding: '40px 24px',
+      padding: '48px 20px',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     }}>
       {/* CoreLink wordmark */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 56 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 48 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="CoreLink" style={{ width: 52, height: 52, objectFit: 'contain', marginBottom: 16 }} />
-        <h1 style={{ color: '#F1F5F9', fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.03em' }}>CoreLink</h1>
-        <p style={{ color: '#374151', fontSize: 13, marginTop: 6 }}>Operations Platform</p>
+        <img src="/logo.png" alt="CoreLink" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 18 }} />
+        <h1 style={{ color: '#F1F5F9', fontSize: 32, fontWeight: 800, margin: 0, letterSpacing: '-0.03em' }}>CoreLink</h1>
+        <p style={{ color: '#374151', fontSize: 14, marginTop: 6 }}>Operations Platform</p>
       </div>
 
-      {/* App cards */}
+      {/* App cards — single column on mobile, side-by-side on wider screens */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${visibleApps.length}, 1fr)`,
-        gap: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
         width: '100%',
-        maxWidth: 640,
+        maxWidth: 420,
       }}>
         {visibleApps.map((app) => (
           <button
             key={app.id}
             onClick={() => handleAppClick(app.href, app.id)}
             style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              padding: '28px 20px',
+              display: 'flex', alignItems: 'center',
+              padding: '20px 24px',
               background: app.accentBg,
               border: `1px solid ${app.accentBorder}`,
               borderRadius: 16,
               cursor: 'pointer',
-              textAlign: 'center',
+              textAlign: 'left',
               transition: 'transform 0.12s, box-shadow 0.12s',
-              gap: 14,
+              gap: 18,
+              width: '100%',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
               e.currentTarget.style.boxShadow = `0 8px 24px ${app.accentBg}`;
             }}
             onMouseLeave={(e) => {
@@ -129,18 +130,14 @@ export default function LandingPage() {
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={app.logo} alt={app.name} style={{ width: 48, height: 48, objectFit: 'contain' }} />
-            <div>
-              <div style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{app.name}</div>
-              <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.4 }}>{app.description}</div>
+            <img src={app.logo} alt={app.name} style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: '#F1F5F9', fontSize: 17, fontWeight: 700, marginBottom: 3 }}>{app.name}</div>
+              <div style={{ color: '#64748B', fontSize: 13, lineHeight: 1.4 }}>{app.description}</div>
             </div>
-            <div style={{
-              marginTop: 4, fontSize: 11, fontWeight: 600, letterSpacing: '0.04em',
-              color: app.accent, padding: '4px 12px',
-              background: 'rgba(255,255,255,0.04)', borderRadius: 20,
-            }}>
-              Open →
-            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: app.accent, flexShrink: 0 }}>
+              <path d="M3 8H13M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </button>
         ))}
       </div>

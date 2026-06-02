@@ -20,7 +20,7 @@ const MORE_TABS = [
 ];
 
 const EXTERNAL_LINKS = [
-  { label: 'Field Control', href: '/control' },
+  { label: 'Control', href: '/control' },
   { label: 'Sign-Off', href: '/signoff' },
   { label: 'TV Screens', href: '/tv' },
 ];

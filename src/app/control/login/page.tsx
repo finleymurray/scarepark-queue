@@ -61,7 +61,7 @@ export default function ControlLoginPage() {
             priority
             style={{ width: 48, height: 'auto', marginBottom: 16 }}
           />
-          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Field Control</h1>
+          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Control</h1>
           <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>CoreLink Operations Platform</p>
         </div>
 

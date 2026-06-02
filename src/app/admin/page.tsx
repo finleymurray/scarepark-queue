@@ -1581,6 +1581,43 @@ export default function AdminDashboard() {
         <OperatingHoursControl openingTime={openingTime} closingTime={closingTime} onUpdateOpening={handleOpeningTimeUpdate} onUpdateClosing={handleClosingTimeUpdate} />
       </div>
 
+      {/* ── Bulk Dispatch Target ── */}
+      {(() => {
+        const rides = attractions.filter((a) => a.attraction_type !== 'show');
+        if (rides.length === 0) return null;
+        const uniqueTargets = [...new Set(rides.map((r) => r.target_dispatch_seconds ?? 90))];
+        const currentBulk = uniqueTargets.length === 1 ? uniqueTargets[0] : null;
+        return (
+          <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 14, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 2px' }}>Target Dispatch Interval</p>
+              <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>Set for all rides at once</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[45, 60, 90, 120].map((secs) => (
+                <button key={secs}
+                  onClick={async () => {
+                    const ids = rides.map((r) => r.id);
+                    for (const id of ids) {
+                      await supabase.from('attractions').update({ target_dispatch_seconds: secs }).eq('id', id);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 16px', borderRadius: 8, border: '1px solid',
+                    borderColor: currentBulk === secs ? '#3B82F6' : '#2a2a2a',
+                    background: currentBulk === secs ? 'rgba(59,130,246,0.1)' : '#000',
+                    color: currentBulk === secs ? '#60A5FA' : '#94A3B8',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}>
+                  {secs}s
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Sign-off completion banners ── */}
       {(() => {
         const rides = attractions.filter((a) => a.attraction_type !== 'show');

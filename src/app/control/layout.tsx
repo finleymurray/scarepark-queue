@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   manifest: '/manifest-control.json',
-  title: 'Field Control',
+  title: 'Control',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Field Control',
+    title: 'Control',
   },
   icons: {
     icon: '/favicons/control.ico',

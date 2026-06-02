@@ -113,7 +113,7 @@ export default function ShowReportModal({
   const [existingReport, setExistingReport] = useState<{ submittedBy: string; submittedAt: string } | null>(null);
   // Draft info
   const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null);
-  // Draft from Field Control
+  // Draft from Control
   const [draftFromField, setDraftFromField] = useState(false);
 
   // PIN verification — submitter identity
@@ -155,7 +155,7 @@ export default function ShowReportModal({
         setDraftInfo(null);
         setDraftFromField(false);
       } else if (existing && existing.is_draft) {
-        // DB draft from Field Control notes
+        // DB draft from Control notes
         setOperationalReport(existing.operational_report || '');
         setTechnicalReport(existing.technical_report || '');
         setCostumeReport(existing.costume_report || '');
@@ -361,7 +361,7 @@ export default function ShowReportModal({
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
             </svg>
-            Notes pre-loaded from Field Control — review before submitting.
+            Notes pre-loaded from Control — review before submitting.
           </div>
         )}
         {!existingReport && !draftFromField && draftInfo && (

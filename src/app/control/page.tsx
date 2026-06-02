@@ -143,7 +143,7 @@ export default function SupervisorDashboard() {
         setNotifEnabled(true);
         notifEnabledRef.current = true;
         localStorage.setItem('ic-notif-enabled', 'true');
-        new Notification('IC Field Control', { body: 'Status change notifications enabled.', icon: '/logo-control.png' });
+        new Notification('IC Control', { body: 'Status change notifications enabled.', icon: '/logo-control.png' });
       }
     } else {
       setNotifEnabled(false);
@@ -591,7 +591,7 @@ export default function SupervisorDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="control" isAdmin={userRole === 'admin'} />
           <a href="/control" style={{ textDecoration: 'none' }}>
-            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Field Control</h1>
+            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Control</h1>
           </a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
@@ -794,8 +794,16 @@ export default function SupervisorDashboard() {
                       }}>
                         {timerStr}
                       </div>
-                      <div style={{ color: '#64748B', fontSize: 11, marginTop: 4 }}>
-                        Target: {targetSeconds}s
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 6 }}>
+                        <span style={{ color: '#64748B', fontSize: 11 }}>Target: {targetSeconds}s</span>
+                        {lastDispatchAt !== null && (
+                          <button
+                            onClick={() => { setLastDispatchAt(null); setDispatchElapsed(0); }}
+                            style={{ background: 'none', border: '1px solid #2a2a2a', color: '#64748B', fontSize: 11, padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}
+                          >
+                            Reset timer
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -871,6 +879,88 @@ export default function SupervisorDashboard() {
                 </section>
               );
             })()}
+
+            {/* ── Queue Time Control ── */}
+            <section style={{ marginBottom: 48 }}>
+              <div className="flex items-center gap-2.5 mb-5">
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
+              </div>
+
+              <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
+                {selected.attraction_type === 'show' ? (
+                  <div className="text-center py-4">
+                    <div className={`text-3xl font-black ${
+                      selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                      selected.status === 'CLOSED' ? 'text-[#dc3545]' :
+                      'text-[#f0ad4e]'
+                    }`}>
+                      {selected.status === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : selected.status}
+                    </div>
+                  </div>
+                ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
+                  <div className="text-center py-4">
+                    <div className={`text-4xl font-black ${
+                      selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
+                    }`}>
+                      {selected.status === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : selected.status}
+                    </div>
+                    <p className="text-white/30 text-xs mt-2">
+                      {selected.status === 'CLOSED'
+                        ? 'Contact control to open your attraction'
+                        : 'Contact control to re-open your attraction'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Inline stepper: [-5]  TIME  [+5] */}
+                    <div className="flex items-center gap-6">
+                      <button
+                        onClick={() => handleWaitTimeUpdate(-5)}
+                        disabled={selected.wait_time <= 0}
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400
+                                   text-red-400 text-3xl font-black active:bg-red-900/20
+                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
+                                   min-w-[80px] min-h-[80px]"
+                      >
+                        -5
+                      </button>
+
+                      <div className="flex-1 text-center">
+                        <div className={`text-5xl font-black tabular-nums ${
+                          selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                          selected.status === 'AT CAPACITY' ? 'text-[#F59E0B]' :
+                          'text-[#f0ad4e]'
+                        }`}>
+                          {selected.wait_time}
+                          <span className="text-xl text-white/30 ml-1">min</span>
+                        </div>
+                        <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
+                          selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
+                          'text-[#f0ad4e]/50'
+                        }`}>
+                          {selected.status}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleWaitTimeUpdate(5)}
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E]
+                                   text-[#22C55E] text-3xl font-black active:bg-green-900/20
+                                   transition-colors touch-manipulation
+                                   min-w-[80px] min-h-[80px]"
+                      >
+                        +5
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
 
             {/* ── Hourly Throughput (view + hold-to-edit) ── */}
             {selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
@@ -974,88 +1064,6 @@ export default function SupervisorDashboard() {
                 </div>
               </div>
             )}
-
-            {/* ── Queue Time Control ── */}
-            <section style={{ marginBottom: 48 }}>
-              <div className="flex items-center gap-2.5 mb-5">
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
-              </div>
-
-              <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
-                {selected.attraction_type === 'show' ? (
-                  <div className="text-center py-4">
-                    <div className={`text-3xl font-black ${
-                      selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                      selected.status === 'CLOSED' ? 'text-[#dc3545]' :
-                      'text-[#f0ad4e]'
-                    }`}>
-                      {selected.status === 'DELAYED' && delayStartedAt
-                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                        : selected.status}
-                    </div>
-                  </div>
-                ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
-                  <div className="text-center py-4">
-                    <div className={`text-4xl font-black ${
-                      selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
-                    }`}>
-                      {selected.status === 'DELAYED' && delayStartedAt
-                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                        : selected.status}
-                    </div>
-                    <p className="text-white/30 text-xs mt-2">
-                      {selected.status === 'CLOSED'
-                        ? 'Contact control to open your attraction'
-                        : 'Contact control to re-open your attraction'}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Inline stepper: [-5]  TIME  [+5] */}
-                    <div className="flex items-center gap-6">
-                      <button
-                        onClick={() => handleWaitTimeUpdate(-5)}
-                        disabled={selected.wait_time <= 0}
-                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400
-                                   text-red-400 text-3xl font-black active:bg-red-900/20
-                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
-                                   min-w-[80px] min-h-[80px]"
-                      >
-                        -5
-                      </button>
-
-                      <div className="flex-1 text-center">
-                        <div className={`text-5xl font-black tabular-nums ${
-                          selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                          selected.status === 'AT CAPACITY' ? 'text-[#F59E0B]' :
-                          'text-[#f0ad4e]'
-                        }`}>
-                          {selected.wait_time}
-                          <span className="text-xl text-white/30 ml-1">min</span>
-                        </div>
-                        <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
-                          selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
-                          'text-[#f0ad4e]/50'
-                        }`}>
-                          {selected.status}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => handleWaitTimeUpdate(5)}
-                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E]
-                                   text-[#22C55E] text-3xl font-black active:bg-green-900/20
-                                   transition-colors touch-manipulation
-                                   min-w-[80px] min-h-[80px]"
-                      >
-                        +5
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </section>
 
             {/* ── Field Notes Button ── */}
             {selected.attraction_type !== 'show' && (

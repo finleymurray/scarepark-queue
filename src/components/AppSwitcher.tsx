@@ -12,7 +12,7 @@ interface App {
 }
 
 const APPS: App[] = [
-  { id: 'control',  label: 'Field Control', sublabel: 'Queue & throughput',  href: '/control',  logo: '/logo-control.png',  accent: '#3B82F6' },
+  { id: 'control',  label: 'Control', sublabel: 'Queue & throughput',  href: '/control',  logo: '/logo-control.png',  accent: '#3B82F6' },
   { id: 'signoff',  label: 'Sign-Off',       sublabel: 'Checklists & reports', href: '/signoff',  logo: '/logo-signoff.png',  accent: '#F59E0B' },
   { id: 'admin',    label: 'Admin',           sublabel: 'Management & ops',    href: '/admin',    logo: '/logo-admin.png',    accent: '#EF4444' },
 ];
