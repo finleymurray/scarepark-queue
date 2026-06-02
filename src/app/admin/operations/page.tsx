@@ -87,20 +87,31 @@ interface AttractionOps {
 
 /* ── Queue time sparkline ── */
 
-interface ChartPoint { t: number; wait: number | null; label: string }
+interface ChartPoint { t: number; wait: number | null; label: string } // t = local minutes since midnight
 
-function formatHourLabel(ms: number): string {
-  const d = new Date(ms);
-  const h = d.getHours();
+/* Convert "HH:MM" string → minutes since midnight */
+function hhmToMin(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+/* Convert a live Date → local minutes since midnight */
+function dateToMin(d: Date): number {
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+/* Format minutes-since-midnight as "7PM", "9PM" etc for axis ticks */
+function formatMinLabel(min: number): string {
+  const h = Math.floor(min / 60) % 24;
   const ampm = h >= 12 ? 'PM' : 'AM';
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${h12}${ampm}`;
 }
 
-function formatTooltipTime(ms: number): string {
-  const d = new Date(ms);
-  const h = d.getHours();
-  const m = d.getMinutes();
+/* Format minutes-since-midnight as "7:24 PM" for tooltip */
+function formatMinTooltip(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
   const ampm = h >= 12 ? 'PM' : 'AM';
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
@@ -121,59 +132,51 @@ function QueueChart({
 }) {
   if (history.length === 0) return null;
 
-  // Build domain from park hours for the selected date so the x-axis always
-  // spans the full operating window even early in the night with sparse data.
-  // Fall back to the data bounds if park hours aren't configured.
+  // Use LOCAL minutes-since-midnight to avoid all timezone issues.
+  // openTime "19:00" → 1140, closeTime "23:00" → 1380.
+  // Data points also converted via d.getHours()/getMinutes() (local).
   let domainStart: number;
   let domainEnd: number;
 
   if (openTime && closeTime) {
-    // Parse park hours as local time on the selected date
-    domainStart = new Date(`${dateStr}T${openTime}:00`).getTime();
-    domainEnd   = new Date(`${dateStr}T${closeTime}:00`).getTime();
-    // Handle crossing midnight
-    if (domainEnd <= domainStart) domainEnd += 24 * 60 * 60 * 1000;
-    // Add 1 hour buffer after close for queue clearance
-    domainEnd += 60 * 60 * 1000;
+    domainStart = Math.floor(hhmToMin(openTime) / 60) * 60; // floor to hour
+    domainEnd   = hhmToMin(closeTime) + 60;                 // +1hr buffer
+    if (domainEnd <= domainStart) domainEnd += 24 * 60;     // cross midnight
   } else {
-    // Fallback: derive from data
-    const timestamps = history.map((h) => new Date(h.recorded_at).getTime());
-    domainStart = Math.floor(Math.min(...timestamps) / 3_600_000) * 3_600_000;
-    domainEnd   = Math.ceil(Math.max(...timestamps)  / 3_600_000) * 3_600_000 + 15 * 60_000;
+    const mins = history.map((h) => dateToMin(new Date(h.recorded_at)));
+    domainStart = Math.floor(Math.min(...mins) / 60) * 60;
+    domainEnd   = Math.ceil(Math.max(...mins)  / 60) * 60 + 60;
   }
 
-  // Build data points from history
-  const dataPoints: ChartPoint[] = history.map((h) => ({
-    t: new Date(h.recorded_at).getTime(),
-    wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
-    label: formatTooltipTime(new Date(h.recorded_at).getTime()),
-  }));
+  // Data points as local minutes since midnight — no timezone issues
+  const dataPoints: ChartPoint[] = history.map((h) => {
+    const d = new Date(h.recorded_at);
+    const min = dateToMin(d);
+    return {
+      t: min,
+      wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
+      label: formatMinTooltip(min),
+    };
+  });
 
   if (dataPoints.length === 0) return null;
 
-  // Inject invisible boundary points at domainStart and domainEnd so Recharts
-  // always renders the chart across the full operating window regardless of
-  // how many actual data points exist. null wait = no line drawn.
+  // Boundary points force chart to span full operating window
   const points: ChartPoint[] = [
-    { t: domainStart, wait: null, label: formatTooltipTime(domainStart) },
+    { t: domainStart, wait: null, label: formatMinTooltip(domainStart) },
     ...dataPoints,
-    { t: domainEnd, wait: null, label: formatTooltipTime(domainEnd) },
+    { t: domainEnd, wait: null, label: formatMinTooltip(domainEnd) },
   ];
 
-  // Delay reference lines
+  // Delay reference lines in local minutes
   const delayBands = delays.map((d) => ({
-    start: new Date(d.log.changed_at).getTime(),
-    end: d.log.resolved_at ? new Date(d.log.resolved_at).getTime() : Date.now(),
+    start: dateToMin(new Date(d.log.changed_at)),
+    end:   d.log.resolved_at ? dateToMin(new Date(d.log.resolved_at)) : dateToMin(new Date()),
   }));
 
-  // Hourly ticks — every 2 hours to avoid crowding on small charts
+  // Hourly ticks — every 2 hours
   const allTicks: number[] = [];
-  let tick = Math.floor(domainStart / 3_600_000) * 3_600_000;
-  while (tick <= domainEnd) {
-    allTicks.push(tick);
-    tick += 3_600_000;
-  }
-  // Show every 2nd tick to prevent label collision
+  for (let t = Math.floor(domainStart / 60) * 60; t <= domainEnd; t += 60) allTicks.push(t);
   const ticks = allTicks.filter((_, i) => i % 2 === 0);
 
   return (
@@ -195,7 +198,7 @@ function QueueChart({
             type="number"
             domain={['dataMin', 'dataMax']}
             ticks={ticks}
-            tickFormatter={formatHourLabel}
+            tickFormatter={formatMinLabel}
             tick={{ fontSize: 11, fill: '#475569' }}
             axisLine={false}
             tickLine={false}
@@ -211,7 +214,7 @@ function QueueChart({
           />
           <Tooltip
             contentStyle={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, fontSize: 13 }}
-            labelFormatter={(v) => formatTooltipTime(v as number)}
+            labelFormatter={(v) => formatMinTooltip(v as number)}
             formatter={(v: unknown) => [`${v} min`, 'Wait time']}
             itemStyle={{ color: '#22C55E' }}
             labelStyle={{ color: '#888' }}
