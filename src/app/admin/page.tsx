@@ -761,16 +761,26 @@ const RideControl = React.memo(function RideControl({
           placeholder="Set min"
           min={0}
           max={180}
-          className="flex-1 px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
-                     placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors
-                     [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
-                     [&::-webkit-outer-spin-button]:appearance-none"
+          style={{
+            flex: 1, padding: '10px 12px',
+            background: '#000', border: '1px solid #2a2a2a', borderRadius: 8,
+            color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44,
+          }}
+          className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
+          onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
         />
         <button
           onClick={handleSetTime}
           disabled={saving || !customTime}
-          className="btn-quick px-4 py-2.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-sm font-semibold
-                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            padding: '10px 18px', background: '#DC2626', border: 'none',
+            borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700,
+            cursor: !customTime || saving ? 'not-allowed' : 'pointer',
+            opacity: !customTime || saving ? 0.3 : 1, minHeight: 44,
+            transition: 'opacity 0.15s',
+          }}
+          className="btn-quick"
         >
           Set
         </button>
