@@ -313,8 +313,18 @@ export default function SupervisorDashboard() {
         .order('dispatched_at', { ascending: false }).limit(10);
       setDispatchLogs(data || []);
       const latest = (data || [])[0];
-      if (latest) setLastDispatchAt(latest.dispatched_at);
-      else setLastDispatchAt(null);
+      // Respect a locally persisted reset — if the reset happened after the
+      // last dispatch, keep the timer blank until a new dispatch is logged.
+      const resetTime = typeof window !== 'undefined'
+        ? localStorage.getItem(`ic-dispatch-reset-${attractionId}`)
+        : null;
+      if (latest && resetTime && new Date(latest.dispatched_at) < new Date(resetTime)) {
+        setLastDispatchAt(null);
+      } else if (latest) {
+        setLastDispatchAt(latest.dispatched_at);
+      } else {
+        setLastDispatchAt(null);
+      }
     }
 
     fetchDispatchLogs(selectedId);
@@ -553,6 +563,8 @@ export default function SupervisorDashboard() {
     const now = new Date().toISOString();
     setLastDispatchAt(now);
     setDispatchElapsed(0);
+    // Clear any manual reset so the new dispatch shows correctly after navigation
+    if (selectedId) localStorage.removeItem(`ic-dispatch-reset-${selectedId}`);
     const { data } = await supabase.from('dispatch_logs')
       .select('*').eq('attraction_id', selectedId).eq('log_date', today)
       .order('dispatched_at', { ascending: false }).limit(10);
@@ -798,7 +810,11 @@ export default function SupervisorDashboard() {
                         <span style={{ color: '#64748B', fontSize: 11 }}>Target: {targetSeconds}s</span>
                         {lastDispatchAt !== null && (
                           <button
-                            onClick={() => { setLastDispatchAt(null); setDispatchElapsed(0); }}
+                            onClick={() => {
+                              setLastDispatchAt(null);
+                              setDispatchElapsed(0);
+                              if (selectedId) localStorage.setItem(`ic-dispatch-reset-${selectedId}`, new Date().toISOString());
+                            }}
                             style={{ background: 'none', border: '1px solid #2a2a2a', color: '#64748B', fontSize: 11, padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}
                           >
                             Reset timer
