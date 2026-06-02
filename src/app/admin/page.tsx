@@ -850,73 +850,51 @@ const ShowControl = React.memo(function ShowControl({
   }
 
   return (
-    <div style={{ background: 'rgba(88, 28, 135, 0.10)', border: '1px solid rgba(126, 34, 206, 0.25)', borderRadius: 12, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
+    <div style={{ background: '#111', border: '1px solid rgba(126,34,206,0.2)', borderRadius: 14, padding: 20, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
-      {/* Reorder buttons — top right corner */}
-      {onMove && (
-        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
-          <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />
+      {/* Header row: SHOW badge + status + reorder */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ background: 'rgba(126,34,206,0.3)', color: '#c084fc', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 5, letterSpacing: '0.05em' }}>
+            SHOW
+          </span>
+          <select
+            key={`status-${attraction.id}-${status}`}
+            value={status}
+            onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
+            disabled={saving}
+            style={{
+              appearance: 'none', WebkitAppearance: 'none',
+              padding: '6px 28px 6px 12px', fontSize: 12, fontWeight: 700,
+              textTransform: 'uppercase' as const, letterSpacing: '0.04em',
+              borderRadius: 6, border: 'none', cursor: 'pointer',
+              backgroundColor: STATUS_PILL_BG[status] || '#555',
+              color: STATUS_PILL_TEXT[status] || '#fff',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 2l4 4 4-4' fill='${encodeURIComponent(STATUS_PILL_TEXT[status] || '#fff')}' /%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 9px center', backgroundSize: '8px',
+              opacity: saving ? 0.5 : 1, outline: 'none',
+            }}
+          >
+            {SHOW_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
-      )}
-
-      {/* SHOW badge + Status pill — centred */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-md whitespace-nowrap">
-          SHOW
-        </span>
-        <select
-          key={`status-${attraction.id}-${status}`}
-          value={status}
-          onChange={(e) => handleUpdate({ status: e.target.value as AttractionStatus })}
-          disabled={saving}
-          style={{
-            appearance: 'none',
-            WebkitAppearance: 'none',
-            MozAppearance: 'none' as never,
-            padding: '6px 30px 6px 14px',
-            fontSize: 12,
-            fontWeight: 800,
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.04em',
-            borderRadius: 6,
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'filter 0.15s',
-            backgroundColor: STATUS_PILL_BG[status] || '#555',
-            color: STATUS_PILL_TEXT[status] || '#fff',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 2l4 4 4-4' fill='${encodeURIComponent(STATUS_PILL_TEXT[status] || '#fff')}' /%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 10px center',
-            backgroundSize: '8px',
-            opacity: saving ? 0.5 : 1,
-            outline: 'none',
-          }}
-        >
-          {SHOW_STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        {onMove && <ReorderButtons onMove={onMove} isFirst={isFirst} isLast={isLast} />}
       </div>
 
-      {/* Logo + Name — centred */}
-      <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 6, marginBottom: 4 }}>
+      {/* Logo + Name */}
+      <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 8, marginBottom: 12 }}>
         {(() => {
           const logo = getAttractionLogo(attraction.slug);
           const glow = getLogoGlow(attraction.slug);
           return logo ? (
-            <img src={logo} alt="" width={80} height={80} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 80, height: 80, filter: glow || undefined }} />
+            <img src={logo} alt="" width={72} height={72} loading="lazy" decoding="async" className="rounded object-contain" style={{ width: 72, height: 72, filter: glow || undefined }} />
           ) : null;
         })()}
-        <div style={{ textAlign: 'center' as const }}>
-          <EditableName
-            name={attraction.name}
-            onSave={(newName) => {
-              const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              handleUpdate({ name: newName, slug: newSlug });
-            }}
-          />
-        </div>
+        <EditableName name={attraction.name} onSave={(newName) => {
+          const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          handleUpdate({ name: newName, slug: newSlug });
+        }} />
       </div>
 
       {/* Sign-off badge — centred */}
@@ -939,75 +917,52 @@ const ShowControl = React.memo(function ShowControl({
         </div>
       )}
 
-      {/* Show times list */}
-      <div className="mb-3" style={{ width: '100%' }}>
-        <label className="block text-[#888] text-xs font-medium mb-2 uppercase tracking-wider">Show Times</label>
+      {/* Show times */}
+      <div style={{ width: '100%' }}>
+        <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Show Times</p>
+
         {sortedTimes.length === 0 ? (
-          <p className="text-white/30 text-xs italic mb-2">No show times added</p>
+          <p style={{ color: '#374151', fontSize: 12, fontStyle: 'italic', marginBottom: 10 }}>No show times added</p>
         ) : (
-          <div className="flex flex-wrap gap-2 mb-2">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {sortedTimes.map((time) => (
-              <div
-                key={time}
-                className="flex items-center gap-1.5 bg-purple-900/40 border border-purple-500/30
-                           text-purple-200 text-sm font-semibold px-3 py-1.5 rounded-md"
-              >
+              <div key={time} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(126,34,206,0.15)', border: '1px solid rgba(126,34,206,0.3)', color: '#c084fc', fontSize: 13, fontWeight: 600, padding: '7px 12px', borderRadius: 8, minHeight: 38 }}>
                 <span className="tabular-nums">{formatTime12h(time)}</span>
-                <button
-                  onClick={() => handleRemoveTime(time)}
-                  disabled={saving}
-                  className="text-purple-400/60 hover:text-[#dc3545] transition-colors ml-1
-                             disabled:opacity-30"
-                  title="Remove this time"
-                >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" />
-                  </svg>
+                <button onClick={() => handleRemoveTime(time)} disabled={saving}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7c3aed', padding: 2, lineHeight: 1, opacity: saving ? 0.3 : 1 }}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
                 </button>
               </div>
             ))}
           </div>
         )}
+
+        {/* Add time row */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+          <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
+            style={{ flex: 1, padding: '10px 12px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44 }}
+          />
+          <button onClick={handleAddTime} disabled={saving || !newTime || showTimes.includes(newTime)}
+            style={{ padding: '10px 18px', background: 'rgba(126,34,206,0.6)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!newTime || showTimes.includes(newTime)) ? 0.3 : 1, minHeight: 44 }}>
+            Add
+          </button>
+        </div>
       </div>
 
-      {/* Add new time */}
-      <div className="flex gap-2 mb-3" style={{ width: '100%' }}>
-        <input
-          type="time"
-          value={newTime}
-          onChange={(e) => setNewTime(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-          className="flex-1 px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
-                     focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors"
-        />
-        <button
-          onClick={handleAddTime}
-          disabled={saving || !newTime || showTimes.includes(newTime)}
-          className="btn-quick px-4 py-2.5 bg-purple-700/80 hover:bg-purple-600 text-white text-sm font-semibold
-                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          Add
+      {/* Footer actions */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid #1a1a1a' }}>
+        {sortedTimes.length > 0 && (
+          <button onClick={handleClearAll} disabled={saving}
+            style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, color: '#64748B', fontSize: 12, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.3 : 1 }}>
+            Clear Times
+          </button>
+        )}
+        <button onClick={() => onDelete(attraction.id, attraction.name)}
+          style={{ flex: sortedTimes.length > 0 ? '0 0 auto' : 1, padding: '9px 12px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, color: '#64748B', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+          Remove
         </button>
       </div>
-
-      {sortedTimes.length > 0 && (
-        <button
-          onClick={handleClearAll}
-          disabled={saving}
-          className="w-full py-2 mb-3 text-xs text-purple-400/50 hover:text-purple-300 hover:bg-purple-900/20
-                     rounded-md transition-colors disabled:opacity-30"
-        >
-          Clear All Times
-        </button>
-      )}
-
-      <button
-        onClick={() => onDelete(attraction.id, attraction.name)}
-        className="w-full py-2 text-xs text-white/30 hover:text-[#dc3545] hover:bg-[#dc3545]/10
-                   rounded-md transition-colors"
-      >
-        Remove Attraction
-      </button>
     </div>
   );
 });
@@ -1554,69 +1509,72 @@ export default function AdminDashboard() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ padding: '24px 20px' }}>
-      {/* Quick Actions */}
-      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 40 }}>
-        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24 }}>
-          <h3 style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>Quick Actions</h3>
-          <div className="flex gap-3">
+      {/* Quick Actions + Operating Hours */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 32 }}>
+
+        {/* Quick Actions card */}
+        <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 14, padding: '20px 20px' }}>
+          <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 14px' }}>Quick Actions</p>
+
+          {/* Open / Close */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
             <button onClick={() => setShowOpenAll(true)} disabled={openingAll}
-              className="flex-1 btn-quick px-4 py-3.5 bg-[#22C55E] hover:bg-[#16a34a] text-black font-bold rounded-md text-sm transition-colors disabled:opacity-50">
-              {openingAll ? 'Opening...' : 'Open All Rides'}
+              className="btn-quick"
+              style={{ flex: 1, padding: '12px 8px', background: '#22C55E', color: '#000', fontWeight: 700, fontSize: 13, borderRadius: 8, border: 'none', cursor: 'pointer', opacity: openingAll ? 0.5 : 1 }}>
+              {openingAll ? 'Opening…' : 'Open All'}
             </button>
             <button onClick={() => setShowCloseAll(true)} disabled={closingAll}
-              className="flex-1 btn-quick px-4 py-3.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-md text-sm transition-colors disabled:opacity-50">
-              {closingAll ? 'Closing...' : 'Close All Rides'}
+              className="btn-quick"
+              style={{ flex: 1, padding: '12px 8px', background: '#DC2626', color: '#fff', fontWeight: 700, fontSize: 13, borderRadius: 8, border: 'none', cursor: 'pointer', opacity: closingAll ? 0.5 : 1 }}>
+              {closingAll ? 'Closing…' : 'Close All'}
             </button>
           </div>
-          <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: '1px solid #2a2a2a' }}>
+
+          {/* Auto-sort */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 12, borderTop: '1px solid #1a1a1a', marginBottom: 14 }}>
             <button onClick={handleToggleAutoSort}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoSort ? 'bg-[#22C55E]' : 'bg-[#1a1a1a] border border-[#2a2a2a]'}`}>
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${autoSort ? 'bg-[#22C55E]' : 'bg-[#1a1a1a] border border-[#2a2a2a]'}`}>
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
-            <span style={{ color: '#94A3B8', fontSize: 14 }}>
-              Auto-sort by wait time {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>(ON)</span> : <span style={{ color: '#94A3B8' }}>(OFF)</span>}
+            <span style={{ color: '#94A3B8', fontSize: 13 }}>
+              Auto-sort {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>ON</span> : <span style={{ color: '#64748B' }}>OFF</span>}
             </span>
           </div>
+
+          {/* Target Dispatch Interval */}
+          {(() => {
+            const rides = attractions.filter((a) => a.attraction_type !== 'show');
+            if (rides.length === 0) return null;
+            const uniqueTargets = [...new Set(rides.map((r) => r.target_dispatch_seconds ?? 90))];
+            const currentBulk = uniqueTargets.length === 1 ? uniqueTargets[0] : null;
+            return (
+              <div style={{ paddingTop: 12, borderTop: '1px solid #1a1a1a' }}>
+                <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Target Dispatch</p>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[45, 60, 90, 120].map((secs) => (
+                    <button key={secs}
+                      onClick={async () => {
+                        const ids = rides.map((r) => r.id);
+                        for (const id of ids) await supabase.from('attractions').update({ target_dispatch_seconds: secs }).eq('id', id);
+                      }}
+                      style={{
+                        flex: 1, padding: '9px 4px', borderRadius: 7, border: '1px solid',
+                        borderColor: currentBulk === secs ? '#3B82F6' : '#2a2a2a',
+                        background: currentBulk === secs ? 'rgba(59,130,246,0.12)' : '#000',
+                        color: currentBulk === secs ? '#60A5FA' : '#64748B',
+                        fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                      }}>
+                      {secs}s
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
+
         <OperatingHoursControl openingTime={openingTime} closingTime={closingTime} onUpdateOpening={handleOpeningTimeUpdate} onUpdateClosing={handleClosingTimeUpdate} />
       </div>
-
-      {/* ── Bulk Dispatch Target ── */}
-      {(() => {
-        const rides = attractions.filter((a) => a.attraction_type !== 'show');
-        if (rides.length === 0) return null;
-        const uniqueTargets = [...new Set(rides.map((r) => r.target_dispatch_seconds ?? 90))];
-        const currentBulk = uniqueTargets.length === 1 ? uniqueTargets[0] : null;
-        return (
-          <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 14, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 2px' }}>Target Dispatch Interval</p>
-              <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>Set for all rides at once</p>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {[45, 60, 90, 120].map((secs) => (
-                <button key={secs}
-                  onClick={async () => {
-                    const ids = rides.map((r) => r.id);
-                    for (const id of ids) {
-                      await supabase.from('attractions').update({ target_dispatch_seconds: secs }).eq('id', id);
-                    }
-                  }}
-                  style={{
-                    padding: '8px 16px', borderRadius: 8, border: '1px solid',
-                    borderColor: currentBulk === secs ? '#3B82F6' : '#2a2a2a',
-                    background: currentBulk === secs ? 'rgba(59,130,246,0.1)' : '#000',
-                    color: currentBulk === secs ? '#60A5FA' : '#94A3B8',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}>
-                  {secs}s
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── Sign-off completion banners ── */}
       {(() => {
