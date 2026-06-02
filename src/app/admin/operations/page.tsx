@@ -165,8 +165,8 @@ function QueueChart({
       <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Queue time tonight
       </div>
-      <ResponsiveContainer width="100%" height={110}>
-        <AreaChart data={points} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+      <ResponsiveContainer width="100%" height={120}>
+        <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
           <defs>
             <linearGradient id={`grad-${history[0]?.attraction_id}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
@@ -183,15 +183,15 @@ function QueueChart({
             axisLine={false}
             tickLine={false}
             scale="time"
+            padding={{ left: 8, right: 8 }}
           />
           <YAxis
             dataKey="wait"
-            tick={{ fontSize: 10, fill: '#475569' }}
+            tick={false}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
-            width={32}
-            tickFormatter={(v) => `${v}m`}
+            width={0}
           />
           <Tooltip
             contentStyle={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 6, fontSize: 12 }}
