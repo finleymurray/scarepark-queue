@@ -97,6 +97,7 @@ export default function SupervisorDashboard() {
   const [dispatchElapsed, setDispatchElapsed] = useState(0);
   const [dispatching, setDispatching] = useState(false);
   const [dispatchFlashOn, setDispatchFlashOn] = useState(true);
+  const [showAllDispatches, setShowAllDispatches] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -312,7 +313,7 @@ export default function SupervisorDashboard() {
       const today = getTodayDateStr();
       const { data } = await supabase.from('dispatch_logs')
         .select('*').eq('attraction_id', attractionId).eq('log_date', today)
-        .order('dispatched_at', { ascending: false }).limit(10);
+        .order('dispatched_at', { ascending: false }).limit(200);
       setDispatchLogs(data || []);
       const latest = (data || [])[0];
       // Respect a locally persisted reset — if the reset happened after the
@@ -569,7 +570,7 @@ export default function SupervisorDashboard() {
     if (selectedId) localStorage.removeItem(`ic-dispatch-reset-${selectedId}`);
     const { data } = await supabase.from('dispatch_logs')
       .select('*').eq('attraction_id', selectedId).eq('log_date', today)
-      .order('dispatched_at', { ascending: false }).limit(10);
+      .order('dispatched_at', { ascending: false }).limit(200);
     setDispatchLogs(data || []);
     setDispatching(false);
   }
@@ -875,10 +876,22 @@ export default function SupervisorDashboard() {
 
                     {/* Today's dispatches summary */}
                     <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 16 }}>
-                      <p style={{ color: '#64748B', fontSize: 12, margin: '0 0 10px 0' }}>
-                        {totalDispatches} dispatch{totalDispatches !== 1 ? 'es' : ''} · {totalGuests} guests today
-                      </p>
-                      {dispatchLogs.slice(0, 5).map((log) => {
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>
+                          {totalDispatches} dispatch{totalDispatches !== 1 ? 'es' : ''} · {totalGuests} guests today
+                        </p>
+                        {totalDispatches > 1 && (
+                          <button
+                            onClick={() => setShowAllDispatches((v) => !v)}
+                            style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: 12, cursor: 'pointer', padding: 0 }}
+                          >
+                            {showAllDispatches ? 'Show less' : `See all ${totalDispatches}`}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Most recent dispatch only by default */}
+                      {dispatchLogs.slice(0, showAllDispatches ? dispatchLogs.length : 1).map((log) => {
                         const t = new Date(log.dispatched_at);
                         const h = t.getHours();
                         const m = t.getMinutes();
@@ -886,7 +899,7 @@ export default function SupervisorDashboard() {
                         const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
                         const timeStr = `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
                         return (
-                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 13, padding: '4px 0' }}>
+                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 13, padding: '4px 0', borderTop: '1px solid #1a1a1a' }}>
                             <span>{timeStr}</span>
                             <span style={{ color: '#F1F5F9' }}>{log.group_size} guests</span>
                           </div>
