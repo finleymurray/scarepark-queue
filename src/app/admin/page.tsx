@@ -725,31 +725,30 @@ const RideControl = React.memo(function RideControl({
       </div>
 
       {/* Quick adjust buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12, width: '100%' }}>
-        <button
-          onClick={() => handleTimeAdjust(-5)}
-          disabled={saving || attraction.wait_time <= 0}
-          className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#1a1a1a] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          -5m
-        </button>
-        <button
-          onClick={() => handleTimeAdjust(5)}
-          disabled={saving}
-          className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#1a1a1a] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          +5m
-        </button>
-        <button
-          onClick={() => handleTimeAdjust(10)}
-          disabled={saving}
-          className="btn-quick py-3.5 bg-transparent border-2 border-[#22C55E] text-[#22C55E] rounded-md
-                     hover:bg-[#1a1a1a] text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          +10m
-        </button>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 12, width: '100%' }}>
+        {([-10, -5, 5, 10] as const).map((delta) => (
+          <button
+            key={delta}
+            onClick={() => handleTimeAdjust(delta)}
+            disabled={saving || (delta < 0 && attraction.wait_time <= 0)}
+            style={{
+              padding: '10px 4px',
+              background: 'transparent',
+              border: `1px solid ${delta < 0 ? '#EF4444' : '#22C55E'}`,
+              borderRadius: 8,
+              color: delta < 0 ? '#EF4444' : '#22C55E',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              minHeight: 42,
+              opacity: (saving || (delta < 0 && attraction.wait_time <= 0)) ? 0.3 : 1,
+              transition: 'opacity 0.15s',
+            }}
+            className="btn-quick"
+          >
+            {delta > 0 ? `+${delta}` : delta}m
+          </button>
+        ))}
       </div>
 
       {/* Custom time input */}
