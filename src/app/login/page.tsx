@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get('next') || null;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,35 +21,23 @@ export default function LoginPage() {
     async function checkExisting() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        if (nextUrl) { router.replace(nextUrl); return; }
         const { data: userRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('email', session.user.email)
-          .single();
-
-        if (userRole?.role === 'admin') {
-          router.replace('/admin');
-          return;
-        }
-        if (userRole?.role === 'supervisor') {
-          router.replace('/control');
-          return;
-        }
+          .from('user_roles').select('role').eq('email', session.user.email).single();
+        router.replace(userRole?.role === 'admin' ? '/admin' : '/control');
+        return;
       }
       setChecking(false);
     }
     checkExisting();
-  }, [router]);
+  }, [router, nextUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
       setError('Invalid credentials. Try again.');
@@ -55,10 +46,7 @@ export default function LoginPage() {
     }
 
     const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('email', data.session?.user.email)
-      .single();
+      .from('user_roles').select('role').eq('email', data.session?.user.email).single();
 
     if (!userRole) {
       setError('Access denied — contact an administrator.');
@@ -66,7 +54,9 @@ export default function LoginPage() {
       return;
     }
 
-    if (userRole.role === 'admin') {
+    if (nextUrl) {
+      router.push(nextUrl);
+    } else if (userRole.role === 'admin') {
       router.push('/admin');
     } else {
       router.push('/control');
@@ -183,5 +173,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#374151", fontSize: 14 }}>Loading…</div></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

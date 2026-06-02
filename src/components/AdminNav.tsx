@@ -143,7 +143,9 @@ export default function AdminNav({
               onClick={() => {
                 if (!moreOpen && moreButtonRef.current) {
                   const r = moreButtonRef.current.getBoundingClientRect();
-                  setDropdownPos({ top: r.bottom + 4, left: r.left });
+                  // Clamp so dropdown never overflows right edge of screen
+                  const left = Math.min(r.left, window.innerWidth - 170);
+                  setDropdownPos({ top: r.bottom + 4, left });
                 }
                 setMoreOpen((v) => !v);
               }}
