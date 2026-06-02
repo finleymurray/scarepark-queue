@@ -98,6 +98,8 @@ export default function SupervisorDashboard() {
   const [dispatching, setDispatching] = useState(false);
   const [dispatchFlashOn, setDispatchFlashOn] = useState(true);
   const [showAllDispatches, setShowAllDispatches] = useState(false);
+  const [groupSizePadOpen, setGroupSizePadOpen] = useState(false);
+  const [groupSizePadInput, setGroupSizePadInput] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -869,12 +871,16 @@ export default function SupervisorDashboard() {
                       >
                         −
                       </button>
-                      <div style={{ flex: 1, textAlign: 'center' }}>
+                      <button
+                        onClick={() => { setGroupSizePadInput(dispatchGroupSize > 0 ? String(dispatchGroupSize) : ''); setGroupSizePadOpen(true); }}
+                        style={{ flex: 1, textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
+                        title="Tap to enter number"
+                      >
                         <div style={{ fontSize: 56, fontWeight: 900, fontVariantNumeric: 'tabular-nums', color: dispatchGroupSize > 0 ? '#F1F5F9' : '#475569' }}>
                           {dispatchGroupSize}
                         </div>
-                        <div style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>guests</div>
-                      </div>
+                        <div style={{ color: '#3B82F6', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>tap to enter</div>
+                      </button>
                       <button
                         onClick={() => setDispatchGroupSize((v) => Math.min(30, v + 1))}
                         className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E] text-[#22C55E] text-3xl font-black active:bg-green-900/20 transition-colors touch-manipulation"
@@ -1140,6 +1146,51 @@ export default function SupervisorDashboard() {
           </>
         )}
       </div>
+
+      {/* ── Group Size Pad ── */}
+      {groupSizePadOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
+          <div style={{ width: '100%', maxWidth: 320, background: '#111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
+            <p style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', marginBottom: 4 }}>Group size</p>
+            <div style={{ background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
+              <span style={{ color: '#F1F5F9', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                {groupSizePadInput || '0'}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
+              {['1','2','3','4','5','6','7','8','9'].map((k) => (
+                <button key={k}
+                  onClick={() => setGroupSizePadInput((v) => { const n = v + k; return parseInt(n, 10) > 30 ? v : n; })}
+                  style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                  className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
+                >{k}</button>
+              ))}
+              <button onClick={() => setGroupSizePadInput('')}
+                style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#EF4444', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                className="active:bg-[#EF4444]/10 transition-colors touch-manipulation">CLR</button>
+              <button onClick={() => setGroupSizePadInput((v) => { const n = v + '0'; return parseInt(n, 10) > 30 ? v : n; })}
+                style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                className="active:bg-[#1a1a1a] transition-colors touch-manipulation">0</button>
+              <button onClick={() => setGroupSizePadInput((v) => v.slice(0, -1))}
+                style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                className="active:bg-[#F59E0B]/10 transition-colors touch-manipulation">DEL</button>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setGroupSizePadOpen(false); setGroupSizePadInput(''); }}
+                style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, cursor: 'pointer' }}
+                className="active:bg-[#1a1a1a] transition-colors touch-manipulation">Cancel</button>
+              <button onClick={() => {
+                  const val = Math.min(30, Math.max(0, parseInt(groupSizePadInput, 10) || 0));
+                  setDispatchGroupSize(val);
+                  setGroupSizePadOpen(false);
+                  setGroupSizePadInput('');
+                }}
+                style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 700, color: '#fff', background: '#2563EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                className="active:bg-[#1D4ED8] transition-colors touch-manipulation">Set</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Field Notes Drawer ── */}
       {notesOpen && selected && (
