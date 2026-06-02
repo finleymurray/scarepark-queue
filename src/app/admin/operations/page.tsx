@@ -64,6 +64,12 @@ interface DelayIncident {
   durationSecs: number | null; // null = ongoing
 }
 
+interface HourlySlot {
+  start: string; // "19:00"
+  end: string;   // "20:00"
+  guests: number;
+}
+
 interface AttractionOps {
   attraction: Attraction;
   currentStatus: AttractionStatus;
@@ -74,8 +80,9 @@ interface AttractionOps {
   activeDelay: AttractionStatusLog | null;
   history: AttractionHistory[];
   totalGuests: number;
-  avgDispatchIntervalSecs: number | null; // null = fewer than 2 dispatches
+  avgDispatchIntervalSecs: number | null;
   totalDispatches: number;
+  hourlyBreakdown: HourlySlot[];
 }
 
 /* ── Queue time sparkline ── */
@@ -264,7 +271,7 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
 /* ── Ops Card ── */
 
 function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; dateStr: string; openTime: string; closeTime: string }) {
-  const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests, avgDispatchIntervalSecs, totalDispatches } = ops;
+  const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests, avgDispatchIntervalSecs, totalDispatches, hourlyBreakdown } = ops;
 
   const statusColor = STATUS_COLORS[currentStatus] || '#888';
   const statusBg = STATUS_BG[currentStatus] || 'rgba(128,128,128,0.15)';
@@ -401,6 +408,35 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
         <div style={{ fontSize: 13, color: '#555', fontStyle: 'italic' }}>No activity recorded today.</div>
       )}
 
+      {/* Hourly Throughput */}
+      {hourlyBreakdown.length > 0 && (
+        <div style={{ borderTop: '1px solid #2a2a2a', paddingTop: 16, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>
+            Hourly Throughput
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {hourlyBreakdown.map((slot) => {
+              const [sh, sm] = slot.start.split(':').map(Number);
+              const [eh, em] = slot.end.split(':').map(Number);
+              const startAmpm = sh >= 12 ? 'PM' : 'AM';
+              const endAmpm   = eh >= 12 ? 'PM' : 'AM';
+              const sh12 = sh === 0 ? 12 : sh > 12 ? sh - 12 : sh;
+              const eh12 = eh === 0 ? 12 : eh > 12 ? eh - 12 : eh;
+              const startStr = `${sh12}:${String(sm).padStart(2,'0')} ${startAmpm}`;
+              const endStr   = `${eh12}:${String(em).padStart(2,'0')} ${endAmpm}`;
+              return (
+                <div key={slot.start} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', background: '#000', borderRadius: 8 }}>
+                  <span style={{ color: '#94A3B8', fontSize: 13 }}>{startStr} – {endStr}</span>
+                  <span style={{ color: slot.guests > 0 ? '#F1F5F9' : '#2a2a2a', fontSize: 13, fontWeight: slot.guests > 0 ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                    {slot.guests > 0 ? `${slot.guests} guests` : '—'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Queue time chart */}
       {history.length > 0 && (
         <div style={{ borderTop: '1px solid #2a2a2a', paddingTop: 16 }}>
@@ -419,19 +455,69 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
 
 /* ── Build ops data from logs ── */
 
+/* ── Slot helpers ── */
+function genSlots(openTime: string, closeTime: string, dateStr: string): HourlySlot[] {
+  if (!openTime || !closeTime) return [];
+  const [oh] = openTime.split(':').map(Number);
+  const [ch, cm] = closeTime.split(':').map(Number);
+  let start = oh * 60;
+  let end = ch * 60 + (cm || 0);
+  if (end <= start) end += 24 * 60;
+  end += 60; // 1hr buffer
+  const slots: HourlySlot[] = [];
+  let cursor = start;
+  while (cursor < end) {
+    const next = Math.min(cursor + 60, end);
+    const sh = Math.floor(cursor / 60) % 24, sm = cursor % 60;
+    const eh = Math.floor(next / 60) % 24, em = next % 60;
+    slots.push({
+      start: `${String(sh).padStart(2,'0')}:${String(sm).padStart(2,'0')}`,
+      end:   `${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`,
+      guests: 0,
+    });
+    cursor = next;
+  }
+  return slots;
+}
+
 function buildOpsData(
   attractions: Attraction[],
   logs: AttractionStatusLog[],
   history: AttractionHistory[],
   throughput: ThroughputLog[],
   dispatches: DispatchLog[],
+  openTime: string,
+  closeTime: string,
+  dateStr: string,
 ): AttractionOps[] {
   return attractions.filter((a) => a.attraction_type === 'ride').map((attraction) => {
     const aLogs = logs.filter((l) => l.attraction_id === attraction.id);
     const aHistory = history.filter((h) => h.attraction_id === attraction.id);
-    const totalGuests = throughput
-      .filter((t) => t.attraction_id === attraction.id)
-      .reduce((sum, t) => sum + (t.guest_count || 0), 0);
+
+    // Build hourly breakdown: prefer throughput_logs manual overrides,
+    // otherwise sum dispatch_logs per slot. Always re-computed on every call.
+    const slots = genSlots(openTime, closeTime, dateStr);
+    const hourlyBreakdown: HourlySlot[] = slots.map((slot) => {
+      // Manual override from throughput_logs takes priority
+      const manual = throughput.find(
+        (t) => t.attraction_id === attraction.id && t.slot_start === slot.start && t.slot_end === slot.end
+      );
+      if (manual) return { ...slot, guests: manual.guest_count };
+      // Sum dispatches that fall within this slot
+      const slotStart = new Date(`${dateStr}T${slot.start}:00`).getTime();
+      const slotEnd   = new Date(`${dateStr}T${slot.end}:00`).getTime();
+      const guests = dispatches
+        .filter((d) => {
+          if (d.attraction_id !== attraction.id) return false;
+          const t = new Date(d.dispatched_at).getTime();
+          return t >= slotStart && t < slotEnd;
+        })
+        .reduce((s, d) => s + d.group_size, 0);
+      return { ...slot, guests };
+    });
+
+    // Total guests = sum of hourly breakdown
+    const totalGuests = hourlyBreakdown.reduce((s, sl) => s + sl.guests, 0);
 
     // Average dispatch interval
     const aDispatches = dispatches
@@ -481,6 +567,7 @@ function buildOpsData(
       totalGuests,
       avgDispatchIntervalSecs,
       totalDispatches: aDispatches.length,
+      hourlyBreakdown,
     };
   });
 }
@@ -533,7 +620,7 @@ export default function OperationsPage() {
     setDispatches(dp);
     setOpenTime(openRes.data?.value || '');
     setCloseTime(closeRes.data?.value || '');
-    setOpsData(buildOpsData(attrs, allLogs, hist, tp, dp));
+    setOpsData(buildOpsData(attrs, allLogs, hist, tp, dp, openRes.data?.value || '', closeRes.data?.value || '', dateStr));
   }, []);
 
   useEffect(() => {
@@ -558,7 +645,7 @@ export default function OperationsPage() {
 
   // Rebuild opsData when any source data updates
   useEffect(() => {
-    setOpsData(buildOpsData(attractions, logs, history, throughput, dispatches));
+    setOpsData(buildOpsData(attractions, logs, history, throughput, dispatches, openTime, closeTime, selectedDate));
   }, [attractions, logs, history, throughput]);
 
   // Realtime subscription
