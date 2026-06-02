@@ -19,6 +19,51 @@ function getTodayDateStr(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+function formatSlotTime(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function generateHourlySlots(openTime: string, closeTime: string): { start: string; end: string }[] {
+  if (!openTime || !closeTime) return [];
+  const [oh, om] = openTime.split(':').map(Number);
+  const [ch] = closeTime.split(':').map(Number);
+  let startMinutes = oh * 60 + (om || 0);
+  let endMinutes = ch * 60;
+  if (endMinutes <= startMinutes) endMinutes += 24 * 60;
+  endMinutes += 60; // 1hr buffer after close
+  const slots: { start: string; end: string }[] = [];
+  let cursor = startMinutes;
+  while (cursor < endMinutes) {
+    const next = Math.min(cursor + 60, endMinutes);
+    const sh = Math.floor(cursor / 60) % 24, sm = cursor % 60;
+    const eh = Math.floor(next / 60) % 24, em = next % 60;
+    slots.push({
+      start: `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`,
+      end: `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`,
+    });
+    cursor = next;
+  }
+  return slots;
+}
+
+function getCurrentSlotIndex(slots: { start: string; end: string }[]): number {
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  for (let i = 0; i < slots.length; i++) {
+    const [sh, sm] = slots[i].start.split(':').map(Number);
+    const [eh, em] = slots[i].end.split(':').map(Number);
+    let startMin = sh * 60 + sm, endMin = eh * 60 + em;
+    if (endMin <= startMin) endMin += 24 * 60;
+    let checkNow = nowMinutes;
+    if (checkNow < startMin && startMin > 12 * 60) checkNow += 24 * 60;
+    if (checkNow >= startMin && checkNow < endMin) return i;
+  }
+  return -1;
+}
+
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -36,6 +81,13 @@ export default function SupervisorDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [throughputLogs, setThroughputLogs] = useState<ThroughputLog[]>([]);
+  const [openingTime, setOpeningTime] = useState('');
+  const [closingTime, setClosingTime] = useState('');
+  const [now, setNow] = useState(Date.now());
+  // Edit throughput modal
+  const [editSlot, setEditSlot] = useState<{ start: string; end: string } | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Dispatch clicker state
   const [dispatchGroupSize, setDispatchGroupSize] = useState(0);
   const [dispatchLogs, setDispatchLogs] = useState<DispatchLog[]>([]);
@@ -124,9 +176,16 @@ export default function SupervisorDashboard() {
         attractionsQuery = attractionsQuery.in('id', auth.allowedAttractions);
       }
 
-      const [attractionsRes] = await Promise.all([
+      const [attractionsRes, settingsRes] = await Promise.all([
         attractionsQuery,
+        supabase.from('park_settings').select('key,value'),
       ]);
+      if (settingsRes.data) {
+        for (const s of settingsRes.data) {
+          if (s.key === 'opening_time') setOpeningTime(s.value);
+          if (s.key === 'closing_time') setClosingTime(s.value);
+        }
+      }
 
       if (!attractionsRes.error && attractionsRes.data) {
         setAttractions(attractionsRes.data);
@@ -275,6 +334,12 @@ export default function SupervisorDashboard() {
     };
   }, [selectedId]);
 
+  // Clock tick for current-slot highlighting
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   // Dispatch elapsed timer
   useEffect(() => {
     const interval = setInterval(() => {
@@ -413,6 +478,44 @@ export default function SupervisorDashboard() {
     for (const l of throughputLogs) sum += l.guest_count;
     return sum;
   }, [throughputLogs]);
+
+  // Hourly slots derived from park hours + dispatch counts per slot
+  const hourlySlots = useMemo(() => generateHourlySlots(openingTime, closingTime), [openingTime, closingTime]);
+  const currentSlotIndex = useMemo(() => getCurrentSlotIndex(hourlySlots), [hourlySlots, now]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function getDispatchCountForSlot(slot: { start: string; end: string }): number {
+    const today = getTodayDateStr();
+    const [sh, sm] = slot.start.split(':').map(Number);
+    const [eh, em] = slot.end.split(':').map(Number);
+    let startMs = new Date(`${today}T${slot.start}:00`).getTime();
+    let endMs   = new Date(`${today}T${slot.end}:00`).getTime();
+    if (endMs <= startMs) endMs += 86400000;
+    // Also check throughput_logs override for this slot
+    const manual = throughputLogs.find(
+      (l) => l.slot_start === slot.start && l.slot_end === slot.end && l.log_date === today
+    );
+    if (manual) return manual.guest_count;
+    return dispatchLogs.filter((d) => {
+      const t = new Date(d.dispatched_at).getTime();
+      return t >= startMs && t < endMs;
+    }).reduce((s, d) => s + d.group_size, 0);
+  }
+
+  async function saveSlotOverride(slot: { start: string; end: string }, count: number) {
+    const today = getTodayDateStr();
+    await supabase.from('throughput_logs').upsert({
+      attraction_id: selectedId,
+      slot_start: slot.start,
+      slot_end: slot.end,
+      guest_count: count,
+      logged_by: displayName || userEmail,
+      log_date: today,
+    }, { onConflict: 'attraction_id,log_date,slot_start' });
+    // Refresh throughput logs
+    const { data } = await supabase.from('throughput_logs')
+      .select('*').eq('attraction_id', selectedId ?? '').eq('log_date', today);
+    setThroughputLogs(data || []);
+  }
 
   // Handle queue time update
   async function handleWaitTimeUpdate(delta: number) {
@@ -648,108 +751,6 @@ export default function SupervisorDashboard() {
               </div>
             )}
 
-            {/* ── Queue Time Control ── */}
-            <section style={{ marginBottom: 48 }}>
-              <div className="flex items-center gap-2.5 mb-5">
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
-              </div>
-
-              <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
-                {selected.attraction_type === 'show' ? (
-                  <div className="text-center py-4">
-                    <div className={`text-3xl font-black ${
-                      selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                      selected.status === 'CLOSED' ? 'text-[#dc3545]' :
-                      'text-[#f0ad4e]'
-                    }`}>
-                      {selected.status === 'DELAYED' && delayStartedAt
-                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                        : selected.status}
-                    </div>
-                  </div>
-                ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
-                  <div className="text-center py-4">
-                    <div className={`text-4xl font-black ${
-                      selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
-                    }`}>
-                      {selected.status === 'DELAYED' && delayStartedAt
-                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                        : selected.status}
-                    </div>
-                    <p className="text-white/30 text-xs mt-2">
-                      {selected.status === 'CLOSED'
-                        ? 'Contact control to open your attraction'
-                        : 'Contact control to re-open your attraction'}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Inline stepper: [-5]  TIME  [+5] */}
-                    <div className="flex items-center gap-6">
-                      <button
-                        onClick={() => handleWaitTimeUpdate(-5)}
-                        disabled={selected.wait_time <= 0}
-                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400
-                                   text-red-400 text-3xl font-black active:bg-red-900/20
-                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
-                                   min-w-[80px] min-h-[80px]"
-                      >
-                        -5
-                      </button>
-
-                      <div className="flex-1 text-center">
-                        <div className={`text-5xl font-black tabular-nums ${
-                          selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                          selected.status === 'AT CAPACITY' ? 'text-[#F59E0B]' :
-                          'text-[#f0ad4e]'
-                        }`}>
-                          {selected.wait_time}
-                          <span className="text-xl text-white/30 ml-1">min</span>
-                        </div>
-                        <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
-                          selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
-                          'text-[#f0ad4e]/50'
-                        }`}>
-                          {selected.status}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => handleWaitTimeUpdate(5)}
-                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E]
-                                   text-[#22C55E] text-3xl font-black active:bg-green-900/20
-                                   transition-colors touch-manipulation
-                                   min-w-[80px] min-h-[80px]"
-                      >
-                        +5
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </section>
-
-            {/* ── Field Notes Button ── */}
-            {selected.attraction_type !== 'show' && (
-              <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
-                <button
-                  onClick={() => setNotesOpen(true)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 20px',
-                    background: '#111111', border: '1px solid #2a2a2a', borderRadius: 10,
-                    color: '#94A3B8', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                    transition: 'border-color 0.15s, color 0.15s',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
-                >
-                  📝 Show Report
-                </button>
-              </div>
-            )}
-
             {/* ── Dispatch Clicker ── */}
             {selected.attraction_type !== 'show' && (() => {
               const targetSeconds = selected.target_dispatch_seconds ?? 90;
@@ -870,6 +871,211 @@ export default function SupervisorDashboard() {
                 </section>
               );
             })()}
+
+            {/* ── Hourly Throughput (view + hold-to-edit) ── */}
+            {selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
+              <section style={{ marginBottom: 48 }}>
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                  <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Hourly Throughput</h2>
+                </div>
+                <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, overflow: 'hidden' }}>
+                  {hourlySlots.map((slot, idx) => {
+                    const count = getDispatchCountForSlot(slot);
+                    const isCurrent = idx === currentSlotIndex;
+                    const isPast = idx < currentSlotIndex;
+                    return (
+                      <div
+                        key={slot.start}
+                        onMouseDown={() => {
+                          longPressTimer.current = setTimeout(() => {
+                            setEditSlot(slot);
+                            setEditValue(String(count));
+                          }, 600);
+                        }}
+                        onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                        onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                        onTouchStart={() => {
+                          longPressTimer.current = setTimeout(() => {
+                            setEditSlot(slot);
+                            setEditValue(String(count));
+                          }, 600);
+                        }}
+                        onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '14px 20px',
+                          borderTop: idx === 0 ? 'none' : '1px solid #1a1a1a',
+                          background: isCurrent ? 'rgba(59,130,246,0.06)' : 'transparent',
+                          borderLeft: isCurrent ? '3px solid #3B82F6' : '3px solid transparent',
+                          cursor: 'default',
+                          userSelect: 'none',
+                        }}
+                      >
+                        <span style={{ color: isCurrent ? '#F1F5F9' : isPast ? '#94A3B8' : '#64748B', fontSize: 14, fontWeight: isCurrent ? 600 : 400 }}>
+                          {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {count > 0 ? (
+                            <span style={{ color: isCurrent ? '#F1F5F9' : '#94A3B8', fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                              {count}
+                            </span>
+                          ) : (
+                            <span style={{ color: '#374151', fontSize: 13 }}>
+                              {isCurrent ? 'In progress' : isPast ? '—' : ''}
+                            </span>
+                          )}
+                          <span style={{ color: '#2a2a2a', fontSize: 11 }}>hold to edit</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* ── Edit Throughput Modal ── */}
+            {editSlot && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
+                <div style={{ width: '100%', maxWidth: 320, background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
+                  <p style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', marginBottom: 4 }}>
+                    {formatSlotTime(editSlot.start)} – {formatSlotTime(editSlot.end)}
+                  </p>
+                  <p style={{ color: '#F1F5F9', fontSize: 14, textAlign: 'center', marginBottom: 20 }}>Edit guest count</p>
+                  <div style={{ background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
+                    <span style={{ color: '#F1F5F9', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                      {editValue || '0'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
+                    {['1','2','3','4','5','6','7','8','9'].map((k) => (
+                      <button key={k} onClick={() => setEditValue((v) => { const n = v + k; return parseInt(n, 10) > 9999 ? v : n; })}
+                        style={{ padding: '14px 0', fontSize: 20, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                        className="active:bg-[#1a1a1a] transition-colors touch-manipulation">{k}</button>
+                    ))}
+                    <button onClick={() => setEditValue('')}
+                      style={{ padding: '14px 0', fontSize: 13, fontWeight: 700, color: '#EF4444', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                      className="active:bg-[#EF4444]/10 transition-colors touch-manipulation">CLR</button>
+                    <button onClick={() => setEditValue((v) => { const n = v + '0'; return parseInt(n, 10) > 9999 ? v : n; })}
+                      style={{ padding: '14px 0', fontSize: 20, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                      className="active:bg-[#1a1a1a] transition-colors touch-manipulation">0</button>
+                    <button onClick={() => setEditValue((v) => v.slice(0, -1))}
+                      style={{ padding: '14px 0', fontSize: 13, fontWeight: 700, color: '#F59E0B', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
+                      className="active:bg-[#F59E0B]/10 transition-colors touch-manipulation">DEL</button>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => { setEditSlot(null); setEditValue(''); }}
+                      style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, cursor: 'pointer' }}
+                      className="active:bg-[#1a1a1a] transition-colors touch-manipulation">Cancel</button>
+                    <button onClick={async () => { await saveSlotOverride(editSlot, parseInt(editValue, 10) || 0); setEditSlot(null); setEditValue(''); }}
+                      style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 700, color: '#fff', background: '#2563EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                      className="active:bg-[#1D4ED8] transition-colors touch-manipulation">Save</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Queue Time Control ── */}
+            <section style={{ marginBottom: 48 }}>
+              <div className="flex items-center gap-2.5 mb-5">
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
+              </div>
+
+              <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
+                {selected.attraction_type === 'show' ? (
+                  <div className="text-center py-4">
+                    <div className={`text-3xl font-black ${
+                      selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                      selected.status === 'CLOSED' ? 'text-[#dc3545]' :
+                      'text-[#f0ad4e]'
+                    }`}>
+                      {selected.status === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : selected.status}
+                    </div>
+                  </div>
+                ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
+                  <div className="text-center py-4">
+                    <div className={`text-4xl font-black ${
+                      selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
+                    }`}>
+                      {selected.status === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : selected.status}
+                    </div>
+                    <p className="text-white/30 text-xs mt-2">
+                      {selected.status === 'CLOSED'
+                        ? 'Contact control to open your attraction'
+                        : 'Contact control to re-open your attraction'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Inline stepper: [-5]  TIME  [+5] */}
+                    <div className="flex items-center gap-6">
+                      <button
+                        onClick={() => handleWaitTimeUpdate(-5)}
+                        disabled={selected.wait_time <= 0}
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400
+                                   text-red-400 text-3xl font-black active:bg-red-900/20
+                                   transition-colors touch-manipulation disabled:opacity-20 disabled:cursor-not-allowed
+                                   min-w-[80px] min-h-[80px]"
+                      >
+                        -5
+                      </button>
+
+                      <div className="flex-1 text-center">
+                        <div className={`text-5xl font-black tabular-nums ${
+                          selected.status === 'OPEN' ? 'text-[#22C55E]' :
+                          selected.status === 'AT CAPACITY' ? 'text-[#F59E0B]' :
+                          'text-[#f0ad4e]'
+                        }`}>
+                          {selected.wait_time}
+                          <span className="text-xl text-white/30 ml-1">min</span>
+                        </div>
+                        <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
+                          selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
+                          'text-[#f0ad4e]/50'
+                        }`}>
+                          {selected.status}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleWaitTimeUpdate(5)}
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E]
+                                   text-[#22C55E] text-3xl font-black active:bg-green-900/20
+                                   transition-colors touch-manipulation
+                                   min-w-[80px] min-h-[80px]"
+                      >
+                        +5
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* ── Field Notes Button ── */}
+            {selected.attraction_type !== 'show' && (
+              <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setNotesOpen(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 20px',
+                    background: '#111111', border: '1px solid #2a2a2a', borderRadius: 10,
+                    color: '#94A3B8', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+                >
+                  📝 Show Report
+                </button>
+              </div>
+            )}
 
           </>
         )}
