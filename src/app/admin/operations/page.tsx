@@ -9,7 +9,7 @@ import { getAllStatusLogs } from '@/lib/statusLog';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog, ThroughputLog, DispatchLog } from '@/types/database';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from 'recharts';
 
 /* ── Helpers ── */
@@ -181,59 +181,60 @@ function QueueChart({
       <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Queue time tonight
       </div>
-      <ResponsiveContainer width="100%" height={120}>
-        <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
+      <ResponsiveContainer width="100%" height={180}>
+        <AreaChart data={points} margin={{ top: 10, right: 12, bottom: 4, left: 36 }}>
           <defs>
             <linearGradient id={`grad-${history[0]?.attraction_id}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+              <stop offset="10%" stopColor="#22C55E" stopOpacity={0.45} />
+              <stop offset="95%" stopColor="#22C55E" stopOpacity={0.02} />
             </linearGradient>
           </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
             domain={['dataMin', 'dataMax']}
             ticks={ticks}
             tickFormatter={formatHourLabel}
-            tick={{ fontSize: 10, fill: '#475569' }}
+            tick={{ fontSize: 11, fill: '#475569' }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             dataKey="wait"
-            tick={false}
+            tick={{ fontSize: 11, fill: '#475569' }}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
-            width={0}
+            width={28}
+            tickFormatter={(v) => `${v}m`}
           />
           <Tooltip
-            contentStyle={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 6, fontSize: 12 }}
+            contentStyle={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, fontSize: 13 }}
             labelFormatter={(v) => formatTooltipTime(v as number)}
             formatter={(v: unknown) => [`${v} min`, 'Wait time']}
             itemStyle={{ color: '#22C55E' }}
             labelStyle={{ color: '#888' }}
           />
-          {/* Amber delay bands */}
           {delayBands.map((band, i) => (
             <ReferenceLine
               key={i}
               x={band.start}
               stroke="#f0ad4e"
-              strokeWidth={1.5}
-              strokeDasharray="3 3"
-              opacity={0.6}
+              strokeWidth={2}
+              strokeDasharray="4 3"
+              opacity={0.7}
             />
           ))}
           <Area
             type="monotone"
             dataKey="wait"
             stroke="#22C55E"
-            strokeWidth={2}
+            strokeWidth={3}
             fill={`url(#grad-${history[0]?.attraction_id})`}
             connectNulls={false}
-            dot={false}
-            activeDot={{ r: 3, fill: '#22C55E' }}
+            dot={{ r: 3, fill: '#22C55E', strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: '#22C55E' }}
           />
         </AreaChart>
       </ResponsiveContainer>
