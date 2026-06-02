@@ -148,25 +148,34 @@ function QueueChart({
     domainEnd   = Math.ceil(Math.max(...mins)  / 60) * 60 + 60;
   }
 
-  // Data points as local minutes since midnight — no timezone issues
-  const dataPoints: ChartPoint[] = history.map((h) => {
-    const d = new Date(h.recorded_at);
-    const min = dateToMin(d);
-    return {
-      t: min,
-      wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
-      label: formatMinTooltip(min),
-    };
-  });
+  // Only include history records within the operating window —
+  // early-morning records (status checks etc) would otherwise push
+  // dataMin far left of 7PM and squish all the useful data to the right.
+  const dataPoints: ChartPoint[] = history
+    .filter((h) => {
+      const min = dateToMin(new Date(h.recorded_at));
+      return min >= domainStart && min <= domainEnd;
+    })
+    .map((h) => {
+      const d = new Date(h.recorded_at);
+      const min = dateToMin(d);
+      return {
+        t: min,
+        wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
+        label: formatMinTooltip(min),
+      };
+    });
 
-  if (dataPoints.length === 0) return null;
-
-  // Boundary points force chart to span full operating window
+  // Boundary points at exactly domainStart and domainEnd anchor the chart
+  // to the full operating window. With no out-of-window data, dataMin/dataMax
+  // will be exactly domainStart and domainEnd.
   const points: ChartPoint[] = [
     { t: domainStart, wait: null, label: formatMinTooltip(domainStart) },
     ...dataPoints,
-    { t: domainEnd, wait: null, label: formatMinTooltip(domainEnd) },
+    { t: domainEnd,   wait: null, label: formatMinTooltip(domainEnd) },
   ];
+
+  if (points.length < 2) return null;
 
   // Delay reference lines in local minutes
   const delayBands = delays.map((d) => ({
