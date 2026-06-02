@@ -22,9 +22,7 @@ function LoginForm() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         if (nextUrl) { router.replace(nextUrl); return; }
-        const { data: userRole } = await supabase
-          .from('user_roles').select('role').eq('email', session.user.email).single();
-        router.replace(userRole?.role === 'admin' ? '/admin' : '/control');
+        router.replace('/landing');
         return;
       }
       setChecking(false);
@@ -54,13 +52,7 @@ function LoginForm() {
       return;
     }
 
-    if (nextUrl) {
-      router.push(nextUrl);
-    } else if (userRole.role === 'admin') {
-      router.push('/admin');
-    } else {
-      router.push('/control');
-    }
+    router.push(nextUrl || '/landing');
   }
 
   if (checking) {

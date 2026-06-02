@@ -74,37 +74,26 @@ export default function AdminNav({
   return (
     <>
       {/* Header bar */}
-      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 0', height: 56, display: 'flex', alignItems: 'center' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AppSwitcher currentApp="admin" isAdmin={isAdmin} />
-            <Link href="/admin" style={{ textDecoration: 'none' }}>
-              <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
-            </Link>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
-            {userEmail && (
-              <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#94A3B8' }}>
-                {displayName || userEmail}
-              </span>
-            )}
-            <button
-              onClick={onLogout}
-              className="admin-nav-signout"
-              style={{
-                background: 'none',
-                border: '1px solid #2a2a2a',
-                color: '#94A3B8',
-                padding: '4px 10px',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-              }}
-            >
-              Sign out
-            </button>
-          </div>
+      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AppSwitcher currentApp="admin" isAdmin={isAdmin} />
+          <Link href="/admin" style={{ textDecoration: 'none' }}>
+            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
+          </Link>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
+          {userEmail && (
+            <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#94A3B8' }}>
+              {displayName || userEmail}
+            </span>
+          )}
+          <button
+            onClick={onLogout}
+            className="admin-nav-signout"
+            style={{ background: 'none', border: '1px solid #2a2a2a', color: '#94A3B8', padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}
+          >
+            Sign out
+          </button>
         </div>
       </div>
 
