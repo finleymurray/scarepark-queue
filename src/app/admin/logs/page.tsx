@@ -39,6 +39,7 @@ const ACTION_COLORS: Record<string, string> = {
 const CLEAR_DATA_TABLES = [
   { key: 'attraction_history', label: 'Wait Time History', dateCol: 'recorded_at', isTimestamp: true },
   { key: 'throughput_logs', label: 'Throughput Logs', dateCol: 'log_date', isTimestamp: false },
+  { key: 'dispatch_logs', label: 'Dispatch Logs', dateCol: 'log_date', isTimestamp: false },
   { key: 'attraction_status_logs', label: 'Status Change Logs', dateCol: 'changed_at', isTimestamp: true },
   { key: 'audit_logs', label: 'Audit Logs', dateCol: 'created_at', isTimestamp: true },
   { key: 'signoff_completions', label: 'Sign-Off Completions', dateCol: 'sign_date', isTimestamp: false },
