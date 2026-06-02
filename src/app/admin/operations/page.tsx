@@ -150,21 +150,23 @@ function QueueChart({
     end: d.log.resolved_at ? new Date(d.log.resolved_at).getTime() : Date.now(),
   }));
 
-  // Hourly ticks across the full operating window
-  const ticks: number[] = [];
+  // Hourly ticks — every 2 hours to avoid crowding on small charts
+  const allTicks: number[] = [];
   let tick = Math.floor(domainStart / 3_600_000) * 3_600_000;
   while (tick <= domainEnd) {
-    ticks.push(tick);
+    allTicks.push(tick);
     tick += 3_600_000;
   }
+  // Show every 2nd tick to prevent label collision
+  const ticks = allTicks.filter((_, i) => i % 2 === 0);
 
   return (
     <div style={{ marginTop: 4 }}>
       <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Queue time tonight
       </div>
-      <ResponsiveContainer width="100%" height={90}>
-        <AreaChart data={points} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
+      <ResponsiveContainer width="100%" height={110}>
+        <AreaChart data={points} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
           <defs>
             <linearGradient id={`grad-${history[0]?.attraction_id}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />

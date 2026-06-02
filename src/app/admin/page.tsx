@@ -422,35 +422,42 @@ function OperatingHoursControl({
       </div>
 
       <div className="space-y-2">
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, marginBottom: 4 }}>Opening</label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Opening</label>
             <input
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
-                         focus:outline-none focus:border-[#3B82F6] transition-colors"
+              style={{ width: '100%', padding: '10px 12px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44 }}
+              onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
             />
           </div>
-          <div className="flex-1">
-            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, marginBottom: 4 }}>Closing</label>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Closing</label>
             <input
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              className="w-full px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
-                         focus:outline-none focus:border-[#3B82F6] transition-colors"
+              style={{ width: '100%', padding: '10px 12px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44 }}
+              onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
             />
           </div>
         </div>
         <button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="w-full btn-quick px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold
-                     rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            width: '100%', padding: '11px 0', marginTop: 8,
+            background: '#2563EB', border: 'none', borderRadius: 8,
+            color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving || !hasChanges ? 'not-allowed' : 'pointer',
+            opacity: saving || !hasChanges ? 0.3 : 1, transition: 'opacity 0.15s', minHeight: 44,
+          }}
+          className="btn-quick"
         >
-          {saving ? 'Saving...' : 'Set Hours'}
+          {saving ? 'Saving…' : 'Set Hours'}
         </button>
       </div>
     </div>
