@@ -135,14 +135,23 @@ function QueueChart({
     domainEnd   = Math.ceil(Math.max(...timestamps)  / 3_600_000) * 3_600_000 + 15 * 60_000;
   }
 
-  // Map to chart points
-  const points: ChartPoint[] = history.map((h) => ({
+  // Build data points from history
+  const dataPoints: ChartPoint[] = history.map((h) => ({
     t: new Date(h.recorded_at).getTime(),
     wait: h.status === 'OPEN' || h.status === 'AT CAPACITY' ? h.wait_time : null,
     label: formatTooltipTime(new Date(h.recorded_at).getTime()),
   }));
 
-  if (points.length === 0) return null;
+  if (dataPoints.length === 0) return null;
+
+  // Inject invisible boundary points at domainStart and domainEnd so Recharts
+  // always renders the chart across the full operating window regardless of
+  // how many actual data points exist. null wait = no line drawn.
+  const points: ChartPoint[] = [
+    { t: domainStart, wait: null, label: formatTooltipTime(domainStart) },
+    ...dataPoints,
+    { t: domainEnd, wait: null, label: formatTooltipTime(domainEnd) },
+  ];
 
   // Delay reference lines
   const delayBands = delays.map((d) => ({
@@ -176,13 +185,12 @@ function QueueChart({
           <XAxis
             dataKey="t"
             type="number"
-            domain={[domainStart, domainEnd]}
+            domain={['dataMin', 'dataMax']}
             ticks={ticks}
             tickFormatter={formatHourLabel}
             tick={{ fontSize: 10, fill: '#475569' }}
             axisLine={false}
             tickLine={false}
-            padding={{ left: 0, right: 0 }}
           />
           <YAxis
             dataKey="wait"
