@@ -29,9 +29,11 @@ function formatSlotTime(time: string): string {
 function generateHourlySlots(openTime: string, closeTime: string): { start: string; end: string }[] {
   if (!openTime || !closeTime) return [];
   const [oh, om] = openTime.split(':').map(Number);
-  const [ch] = closeTime.split(':').map(Number);
-  let startMinutes = oh * 60 + (om || 0);
-  let endMinutes = ch * 60;
+  const [ch, cm] = closeTime.split(':').map(Number);
+  // Floor start to the nearest hour so slots always land on whole hours
+  // (e.g. 19:30 open → start at 19:00, not 19:30)
+  let startMinutes = oh * 60; // intentionally drop minutes
+  let endMinutes = ch * 60 + (cm || 0);
   if (endMinutes <= startMinutes) endMinutes += 24 * 60;
   endMinutes += 60; // 1hr buffer after close
   const slots: { start: string; end: string }[] = [];
