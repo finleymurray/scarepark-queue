@@ -709,15 +709,49 @@ export default function SupervisorDashboard() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }}>
         {selected && (
           <>
-            {/* ── Attraction Logo ── */}
+            {/* ── Attraction Logo + Status + Show Report ── */}
             {(() => {
               const logo = getAttractionLogo(selected.slug);
               const glow = getLogoGlow(selected.slug);
-              return logo ? (
-                <div className="flex justify-center mb-6">
-                  <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
+              const st = selected.status as string;
+              const statusColor = st === 'OPEN' ? '#22C55E' : st === 'CLOSED' ? '#EF4444' : st === 'DELAYED' ? '#F59E0B' : '#F59E0B';
+              const statusBg   = st === 'OPEN' ? 'rgba(34,197,94,0.1)' : st === 'CLOSED' ? 'rgba(239,68,68,0.1)' : st === 'DELAYED' ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.1)';
+              const statusBorder = st === 'OPEN' ? 'rgba(34,197,94,0.25)' : st === 'CLOSED' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)';
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                  {logo && (
+                    <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
+                  )}
+                  {/* Attraction status — prominent */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    padding: '7px 18px', borderRadius: 8,
+                    background: statusBg, color: statusColor, border: `1px solid ${statusBorder}`,
+                  }}>
+                    {st === 'DELAYED' && delayStartedAt
+                      ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                      : st}
+                  </span>
+                  {/* Show Report button — always visible under logo */}
+                  {selected.attraction_type !== 'show' && (
+                    <button
+                      onClick={() => setNotesOpen(true)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '8px 18px',
+                        background: '#111', border: '1px solid #2a2a2a', borderRadius: 8,
+                        color: '#94A3B8', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                        transition: 'border-color 0.15s, color 0.15s',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+                    >
+                      📝 Show Report
+                    </button>
+                  )}
                 </div>
-              ) : null;
+              );
             })()}
 
             {/* ── Sign-Off Status ── */}
@@ -850,29 +884,35 @@ export default function SupervisorDashboard() {
                       </button>
                     </div>
 
-                    {/* Dispatch button */}
-                    <button
-                      onClick={handleDispatch}
-                      disabled={dispatchGroupSize === 0 || dispatching}
-                      style={{
-                        width: '100%',
-                        padding: '18px 0',
-                        fontSize: 18,
-                        fontWeight: 800,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        borderRadius: 12,
-                        border: 'none',
-                        cursor: dispatchGroupSize === 0 || dispatching ? 'not-allowed' : 'pointer',
-                        background: dispatchGroupSize === 0 || dispatching ? '#1a2a1a' : '#2563EB',
-                        color: dispatchGroupSize === 0 || dispatching ? '#374151' : '#fff',
-                        transition: 'background 0.15s, color 0.15s',
-                        marginBottom: 20,
-                      }}
-                      className="touch-manipulation active:bg-[#1D4ED8]"
-                    >
-                      {dispatching ? 'Dispatching...' : 'Dispatch'}
-                    </button>
+                    {/* Dispatch button — locked when CLOSED or DELAYED */}
+                    {(selected.status === 'CLOSED' || selected.status === 'DELAYED') ? (
+                      <div style={{
+                        width: '100%', padding: '18px 0', marginBottom: 20,
+                        background: selected.status === 'CLOSED' ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.06)',
+                        border: `1px solid ${selected.status === 'CLOSED' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'}`,
+                        borderRadius: 12, textAlign: 'center',
+                        color: selected.status === 'CLOSED' ? '#EF4444' : '#F59E0B',
+                        fontSize: 14, fontWeight: 600, letterSpacing: '0.04em',
+                      }}>
+                        {selected.status === 'CLOSED' ? 'Attraction closed — dispatch locked' : 'Attraction delayed — dispatch locked'}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleDispatch}
+                        disabled={dispatchGroupSize === 0 || dispatching}
+                        style={{
+                          width: '100%', padding: '18px 0', fontSize: 18, fontWeight: 800,
+                          letterSpacing: '0.06em', textTransform: 'uppercase', borderRadius: 12, border: 'none',
+                          cursor: dispatchGroupSize === 0 || dispatching ? 'not-allowed' : 'pointer',
+                          background: dispatchGroupSize === 0 || dispatching ? '#1a2a1a' : '#2563EB',
+                          color: dispatchGroupSize === 0 || dispatching ? '#374151' : '#fff',
+                          transition: 'background 0.15s, color 0.15s', marginBottom: 20,
+                        }}
+                        className="touch-manipulation active:bg-[#1D4ED8]"
+                      >
+                        {dispatching ? 'Dispatching...' : 'Dispatch'}
+                      </button>
+                    )}
 
                     {/* Today's dispatches summary */}
                     <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 16 }}>
@@ -1096,25 +1136,6 @@ export default function SupervisorDashboard() {
               </div>
             )}
 
-            {/* ── Field Notes Button ── */}
-            {selected.attraction_type !== 'show' && (
-              <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
-                <button
-                  onClick={() => setNotesOpen(true)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 20px',
-                    background: '#111111', border: '1px solid #2a2a2a', borderRadius: 10,
-                    color: '#94A3B8', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                    transition: 'border-color 0.15s, color 0.15s',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
-                >
-                  📝 Show Report
-                </button>
-              </div>
-            )}
 
           </>
         )}
