@@ -182,8 +182,7 @@ function QueueChart({
             tick={{ fontSize: 10, fill: '#475569' }}
             axisLine={false}
             tickLine={false}
-            scale="time"
-            padding={{ left: 8, right: 8 }}
+            padding={{ left: 0, right: 0 }}
           />
           <YAxis
             dataKey="wait"
