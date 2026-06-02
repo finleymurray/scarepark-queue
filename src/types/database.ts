@@ -12,6 +12,16 @@ export interface Attraction {
   attraction_type: AttractionType;
   show_times: string[] | null;
   updated_at: string;
+  target_dispatch_seconds?: number | null;
+}
+
+export interface DispatchLog {
+  id: string;
+  attraction_id: string;
+  group_size: number;
+  dispatched_at: string;
+  dispatched_by: string;
+  log_date: string;
 }
 
 export interface ParkSetting {

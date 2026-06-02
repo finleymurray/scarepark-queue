@@ -9,67 +9,11 @@ import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
-import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
+import type { Attraction, ThroughputLog, DispatchLog } from '@/types/database';
 import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
 import AppSwitcher from '@/components/AppSwitcher';
 
 /* ── Helpers ── */
-
-function generateHourlySlots(openTime: string, closeTime: string): { start: string; end: string }[] {
-  if (!openTime || !closeTime) return [];
-  const [oh, om] = openTime.split(':').map(Number);
-  const [ch, cm] = closeTime.split(':').map(Number);
-
-  let startMinutes = oh * 60 + (om || 0);
-  let endMinutes = ch * 60 + (cm || 0);
-
-  // Handle crossing midnight (e.g., 18:00 - 01:00)
-  if (endMinutes <= startMinutes) endMinutes += 24 * 60;
-
-  // Add an extra hour after closing for queue clearance
-  // (guests already in the queue when the park closes still go through)
-  endMinutes += 60;
-
-  const slots: { start: string; end: string }[] = [];
-  let cursor = startMinutes;
-  while (cursor < endMinutes) {
-    const next = Math.min(cursor + 60, endMinutes);
-    const sh = Math.floor(cursor / 60) % 24;
-    const sm = cursor % 60;
-    const eh = Math.floor(next / 60) % 24;
-    const em = next % 60;
-    slots.push({
-      start: `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`,
-      end: `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`,
-    });
-    cursor = next;
-  }
-  return slots;
-}
-
-function getCurrentSlotIndex(slots: { start: string; end: string }[]): number {
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-  for (let i = 0; i < slots.length; i++) {
-    const [sh, sm] = slots[i].start.split(':').map(Number);
-    const [eh, em] = slots[i].end.split(':').map(Number);
-    let startMin = sh * 60 + sm;
-    let endMin = eh * 60 + em;
-    if (endMin <= startMin) endMin += 24 * 60;
-    let checkNow = nowMinutes;
-    if (checkNow < startMin && startMin > 12 * 60) checkNow += 24 * 60;
-    if (checkNow >= startMin && checkNow < endMin) return i;
-  }
-  return -1;
-}
-
-function formatSlotTime(time: string): string {
-  const [h, m] = time.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
-}
 
 function getTodayDateStr(): string {
   return new Date().toISOString().split('T')[0];
@@ -85,127 +29,20 @@ function formatElapsed(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/* ── Numeric Keypad Modal ── */
-function NumericKeypad({
-  open,
-  currentValue,
-  slotLabel,
-  onConfirm,
-  onCancel,
-}: {
-  open: boolean;
-  currentValue: number;
-  slotLabel: string;
-  onConfirm: (value: number) => void;
-  onCancel: () => void;
-}) {
-  const [display, setDisplay] = useState('');
-
-  useEffect(() => {
-    if (open) setDisplay(currentValue > 0 ? String(currentValue) : '');
-  }, [open, currentValue]);
-
-  if (!open) return null;
-
-  function handleKey(key: string) {
-    if (key === 'clear') {
-      setDisplay('');
-    } else if (key === 'back') {
-      setDisplay((prev) => prev.slice(0, -1));
-    } else {
-      setDisplay((prev) => {
-        const next = prev + key;
-        if (parseInt(next, 10) > 99999) return prev;
-        return next;
-      });
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div style={{ width: '100%', maxWidth: 360, background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <p style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{slotLabel}</p>
-          <p style={{ color: '#F1F5F9', fontSize: 14, marginTop: 4 }}>Enter guest count</p>
-        </div>
-
-        {/* Display */}
-        <div style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8, padding: '20px 16px', textAlign: 'center', marginBottom: 16 }}>
-          <span style={{ color: '#F1F5F9', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-            {display || '0'}
-          </span>
-        </div>
-
-        {/* Keys */}
-        <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
-          {['1','2','3','4','5','6','7','8','9'].map((k) => (
-            <button
-              key={k}
-              onClick={() => handleKey(k)}
-              style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-              className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-            >
-              {k}
-            </button>
-          ))}
-          <button
-            onClick={() => handleKey('clear')}
-            style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#EF4444', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-            className="active:bg-[#EF4444]/10 transition-colors touch-manipulation"
-          >
-            CLR
-          </button>
-          <button
-            onClick={() => handleKey('0')}
-            style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-            className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-          >
-            0
-          </button>
-          <button
-            onClick={() => handleKey('back')}
-            style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-            className="active:bg-[#F59E0B]/10 transition-colors touch-manipulation"
-          >
-            DEL
-          </button>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            style={{ flex: 1, padding: '14px 0', fontSize: 15, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8 }}
-            className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(parseInt(display, 10) || 0)}
-            style={{ flex: 1, padding: '14px 0', fontSize: 15, fontWeight: 700, color: '#fff', background: '#2563EB', border: 'none', borderRadius: 8 }}
-            className="active:bg-[#1D4ED8] transition-colors touch-manipulation"
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Main Supervisor Dashboard ── */
 export default function SupervisorDashboard() {
   const router = useRouter();
   const [attractions, setAttractions] = useState<Attraction[]>([]);
-  const [openingTime, setOpeningTime] = useState('');
-  const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [throughputLogs, setThroughputLogs] = useState<ThroughputLog[]>([]);
-  const [keypadOpen, setKeypadOpen] = useState(false);
-  const [keypadSlot, setKeypadSlot] = useState<{ start: string; end: string } | null>(null);
-  const [keypadValue, setKeypadValue] = useState(0);
-  const [now, setNow] = useState(Date.now());
+  // Dispatch clicker state
+  const [dispatchGroupSize, setDispatchGroupSize] = useState(0);
+  const [dispatchLogs, setDispatchLogs] = useState<DispatchLog[]>([]);
+  const [lastDispatchAt, setLastDispatchAt] = useState<string | null>(null);
+  const [dispatchElapsed, setDispatchElapsed] = useState(0);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchFlashOn, setDispatchFlashOn] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -264,19 +101,10 @@ export default function SupervisorDashboard() {
   }
 
   const tabBarRef = useRef<HTMLDivElement>(null);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressTriggered = useRef(false);
-
-  // Tick every 30s to keep current slot highlighting fresh
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Auth & initial data fetch
   useEffect(() => {
     let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
-    let settingsChannel: ReturnType<typeof supabase.channel> | null = null;
     let logsChannel: ReturnType<typeof supabase.channel> | null = null;
 
     async function init() {
@@ -291,14 +119,13 @@ export default function SupervisorDashboard() {
       setUserRole(auth.role);
 
       // Filter attractions at query level for supervisors (H2 fix)
-      let attractionsQuery = supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true });
+      let attractionsQuery = supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds').order('sort_order', { ascending: true });
       if (auth.role === 'supervisor' && auth.allowedAttractions && auth.allowedAttractions.length > 0) {
         attractionsQuery = attractionsQuery.in('id', auth.allowedAttractions);
       }
 
-      const [attractionsRes, settingsRes] = await Promise.all([
+      const [attractionsRes] = await Promise.all([
         attractionsQuery,
-        supabase.from('park_settings').select('key,value'),
       ]);
 
       if (!attractionsRes.error && attractionsRes.data) {
@@ -308,13 +135,6 @@ export default function SupervisorDashboard() {
         const savedExists = saved && attractionsRes.data.find((a: Attraction) => a.id === saved);
         const firstRide = attractionsRes.data.find((a: Attraction) => a.attraction_type !== 'show');
         setSelectedId(savedExists ? saved : (firstRide?.id ?? null));
-      }
-
-      if (settingsRes.data) {
-        for (const s of settingsRes.data) {
-          if (s.key === 'opening_time') setOpeningTime(s.value);
-          if (s.key === 'closing_time') setClosingTime(s.value);
-        }
       }
 
       setLoading(false);
@@ -359,20 +179,6 @@ export default function SupervisorDashboard() {
         )
         .subscribe();
 
-      // Realtime: settings
-      settingsChannel = supabase
-        .channel('control-settings')
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'park_settings' },
-          (payload) => {
-            const setting = payload.new as ParkSetting;
-            if (setting.key === 'opening_time') setOpeningTime(setting.value);
-            if (setting.key === 'closing_time') setClosingTime(setting.value);
-          }
-        )
-        .subscribe();
-
       // Realtime: throughput_logs — use payload to avoid refetching all logs
       logsChannel = supabase
         .channel('control-logs')
@@ -404,7 +210,6 @@ export default function SupervisorDashboard() {
 
     return () => {
       if (attractionsChannel) supabase.removeChannel(attractionsChannel);
-      if (settingsChannel) supabase.removeChannel(settingsChannel);
       if (logsChannel) supabase.removeChannel(logsChannel);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -435,6 +240,56 @@ export default function SupervisorDashboard() {
       if (channel) supabase.removeChannel(channel);
     };
   }, [selectedId]);
+
+  // Fetch dispatch logs when selectedId changes
+  useEffect(() => {
+    if (!selectedId) { setDispatchLogs([]); setLastDispatchAt(null); setDispatchElapsed(0); return; }
+
+    let dispatchChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function fetchDispatchLogs(attractionId: string) {
+      const today = getTodayDateStr();
+      const { data } = await supabase.from('dispatch_logs')
+        .select('*').eq('attraction_id', attractionId).eq('log_date', today)
+        .order('dispatched_at', { ascending: false }).limit(10);
+      setDispatchLogs(data || []);
+      const latest = (data || [])[0];
+      if (latest) setLastDispatchAt(latest.dispatched_at);
+      else setLastDispatchAt(null);
+    }
+
+    fetchDispatchLogs(selectedId);
+    setDispatchGroupSize(0);
+
+    dispatchChannel = supabase
+      .channel(`dispatch-logs-${selectedId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'dispatch_logs', filter: `attraction_id=eq.${selectedId}` },
+        () => { fetchDispatchLogs(selectedId); }
+      )
+      .subscribe();
+
+    return () => {
+      if (dispatchChannel) supabase.removeChannel(dispatchChannel);
+    };
+  }, [selectedId]);
+
+  // Dispatch elapsed timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (lastDispatchAt) {
+        setDispatchElapsed(Math.floor((Date.now() - new Date(lastDispatchAt).getTime()) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastDispatchAt]);
+
+  // Flashing timer for when way over target
+  useEffect(() => {
+    const interval = setInterval(() => setDispatchFlashOn((v) => !v), 500);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load existing notes when drawer opens or selectedId changes while open
   useEffect(() => {
@@ -547,36 +402,12 @@ export default function SupervisorDashboard() {
     return () => clearInterval(interval);
   }, [delayStartedAt]);
 
-  // Hourly slots
-  const slots = useMemo(() => generateHourlySlots(openingTime, closingTime), [openingTime, closingTime]);
-  const currentSlotIdx = useMemo(() => getCurrentSlotIndex(slots), [slots, now]);
-
-  // Build a lookup map for throughput logs keyed by "attractionId|slotStart|slotEnd"
-  const logsMap = useMemo(() => {
-    const map = new Map<string, ThroughputLog>();
-    for (const l of throughputLogs) {
-      map.set(`${l.attraction_id}|${l.slot_start}|${l.slot_end}`, l);
-    }
-    return map;
-  }, [throughputLogs]);
-
-  // Throughput for selected attraction (already filtered to today by fetch)
-  function getLogForSlot(slot: { start: string; end: string }): ThroughputLog | undefined {
-    if (!selectedId) return undefined;
-    return logsMap.get(`${selectedId}|${slot.start}|${slot.end}`);
-  }
-
-  // Total guests tonight for selected attraction
+  // Total guests tonight for selected attraction (from dispatch logs)
   const guestsTonight = useMemo(() => {
-    if (!selectedId) return 0;
-    let sum = 0;
-    for (const l of throughputLogs) {
-      if (l.attraction_id === selectedId) sum += l.guest_count;
-    }
-    return sum;
-  }, [throughputLogs, selectedId]);
+    return dispatchLogs.reduce((s, l) => s + l.group_size, 0);
+  }, [dispatchLogs]);
 
-  // Total guests across ALL attractions tonight
+  // Total guests across ALL attractions tonight (throughput-based for park total)
   const totalGuestsAllAttractions = useMemo(() => {
     let sum = 0;
     for (const l of throughputLogs) sum += l.guest_count;
@@ -605,65 +436,25 @@ export default function SupervisorDashboard() {
     });
   }
 
-  // Handle throughput log save
-  async function handleLogThroughput(slot: { start: string; end: string }, count: number) {
-    if (!selectedId) return;
-    // Validate guest count (M6 fix)
-    const sanitisedCount = Math.max(0, Math.min(99999, Math.round(count)));
-    if (!Number.isFinite(sanitisedCount)) return;
-    count = sanitisedCount;
-    const attraction = rides.find((r) => r.id === selectedId);
-    const attractionName = attraction?.name || 'Unknown';
-    const existing = getLogForSlot(slot);
-    const slotLabel = `${formatSlotTime(slot.start)}-${formatSlotTime(slot.end)}`;
-    const performer = displayName || userEmail;
-
-    if (existing) {
-      const oldCount = existing.guest_count;
-      await supabase
-        .from('throughput_logs')
-        .update({ guest_count: count, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-
-      logAudit({
-        actionType: 'throughput_entry',
-        attractionId: selectedId,
-        attractionName,
-        performedBy: performer,
-        oldValue: String(oldCount),
-        newValue: String(count),
-        details: `Throughput edited for ${slotLabel}: ${oldCount} -> ${count} guests`,
-      });
-    } else {
-      await supabase
-        .from('throughput_logs')
-        .insert({
-          attraction_id: selectedId,
-          slot_start: slot.start,
-          slot_end: slot.end,
-          guest_count: count,
-          logged_by: 'supervisor',
-          log_date: getTodayDateStr(),
-        });
-
-      logAudit({
-        actionType: 'throughput_entry',
-        attractionId: selectedId,
-        attractionName,
-        performedBy: performer,
-        oldValue: null,
-        newValue: String(count),
-        details: `Throughput logged for ${slotLabel}: ${count} guests`,
-      });
-    }
-
-  }
-
-  function openKeypadForSlot(slot: { start: string; end: string }) {
-    const existing = getLogForSlot(slot);
-    setKeypadSlot(slot);
-    setKeypadValue(existing?.guest_count || 0);
-    setKeypadOpen(true);
+  async function handleDispatch() {
+    if (dispatchGroupSize === 0 || dispatching || !selectedId) return;
+    setDispatching(true);
+    const today = getTodayDateStr();
+    await supabase.from('dispatch_logs').insert({
+      attraction_id: selectedId,
+      group_size: dispatchGroupSize,
+      dispatched_by: displayName || userEmail,
+      log_date: today,
+    });
+    setDispatchGroupSize(0);
+    const now = new Date().toISOString();
+    setLastDispatchAt(now);
+    setDispatchElapsed(0);
+    const { data } = await supabase.from('dispatch_logs')
+      .select('*').eq('attraction_id', selectedId).eq('log_date', today)
+      .order('dispatched_at', { ascending: false }).limit(10);
+    setDispatchLogs(data || []);
+    setDispatching(false);
   }
 
   async function handleLogout() {
@@ -692,18 +483,6 @@ export default function SupervisorDashboard() {
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#000000', color: '#F1F5F9' }}>
-      {/* Numeric Keypad Modal */}
-      <NumericKeypad
-        open={keypadOpen}
-        currentValue={keypadValue}
-        slotLabel={keypadSlot ? `${formatSlotTime(keypadSlot.start)} - ${formatSlotTime(keypadSlot.end)}` : ''}
-        onConfirm={(value) => {
-          if (keypadSlot) handleLogThroughput(keypadSlot, value);
-          setKeypadOpen(false);
-        }}
-        onCancel={() => setKeypadOpen(false)}
-      />
-
       {/* Header */}
       <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', height: 56, padding: '0 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -971,99 +750,126 @@ export default function SupervisorDashboard() {
               </div>
             )}
 
-            {/* ── Hourly Throughput ── */}
-            <section>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                <h2 style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Hourly Throughput</h2>
-              </div>
+            {/* ── Dispatch Clicker ── */}
+            {selected.attraction_type !== 'show' && (() => {
+              const targetSeconds = selected.target_dispatch_seconds ?? 90;
+              const timerColor = lastDispatchAt === null ? '#64748B'
+                : dispatchElapsed > targetSeconds + 30 ? '#EF4444'
+                : dispatchElapsed > targetSeconds ? '#EF4444'
+                : dispatchElapsed > targetSeconds * 0.75 ? '#F59E0B'
+                : '#22C55E';
+              const timerFlashing = lastDispatchAt !== null && dispatchElapsed > targetSeconds + 30;
+              const timerVisible = !timerFlashing || dispatchFlashOn;
 
-              {slots.length === 0 ? (
-                <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, padding: 24, textAlign: 'center' }}>
-                  <p style={{ color: '#94A3B8', fontSize: 14 }}>Operating hours not set.</p>
-                  <p style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>Ask a manager to set hours in Admin.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {slots.map((slot, idx) => {
-                    const isCurrent = idx === currentSlotIdx;
-                    const isPast = idx < currentSlotIdx || currentSlotIdx === -1;
-                    const isFuture = idx > currentSlotIdx && currentSlotIdx !== -1;
-                    const log = getLogForSlot(slot);
-                    const guestCount = log?.guest_count ?? null;
-                    const hasLog = guestCount !== null;
-                    const needsLongPress = hasLog && !isFuture;
+              const dispatchMin = Math.floor(dispatchElapsed / 60);
+              const dispatchSec = dispatchElapsed % 60;
+              const timerStr = lastDispatchAt === null
+                ? '—:—'
+                : `${String(dispatchMin).padStart(2, '0')}:${String(dispatchSec).padStart(2, '0')}`;
 
-                    function startPress() {
-                      if (isFuture) return;
-                      longPressTriggered.current = false;
-                      if (needsLongPress) {
-                        longPressTimer.current = setTimeout(() => {
-                          longPressTriggered.current = true;
-                          openKeypadForSlot(slot);
-                        }, 500);
-                      }
-                    }
+              const totalDispatches = dispatchLogs.length;
+              const totalGuests = dispatchLogs.reduce((s, l) => s + l.group_size, 0);
 
-                    function endPress() {
-                      if (longPressTimer.current) {
-                        clearTimeout(longPressTimer.current);
-                        longPressTimer.current = null;
-                      }
-                    }
+              return (
+                <section style={{ marginBottom: 48 }}>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
+                    <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Dispatch</h2>
+                  </div>
 
-                    function handleTap() {
-                      if (isFuture) return;
-                      if (longPressTriggered.current) return;
-                      if (!needsLongPress) {
-                        openKeypadForSlot(slot);
-                      }
-                    }
+                  <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
+                    {/* Timer */}
+                    <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                      <div style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 6 }}>
+                        Time Since Last Dispatch
+                      </div>
+                      <div style={{
+                        fontSize: 52,
+                        fontWeight: 800,
+                        fontVariantNumeric: 'tabular-nums',
+                        color: timerVisible ? timerColor : 'transparent',
+                        transition: timerFlashing ? 'none' : 'color 0.3s',
+                        letterSpacing: '-0.02em',
+                      }}>
+                        {timerStr}
+                      </div>
+                      <div style={{ color: '#64748B', fontSize: 11, marginTop: 4 }}>
+                        Target: {targetSeconds}s
+                      </div>
+                    </div>
 
-                    return (
+                    {/* Group size counter */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
                       <button
-                        key={`${slot.start}-${slot.end}`}
-                        onClick={handleTap}
-                        onTouchStart={startPress}
-                        onTouchEnd={endPress}
-                        onTouchCancel={endPress}
-                        onMouseDown={startPress}
-                        onMouseUp={endPress}
-                        onMouseLeave={endPress}
-                        onContextMenu={(e) => e.preventDefault()}
-                        disabled={isFuture}
-                        style={{
-                          minHeight: 72, padding: '0 24px', userSelect: 'none', WebkitUserSelect: 'none',
-                          background: isCurrent ? 'rgba(59,130,246,0.08)' : '#111111',
-                          border: isCurrent ? '2px solid #3B82F6' : '1px solid #2a2a2a',
-                          opacity: isFuture ? 0.4 : 1,
-                          cursor: isFuture ? 'not-allowed' : 'pointer',
-                        }}
-                        className="w-full flex items-center justify-between rounded-xl transition-all touch-manipulation"
+                        onClick={() => setDispatchGroupSize((v) => Math.max(0, v - 1))}
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400 text-red-400 text-3xl font-black active:bg-red-900/20 transition-colors touch-manipulation"
+                        style={{ minWidth: 72, minHeight: 72 }}
                       >
-                        <div style={{ fontSize: 14, fontWeight: 600, color: isCurrent ? '#3B82F6' : '#94A3B8' }}>
-                          {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {guestCount !== null ? (
-                            <>
-                              <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: isCurrent ? '#3B82F6' : '#F1F5F9' }}>
-                                {guestCount}
-                              </span>
-                              <span style={{ color: '#94A3B8', fontSize: 11 }}>hold to edit</span>
-                            </>
-                          ) : (
-                            <span style={{ fontSize: 14, color: isCurrent ? '#3B82F6' : '#2a2a2a' }}>
-                              {isFuture ? '—' : 'Tap to log'}
-                            </span>
-                          )}
-                        </div>
+                        −
                       </button>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+                      <div style={{ flex: 1, textAlign: 'center' }}>
+                        <div style={{ fontSize: 56, fontWeight: 900, fontVariantNumeric: 'tabular-nums', color: dispatchGroupSize > 0 ? '#F1F5F9' : '#475569' }}>
+                          {dispatchGroupSize}
+                        </div>
+                        <div style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>guests</div>
+                      </div>
+                      <button
+                        onClick={() => setDispatchGroupSize((v) => Math.min(30, v + 1))}
+                        className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E] text-[#22C55E] text-3xl font-black active:bg-green-900/20 transition-colors touch-manipulation"
+                        style={{ minWidth: 72, minHeight: 72 }}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Dispatch button */}
+                    <button
+                      onClick={handleDispatch}
+                      disabled={dispatchGroupSize === 0 || dispatching}
+                      style={{
+                        width: '100%',
+                        padding: '18px 0',
+                        fontSize: 18,
+                        fontWeight: 800,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        borderRadius: 12,
+                        border: 'none',
+                        cursor: dispatchGroupSize === 0 || dispatching ? 'not-allowed' : 'pointer',
+                        background: dispatchGroupSize === 0 || dispatching ? '#1a2a1a' : '#2563EB',
+                        color: dispatchGroupSize === 0 || dispatching ? '#374151' : '#fff',
+                        transition: 'background 0.15s, color 0.15s',
+                        marginBottom: 20,
+                      }}
+                      className="touch-manipulation active:bg-[#1D4ED8]"
+                    >
+                      {dispatching ? 'Dispatching...' : 'Dispatch'}
+                    </button>
+
+                    {/* Today's dispatches summary */}
+                    <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 16 }}>
+                      <p style={{ color: '#64748B', fontSize: 12, margin: '0 0 10px 0' }}>
+                        {totalDispatches} dispatch{totalDispatches !== 1 ? 'es' : ''} · {totalGuests} guests today
+                      </p>
+                      {dispatchLogs.slice(0, 5).map((log) => {
+                        const t = new Date(log.dispatched_at);
+                        const h = t.getHours();
+                        const m = t.getMinutes();
+                        const ampm = h >= 12 ? 'PM' : 'AM';
+                        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                        const timeStr = `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+                        return (
+                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 13, padding: '4px 0' }}>
+                            <span>{timeStr}</span>
+                            <span style={{ color: '#F1F5F9' }}>{log.group_size} guests</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
 
           </>
         )}

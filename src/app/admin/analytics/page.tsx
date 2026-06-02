@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
 
       const [settingsRes, attractionsRes] = await Promise.all([
         supabase.from('park_settings').select('key,value').eq('key', 'opening_time').single(),
-        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds').order('sort_order', { ascending: true }),
       ]);
 
       if (settingsRes.data) {

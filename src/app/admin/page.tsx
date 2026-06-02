@@ -493,6 +493,55 @@ function ReorderButtons({
   );
 }
 
+/* ── Target Dispatch Field ── */
+function TargetDispatchField({ value, onSave }: { value: number | null; onSave: (v: number | null) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [input, setInput] = useState('');
+
+  function startEdit() {
+    setInput(value !== null ? String(value) : '90');
+    setEditing(true);
+  }
+
+  function confirm() {
+    const n = parseInt(input, 10);
+    if (!isNaN(n) && n > 0) onSave(n);
+    setEditing(false);
+  }
+
+  return (
+    <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 12, marginBottom: 4, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <span style={{ color: '#64748B', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Target Dispatch</span>
+      {editing ? (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            type="number"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') confirm(); if (e.key === 'Escape') setEditing(false); }}
+            autoFocus
+            min={1}
+            max={600}
+            style={{ width: 64, padding: '4px 8px', background: '#000', border: '1px solid #3B82F6', borderRadius: 6, color: '#F1F5F9', fontSize: 13, outline: 'none' }}
+          />
+          <span style={{ color: '#64748B', fontSize: 12 }}>s</span>
+          <button onClick={confirm} style={{ padding: '4px 10px', background: '#2563EB', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>OK</button>
+          <button onClick={() => setEditing(false)} style={{ padding: '4px 8px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 6, color: '#94A3B8', fontSize: 12, cursor: 'pointer' }}>✕</button>
+        </div>
+      ) : (
+        <button
+          onClick={startEdit}
+          style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#F1F5F9'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+        >
+          {value !== null ? `${value}s` : '90s'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ── Ride Control Card ── */
 const RideControl = React.memo(function RideControl({
   attraction,
@@ -727,6 +776,12 @@ const RideControl = React.memo(function RideControl({
           Set
         </button>
       </div>
+
+      {/* Target Dispatch */}
+      <TargetDispatchField
+        value={attraction.target_dispatch_seconds ?? null}
+        onSave={(val) => handleUpdate({ target_dispatch_seconds: val })}
+      />
 
       {/* Remove */}
       <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 12, width: '100%' }}>
@@ -1003,7 +1058,7 @@ export default function AdminDashboard() {
       setDisplayName(auth.displayName || '');
 
       const [attractionsRes, openingRes, closingRes, autoSortRes] = await Promise.all([
-        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds').order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'opening_time').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
