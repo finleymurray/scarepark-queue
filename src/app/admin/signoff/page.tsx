@@ -120,6 +120,14 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
   const completedSections = allSections.filter((s) => completionMap.has(s.id)).length;
   const waitingSections = totalSections - completedSections;
 
+  // Split by phase
+  const openingSections = allSections.filter((s) => s.phase === 'opening');
+  const closingSections = allSections.filter((s) => s.phase === 'closing');
+  const openingCompleted = openingSections.filter((s) => completionMap.has(s.id)).length;
+  const closingCompleted = closingSections.filter((s) => completionMap.has(s.id)).length;
+  const openingWaiting = openingSections.length - openingCompleted;
+  const closingWaiting = closingSections.length - closingCompleted;
+
   return (
     <>
       <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
@@ -136,12 +144,62 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
         </div>
       </div>
 
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
-        <div className="flex items-center gap-12 flex-wrap">
-          <div><span className="text-[#888] text-xs uppercase tracking-wider block mb-1">Total</span><div className="text-white text-2xl font-bold">{totalSections}</div></div>
-          <div><span className="text-[#888] text-xs uppercase tracking-wider block mb-1">Completed</span><div className="text-[#4caf50] text-2xl font-bold">{completedSections}</div></div>
-          <div><span className="text-[#888] text-xs uppercase tracking-wider block mb-1">Waiting</span><div className={`text-2xl font-bold ${waitingSections > 0 ? 'text-[#ffc107]' : 'text-[#4caf50]'}`}>{waitingSections}</div></div>
-          {totalSections > 0 && (<div className="flex-1 min-w-[120px]"><div style={{ position: 'relative', width: '100%', height: 8, background: '#000000', borderRadius: 4, overflow: 'hidden' }}><div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, filter: 'blur(6px)', opacity: 0.6, transition: 'width 0.5s' }} /><div style={{ position: 'relative', height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, transition: 'width 0.5s' }} /></div></div>)}
+      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: '24px 28px', marginBottom: 32 }}>
+        {/* Overall progress bar */}
+        {totalSections > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+              <span style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Overall Progress</span>
+              <span style={{ color: completedSections === totalSections ? '#22C55E' : '#94A3B8', fontSize: 13, fontWeight: 600 }}>
+                {completedSections}/{totalSections} complete
+              </span>
+            </div>
+            <div style={{ position: 'relative', width: '100%', height: 8, background: '#000', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, filter: 'blur(6px)', opacity: 0.6, transition: 'width 0.5s' }} />
+              <div style={{ position: 'relative', height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, transition: 'width 0.5s' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Opening / Closing split */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {/* Opening checks */}
+          <div style={{ background: '#000', border: '1px solid #1a1a1a', borderRadius: 10, padding: '14px 16px' }}>
+            <p style={{ color: '#64748B', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Opening Checks</p>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div>
+                <div style={{ color: openingCompleted === openingSections.length && openingSections.length > 0 ? '#22C55E' : '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{openingCompleted}</div>
+                <div style={{ color: '#22C55E', fontSize: 11, marginTop: 4 }}>Complete</div>
+              </div>
+              <div>
+                <div style={{ color: openingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{openingWaiting}</div>
+                <div style={{ color: openingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 11, marginTop: 4 }}>Waiting</div>
+              </div>
+              <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                <div style={{ color: '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{openingSections.length}</div>
+                <div style={{ color: '#374151', fontSize: 11, marginTop: 4 }}>Total</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Closing checks */}
+          <div style={{ background: '#000', border: '1px solid #1a1a1a', borderRadius: 10, padding: '14px 16px' }}>
+            <p style={{ color: '#64748B', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Closing Checks</p>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div>
+                <div style={{ color: closingCompleted === closingSections.length && closingSections.length > 0 ? '#22C55E' : '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{closingCompleted}</div>
+                <div style={{ color: '#22C55E', fontSize: 11, marginTop: 4 }}>Complete</div>
+              </div>
+              <div>
+                <div style={{ color: closingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{closingWaiting}</div>
+                <div style={{ color: closingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 11, marginTop: 4 }}>Waiting</div>
+              </div>
+              <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                <div style={{ color: '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{closingSections.length}</div>
+                <div style={{ color: '#374151', fontSize: 11, marginTop: 4 }}>Total</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

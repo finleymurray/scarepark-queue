@@ -908,7 +908,7 @@ const ShowControl = React.memo(function ShowControl({
 
       {/* Sign-off badge — centred */}
       {signoffStatus && (
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
           {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }}>
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
