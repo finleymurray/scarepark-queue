@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import AppSwitcher from '@/components/AppSwitcher';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
@@ -464,10 +465,12 @@ export default function SignoffPage() {
 
       {/* Header */}
       <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/signoff" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <Image src="/logo-signoff.png" alt="CoreLink Sign-Off" width={28} height={28} priority style={{ width: 28, height: 'auto' }} />
-          <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Sign-Off</h1>
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AppSwitcher currentApp="signoff" isAdmin={false} />
+          <a href="/signoff" style={{ textDecoration: 'none' }}>
+            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Sign-Off</h1>
+          </a>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
           {(displayName || userEmail) && (
             <span title={userEmail} className="hidden sm:block" style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

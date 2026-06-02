@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import AppSwitcher from './AppSwitcher';
 
 const PRIMARY_TABS = [
   { label: 'Attractions', href: '/admin' },
@@ -29,14 +29,18 @@ export default function AdminNav({
   userEmail,
   displayName,
   onLogout,
+  isAdmin = true,
 }: {
   userEmail: string;
   displayName?: string;
   onLogout: () => void;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
@@ -72,17 +76,12 @@ export default function AdminNav({
       {/* Header bar */}
       <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 0', height: 56, display: 'flex', alignItems: 'center' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <Image
-              src="/logo-admin.png"
-              alt="CoreLink Admin"
-              width={28}
-              height={28}
-              priority
-              style={{ width: 28, height: 'auto' }}
-            />
-            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AppSwitcher currentApp="admin" isAdmin={isAdmin} />
+            <Link href="/admin" style={{ textDecoration: 'none' }}>
+              <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
+            </Link>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
             {userEmail && (
               <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#94A3B8' }}>
@@ -137,10 +136,17 @@ export default function AdminNav({
             );
           })}
 
-          {/* More dropdown */}
+          {/* More dropdown — uses fixed positioning to avoid mobile clip */}
           <div ref={moreRef} style={{ position: 'relative', flexShrink: 0 }}>
             <button
-              onClick={() => setMoreOpen((v) => !v)}
+              ref={moreButtonRef}
+              onClick={() => {
+                if (!moreOpen && moreButtonRef.current) {
+                  const r = moreButtonRef.current.getBoundingClientRect();
+                  setDropdownPos({ top: r.bottom + 4, left: r.left });
+                }
+                setMoreOpen((v) => !v);
+              }}
               className={`admin-nav-tab ${moreIsActive || moreOpen ? 'admin-nav-tab-active' : ''}`}
               style={{
                 border: 'none',
@@ -164,16 +170,16 @@ export default function AdminNav({
 
             {moreOpen && (
               <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 4px)',
-                left: 0,
+                position: 'fixed',
+                top: dropdownPos.top,
+                left: dropdownPos.left,
                 background: '#111111',
                 border: '1px solid #2a2a2a',
                 borderRadius: 8,
                 padding: '4px 0',
-                minWidth: 150,
-                zIndex: 50,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                minWidth: 160,
+                zIndex: 9999,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
               }}>
                 {MORE_TABS.map((tab) => {
                   const active = isActive(tab.href);

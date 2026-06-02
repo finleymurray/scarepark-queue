@@ -11,6 +11,7 @@ import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, ParkSetting, ThroughputLog } from '@/types/database';
 import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
+import AppSwitcher from '@/components/AppSwitcher';
 
 /* ── Helpers ── */
 
@@ -703,12 +704,14 @@ export default function SupervisorDashboard() {
         onCancel={() => setKeypadOpen(false)}
       />
 
-      {/* Header — logo, user info & sign out */}
+      {/* Header */}
       <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', height: 56, padding: '0 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/control" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <Image src="/logo-control.png" alt="CoreLink" width={28} height={28} priority style={{ width: 28, height: 'auto' }} />
-          <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Field Control</h1>
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AppSwitcher currentApp="control" isAdmin={userRole === 'admin'} />
+          <a href="/control" style={{ textDecoration: 'none' }}>
+            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Field Control</h1>
+          </a>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
           {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || userEmail}</span>}
           {'Notification' in (typeof window !== 'undefined' ? window : {}) && notifPermission !== 'denied' && (
@@ -728,31 +731,6 @@ export default function SupervisorDashboard() {
                 </svg>
               )}
             </button>
-          )}
-          {userRole === 'admin' && (
-            <a
-              href="/admin"
-              style={{
-                background: 'none',
-                border: '1px solid #2a2a2a',
-                color: '#94A3B8',
-                padding: '4px 10px',
-                borderRadius: 4,
-                fontSize: 12,
-                textDecoration: 'none',
-                transition: 'border-color 0.15s, color 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#444444';
-                e.currentTarget.style.color = '#F1F5F9';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#2a2a2a';
-                e.currentTarget.style.color = '#aaa';
-              }}
-            >
-              Admin
-            </a>
           )}
           <button
             onClick={handleLogout}
