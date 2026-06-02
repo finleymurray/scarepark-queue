@@ -442,6 +442,11 @@ function buildOpsData(
     const firstOpen = aLogs.find((l) => l.status === 'OPEN') || null;
     const closedLogs = aLogs.filter((l) => l.status === 'CLOSED');
     const lastClosed = closedLogs.length > 0 ? closedLogs[closedLogs.length - 1] : null;
+    // Only show closing time if it happened after today's opening — prevents
+    // late-night close events from the previous night appearing as today's close
+    const validLastClosed = lastClosed && firstOpen
+      && new Date(lastClosed.changed_at) > new Date(firstOpen.changed_at)
+      ? lastClosed : null;
 
     const delayLogs = aLogs.filter((l) => l.status === 'DELAYED');
     const delays: DelayIncident[] = delayLogs.map((log) => {
@@ -459,7 +464,7 @@ function buildOpsData(
       attraction,
       currentStatus: attraction.status as AttractionStatus,
       openedAt: firstOpen?.changed_at || null,
-      closedAt: lastClosed?.changed_at || null,
+      closedAt: validLastClosed?.changed_at || null,
       delays,
       totalDowntimeSecs,
       activeDelay,
