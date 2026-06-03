@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
-import type { Attraction, AttractionHistory, ThroughputLog, AttractionStatusLog } from '@/types/database';
+import type { Attraction, AttractionHistory, ThroughputLog, AttractionStatusLog, ShowReport } from '@/types/database';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceArea,
@@ -71,7 +71,32 @@ function formatSlotTime(time: string): string {
   return `${hour12}:${m || '00'} ${ampm}`;
 }
 
-type AnalyticsTab = 'queue' | 'throughput' | 'statuslog' | 'summary';
+type AnalyticsTab = 'queue' | 'throughput' | 'statuslog' | 'summary' | 'season';
+
+const DELAY_REASONS = ['Technical Issue', 'Guest Action', 'E-Stop', 'Weather', 'Staffing', 'Other'];
+
+function formatDowntime(mins: number): string {
+  if (mins <= 0) return '—';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  return `${m}m`;
+}
+
+function formatSeasonDate(dateStr: string): string {
+  // dateStr is YYYY-MM-DD
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function hourLabel(slotStart: string): string {
+  if (!slotStart) return '';
+  const h = parseInt(slotStart.split(':')[0], 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12} ${ampm}`;
+}
 
 const CHART_TOOLTIP_STYLE = {
   backgroundColor: '#111',
@@ -89,6 +114,214 @@ function EmptyState({ message }: { message: string }) {
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <p className="text-[#94A3B8] text-sm">{message}</p>
       <p className="text-[#64748B] text-xs mt-1">Data is captured automatically when staff update queue times.</p>
+    </div>
+  );
+}
+
+interface SeasonAgg {
+  hasData: boolean;
+  nights: string[];
+  nightsOperated: number;
+  totalGuests: number;
+  avgGuests: number;
+  busiest: { date: string; guests: number } | null;
+  totalDelayIncidents: number;
+  totalDowntimeMin: number;
+  perNight: { date: string; label: string; guests: number }[];
+  perAttraction: { id: string; name: string; nights: number; guests: number; avgPerNight: number; downtimeMin: number; delayCount: number }[];
+  delayReasons: { reason: string; count: number; minutes: number }[];
+  maxReasonCount: number;
+  byHour: { slot_start: string; label: string; guests: number }[];
+}
+
+function SeasonView({
+  agg, loading, seasonFrom, seasonTo, setSeasonFrom, setSeasonTo, tooltipStyle,
+}: {
+  agg: SeasonAgg;
+  loading: boolean;
+  seasonFrom: string;
+  seasonTo: string;
+  setSeasonFrom: (v: string) => void;
+  setSeasonTo: (v: string) => void;
+  tooltipStyle: typeof CHART_TOOLTIP_STYLE;
+}) {
+  const dateInputStyle = { padding: '7px 10px', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' as const };
+
+  const rangeNote = (() => {
+    if (agg.nights.length === 0) return null;
+    const first = formatSeasonDate(agg.nights[0]);
+    const last = formatSeasonDate(agg.nights[agg.nights.length - 1]);
+    const year = agg.nights[agg.nights.length - 1].split('-')[0];
+    return `Season: ${first} – ${last} ${year}, ${agg.nightsOperated} night${agg.nightsOperated === 1 ? '' : 's'}`;
+  })();
+
+  const parkTotals = agg.perAttraction.reduce(
+    (acc, a) => ({
+      guests: acc.guests + a.guests,
+      downtimeMin: acc.downtimeMin + a.downtimeMin,
+      delayCount: acc.delayCount + a.delayCount,
+    }),
+    { guests: 0, downtimeMin: 0, delayCount: 0 },
+  );
+
+  const cards: { label: string; value: string }[] = [
+    { label: 'Nights Operated', value: String(agg.nightsOperated) },
+    { label: 'Total Guests', value: agg.totalGuests.toLocaleString() },
+    { label: 'Avg Guests / Night', value: agg.avgGuests > 0 ? agg.avgGuests.toLocaleString() : '—' },
+    { label: 'Busiest Night', value: agg.busiest && agg.busiest.guests > 0 ? `${formatSeasonDate(agg.busiest.date)} · ${agg.busiest.guests.toLocaleString()}` : '—' },
+    { label: 'Total Delay Incidents', value: String(agg.totalDelayIncidents) },
+    { label: 'Total Downtime', value: formatDowntime(agg.totalDowntimeMin) },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Date range filter */}
+      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[#94A3B8] text-xs font-medium">From</span>
+          <input type="date" value={seasonFrom} max={seasonTo} onChange={(e) => setSeasonFrom(e.target.value)} style={dateInputStyle} />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[#94A3B8] text-xs font-medium">To</span>
+          <input type="date" value={seasonTo} min={seasonFrom} onChange={(e) => setSeasonTo(e.target.value)} style={dateInputStyle} />
+        </div>
+        {rangeNote && <span className="text-[#64748B] text-xs ml-auto">{rangeNote}</span>}
+      </div>
+
+      {loading ? (
+        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-16 text-center">
+          <p className="text-[#94A3B8] text-sm">Loading season data...</p>
+        </div>
+      ) : !agg.hasData ? (
+        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-[#94A3B8] text-sm">No season data yet</p>
+            <p className="text-[#64748B] text-xs mt-1">Show reports and throughput logs will appear here as nights are operated.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* A. Headline stat cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+            {cards.map((stat) => (
+              <div key={stat.label} style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '20px 20px 18px' }}>
+                <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{stat.label}</p>
+                <p style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1.1 }}>{stat.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* B. Guests per night */}
+          {agg.perNight.length > 0 && (
+            <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+              <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Guests Per Night</h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={agg.perNight}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                  <XAxis dataKey="label" stroke="transparent" tick={AXIS_TICK_STYLE} angle={-30} textAnchor="end" height={60} interval="preserveStartEnd" />
+                  <YAxis
+                    stroke="transparent"
+                    tick={AXIS_TICK_STYLE}
+                    label={{ value: 'Guests', angle: -90, position: 'insideLeft', fill: '#475569', style: { fontSize: 11 } }}
+                  />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [Number(v).toLocaleString(), 'Guests']} />
+                  <Bar dataKey="guests" fill={LINE_COLORS[1]} radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* C. Per-attraction season totals */}
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+            <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Per-Attraction Season Totals</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                    <th className="text-left px-3 py-2 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">Attraction</th>
+                    {['Nights Open', 'Total Guests', 'Avg/Night', 'Total Downtime', 'Delay Incidents'].map((h) => (
+                      <th key={h} className="text-right px-3 py-2 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {agg.perAttraction.map((a) => (
+                    <tr key={a.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                      <td className="px-3 py-3 text-[#F1F5F9] font-medium whitespace-nowrap">{a.name}</td>
+                      <td className="px-3 py-3 text-right text-[#94A3B8] tabular-nums">{a.nights > 0 ? a.nights : <span className="text-[#64748B]">—</span>}</td>
+                      <td className="px-3 py-3 text-right text-[#F1F5F9] tabular-nums font-medium">{a.guests > 0 ? a.guests.toLocaleString() : <span className="text-[#64748B]">—</span>}</td>
+                      <td className="px-3 py-3 text-right text-[#94A3B8] tabular-nums">{a.avgPerNight > 0 ? a.avgPerNight.toLocaleString() : <span className="text-[#64748B]">—</span>}</td>
+                      <td className="px-3 py-3 text-right text-[#94A3B8] tabular-nums">{a.downtimeMin > 0 ? formatDowntime(a.downtimeMin) : <span className="text-[#64748B]">—</span>}</td>
+                      <td className="px-3 py-3 text-right text-[#94A3B8] tabular-nums">{a.delayCount > 0 ? a.delayCount : <span className="text-[#64748B]">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop: '1px solid #2a2a2a' }}>
+                    <td className="px-3 py-3 text-[#94A3B8] font-semibold">Park Total</td>
+                    <td className="px-3 py-3 text-right text-[#64748B]">—</td>
+                    <td className="px-3 py-3 text-right text-[#F1F5F9] font-black tabular-nums">{parkTotals.guests.toLocaleString()}</td>
+                    <td className="px-3 py-3 text-right text-[#64748B]">—</td>
+                    <td className="px-3 py-3 text-right text-[#94A3B8] font-semibold tabular-nums">{parkTotals.downtimeMin > 0 ? formatDowntime(parkTotals.downtimeMin) : '—'}</td>
+                    <td className="px-3 py-3 text-right text-[#94A3B8] font-semibold tabular-nums">{parkTotals.delayCount > 0 ? parkTotals.delayCount : '—'}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* D. Delay reasons breakdown */}
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+            <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Delay Reasons — Season</h3>
+            {agg.delayReasons.length === 0 ? (
+              <p className="text-[#64748B] text-sm">No delays recorded this season.</p>
+            ) : (
+              <div className="space-y-3">
+                {agg.delayReasons.map((r, i) => (
+                  <div key={r.reason}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[#F1F5F9] text-sm font-medium">{r.reason}</span>
+                      <span className="text-[#94A3B8] text-xs tabular-nums">
+                        {r.count} {r.count === 1 ? 'incident' : 'incidents'} · {formatDowntime(r.minutes)}
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full" style={{ background: '#0a0a0a' }}>
+                      <div
+                        className="h-2 rounded-full"
+                        style={{
+                          width: `${agg.maxReasonCount > 0 ? (r.count / agg.maxReasonCount) * 100 : 0}%`,
+                          background: LINE_COLORS[i % LINE_COLORS.length],
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* E. Busiest hours of the night */}
+          {agg.byHour.length > 0 && (
+            <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+              <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Busiest Hours of the Night</h3>
+              <p className="text-[#94A3B8] text-xs mb-5">Total guests by hour slot, summed across all nights.</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={agg.byHour}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                  <XAxis dataKey="label" stroke="transparent" tick={AXIS_TICK_STYLE} />
+                  <YAxis
+                    stroke="transparent"
+                    tick={AXIS_TICK_STYLE}
+                    label={{ value: 'Guests', angle: -90, position: 'insideLeft', fill: '#475569', style: { fontSize: 11 } }}
+                  />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [Number(v).toLocaleString(), 'Guests']} />
+                  <Bar dataKey="guests" fill={LINE_COLORS[4]} radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -111,6 +344,15 @@ export default function AnalyticsPage() {
   const [toTime, setToTime] = useState('23:59');
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('queue');
+
+  // Season (cross-night) data
+  const [seasonReports, setSeasonReports] = useState<ShowReport[]>([]);
+  const [seasonThroughput, setSeasonThroughput] = useState<{ attraction_id: string; guest_count: number; log_date: string }[]>([]);
+  const [seasonStatusLogs, setSeasonStatusLogs] = useState<AttractionStatusLog[]>([]);
+  const [seasonLoading, setSeasonLoading] = useState(false);
+  const [seasonLoaded, setSeasonLoaded] = useState(false);
+  const [seasonFrom, setSeasonFrom] = useState(() => `${new Date().getFullYear()}-01-01`);
+  const [seasonTo, setSeasonTo] = useState(() => new Date().toISOString().split('T')[0]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -181,6 +423,35 @@ export default function AnalyticsPage() {
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, selectedDate, refreshKey]);
+
+  // Lazy-load season data on first open of the Season tab
+  useEffect(() => {
+    if (!authenticated || activeTab !== 'season' || seasonLoaded) return;
+    async function fetchSeason() {
+      setSeasonLoading(true);
+      const [reportsRes, throughputRes, statusRes] = await Promise.all([
+        supabase
+          .from('show_reports')
+          .select('attraction_id,report_date,total_guests,total_operating_minutes,delays,hourly_throughput')
+          .eq('is_draft', false),
+        supabase
+          .from('throughput_logs')
+          .select('attraction_id,guest_count,log_date'),
+        supabase
+          .from('attraction_status_logs')
+          .select('id,attraction_id,status,previous_status,reason,notes,changed_by,changed_at,resolved_at')
+          .eq('status', 'DELAYED'),
+      ]);
+
+      setSeasonReports((reportsRes.data as ShowReport[]) || []);
+      setSeasonThroughput(throughputRes.data || []);
+      setSeasonStatusLogs((statusRes.data as AttractionStatusLog[]) || []);
+      setSeasonLoading(false);
+      setSeasonLoaded(true);
+    }
+    fetchSeason();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, activeTab, seasonLoaded]);
 
   // Filter data by selected time window
   const filteredHistory = useMemo(() => {
@@ -507,6 +778,150 @@ export default function AnalyticsPage() {
     return { totalGuests, avgWait, totalDowntime, delayIncidents, uptimePct, attractionsOpen };
   }, [filteredThroughput, filteredHistory, statusLogSummary, fromTime, toTime, attractions]);
 
+  // ── Season aggregation ──
+  const seasonAgg = useMemo(() => {
+    // Filter reports/logs to the selected season date range (inclusive)
+    const reports = seasonReports.filter((r) => r.report_date >= seasonFrom && r.report_date <= seasonTo);
+    const throughput = seasonThroughput.filter((t) => t.log_date >= seasonFrom && t.log_date <= seasonTo);
+    const delayLogs = seasonStatusLogs.filter((l) => {
+      const d = l.changed_at.split('T')[0];
+      return d >= seasonFrom && d <= seasonTo;
+    });
+
+    const hasData = reports.length > 0 || throughput.length > 0 || delayLogs.length > 0;
+
+    const idToName = new Map<string, string>();
+    for (const a of attractions) idToName.set(a.id, a.name);
+
+    // Distinct nights (from reports, throughput dates, and delay log dates)
+    const nightSet = new Set<string>();
+    reports.forEach((r) => nightSet.add(r.report_date));
+    throughput.forEach((t) => nightSet.add(t.log_date));
+    delayLogs.forEach((l) => nightSet.add(l.changed_at.split('T')[0]));
+    const nights = Array.from(nightSet).sort();
+
+    // Guests per night (prefer report totals; fall back to throughput logs)
+    const guestsByNight = new Map<string, number>();
+    for (const n of nights) guestsByNight.set(n, 0);
+    const reportNights = new Set(reports.map((r) => r.report_date));
+    for (const r of reports) {
+      guestsByNight.set(r.report_date, (guestsByNight.get(r.report_date) || 0) + r.total_guests);
+    }
+    for (const t of throughput) {
+      // only use throughput as fallback for nights with no report data
+      if (!reportNights.has(t.log_date)) {
+        guestsByNight.set(t.log_date, (guestsByNight.get(t.log_date) || 0) + t.guest_count);
+      }
+    }
+
+    const perNight = nights.map((n) => ({ date: n, label: formatSeasonDate(n), guests: guestsByNight.get(n) || 0 }));
+    const totalGuests = perNight.reduce((s, n) => s + n.guests, 0);
+    const nightsOperated = nights.length;
+    const avgGuests = nightsOperated > 0 ? Math.round(totalGuests / nightsOperated) : 0;
+    const busiest = perNight.reduce<{ date: string; guests: number } | null>(
+      (best, n) => (!best || n.guests > best.guests ? { date: n.date, guests: n.guests } : best),
+      null,
+    );
+
+    // Per-attraction season totals
+    interface AttrAgg {
+      id: string;
+      name: string;
+      nights: Set<string>;
+      guests: number;
+      downtimeMin: number;
+      delayCount: number;
+    }
+    const attrMap = new Map<string, AttrAgg>();
+    function ensureAttr(id: string): AttrAgg {
+      let a = attrMap.get(id);
+      if (!a) {
+        a = { id, name: idToName.get(id) || id.slice(0, 8), nights: new Set(), guests: 0, downtimeMin: 0, delayCount: 0 };
+        attrMap.set(id, a);
+      }
+      return a;
+    }
+    for (const r of reports) {
+      const a = ensureAttr(r.attraction_id);
+      a.nights.add(r.report_date);
+      a.guests += r.total_guests;
+      for (const d of r.delays || []) {
+        a.delayCount += 1;
+        a.downtimeMin += d.duration_minutes || 0;
+      }
+    }
+    // Throughput fallback for attraction guests on report-less nights
+    for (const t of throughput) {
+      if (!reportNights.has(t.log_date)) {
+        const a = ensureAttr(t.attraction_id);
+        a.nights.add(t.log_date);
+        a.guests += t.guest_count;
+      }
+    }
+
+    const perAttraction = Array.from(attrMap.values())
+      .map((a) => ({
+        id: a.id,
+        name: a.name,
+        nights: a.nights.size,
+        guests: a.guests,
+        avgPerNight: a.nights.size > 0 ? Math.round(a.guests / a.nights.size) : 0,
+        downtimeMin: a.downtimeMin,
+        delayCount: a.delayCount,
+      }))
+      .sort((a, b) => b.guests - a.guests);
+
+    // Delay reasons breakdown (from report delays across the season)
+    const reasonMap = new Map<string, { count: number; minutes: number }>();
+    for (const reason of DELAY_REASONS) reasonMap.set(reason, { count: 0, minutes: 0 });
+    let totalDelayIncidents = 0;
+    let totalDowntimeMin = 0;
+    for (const r of reports) {
+      for (const d of r.delays || []) {
+        totalDelayIncidents += 1;
+        totalDowntimeMin += d.duration_minutes || 0;
+        const key = d.reason && reasonMap.has(d.reason) ? d.reason : 'Other';
+        const entry = reasonMap.get(key)!;
+        entry.count += 1;
+        entry.minutes += d.duration_minutes || 0;
+      }
+    }
+    const delayReasons = DELAY_REASONS
+      .map((reason) => ({ reason, ...reasonMap.get(reason)! }))
+      .filter((r) => r.count > 0)
+      .sort((a, b) => b.count - a.count);
+    const maxReasonCount = delayReasons.reduce((m, r) => Math.max(m, r.count), 0);
+
+    // Busiest hours — sum hourly_throughput across all reports by hour slot
+    const hourMap = new Map<string, number>();
+    for (const r of reports) {
+      for (const slot of r.hourly_throughput || []) {
+        const key = slot.slot_start;
+        if (!key) continue;
+        hourMap.set(key, (hourMap.get(key) || 0) + (slot.guest_count || 0));
+      }
+    }
+    const byHour = Array.from(hourMap.entries())
+      .map(([slot_start, guests]) => ({ slot_start, label: hourLabel(slot_start), guests }))
+      .sort((a, b) => a.slot_start.localeCompare(b.slot_start));
+
+    return {
+      hasData,
+      nights,
+      nightsOperated,
+      totalGuests,
+      avgGuests,
+      busiest,
+      totalDelayIncidents,
+      totalDowntimeMin,
+      perNight,
+      perAttraction,
+      delayReasons,
+      maxReasonCount,
+      byHour,
+    };
+  }, [seasonReports, seasonThroughput, seasonStatusLogs, seasonFrom, seasonTo, attractions]);
+
   // suppress unused warning for openingTime — it's fetched for future use
   void openingTime;
 
@@ -517,6 +932,7 @@ export default function AnalyticsPage() {
     { key: 'throughput', label: 'Throughput' },
     { key: 'statuslog', label: 'Status Log' },
     { key: 'summary', label: 'Summary' },
+    { key: 'season', label: 'Season' },
   ];
 
   if (!authenticated) {
@@ -610,7 +1026,18 @@ export default function AnalyticsPage() {
           ))}
         </div>
 
-        {loading ? (
+        {activeTab === 'season' ? (
+          /* ── Season Tab (own data + loading) ── */
+          <SeasonView
+            agg={seasonAgg}
+            loading={seasonLoading}
+            seasonFrom={seasonFrom}
+            seasonTo={seasonTo}
+            setSeasonFrom={setSeasonFrom}
+            setSeasonTo={setSeasonTo}
+            tooltipStyle={tooltipStyle}
+          />
+        ) : loading ? (
           <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-16 text-center">
             <p className="text-[#94A3B8] text-sm">Loading historical data...</p>
           </div>

@@ -1,3 +1,45 @@
+/**
+ * DB-aware resolvers. Pass an attraction object — these prefer uploaded
+ * Supabase Storage URLs (from the new-attraction wizard) and fall back to
+ * the hardcoded /public/logos/ assets for the original attractions.
+ *
+ * Minimal shape so any object with these optional fields works.
+ */
+interface AttractionAssetShape {
+  slug: string;
+  logo_url?: string | null;
+  bg_url?: string | null;
+  queue_bg_url?: string | null;
+  glow_rgb?: string | null;
+  text_color?: string | null;
+  text_rgb?: string | null;
+}
+
+export function resolveLogo(a: AttractionAssetShape): string | null {
+  return a.logo_url || getAttractionLogo(a.slug);
+}
+export function resolveBg(a: AttractionAssetShape): string | null {
+  return a.bg_url || getAttractionBg(a.slug);
+}
+export function resolveQueueBg(a: AttractionAssetShape): string | null {
+  return a.queue_bg_url || a.bg_url || getQueueBg(a.slug);
+}
+export function resolveGlowRgb(a: AttractionAssetShape): string | null {
+  return a.glow_rgb || getGlowRgb(a.slug);
+}
+export function resolveLogoGlow(a: AttractionAssetShape, intensity: 'normal' | 'strong' = 'normal'): string {
+  const rgb = a.glow_rgb || LOGO_GLOW_COLORS[a.slug];
+  if (!rgb) return '';
+  if (intensity === 'strong') {
+    return `drop-shadow(0 0 15px rgba(${rgb}, 1)) drop-shadow(0 0 35px rgba(${rgb}, 0.7)) drop-shadow(0 0 70px rgba(${rgb}, 0.4))`;
+  }
+  return `drop-shadow(0 0 8px rgba(${rgb}, 0.7)) drop-shadow(0 0 20px rgba(${rgb}, 0.4))`;
+}
+export function resolveQueueTextTheme(a: AttractionAssetShape): { color: string; rgb: string } {
+  if (a.text_color && a.text_rgb) return { color: a.text_color, rgb: a.text_rgb };
+  return getQueueTextTheme(a.slug);
+}
+
 /** Known attraction slugs that have logos in /public/logos/ */
 const LOGO_SLUGS = new Set([
   'westlake-witch-trials',

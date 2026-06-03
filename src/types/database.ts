@@ -13,6 +13,14 @@ export interface Attraction {
   show_times: string[] | null;
   updated_at: string;
   target_dispatch_seconds?: number | null;
+  // Asset + theming (uploaded via the new-attraction wizard; null = use hardcoded fallback)
+  logo_url?: string | null;
+  bg_url?: string | null;
+  queue_bg_url?: string | null;
+  glow_rgb?: string | null;
+  text_color?: string | null;
+  text_rgb?: string | null;
+  fear_rating?: number | null;
 }
 
 export interface DispatchLog {
