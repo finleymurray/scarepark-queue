@@ -400,6 +400,12 @@ function ReportDetail({ report }: { report: ShowReport }) {
         <MiniStat label="Operating Time" value={formatMinutes(report.total_operating_minutes)} color="#22C55E" />
         <MiniStat label="Total Guests" value={report.total_guests.toLocaleString()} color="#22C55E" />
         <MiniStat label="Delays" value={delays.length.toString()} color={delays.length > 0 ? '#f0ad4e' : '#22C55E'} />
+        {(() => {
+          const totalDowntime = delays.reduce((s, d) => s + (d.duration_minutes || 0), 0);
+          return totalDowntime > 0 ? (
+            <MiniStat label="Total Downtime" value={formatMinutes(totalDowntime)} color="#f0ad4e" />
+          ) : null;
+        })()}
       </div>
 
       {/* Hourly Throughput */}
@@ -439,7 +445,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
       )}
 
       {/* Text Reports */}
-      {(report.operational_report || report.technical_report || report.costume_report) && (
+      {(report.operational_report || report.technical_report || report.costume_report || report.construction_report || report.additional_notes) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {report.operational_report && (
             <ReportBlock label="Operational Report" text={report.operational_report} borderColor="#6ea8fe" />
@@ -449,6 +455,12 @@ function ReportDetail({ report }: { report: ShowReport }) {
           )}
           {report.costume_report && (
             <ReportBlock label="Costume Report" text={report.costume_report} borderColor="#c084fc" />
+          )}
+          {report.construction_report && (
+            <ReportBlock label="Construction Report" text={report.construction_report} borderColor="#34d399" />
+          )}
+          {report.additional_notes && (
+            <ReportBlock label="Additional Notes" text={report.additional_notes} borderColor="#94A3B8" />
           )}
         </div>
       )}
