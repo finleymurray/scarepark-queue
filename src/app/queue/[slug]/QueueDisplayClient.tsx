@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getQueueBg, getQueueTextTheme } from '@/lib/logos';
+import { getQueueBg, getQueueTextTheme, resolveQueueBg, resolveQueueTextTheme } from '@/lib/logos';
 import type { Attraction } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
@@ -14,14 +14,15 @@ export default function QueueDisplayClient({ slug }: { slug: string }) {
   const [attraction, setAttraction] = useState<Attraction | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const bgSrc = getQueueBg(slug);
-  const theme = getQueueTextTheme(slug);
+  // Prefer uploaded assets from the attraction record; fall back to hardcoded slug assets
+  const bgSrc = attraction ? resolveQueueBg(attraction) : getQueueBg(slug);
+  const theme = attraction ? resolveQueueTextTheme(attraction) : getQueueTextTheme(slug);
 
   useEffect(() => {
     async function fetchAttraction() {
       const { data } = await supabase
         .from('attractions')
-        .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at')
+        .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating')
         .eq('slug', slug)
         .single();
 

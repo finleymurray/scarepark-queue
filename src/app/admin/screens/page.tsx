@@ -9,7 +9,9 @@ import type { Screen, ParkSetting } from '@/types/database';
 
 /* ── Assignable paths ── */
 
-const ASSIGNABLE_PATHS = [
+// Fixed system display pages. Per-attraction queue pages are generated
+// dynamically from the live attractions list (see buildAssignablePaths).
+const SYSTEM_PATHS = [
   { value: '', label: 'Unassigned' },
   { value: '/tv1', label: 'TV1 — Mazes & Shows' },
   { value: '/tv2', label: 'TV2 — Ride Banners' },
@@ -20,13 +22,16 @@ const ASSIGNABLE_PATHS = [
   { value: '/tv4.5', label: 'TV4.5 — Lite Carousel (Pi)' },
   { value: '/tv5', label: 'TV5 — Glitch Montage' },
   { value: '/tv-ops', label: 'Operations View' },
-  { value: '/queue/the-bunker', label: 'Queue — The Bunker' },
-  { value: '/queue/drowned', label: 'Queue — Drowned' },
-  { value: '/queue/night-terrors', label: 'Queue — Night Terrors' },
-  { value: '/queue/westlake-witch-trials', label: 'Queue — Westlake Witch Trials' },
-  { value: '/queue/strings-of-control', label: 'Queue — Strings of Control' },
-  { value: '/queue/signal-loss', label: 'Queue — Signal Loss' },
 ];
+
+/** Build the full assignable-path list, adding a queue page per attraction. */
+function buildAssignablePaths(attractions: { name: string; slug: string }[]) {
+  const queue = attractions.map((a) => ({
+    value: `/queue?a=${a.slug}`,
+    label: `Queue — ${a.name}`,
+  }));
+  return [...SYSTEM_PATHS, ...queue];
+}
 
 /* ── Helpers ── */
 
@@ -52,10 +57,17 @@ const statusColors = {
   offline: { bg: '#EF4444', text: '#EF4444', label: 'Offline' },
 };
 
-function getPathLabel(path: string | null): string | null {
+function getPathLabel(path: string | null, paths: { value: string; label: string }[]): string | null {
   if (!path) return null;
-  const found = ASSIGNABLE_PATHS.find((p) => p.value === path);
-  return found ? found.label : path;
+  const found = paths.find((p) => p.value === path);
+  if (found) return found.label;
+  // Legacy /queue/<slug> or unknown queue path → derive a friendly label
+  const slugMatch = path.match(/\/queue(?:\?a=|\/)([a-z0-9-]+)/i);
+  if (slugMatch) {
+    const name = slugMatch[1].replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    return `Queue — ${name}`;
+  }
+  return path;
 }
 
 /* ── Styles ── */
@@ -95,16 +107,19 @@ export default function ScreensPage() {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [managedScreens, setManagedScreens] = useState<Screen[]>([]);
+  const [attractions, setAttractions] = useState<{ name: string; slug: string }[]>([]);
   const [parkClosed, setParkClosed] = useState(false);
   const [toggling, setToggling] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('screens')
-      .select('*')
-      .order('last_seen', { ascending: false });
+  const assignablePaths = buildAssignablePaths(attractions);
 
-    if (!error && data) setManagedScreens(data);
+  const fetchData = useCallback(async () => {
+    const [screensRes, attractionsRes] = await Promise.all([
+      supabase.from('screens').select('*').order('last_seen', { ascending: false }),
+      supabase.from('attractions').select('name,slug').order('sort_order', { ascending: true }),
+    ]);
+    if (!screensRes.error && screensRes.data) setManagedScreens(screensRes.data);
+    if (!attractionsRes.error && attractionsRes.data) setAttractions(attractionsRes.data);
   }, []);
 
   useEffect(() => {
@@ -341,6 +356,7 @@ export default function ScreensPage() {
                 onAssign={handleAssignPath}
                 onDelete={handleDeleteScreen}
                 onLabelChange={handleLabelChange}
+                assignablePaths={assignablePaths}
               />
             ))}
           </div>
@@ -358,11 +374,13 @@ function ManagedScreenCard({
   onAssign,
   onDelete,
   onLabelChange,
+  assignablePaths,
 }: {
   screen: Screen;
   onAssign: (screen: Screen, path: string) => void;
   onDelete: (screen: Screen) => void;
   onLabelChange: (screen: Screen, label: string) => void;
+  assignablePaths: { value: string; label: string }[];
 }) {
   const status = getStatus(screen.last_seen);
   const statusInfo = statusColors[status];
@@ -481,13 +499,13 @@ function ManagedScreenCard({
           {screen.assigned_path && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 600 }}>Assigned:</span>
-              <span style={{ fontSize: 11, color: '#ccc' }}>{getPathLabel(screen.assigned_path)}</span>
+              <span style={{ fontSize: 11, color: '#ccc' }}>{getPathLabel(screen.assigned_path, assignablePaths)}</span>
             </div>
           )}
           {screen.current_page && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Showing:</span>
-              <span style={{ fontSize: 11, color: '#999' }}>{getPathLabel(screen.current_page)}</span>
+              <span style={{ fontSize: 11, color: '#999' }}>{getPathLabel(screen.current_page, assignablePaths)}</span>
             </div>
           )}
         </div>
@@ -504,7 +522,7 @@ function ManagedScreenCard({
           style={selectStyle}
         >
           <option value="" disabled>Select a page...</option>
-          {ASSIGNABLE_PATHS.filter((p) => p.value).map((p) => (
+          {assignablePaths.filter((p) => p.value).map((p) => (
             <option key={p.value} value={p.value}>{p.label}</option>
           ))}
         </select>
