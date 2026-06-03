@@ -24,7 +24,7 @@ function QueueByParam() {
     );
   }
 
-  return <QueueDisplayClient slug={slug} />;
+  return <QueueDisplayClient slug={slug} identityPath={`/queue?a=${slug}`} />;
 }
 
 export default function QueuePage() {

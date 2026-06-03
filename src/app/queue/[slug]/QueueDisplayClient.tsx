@@ -8,9 +8,12 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
-export default function QueueDisplayClient({ slug }: { slug: string }) {
+export default function QueueDisplayClient({ slug, identityPath }: { slug: string; identityPath?: string }) {
   useConnectionHealth(`queue-${slug}`);
-  useScreenIdentity(`/queue/${slug}`);
+  // identityPath must match the screen's assigned_path exactly, or the
+  // screen-identity hook will redirect in a loop. The query-param /queue
+  // page passes '/queue?a=slug'; the legacy [slug] route uses '/queue/slug'.
+  useScreenIdentity(identityPath ?? `/queue/${slug}`);
   const [attraction, setAttraction] = useState<Attraction | null>(null);
   const [loading, setLoading] = useState(true);
 
