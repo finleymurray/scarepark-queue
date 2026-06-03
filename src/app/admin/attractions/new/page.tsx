@@ -38,10 +38,12 @@ function hexToRgbString(hex: string): string {
 /* File drop zone with preview */
 function AssetDropZone({
   label,
+  hint,
   file,
   onSelect,
 }: {
   label: string;
+  hint?: string;
   file: File | null;
   onSelect: (f: File | null) => void;
 }) {
@@ -57,7 +59,8 @@ function AssetDropZone({
 
   return (
     <div>
-      <label className="block text-[#94A3B8] text-xs font-semibold mb-1.5" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
+      <label className="block text-[#94A3B8] text-xs font-semibold mb-1" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
+      {hint && <p className="text-[#475569] text-[11px] mb-1.5">{hint}</p>}
       <input
         ref={inputRef}
         type="file"
@@ -348,10 +351,25 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
         {/* Step 2 — Artwork */}
         {step === 1 && (
           <div className="flex flex-col gap-4">
-            <p className="text-[#475569] text-[11px]">Recommended: logo as transparent PNG/WebP, backgrounds 1920×1080. All optional.</p>
-            <AssetDropZone label="Logo image" file={logoFile} onSelect={setLogoFile} />
-            <AssetDropZone label="Background image (TV banners)" file={bgFile} onSelect={setBgFile} />
-            <AssetDropZone label="Queue display background (optional)" file={queueBgFile} onSelect={setQueueBgFile} />
+            <p className="text-[#475569] text-[11px]">All images optional. PNG, JPG, WebP or SVG · max 10 MB each.</p>
+            <AssetDropZone
+              label="Logo image"
+              hint="Transparent PNG or WebP · square, ~1000 × 1000 px"
+              file={logoFile}
+              onSelect={setLogoFile}
+            />
+            <AssetDropZone
+              label="Background image (TV banners)"
+              hint="Landscape · 1920 × 1080 px (16:9)"
+              file={bgFile}
+              onSelect={setBgFile}
+            />
+            <AssetDropZone
+              label="Queue display background (optional)"
+              hint="Portrait · 1080 × 1920 px (9:16) for entrance screens"
+              file={queueBgFile}
+              onSelect={setQueueBgFile}
+            />
           </div>
         )}
 
