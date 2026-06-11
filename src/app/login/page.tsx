@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { surface, border, text as textTok, accents, radius, primaryButton } from '@/lib/theme';
 
 function LoginForm() {
   const router = useRouter();
@@ -57,14 +58,14 @@ function LoginForm() {
 
   if (checking) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
-        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
+        <div style={{ color: textTok.faint, fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page, padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
@@ -75,14 +76,14 @@ function LoginForm() {
             priority
             style={{ width: 44, height: 'auto', marginBottom: 16 }}
           />
-          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>CoreLink</h1>
-          <p style={{ color: '#475569', fontSize: 13, marginTop: 4, letterSpacing: '0.02em' }}>Operations Platform</p>
+          <h1 style={{ color: textTok.primary, fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>CoreLink</h1>
+          <p style={{ color: textTok.faint, fontSize: 13, marginTop: 4, letterSpacing: '0.02em' }}>Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
+        <form onSubmit={handleSubmit} style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 28 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label style={{ display: 'block', color: textTok.secondary, fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Email
               </label>
               <input
@@ -94,19 +95,19 @@ function LoginForm() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: '#000000',
-                  border: '1px solid #2a2a2a',
+                  background: surface.control,
+                  border: `1px solid ${border.strong}`,
                   borderRadius: 8,
-                  color: '#F1F5F9',
+                  color: textTok.primary,
                   fontSize: 14,
                   outline: 'none',
                 }}
-                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                onFocus={(e) => { e.target.style.borderColor = accents.control.base; e.target.style.boxShadow = `0 0 0 3px ${accents.control.soft}`; }}
+                onBlur={(e) => { e.target.style.borderColor = border.strong; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label style={{ display: 'block', color: textTok.secondary, fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Password
               </label>
               <input
@@ -118,15 +119,15 @@ function LoginForm() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: '#000000',
-                  border: '1px solid #2a2a2a',
+                  background: surface.control,
+                  border: `1px solid ${border.strong}`,
                   borderRadius: 8,
-                  color: '#F1F5F9',
+                  color: textTok.primary,
                   fontSize: 14,
                   outline: 'none',
                 }}
-                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                onFocus={(e) => { e.target.style.borderColor = accents.control.base; e.target.style.boxShadow = `0 0 0 3px ${accents.control.soft}`; }}
+                onBlur={(e) => { e.target.style.borderColor = border.strong; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
@@ -139,27 +140,24 @@ function LoginForm() {
             type="submit"
             disabled={loading}
             style={{
+              ...primaryButton('control'),
               width: '100%',
               padding: '10px 16px',
-              background: '#2563EB',
-              color: '#fff',
               fontSize: 14,
               fontWeight: 600,
-              borderRadius: 8,
-              border: 'none',
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.5 : 1,
               transition: 'background 0.15s',
             }}
-            onMouseEnter={(e) => { if (!loading) (e.target as HTMLButtonElement).style.background = '#1D4ED8'; }}
-            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = '#2563EB'; }}
+            onMouseEnter={(e) => { if (!loading) (e.target as HTMLButtonElement).style.background = accents.control.base; }}
+            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = accents.control.strong; }}
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <div style={{ marginTop: 16, textAlign: 'center' }}>
-          <Link href="/privacy" style={{ color: '#475569', fontSize: 11, textDecoration: 'none' }}>
+          <Link href="/privacy" style={{ color: textTok.faint, fontSize: 11, textDecoration: 'none' }}>
             Privacy Policy
           </Link>
         </div>
@@ -170,7 +168,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#374151", fontSize: 14 }}>Loading…</div></div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: surface.page, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#374151", fontSize: 14 }}>Loading…</div></div>}>
       <LoginForm />
     </Suspense>
   );

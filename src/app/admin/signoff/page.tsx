@@ -8,6 +8,7 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { ALL_SIGNOFF_ROLES, SIGNOFF_ROLE_LABELS, getTodayDateStr } from '@/lib/signoff';
 import type { Attraction, SignoffSection, SignoffChecklistItem, SignoffCompletion, SignoffRoleKey } from '@/types/database';
+import { surface, border, text, radius, accents, microLabel, FONT_NUM } from '@/lib/theme';
 
 /* ── Green check icon (reusable) ── */
 function GreenCheckIcon({ size = 14 }: { size?: number }) {
@@ -41,8 +42,8 @@ function ConfirmModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/80 px-4">
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, width: '100%', maxWidth: 420 }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0B0E]/80 px-4">
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, width: '100%', maxWidth: 420 }}>
         <p className="text-white text-sm font-semibold mb-1">{title}</p>
         <p className="text-[#888] text-sm mb-6">{message}</p>
         <div className="flex gap-3">
@@ -130,31 +131,31 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
 
   return (
     <>
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 40, marginBottom: 40 }}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <label className="text-[#ccc] text-[13px] font-medium shrink-0">Date</label>
-          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors" />
+          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ padding: '8px 12px', background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors" />
           {!isToday && (<button onClick={() => setSelectedDate(getTodayDateStr())} className="px-3 py-2 border border-[#555] text-[#ccc] text-xs font-medium rounded-[6px] hover:border-[#888] hover:text-white transition-colors">Today</button>)}
-          <div style={{ width: 1, height: 24, background: '#2a2a2a' }} className="hidden sm:block" />
+          <div style={{ width: 1, height: 24, background: border.default }} className="hidden sm:block" />
           <label className="text-[#ccc] text-[13px] font-medium shrink-0">Attraction</label>
-          <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
+          <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
             <option value="all">All Attractions</option>
             {attractions.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
           </select>
         </div>
       </div>
 
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: '24px 28px', marginBottom: 32 }}>
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '24px 28px', marginBottom: 32 }}>
         {/* Overall progress bar */}
         {totalSections > 0 && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-              <span style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Overall Progress</span>
-              <span style={{ color: completedSections === totalSections ? '#22C55E' : '#94A3B8', fontSize: 13, fontWeight: 600 }}>
+              <span style={microLabel}>Overall Progress</span>
+              <span style={{ color: completedSections === totalSections ? '#22C55E' : text.secondary, fontSize: 13, fontWeight: 600, ...FONT_NUM }}>
                 {completedSections}/{totalSections} complete
               </span>
             </div>
-            <div style={{ position: 'relative', width: '100%', height: 8, background: '#000', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ position: 'relative', width: '100%', height: 8, background: surface.control, borderRadius: 4, overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, filter: 'blur(6px)', opacity: 0.6, transition: 'width 0.5s' }} />
               <div style={{ position: 'relative', height: '100%', width: `${(completedSections / totalSections) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #22C55E)', borderRadius: 4, transition: 'width 0.5s' }} />
             </div>
@@ -164,38 +165,38 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
         {/* Opening / Closing split */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {/* Opening checks */}
-          <div style={{ background: '#000', border: '1px solid #1a1a1a', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: surface.control, border: `1px solid ${border.divider}`, borderRadius: radius.md, padding: '14px 16px' }}>
             <p style={{ color: '#64748B', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Opening Checks</p>
             <div style={{ display: 'flex', gap: 16 }}>
               <div>
-                <div style={{ color: openingCompleted === openingSections.length && openingSections.length > 0 ? '#22C55E' : '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{openingCompleted}</div>
+                <div style={{ color: openingCompleted === openingSections.length && openingSections.length > 0 ? '#22C55E' : '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1, ...FONT_NUM }}>{openingCompleted}</div>
                 <div style={{ color: '#22C55E', fontSize: 11, marginTop: 4 }}>Complete</div>
               </div>
               <div>
-                <div style={{ color: openingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{openingWaiting}</div>
+                <div style={{ color: openingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1, ...FONT_NUM }}>{openingWaiting}</div>
                 <div style={{ color: openingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 11, marginTop: 4 }}>Waiting</div>
               </div>
               <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                <div style={{ color: '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{openingSections.length}</div>
+                <div style={{ color: '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1, ...FONT_NUM }}>{openingSections.length}</div>
                 <div style={{ color: '#374151', fontSize: 11, marginTop: 4 }}>Total</div>
               </div>
             </div>
           </div>
 
           {/* Closing checks */}
-          <div style={{ background: '#000', border: '1px solid #1a1a1a', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: surface.control, border: `1px solid ${border.divider}`, borderRadius: radius.md, padding: '14px 16px' }}>
             <p style={{ color: '#64748B', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Closing Checks</p>
             <div style={{ display: 'flex', gap: 16 }}>
               <div>
-                <div style={{ color: closingCompleted === closingSections.length && closingSections.length > 0 ? '#22C55E' : '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{closingCompleted}</div>
+                <div style={{ color: closingCompleted === closingSections.length && closingSections.length > 0 ? '#22C55E' : '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1, ...FONT_NUM }}>{closingCompleted}</div>
                 <div style={{ color: '#22C55E', fontSize: 11, marginTop: 4 }}>Complete</div>
               </div>
               <div>
-                <div style={{ color: closingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{closingWaiting}</div>
+                <div style={{ color: closingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1, ...FONT_NUM }}>{closingWaiting}</div>
                 <div style={{ color: closingWaiting > 0 ? '#F59E0B' : '#374151', fontSize: 11, marginTop: 4 }}>Waiting</div>
               </div>
               <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                <div style={{ color: '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{closingSections.length}</div>
+                <div style={{ color: '#374151', fontSize: 24, fontWeight: 700, lineHeight: 1, ...FONT_NUM }}>{closingSections.length}</div>
                 <div style={{ color: '#374151', fontSize: 11, marginTop: 4 }}>Total</div>
               </div>
             </div>
@@ -204,7 +205,7 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
       </div>
 
       {loadingHistory && <div className="text-[#888] text-sm text-center py-8">Loading...</div>}
-      {!loadingHistory && totalSections === 0 && (<div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, textAlign: 'center' }}><p className="text-[#666] text-sm">No sign-off sections found for this date/attraction.</p></div>)}
+      {!loadingHistory && totalSections === 0 && (<div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 40, textAlign: 'center' }}><p className="text-[#666] text-sm">No sign-off sections found for this date/attraction.</p></div>)}
 
       {!loadingHistory && attractionIds.map((attrId, attrIndex) => {
         const attraction = attractionMap.get(attrId);
@@ -222,7 +223,7 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
                   const completion = completionMap.get(section.id);
                   const isCompleted = !!completion;
                   return (
-                    <div key={section.id} style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, padding: '24px 28px' }} className="flex items-center gap-5">
+                    <div key={section.id} style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, padding: '24px 28px' }} className="flex items-center gap-5">
                       {isCompleted ? (<div className="w-6 h-6 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0"><GreenCheckIcon size={13} /></div>) : (<EmptyCircleIcon />)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -244,7 +245,7 @@ function SignoffHistoryTab({ attractions }: { attractions: Attraction[] }) {
         const attrTotal = attrSections.length;
 
         return (
-          <fieldset key={attrId} style={{ border: '1px solid #2a2a2a', borderRadius: 16, padding: '32px 40px', marginBottom: 40, background: '#111111' }}>
+          <fieldset key={attrId} style={{ border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '32px 40px', marginBottom: 40, background: surface.card }}>
             <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
               <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">{attrIndex + 1}</span>
               {attraction?.name || 'Unknown'}
@@ -401,19 +402,19 @@ export default function SignoffConfigPage() {
 
   const selectedAttraction = attractions.find((a) => a.id === selectedAttractionId);
 
-  if (loading) return (<div className="flex h-screen items-center justify-center bg-[#000000]"><div className="text-[#888] text-sm">Loading...</div></div>);
+  if (loading) return (<div className="flex h-screen items-center justify-center bg-[#0A0B0E]"><div className="text-[#888] text-sm">Loading...</div></div>);
 
   return (
-    <div className="min-h-screen bg-[#000000]">
+    <div className="min-h-screen bg-[#0A0B0E]">
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
       <ConfirmModal open={!!deleteTarget} title={`Delete "${deleteTarget?.name}"?`} message={deleteTarget?.type === 'section' ? 'This will also remove all checklist items in this section. This cannot be undone.' : 'This checklist item will be permanently removed.'} confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
 
       {showCopyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/80 px-4">
-          <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, width: '100%', maxWidth: 420 }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0B0E]/80 px-4">
+          <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 40, width: '100%', maxWidth: 420 }}>
             <p className="text-white text-sm font-semibold mb-2">Copy Sections From Another Attraction</p>
             <p className="text-[#888] text-[13px] mb-8">This will replace all existing sections and checklist items for <strong className="text-[#e0e0e0]">{selectedAttraction?.name}</strong>.</p>
-            <select value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none', marginBottom: 32 }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
+            <select value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, color: '#e0e0e0', fontSize: 14, outline: 'none', marginBottom: 32 }} className="text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
               <option value="">Select an attraction...</option>
               {attractions.filter((a) => a.id !== selectedAttractionId).map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
             </select>
@@ -431,11 +432,11 @@ export default function SignoffConfigPage() {
           <button
             onClick={() => window.location.reload()}
             style={{
-              padding: '6px 12px',
-              background: '#161616',
-              border: '1px solid #2a2a2a',
-              borderRadius: 8,
-              color: '#888',
+              padding: '8px 14px',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
+              borderRadius: radius.md,
+              color: text.secondary,
               fontSize: 12,
               cursor: 'pointer',
               fontWeight: 600,
@@ -452,19 +453,25 @@ export default function SignoffConfigPage() {
           </button>
         </div>
 
-        <div className="flex" style={{ marginBottom: 48, borderBottom: '1px solid #2a2a2a' }}>
+        <div className="flex" style={{ marginBottom: 48, background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.lg, padding: 4, gap: 4 }}>
           {([{ key: 'history' as AdminTab, label: 'Status' }, { key: 'config' as AdminTab, label: 'Configuration' }]).map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative text-sm font-semibold transition-colors touch-manipulation
-                  ${isActive ? 'text-white' : 'text-[#888] hover:text-white'}`}
-                style={{ padding: '14px 24px' }}
+                className="relative text-sm font-semibold transition-colors touch-manipulation"
+                style={{
+                  flex: 1,
+                  padding: '12px 24px',
+                  borderRadius: radius.sm,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: isActive ? surface.raised : 'transparent',
+                  color: isActive ? accents.admin.text : text.secondary,
+                }}
               >
                 {tab.label}
-                {isActive && <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-white rounded-full" />}
               </button>
             );
           })}
@@ -474,10 +481,10 @@ export default function SignoffConfigPage() {
 
         {activeTab === 'config' && (
           <>
-            <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 40, marginBottom: 40 }}>
+            <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 40, marginBottom: 40 }}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <label className="text-[#ccc] text-[13px] font-medium shrink-0">Attraction</label>
-                <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
+                <select value={selectedAttractionId} onChange={(e) => setSelectedAttractionId(e.target.value)} style={{ padding: '8px 12px', background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, color: '#e0e0e0', fontSize: 14, outline: 'none' }} className="flex-1 text-sm focus:outline-none focus:border-[#3B82F6] transition-colors">
                   {attractions.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
                 </select>
                 <button onClick={() => setShowCopyModal(true)} className="px-4 py-2.5 border border-[#555] text-[#ccc] text-sm font-medium rounded-[6px] hover:border-[#888] hover:text-white transition-colors shrink-0">Copy from...</button>
@@ -487,7 +494,7 @@ export default function SignoffConfigPage() {
             {PHASES.map((phase, phaseIndex) => {
               const phaseSections = sections.filter((s) => s.phase === phase);
               return (
-                <fieldset key={phase} style={{ border: '1px solid #2a2a2a', borderRadius: 16, padding: '32px 40px', marginBottom: 48, background: '#111111' }}>
+                <fieldset key={phase} style={{ border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '32px 40px', marginBottom: 48, background: surface.card }}>
                   <legend className="text-base font-semibold text-white px-4 flex items-center gap-4">
                     <span className="inline-flex items-center justify-center w-9 h-9 bg-white text-black rounded-full text-sm font-bold">{phaseIndex + 1}</span>
                     {`${phase.charAt(0).toUpperCase() + phase.slice(1)} Sections`}
@@ -495,15 +502,15 @@ export default function SignoffConfigPage() {
                   </legend>
 
                   {addingSectionPhase === phase && (
-                    <div style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, padding: 32, marginBottom: 32 }}>
+                    <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, padding: 32, marginBottom: 32 }}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                         <div>
                           <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Section Name</label>
-                          <input type="text" value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)} placeholder="e.g. Attraction Supervisor" autoFocus className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-[6px] text-[#e0e0e0] text-sm placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
+                          <input type="text" value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)} placeholder="e.g. Attraction Supervisor" autoFocus className="w-full px-3 py-2.5 bg-[#13161C] border border-[#2E3543] rounded-[6px] text-[#e0e0e0] text-sm placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
                         </div>
                         <div>
                           <label className="block text-[#ccc] text-[13px] font-medium mb-1.5">Required Role</label>
-                          <select value={newSectionRole} onChange={(e) => setNewSectionRole(e.target.value as SignoffRoleKey)} className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors">
+                          <select value={newSectionRole} onChange={(e) => setNewSectionRole(e.target.value as SignoffRoleKey)} className="w-full px-3 py-2.5 bg-[#13161C] border border-[#2E3543] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors">
                             {ALL_SIGNOFF_ROLES.map((r) => (<option key={r} value={r}>{SIGNOFF_ROLE_LABELS[r]}</option>))}
                           </select>
                         </div>
@@ -521,12 +528,12 @@ export default function SignoffConfigPage() {
                     {phaseSections.map((section, sectionIdx) => {
                       const sectionItems = getItemsForSection(section.id);
                       return (
-                        <div key={section.id} style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 6, overflow: 'hidden' }}>
-                          <div className="flex items-center justify-between" style={{ padding: '20px 28px', borderBottom: '1px solid #2a2a2a' }}>
+                        <div key={section.id} style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, overflow: 'hidden' }}>
+                          <div className="flex items-center justify-between" style={{ padding: '20px 28px', borderBottom: `1px solid ${border.divider}` }}>
                             {editingSectionId === section.id ? (
                               <div className="flex-1 flex items-center gap-3 flex-wrap">
-                                <input type="text" value={editingSectionName} onChange={(e) => setEditingSectionName(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveSectionEdit(); if (e.key === 'Escape') setEditingSectionId(null); }} className="flex-1 min-w-[140px] px-3 py-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
-                                <select value={editingSectionRole} onChange={(e) => setEditingSectionRole(e.target.value as SignoffRoleKey)} className="px-3 py-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors">
+                                <input type="text" value={editingSectionName} onChange={(e) => setEditingSectionName(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveSectionEdit(); if (e.key === 'Escape') setEditingSectionId(null); }} className="flex-1 min-w-[140px] px-3 py-1.5 bg-[#13161C] border border-[#2E3543] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
+                                <select value={editingSectionRole} onChange={(e) => setEditingSectionRole(e.target.value as SignoffRoleKey)} className="px-3 py-1.5 bg-[#13161C] border border-[#2E3543] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors">
                                   {ALL_SIGNOFF_ROLES.map((r) => (<option key={r} value={r}>{SIGNOFF_ROLE_LABELS[r]}</option>))}
                                 </select>
                                 <button onClick={handleSaveSectionEdit} className="text-[#4caf50] text-xs font-medium hover:text-[#66bb6a]">Save</button>
@@ -585,11 +592,11 @@ export default function SignoffConfigPage() {
                           <div className="px-7 pb-7 pt-4" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {sectionItems.length === 0 && (<p className="text-[#666] text-xs py-1">No checklist items yet.</p>)}
                             {sectionItems.map((item) => (
-                              <div key={item.id} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, padding: '20px 24px' }} className="flex items-center gap-4">
+                              <div key={item.id} style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.sm, padding: '20px 24px' }} className="flex items-center gap-4">
                                 <div className="w-5 h-5 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0"><GreenCheckIcon size={11} /></div>
                                 {editingItemId === item.id ? (
                                   <div className="flex-1 flex items-center gap-2">
-                                    <input type="text" value={editingItemLabel} onChange={(e) => setEditingItemLabel(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveItemEdit(); if (e.key === 'Escape') setEditingItemId(null); }} className="flex-1 px-3 py-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
+                                    <input type="text" value={editingItemLabel} onChange={(e) => setEditingItemLabel(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveItemEdit(); if (e.key === 'Escape') setEditingItemId(null); }} className="flex-1 px-3 py-1.5 bg-[#13161C] border border-[#2E3543] rounded-[6px] text-[#e0e0e0] text-sm focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
                                     <button onClick={handleSaveItemEdit} className="text-[#4caf50] text-xs font-medium hover:text-[#66bb6a]">Save</button>
                                     <button onClick={() => setEditingItemId(null)} className="text-[#888] text-xs hover:text-white">Cancel</button>
                                   </div>
@@ -605,7 +612,7 @@ export default function SignoffConfigPage() {
 
                             {addingItemSectionId === section.id ? (
                               <div className="flex items-center gap-3 pt-2">
-                                <input type="text" value={newItemLabel} onChange={(e) => setNewItemLabel(e.target.value)} placeholder="Checklist item label..." autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem(); if (e.key === 'Escape') setAddingItemSectionId(null); }} className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-[6px] text-[#e0e0e0] text-sm placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
+                                <input type="text" value={newItemLabel} onChange={(e) => setNewItemLabel(e.target.value)} placeholder="Checklist item label..." autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem(); if (e.key === 'Escape') setAddingItemSectionId(null); }} className="flex-1 px-3 py-2 bg-[#13161C] border border-[#2E3543] rounded-[6px] text-[#e0e0e0] text-sm placeholder-[#666] focus:outline-none focus:border-[#3B82F6] focus:shadow-[0_0_0_2px_rgba(59,130,246,0.15)] transition-colors" />
                                 <button onClick={handleAddItem} disabled={!newItemLabel.trim()} className="text-[#4caf50] text-xs font-medium hover:text-[#66bb6a] disabled:opacity-50">Add</button>
                                 <button onClick={() => setAddingItemSectionId(null)} className="text-[#888] text-xs hover:text-white">Cancel</button>
                               </div>

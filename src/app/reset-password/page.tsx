@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { surface, border, text as textTok, accents, radius, primaryButton } from '@/lib/theme';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -91,17 +92,17 @@ export default function ResetPasswordPage() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px 12px',
-    background: '#000000',
-    border: '1px solid #2a2a2a',
+    background: surface.control,
+    border: `1px solid ${border.strong}`,
     borderRadius: 8,
-    color: '#F1F5F9',
+    color: textTok.primary,
     fontSize: 14,
     outline: 'none',
   };
 
   if (!ready) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page, padding: '0 24px' }}>
         <div style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
           <Image
             src="/logo-control.png"
@@ -112,13 +113,13 @@ export default function ResetPasswordPage() {
             style={{ width: 40, height: 'auto', marginBottom: 24, display: 'block', margin: '0 auto 24px' }}
           />
           {verifyError ? (
-            <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
+            <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 28 }}>
               <p style={{ color: '#EF4444', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Link expired or invalid</p>
-              <p style={{ color: '#475569', fontSize: 13, marginBottom: 16 }}>{verifyError}</p>
+              <p style={{ color: textTok.faint, fontSize: 13, marginBottom: 16 }}>{verifyError}</p>
               <a href="/login" style={{ color: '#3B82F6', fontSize: 14, textDecoration: 'none' }}>Back to sign in</a>
             </div>
           ) : (
-            <p style={{ color: '#475569', fontSize: 14 }}>Verifying link...</p>
+            <p style={{ color: textTok.faint, fontSize: 14 }}>Verifying link...</p>
           )}
         </div>
       </div>
@@ -127,7 +128,7 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page, padding: '0 24px' }}>
         <div style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
           <Image
             src="/logo-control.png"
@@ -137,9 +138,9 @@ export default function ResetPasswordPage() {
             priority
             style={{ width: 40, height: 'auto', marginBottom: 24, display: 'block', margin: '0 auto 24px' }}
           />
-          <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
+          <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 28 }}>
             <p style={{ color: '#22C55E', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Password updated</p>
-            <p style={{ color: '#475569', fontSize: 13 }}>Redirecting to sign in...</p>
+            <p style={{ color: textTok.faint, fontSize: 13 }}>Redirecting to sign in...</p>
           </div>
         </div>
       </div>
@@ -147,7 +148,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page, padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
@@ -158,18 +159,18 @@ export default function ResetPasswordPage() {
             priority
             style={{ width: 40, height: 'auto', marginBottom: 16 }}
           />
-          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>CoreLink</h1>
-          <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>Operations Platform</p>
+          <h1 style={{ color: textTok.primary, fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>CoreLink</h1>
+          <p style={{ color: textTok.faint, fontSize: 13, marginTop: 4 }}>Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
-          <h2 style={{ color: '#F1F5F9', fontSize: 16, fontWeight: 700, marginBottom: 20 }}>
+        <form onSubmit={handleSubmit} style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 28 }}>
+          <h2 style={{ color: textTok.primary, fontSize: 16, fontWeight: 700, marginBottom: 20 }}>
             {isInvite ? 'Set your password' : 'Set new password'}
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label style={{ display: 'block', color: textTok.secondary, fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 New Password
               </label>
               <input
@@ -179,12 +180,12 @@ export default function ResetPasswordPage() {
                 required
                 placeholder="At least 6 characters"
                 style={inputStyle}
-                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                onFocus={(e) => { e.target.style.borderColor = accents.control.base; e.target.style.boxShadow = `0 0 0 3px ${accents.control.soft}`; }}
+                onBlur={(e) => { e.target.style.borderColor = border.strong; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label style={{ display: 'block', color: textTok.secondary, fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Confirm Password
               </label>
               <input
@@ -194,8 +195,8 @@ export default function ResetPasswordPage() {
                 required
                 placeholder="Re-enter password"
                 style={inputStyle}
-                onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                onFocus={(e) => { e.target.style.borderColor = accents.control.base; e.target.style.boxShadow = `0 0 0 3px ${accents.control.soft}`; }}
+                onBlur={(e) => { e.target.style.borderColor = border.strong; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
@@ -208,14 +209,11 @@ export default function ResetPasswordPage() {
             type="submit"
             disabled={saving}
             style={{
+              ...primaryButton('control'),
               width: '100%',
               padding: '10px 16px',
-              background: '#2563EB',
-              color: '#fff',
               fontSize: 14,
               fontWeight: 600,
-              borderRadius: 8,
-              border: 'none',
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.5 : 1,
             }}

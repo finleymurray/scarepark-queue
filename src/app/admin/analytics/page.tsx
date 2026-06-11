@@ -7,6 +7,8 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
 import type { Attraction, AttractionHistory, ThroughputLog, AttractionStatusLog, ShowReport } from '@/types/database';
+import { surface, border, text, radius, accents, FONT_NUM } from '@/lib/theme';
+import MetricStat from '@/components/ui/MetricStat';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceArea,
@@ -99,15 +101,27 @@ function hourLabel(slotStart: string): string {
 }
 
 const CHART_TOOLTIP_STYLE = {
-  backgroundColor: '#111',
-  border: '1px solid #2a2a2a',
+  backgroundColor: surface.card,
+  border: `1px solid ${border.default}`,
   borderRadius: '8px',
-  color: '#F1F5F9',
+  color: text.primary,
   fontSize: 12,
 };
 
-const AXIS_TICK_STYLE = { fill: '#475569', fontSize: 11 };
-const GRID_STROKE = 'rgba(255,255,255,0.04)';
+const AXIS_TICK_STYLE = { fill: text.faint, fontSize: 11 };
+const GRID_STROKE = border.divider;
+
+/** Simple viewport check for the responsive season table (client page). */
+function useIsMobile(breakpoint = 640): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -135,7 +149,7 @@ interface SeasonAgg {
 }
 
 function SeasonView({
-  agg, loading, seasonFrom, seasonTo, setSeasonFrom, setSeasonTo, tooltipStyle,
+  agg, loading, seasonFrom, seasonTo, setSeasonFrom, setSeasonTo, tooltipStyle, rangeNotice,
 }: {
   agg: SeasonAgg;
   loading: boolean;
@@ -144,8 +158,10 @@ function SeasonView({
   setSeasonFrom: (v: string) => void;
   setSeasonTo: (v: string) => void;
   tooltipStyle: typeof CHART_TOOLTIP_STYLE;
+  rangeNotice: string | null;
 }) {
-  const dateInputStyle = { padding: '7px 10px', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' as const };
+  const isMobile = useIsMobile();
+  const dateInputStyle = { padding: '9px 12px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, color: text.primary, fontSize: 13, outline: 'none', colorScheme: 'dark' as const };
 
   const rangeNote = (() => {
     if (agg.nights.length === 0) return null;
@@ -176,7 +192,7 @@ function SeasonView({
   return (
     <div className="space-y-4">
       {/* Date range filter */}
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <span className="text-[#94A3B8] text-xs font-medium">From</span>
           <input type="date" value={seasonFrom} max={seasonTo} onChange={(e) => setSeasonFrom(e.target.value)} style={dateInputStyle} />
@@ -188,12 +204,18 @@ function SeasonView({
         {rangeNote && <span className="text-[#64748B] text-xs ml-auto">{rangeNote}</span>}
       </div>
 
+      {rangeNotice && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: radius.sm, padding: '8px 12px' }}>
+          <p style={{ color: '#FCD34D', fontSize: 12, margin: 0 }}>{rangeNotice}</p>
+        </div>
+      )}
+
       {loading ? (
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-16 text-center">
+        <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-16 text-center">
           <p className="text-[#94A3B8] text-sm">Loading season data...</p>
         </div>
       ) : !agg.hasData ? (
-        <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+        <div className="bg-[#101318] border border-[#23262E] rounded-[14px]">
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-[#94A3B8] text-sm">No season data yet</p>
             <p className="text-[#64748B] text-xs mt-1">Show reports and throughput logs will appear here as nights are operated.</p>
@@ -204,16 +226,15 @@ function SeasonView({
           {/* A. Headline stat cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
             {cards.map((stat) => (
-              <div key={stat.label} style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '20px 20px 18px' }}>
-                <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{stat.label}</p>
-                <p style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, lineHeight: 1.1 }}>{stat.value}</p>
+              <div key={stat.label} style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '20px 20px 18px' }}>
+                <MetricStat label={stat.label} value={stat.value} size={24} />
               </div>
             ))}
           </div>
 
           {/* B. Guests per night */}
           {agg.perNight.length > 0 && (
-            <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+            <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
               <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Guests Per Night</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={agg.perNight}>
@@ -232,12 +253,32 @@ function SeasonView({
           )}
 
           {/* C. Per-attraction season totals */}
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+          <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
             <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Per-Attraction Season Totals</h3>
+            {isMobile ? (
+              <div className="space-y-3">
+                {agg.perAttraction.map((a) => (
+                  <div key={a.id} style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.lg, padding: 14 }}>
+                    <div style={{ color: text.primary, fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{a.name}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                      <MetricStat label="Guests" size={15} value={a.guests > 0 ? a.guests.toLocaleString() : '—'} />
+                      <MetricStat label="Nights" size={15} value={a.nights > 0 ? a.nights : '—'} color={text.secondary} />
+                      <MetricStat label="Avg/Night" size={15} value={a.avgPerNight > 0 ? a.avgPerNight.toLocaleString() : '—'} color={text.secondary} />
+                      <MetricStat label="Downtime" size={15} value={a.downtimeMin > 0 ? formatDowntime(a.downtimeMin) : '—'} color={text.secondary} />
+                      <MetricStat label="Delays" size={15} value={a.delayCount > 0 ? a.delayCount : '—'} color={text.secondary} />
+                    </div>
+                  </div>
+                ))}
+                <div style={{ borderTop: `1px solid ${border.default}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ color: text.secondary, fontSize: 13, fontWeight: 600 }}>Park Total</span>
+                  <span style={{ color: text.primary, fontSize: 16, fontWeight: 800, ...FONT_NUM }}>{parkTotals.guests.toLocaleString()} guests</span>
+                </div>
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                  <tr style={{ borderBottom: `1px solid ${border.default}` }}>
                     <th className="text-left px-3 py-2 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">Attraction</th>
                     {['Nights Open', 'Total Guests', 'Avg/Night', 'Total Downtime', 'Delay Incidents'].map((h) => (
                       <th key={h} className="text-right px-3 py-2 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider whitespace-nowrap">{h}</th>
@@ -246,7 +287,7 @@ function SeasonView({
                 </thead>
                 <tbody>
                   {agg.perAttraction.map((a) => (
-                    <tr key={a.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                    <tr key={a.id} style={{ borderBottom: `1px solid ${border.divider}` }}>
                       <td className="px-3 py-3 text-[#F1F5F9] font-medium whitespace-nowrap">{a.name}</td>
                       <td className="px-3 py-3 text-right text-[#94A3B8] tabular-nums">{a.nights > 0 ? a.nights : <span className="text-[#64748B]">—</span>}</td>
                       <td className="px-3 py-3 text-right text-[#F1F5F9] tabular-nums font-medium">{a.guests > 0 ? a.guests.toLocaleString() : <span className="text-[#64748B]">—</span>}</td>
@@ -257,7 +298,7 @@ function SeasonView({
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr style={{ borderTop: '1px solid #2a2a2a' }}>
+                  <tr style={{ borderTop: `1px solid ${border.default}` }}>
                     <td className="px-3 py-3 text-[#94A3B8] font-semibold">Park Total</td>
                     <td className="px-3 py-3 text-right text-[#64748B]">—</td>
                     <td className="px-3 py-3 text-right text-[#F1F5F9] font-black tabular-nums">{parkTotals.guests.toLocaleString()}</td>
@@ -268,10 +309,11 @@ function SeasonView({
                 </tfoot>
               </table>
             </div>
+            )}
           </div>
 
           {/* D. Delay reasons breakdown */}
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+          <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
             <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Delay Reasons — Season</h3>
             {agg.delayReasons.length === 0 ? (
               <p className="text-[#64748B] text-sm">No delays recorded this season.</p>
@@ -285,7 +327,7 @@ function SeasonView({
                         {r.count} {r.count === 1 ? 'incident' : 'incidents'} · {formatDowntime(r.minutes)}
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full" style={{ background: '#0a0a0a' }}>
+                    <div className="w-full h-2 rounded-full" style={{ background: surface.control }}>
                       <div
                         className="h-2 rounded-full"
                         style={{
@@ -302,7 +344,7 @@ function SeasonView({
 
           {/* E. Busiest hours of the night */}
           {agg.byHour.length > 0 && (
-            <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+            <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
               <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Busiest Hours of the Night</h3>
               <p className="text-[#94A3B8] text-xs mb-5">Total guests by hour slot, summed across all nights.</p>
               <ResponsiveContainer width="100%" height={280}>
@@ -353,6 +395,29 @@ export default function AnalyticsPage() {
   const [seasonLoaded, setSeasonLoaded] = useState(false);
   const [seasonFrom, setSeasonFrom] = useState(() => `${new Date().getFullYear()}-01-01`);
   const [seasonTo, setSeasonTo] = useState(() => new Date().toISOString().split('T')[0]);
+  const [rangeNotice, setRangeNotice] = useState<string | null>(null);
+
+  // Date-range validation: if from > to, swap so the range stays valid.
+  function handleSeasonFrom(v: string) {
+    if (v && seasonTo && v > seasonTo) {
+      setSeasonFrom(seasonTo);
+      setSeasonTo(v);
+      setRangeNotice(`Dates were out of order — showing ${formatSeasonDate(seasonTo)} to ${formatSeasonDate(v)} instead.`);
+    } else {
+      setSeasonFrom(v);
+      setRangeNotice(null);
+    }
+  }
+  function handleSeasonTo(v: string) {
+    if (v && seasonFrom && v < seasonFrom) {
+      setSeasonTo(seasonFrom);
+      setSeasonFrom(v);
+      setRangeNotice(`Dates were out of order — showing ${formatSeasonDate(v)} to ${formatSeasonDate(seasonFrom)} instead.`);
+    } else {
+      setSeasonTo(v);
+      setRangeNotice(null);
+    }
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -937,7 +1002,7 @@ export default function AnalyticsPage() {
 
   if (!authenticated) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
         <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading...</div>
       </div>
     );
@@ -946,7 +1011,7 @@ export default function AnalyticsPage() {
   const hasData = chartData.length > 0 || filteredThroughput.length > 0 || filteredStatusLogs.length > 0;
 
   return (
-    <div className="min-h-screen" style={{ background: '#000000' }}>
+    <div className="min-h-screen" style={{ background: surface.page }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
@@ -958,7 +1023,7 @@ export default function AnalyticsPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ padding: '7px 12px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
+              style={{ padding: '7px 12px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, color: text.primary, fontSize: 13, outline: 'none', colorScheme: 'dark' }}
             />
             <div className="flex items-center gap-2">
               <span className="text-[#94A3B8] text-xs font-medium">From</span>
@@ -966,7 +1031,7 @@ export default function AnalyticsPage() {
                 type="time"
                 value={fromTime}
                 onChange={(e) => setFromTime(e.target.value)}
-                style={{ padding: '7px 10px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
+                style={{ padding: '7px 10px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, color: text.primary, fontSize: 13, outline: 'none', colorScheme: 'dark' }}
               />
             </div>
             <div className="flex items-center gap-2">
@@ -975,17 +1040,17 @@ export default function AnalyticsPage() {
                 type="time"
                 value={toTime}
                 onChange={(e) => setToTime(e.target.value)}
-                style={{ padding: '7px 10px', background: '#111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 13, outline: 'none', colorScheme: 'dark' }}
+                style={{ padding: '7px 10px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, color: text.primary, fontSize: 13, outline: 'none', colorScheme: 'dark' }}
               />
             </div>
             <button
               onClick={() => setRefreshKey((k) => k + 1)}
               style={{
                 padding: '7px 12px',
-                background: '#111',
-                border: '1px solid #2a2a2a',
-                borderRadius: 8,
-                color: '#94A3B8',
+                background: surface.control,
+                border: `1px solid ${border.strong}`,
+                borderRadius: radius.md,
+                color: text.secondary,
                 fontSize: 12,
                 cursor: 'pointer',
                 fontWeight: 600,
@@ -1004,19 +1069,19 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24, background: '#111', border: '1px solid #1a1a1a', borderRadius: 10, padding: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 24, background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.lg, padding: 4 }}>
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
                 flex: 1,
-                padding: '9px 16px',
-                borderRadius: 7,
+                padding: '11px 16px',
+                borderRadius: radius.sm,
                 fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
                 border: 'none', cursor: 'pointer',
-                background: activeTab === tab.key ? '#1E1E1E' : 'transparent',
-                color: activeTab === tab.key ? '#F1F5F9' : '#94A3B8',
+                background: activeTab === tab.key ? surface.raised : 'transparent',
+                color: activeTab === tab.key ? accents.admin.text : text.secondary,
                 transition: 'background 0.15s, color 0.15s',
                 boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
               }}
@@ -1033,23 +1098,24 @@ export default function AnalyticsPage() {
             loading={seasonLoading}
             seasonFrom={seasonFrom}
             seasonTo={seasonTo}
-            setSeasonFrom={setSeasonFrom}
-            setSeasonTo={setSeasonTo}
+            setSeasonFrom={handleSeasonFrom}
+            setSeasonTo={handleSeasonTo}
             tooltipStyle={tooltipStyle}
+            rangeNotice={rangeNotice}
           />
         ) : loading ? (
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-16 text-center">
+          <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-16 text-center">
             <p className="text-[#94A3B8] text-sm">Loading historical data...</p>
           </div>
         ) : !hasData && activeTab !== 'summary' ? (
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+          <div className="bg-[#101318] border border-[#23262E] rounded-[14px]">
             <EmptyState message="No data recorded for this date." />
           </div>
         ) : (
           <>
             {/* ── Queue Times Tab ── */}
             {activeTab === 'queue' && (
-              <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+              <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                 {chartData.length === 0 ? (
                   <EmptyState message="No wait time data for this date." />
                 ) : (
@@ -1112,7 +1178,7 @@ export default function AnalyticsPage() {
 
                     {/* Status band legend */}
                     {statusPeriods.length > 0 && (
-                      <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#2a2a2a]">
+                      <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#23262E]">
                         <span className="text-[#94A3B8] text-[10px] font-semibold uppercase tracking-wider">Shaded:</span>
                         {Object.entries(STATUS_LABEL_COLORS).map(([status, color]) => (
                           <div key={status} className="flex items-center gap-1.5">
@@ -1131,13 +1197,13 @@ export default function AnalyticsPage() {
             {activeTab === 'throughput' && (
               <div className="space-y-4">
                 {filteredThroughput.length === 0 ? (
-                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+                  <div className="bg-[#101318] border border-[#23262E] rounded-[14px]">
                     <EmptyState message="No throughput data logged for this date." />
                   </div>
                 ) : (
                   <>
                     {/* Total guests */}
-                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-5">
+                    <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-5">
                       <p className="text-[#94A3B8] text-xs font-semibold uppercase tracking-wider mb-1">Total Guests</p>
                       <p className="text-[#F1F5F9] text-3xl font-bold">
                         {filteredThroughput.reduce((s, l) => s + l.guest_count, 0).toLocaleString()}
@@ -1145,7 +1211,7 @@ export default function AnalyticsPage() {
                     </div>
 
                     {/* Bar chart */}
-                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                    <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                       <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Guest Throughput — {selectedDate}</h3>
                       <ResponsiveContainer width="100%" height={280}>
                         <BarChart data={throughputChartData}>
@@ -1185,7 +1251,7 @@ export default function AnalyticsPage() {
 
                     {/* Combined chart */}
                     {combinedChartData.length > 0 && combinedAttractionNames.length > 0 && (
-                      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                      <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                         <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Wait Time vs Throughput</h3>
                         <p className="text-[#94A3B8] text-xs mb-5">Lines: avg wait time per slot. Bars: guest throughput.</p>
                         <ResponsiveContainer width="100%" height={280}>
@@ -1254,7 +1320,7 @@ export default function AnalyticsPage() {
                     )}
 
                     {/* Throughput summary table */}
-                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                    <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                       <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Throughput Summary</h3>
                       {(() => {
                         const idToLogs = new Map<string, ThroughputLog[]>();
@@ -1299,7 +1365,7 @@ export default function AnalyticsPage() {
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                               <thead>
-                                <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                                <tr style={{ borderBottom: `1px solid ${border.default}` }}>
                                   <th className="text-left text-[#94A3B8] font-medium py-2 pr-4 whitespace-nowrap text-xs">Attraction</th>
                                   {allSlots.map((slot) => {
                                     const [start, end] = slot.split('|');
@@ -1321,7 +1387,7 @@ export default function AnalyticsPage() {
                                   const slotMap = logLookups.get(id)!;
 
                                   return (
-                                    <tr key={id} style={{ borderBottom: '1px solid #2a2a2a' }}>
+                                    <tr key={id} style={{ borderBottom: `1px solid ${border.default}` }}>
                                       <td className="py-2 pr-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: nameColor }} />
@@ -1348,7 +1414,7 @@ export default function AnalyticsPage() {
                                 })}
                               </tbody>
                               <tfoot>
-                                <tr style={{ borderTop: '1px solid #2a2a2a' }}>
+                                <tr style={{ borderTop: `1px solid ${border.default}` }}>
                                   <td className="py-3 pr-4">
                                     <span className="text-[#94A3B8] font-semibold text-sm">Park Total</span>
                                   </td>
@@ -1379,14 +1445,14 @@ export default function AnalyticsPage() {
             {activeTab === 'statuslog' && (
               <div className="space-y-4">
                 {filteredStatusLogs.length === 0 ? (
-                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+                  <div className="bg-[#101318] border border-[#23262E] rounded-[14px]">
                     <EmptyState message="No status changes recorded for this date." />
                   </div>
                 ) : (
                   <>
                     {/* Status timeline */}
                     {statusPeriods.length > 0 && (
-                      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                      <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                         <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Status Timeline</h3>
                         <div className="space-y-3">
                           {attractionNames.map((name) => {
@@ -1425,11 +1491,11 @@ export default function AnalyticsPage() {
 
                     {/* Summary stats */}
                     {statusLogSummary && (
-                      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                      <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                         <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Downtime Summary</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
                           {statusLogSummary.map((s) => (
-                            <div key={s.attractionId} style={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 10, padding: 14 }}>
+                            <div key={s.attractionId} style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: 10, padding: 14 }}>
                               <div className="text-[#F1F5F9] text-sm font-semibold mb-2">{s.name}</div>
                               <div className="text-[#94A3B8] text-xs space-y-1.5">
                                 <div>Delays: <span className="text-[#94A3B8] font-semibold">{s.delayCount || '—'}</span></div>
@@ -1443,12 +1509,12 @@ export default function AnalyticsPage() {
                     )}
 
                     {/* Detailed log table */}
-                    <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                    <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                       <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Status Change Log — {selectedDate}</h3>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: '1px solid #2a2a2a', color: '#94A3B8' }}>
+                            <tr className="text-xs uppercase tracking-wider" style={{ borderBottom: `1px solid ${border.default}`, color: '#94A3B8' }}>
                               <th className="text-left px-3 py-2 font-medium">Time</th>
                               <th className="text-left px-3 py-2 font-medium">Attraction</th>
                               <th className="text-left px-3 py-2 font-medium">Transition</th>
@@ -1471,7 +1537,7 @@ export default function AnalyticsPage() {
                               const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null;
 
                               return (
-                                <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                                <tr key={log.id} style={{ borderBottom: `1px solid ${border.divider}` }}>
                                   <td className="px-3 py-2 text-[#94A3B8] tabular-nums text-xs whitespace-nowrap">
                                     {new Date(log.changed_at).toLocaleTimeString('en-GB', {
                                       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
@@ -1523,21 +1589,20 @@ export default function AnalyticsPage() {
                     { label: 'Delay Incidents', value: String(summaryStats.delayIncidents) },
                     { label: 'Attractions Open', value: String(summaryStats.attractionsOpen) },
                   ].map((stat) => (
-                    <div key={stat.label} style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '20px 20px 18px' }}>
-                      <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>{stat.label}</p>
-                      <p style={{ color: '#F1F5F9', fontSize: 26, fontWeight: 700, lineHeight: 1 }}>{stat.value}</p>
+                    <div key={stat.label} style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '20px 20px 18px' }}>
+                      <MetricStat label={stat.label} value={stat.value} size={26} />
                     </div>
                   ))}
                 </div>
 
                 {/* Per-attraction summary */}
                 {statusLogSummary && statusLogSummary.length > 0 && (
-                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-6">
+                  <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                     <h3 className="text-[#F1F5F9] text-base font-semibold mb-4">Per-Attraction Summary</h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr style={{ borderBottom: '1px solid #2a2a2a' }}>
+                          <tr style={{ borderBottom: `1px solid ${border.default}` }}>
                             {['Attraction', 'Delays', 'Avg Delay', 'Total Downtime'].map((h) => (
                               <th key={h} className="text-left px-3 py-2 text-[#94A3B8] text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
@@ -1545,7 +1610,7 @@ export default function AnalyticsPage() {
                         </thead>
                         <tbody>
                           {statusLogSummary.map((s) => (
-                            <tr key={s.attractionId} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                            <tr key={s.attractionId} style={{ borderBottom: `1px solid ${border.divider}` }}>
                               <td className="px-3 py-3 text-[#F1F5F9] font-medium">{s.name}</td>
                               <td className="px-3 py-3 text-[#94A3B8]">{s.delayCount > 0 ? s.delayCount : <span className="text-[#64748B]">—</span>}</td>
                               <td className="px-3 py-3 text-[#94A3B8]">{s.avgDelayMinutes > 0 ? `${s.avgDelayMinutes} min` : <span className="text-[#64748B]">—</span>}</td>
@@ -1559,7 +1624,7 @@ export default function AnalyticsPage() {
                 )}
 
                 {!hasData && (
-                  <div className="bg-[#111] border border-[#2a2a2a] rounded-xl">
+                  <div className="bg-[#101318] border border-[#23262E] rounded-[14px]">
                     <EmptyState message="No data recorded for this date." />
                   </div>
                 )}

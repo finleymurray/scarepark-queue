@@ -8,6 +8,9 @@ import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog, ThroughputLog, DispatchLog } from '@/types/database';
+import { surface, border, text, radius, card, microLabel, FONT_NUM, statusColors } from '@/lib/theme';
+import MetricStat from '@/components/ui/MetricStat';
+import { useToasts, ToastStack } from '@/components/ui/Toast';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from 'recharts';
@@ -42,20 +45,6 @@ function formatDuration(startIso: string, endIso: string | null): string {
   const secs = Math.floor((new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000);
   return formatElapsed(secs);
 }
-
-const STATUS_COLORS: Record<AttractionStatus, string> = {
-  OPEN: '#22C55E',
-  CLOSED: '#dc3545',
-  DELAYED: '#f0ad4e',
-  'AT CAPACITY': '#F59E0B',
-};
-
-const STATUS_BG: Record<AttractionStatus, string> = {
-  OPEN: 'rgba(34,197,94,0.15)',
-  CLOSED: 'rgba(220,53,69,0.15)',
-  DELAYED: 'rgba(240,173,78,0.15)',
-  'AT CAPACITY': 'rgba(245,158,11,0.15)',
-};
 
 /* ── Per-attraction data structures ── */
 
@@ -190,7 +179,7 @@ function QueueChart({
 
   return (
     <div style={{ marginTop: 4 }}>
-      <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+      <div style={{ ...microLabel, marginBottom: 8 }}>
         Queue time tonight
       </div>
       <ResponsiveContainer width="100%" height={180}>
@@ -201,7 +190,7 @@ function QueueChart({
               <stop offset="95%" stopColor="#22C55E" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={border.divider} vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
@@ -222,11 +211,11 @@ function QueueChart({
             tickFormatter={(v) => `${v}m`}
           />
           <Tooltip
-            contentStyle={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, fontSize: 13 }}
+            contentStyle={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.sm, fontSize: 13 }}
             labelFormatter={(v) => formatMinTooltip(v as number)}
             formatter={(v: unknown) => [`${v} min`, 'Wait time']}
             itemStyle={{ color: '#22C55E' }}
-            labelStyle={{ color: '#888' }}
+            labelStyle={{ color: text.muted }}
           />
           {delayBands.map((band, i) => (
             <ReferenceLine
@@ -286,16 +275,13 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
 function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; dateStr: string; openTime: string; closeTime: string }) {
   const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests, avgDispatchIntervalSecs, totalDispatches, hourlyBreakdown } = ops;
 
-  const statusColor = STATUS_COLORS[currentStatus] || '#888';
-  const statusBg = STATUS_BG[currentStatus] || 'rgba(128,128,128,0.15)';
+  const sc = statusColors(currentStatus);
   const logo = getAttractionLogo(attraction.slug);
   const glow = getLogoGlow(attraction.slug);
 
   return (
     <div style={{
-      background: '#111111',
-      border: '1px solid #2a2a2a',
-      borderRadius: 14,
+      ...card(currentStatus),
       padding: 24,
       display: 'flex',
       flexDirection: 'column',
@@ -308,13 +294,13 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
             <img src={logo} alt="" aria-hidden width={40} height={40}
               style={{ width: 40, height: 40, objectFit: 'contain', filter: glow || undefined }} />
           )}
-          <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>{attraction.name}</h3>
+          <h3 style={{ color: text.primary, fontSize: 18, fontWeight: 700, margin: 0 }}>{attraction.name}</h3>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
-            background: statusBg,
-            color: statusColor,
-            border: `1px solid ${statusColor}40`,
+            background: sc.soft,
+            color: sc.text,
+            border: `1px solid ${sc.rail}40`,
             borderRadius: 6,
             padding: '4px 10px',
             fontSize: 12,
@@ -332,52 +318,34 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
 
       {/* Quick stats row */}
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Opened</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: openedAt ? '#ccc' : '#555' }}>
-            {openedAt ? formatTimestamp(openedAt) : 'Not yet opened'}
-          </div>
-        </div>
+        <MetricStat label="Opened" size={15}
+          value={openedAt ? formatTimestamp(openedAt) : 'Not yet opened'}
+          color={openedAt ? text.secondary : text.faint} />
         {closedAt && (
-          <div>
-            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Closed</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#ccc' }}>{formatTimestamp(closedAt)}</div>
-          </div>
+          <MetricStat label="Closed" size={15} value={formatTimestamp(closedAt)} color={text.secondary} />
         )}
-        <div>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Total downtime</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: totalDowntimeSecs > 0 ? '#f0ad4e' : '#555' }}>
-            {totalDowntimeSecs > 0 ? formatElapsed(totalDowntimeSecs) : '—'}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Delay incidents</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: delays.length > 0 ? '#f0ad4e' : '#555' }}>
-            {delays.length > 0 ? delays.length : '—'}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Total guests</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: totalGuests > 0 ? '#fff' : '#555' }}>
-            {totalGuests > 0 ? totalGuests.toLocaleString() : '—'}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Avg dispatch</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: avgDispatchIntervalSecs !== null ? '#fff' : '#555' }}>
-            {avgDispatchIntervalSecs !== null
-              ? avgDispatchIntervalSecs >= 60
-                ? `${Math.floor(avgDispatchIntervalSecs / 60)}m ${avgDispatchIntervalSecs % 60}s`
-                : `${avgDispatchIntervalSecs}s`
-              : totalDispatches === 1 ? '1 dispatch' : '—'}
-          </div>
-        </div>
+        <MetricStat label="Total downtime" size={15}
+          value={totalDowntimeSecs > 0 ? formatElapsed(totalDowntimeSecs) : '—'}
+          color={totalDowntimeSecs > 0 ? '#FBBF24' : text.faint} />
+        <MetricStat label="Delay incidents" size={15}
+          value={delays.length > 0 ? delays.length : '—'}
+          color={delays.length > 0 ? '#FBBF24' : text.faint} />
+        <MetricStat label="Total guests" size={15}
+          value={totalGuests > 0 ? totalGuests.toLocaleString() : '—'}
+          color={totalGuests > 0 ? text.primary : text.faint} />
+        <MetricStat label="Avg dispatch" size={15}
+          value={avgDispatchIntervalSecs !== null
+            ? avgDispatchIntervalSecs >= 60
+              ? `${Math.floor(avgDispatchIntervalSecs / 60)}m ${avgDispatchIntervalSecs % 60}s`
+              : `${avgDispatchIntervalSecs}s`
+            : totalDispatches === 1 ? '1 dispatch' : '—'}
+          color={avgDispatchIntervalSecs !== null ? text.primary : text.faint} />
       </div>
 
       {/* Delay incidents */}
       {delays.length > 0 && (
         <div>
-          <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Delay log</div>
+          <div style={{ ...microLabel, marginBottom: 8 }}>Delay log</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {delays.map((incident) => (
               <div
@@ -397,16 +365,16 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
                   {formatTimestamp(incident.log.changed_at)}
                 </span>
                 {incident.log.reason && (
-                  <span style={{ fontSize: 12, color: '#aaa', background: '#1a1a1a', borderRadius: 4, padding: '2px 8px' }}>
+                  <span style={{ fontSize: 12, color: text.secondary, background: surface.raised, borderRadius: 4, padding: '2px 8px' }}>
                     {incident.log.reason}
                   </span>
                 )}
                 {incident.log.notes && (
-                  <span style={{ fontSize: 12, color: '#777', fontStyle: 'italic', flex: 1, minWidth: 100 }}>
+                  <span style={{ fontSize: 12, color: text.muted, fontStyle: 'italic', flex: 1, minWidth: 100 }}>
                     &ldquo;{incident.log.notes}&rdquo;
                   </span>
                 )}
-                <span style={{ fontSize: 12, color: '#888', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 12, color: text.muted, marginLeft: 'auto', whiteSpace: 'nowrap', ...FONT_NUM }}>
                   {incident.durationSecs === null
                     ? <span style={{ color: '#f0ad4e', fontWeight: 700 }}>ongoing</span>
                     : formatElapsed(incident.durationSecs)}
@@ -418,13 +386,13 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
       )}
 
       {!openedAt && (
-        <div style={{ fontSize: 13, color: '#555', fontStyle: 'italic' }}>No activity recorded today.</div>
+        <div style={{ fontSize: 13, color: text.faint, fontStyle: 'italic' }}>No activity recorded today.</div>
       )}
 
       {/* Hourly Throughput */}
       {hourlyBreakdown.length > 0 && (
-        <div style={{ borderTop: '1px solid #2a2a2a', paddingTop: 16, marginBottom: 8 }}>
-          <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>
+        <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 16, marginBottom: 8 }}>
+          <div style={{ ...microLabel, marginBottom: 10 }}>
             Hourly Throughput
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -438,9 +406,9 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
               const startStr = `${sh12}:${String(sm).padStart(2,'0')} ${startAmpm}`;
               const endStr   = `${eh12}:${String(em).padStart(2,'0')} ${endAmpm}`;
               return (
-                <div key={slot.start} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', background: '#000', borderRadius: 8 }}>
-                  <span style={{ color: '#94A3B8', fontSize: 13 }}>{startStr} – {endStr}</span>
-                  <span style={{ color: slot.guests > 0 ? '#F1F5F9' : '#2a2a2a', fontSize: 13, fontWeight: slot.guests > 0 ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
+                <div key={slot.start} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', background: surface.control, borderRadius: radius.sm }}>
+                  <span style={{ color: text.secondary, fontSize: 13 }}>{startStr} – {endStr}</span>
+                  <span style={{ color: slot.guests > 0 ? text.primary : text.faint, fontSize: 13, fontWeight: slot.guests > 0 ? 700 : 400, fontVariantNumeric: 'tabular-nums' }}>
                     {slot.guests > 0 ? `${slot.guests} guests` : '—'}
                   </span>
                 </div>
@@ -452,7 +420,7 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
 
       {/* Queue time chart */}
       {history.length > 0 && (
-        <div style={{ borderTop: '1px solid #2a2a2a', paddingTop: 16 }}>
+        <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 16 }}>
           <QueueChart
             history={history}
             delays={delays}
@@ -601,6 +569,7 @@ export default function OperationsPage() {
   const [closeTime, setCloseTime] = useState('');
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr());
   const [opsData, setOpsData] = useState<AttractionOps[]>([]);
+  const { toasts, pushToast } = useToasts();
 
   const fetchData = useCallback(async (dateStr: string) => {
     const start = new Date(`${dateStr}T00:00:00`).toISOString();
@@ -621,6 +590,10 @@ export default function OperationsPage() {
       supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
     ]);
 
+    if (attractionsRes.error || historyRes.error || throughputRes.error || dispatchRes.error) {
+      pushToast('error', 'Failed to load operations data');
+    }
+
     const attrs: Attraction[] = attractionsRes.data || [];
     const hist: AttractionHistory[] = historyRes.data || [];
     const tp: ThroughputLog[] = throughputRes.data || [];
@@ -634,7 +607,7 @@ export default function OperationsPage() {
     setOpenTime(openRes.data?.value || '');
     setCloseTime(closeRes.data?.value || '');
     setOpsData(buildOpsData(attrs, allLogs, hist, tp, dp, openRes.data?.value || '', closeRes.data?.value || '', dateStr));
-  }, []);
+  }, [pushToast]);
 
   useEffect(() => {
     async function init() {
@@ -689,8 +662,8 @@ export default function OperationsPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading…</div>
+      <div style={{ minHeight: '100vh', background: surface.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: text.secondary, fontSize: 14 }}>Loading…</div>
       </div>
     );
   }
@@ -698,15 +671,16 @@ export default function OperationsPage() {
   const isToday = selectedDate === getTodayDateStr();
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>
+    <div style={{ minHeight: '100vh', background: surface.page }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
+      <ToastStack toasts={toasts} />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
         {/* Page header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>Operations</h1>
-            <p style={{ color: '#94A3B8', fontSize: 13, margin: '4px 0 0' }}>
+            <h1 style={{ color: text.primary, fontSize: 22, fontWeight: 700, margin: 0 }}>Operations</h1>
+            <p style={{ color: text.secondary, fontSize: 13, margin: '4px 0 0' }}>
               {isToday ? "Tonight's operational picture" : `Operational picture for ${selectedDate}`}
             </p>
           </div>
@@ -715,14 +689,15 @@ export default function OperationsPage() {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             style={{
-              background: '#111111',
-              border: '1px solid #2a2a2a',
-              color: '#F1F5F9',
-              borderRadius: 8,
-              padding: '8px 12px',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
+              color: text.primary,
+              borderRadius: radius.md,
+              padding: '10px 14px',
               fontSize: 14,
               outline: 'none',
               cursor: 'pointer',
+              ...FONT_NUM,
             }}
           />
         </div>
@@ -733,7 +708,7 @@ export default function OperationsPage() {
             <OpsCard key={ops.attraction.id} ops={ops} dateStr={selectedDate} openTime={openTime} closeTime={closeTime} />
           ))}
           {opsData.length === 0 && (
-            <div style={{ color: '#555', fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
+            <div style={{ color: text.faint, fontSize: 14, textAlign: 'center', padding: '48px 0' }}>
               No attractions found.
             </div>
           )}

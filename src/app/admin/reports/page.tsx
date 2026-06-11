@@ -7,6 +7,8 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getTodayDateStr } from '@/lib/signoff';
 import type { Attraction, ShowReport, HourlyThroughputSnapshot, DelaySnapshot } from '@/types/database';
+import { surface, border, text as tc, radius, microLabel, FONT_NUM } from '@/lib/theme';
+import MetricStat from '@/components/ui/MetricStat';
 
 /* ── Helpers ── */
 
@@ -125,19 +127,19 @@ export default function ShowReportsPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#888', fontSize: 14 }}>Loading...</div>
+      <div style={{ minHeight: '100vh', background: surface.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: tc.secondary, fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000' }}>
+    <div style={{ minHeight: '100vh', background: surface.page }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 80px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, margin: 0 }}>Show Reports</h2>
+          <h2 style={{ color: tc.primary, fontSize: 22, fontWeight: 700, margin: 0 }}>Show Reports</h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {submittedCount > 0 && (
               <a
@@ -170,11 +172,11 @@ export default function ShowReportsPage() {
             <button
               onClick={() => fetchReports(selectedDate, selectedAttractionId)}
               style={{
-                padding: '6px 12px',
-                background: '#161616',
-                border: '1px solid #2a2a2a',
-                borderRadius: 8,
-                color: '#888',
+                padding: '8px 14px',
+                background: surface.control,
+                border: `1px solid ${border.strong}`,
+                borderRadius: radius.md,
+                color: tc.secondary,
                 fontSize: 12,
                 cursor: 'pointer',
                 fontWeight: 600,
@@ -193,18 +195,18 @@ export default function ShowReportsPage() {
         </div>
 
         {/* ── Filter Bar ── */}
-        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
-          <label style={{ color: '#ccc', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Date</label>
+        <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '16px 20px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+          <label style={{ color: tc.secondary, fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Date</label>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             style={{
-              padding: '8px 12px',
-              background: '#000000',
-              border: '1px solid #2a2a2a',
-              borderRadius: 6,
-              color: '#F1F5F9',
+              padding: '9px 12px',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
+              borderRadius: radius.md,
+              color: tc.primary,
               fontSize: 14,
               outline: 'none',
             }}
@@ -214,12 +216,12 @@ export default function ShowReportsPage() {
               onClick={() => setSelectedDate(getTodayDateStr())}
               style={{
                 padding: '6px 12px',
-                border: '1px solid #555',
+                border: `1px solid ${border.strong}`,
                 background: 'transparent',
-                color: '#ccc',
+                color: tc.secondary,
                 fontSize: 12,
                 fontWeight: 500,
-                borderRadius: 6,
+                borderRadius: radius.md,
                 cursor: 'pointer',
               }}
             >
@@ -227,20 +229,20 @@ export default function ShowReportsPage() {
             </button>
           )}
 
-          <div style={{ width: 1, height: 24, background: '#2a2a2a', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 24, background: border.default, flexShrink: 0 }} />
 
-          <label style={{ color: '#ccc', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Attraction</label>
+          <label style={{ color: tc.secondary, fontSize: 13, fontWeight: 500, flexShrink: 0 }}>Attraction</label>
           <select
             value={selectedAttractionId}
             onChange={(e) => setSelectedAttractionId(e.target.value)}
             style={{
               flex: 1,
               minWidth: 140,
-              padding: '8px 12px',
-              background: '#000000',
-              border: '1px solid #2a2a2a',
-              borderRadius: 6,
-              color: '#F1F5F9',
+              padding: '9px 12px',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
+              borderRadius: radius.md,
+              color: tc.primary,
               fontSize: 14,
               outline: 'none',
             }}
@@ -253,22 +255,13 @@ export default function ShowReportsPage() {
         </div>
 
         {/* ── Summary Stats ── */}
-        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
-          <div>
-            <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Submitted</span>
-            <div style={{ color: '#4caf50', fontSize: 24, fontWeight: 700 }}>{submittedCount}</div>
-          </div>
-          <div>
-            <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Drafts</span>
-            <div style={{ color: draftCount > 0 ? '#F59E0B' : '#666', fontSize: 24, fontWeight: 700 }}>{draftCount}</div>
-          </div>
-          <div>
-            <span style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>Pending</span>
-            <div style={{ color: pendingCount > 0 ? '#ffc107' : '#4caf50', fontSize: 24, fontWeight: 700 }}>{pendingCount}</div>
-          </div>
+        <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
+          <MetricStat label="Submitted" value={submittedCount} size={24} color="#4ADE80" />
+          <MetricStat label="Drafts" value={draftCount} size={24} color={draftCount > 0 ? '#FBBF24' : tc.muted} />
+          <MetricStat label="Pending" value={pendingCount} size={24} color={pendingCount > 0 ? '#FBBF24' : '#4ADE80'} />
           {displayedAttractions.length > 0 && (
             <div style={{ flex: 1, minWidth: 120 }}>
-              <div style={{ position: 'relative', width: '100%', height: 8, background: '#1a1a1a', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ position: 'relative', width: '100%', height: 8, background: surface.raised, borderRadius: 4, overflow: 'hidden' }}>
                 {/* Blur/glow layer */}
                 <div style={{
                   position: 'absolute', top: 0, left: 0, height: '100%',
@@ -291,8 +284,8 @@ export default function ShowReportsPage() {
 
         {/* ── Reports ── */}
         {displayedAttractions.length === 0 && (
-          <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 40, textAlign: 'center' }}>
-            <p style={{ color: '#666', fontSize: 14 }}>No attractions found.</p>
+          <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 40, textAlign: 'center' }}>
+            <p style={{ color: tc.muted, fontSize: 14 }}>No attractions found.</p>
           </div>
         )}
 
@@ -307,15 +300,15 @@ export default function ShowReportsPage() {
             <fieldset
               key={attraction.id}
               style={{
-                border: `1px solid ${hasSubmitted ? '#22C55E33' : hasDraft ? '#F59E0B33' : '#2a2a2a'}`,
-                borderRadius: 12,
+                border: `1px solid ${hasSubmitted ? '#22C55E33' : hasDraft ? '#F59E0B33' : border.default}`,
+                borderRadius: radius.xl,
                 padding: '24px 28px',
                 marginBottom: 20,
-                background: '#111111',
+                background: surface.card,
                 opacity: report ? 1 : 0.65,
               }}
             >
-              <legend style={{ color: '#fff', fontSize: 16, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <legend style={{ color: tc.primary, fontSize: 16, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -347,7 +340,7 @@ export default function ShowReportsPage() {
               </legend>
 
               {!report ? (
-                <div style={{ color: '#666', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
+                <div style={{ color: tc.muted, fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
                   Awaiting report from supervisor
                 </div>
               ) : hasDraft ? (
@@ -368,7 +361,7 @@ export default function ShowReportsPage() {
 function DraftDetail({ report }: { report: ShowReport }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
-      <div style={{ background: '#1a1000', border: '1px solid #F59E0B33', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#F59E0B' }}>
+      <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid #F59E0B33', borderRadius: radius.sm, padding: '10px 14px', fontSize: 13, color: '#FBBF24' }}>
         Draft in progress — not yet submitted.
         {report.draft_updated_at && ` Last updated: ${formatTimestamp(report.draft_updated_at)}`}
       </div>
@@ -381,7 +374,7 @@ function DraftDetail({ report }: { report: ShowReport }) {
           {report.additional_notes && <ReportBlock label="Additional Notes" text={report.additional_notes} borderColor="#94A3B8" />}
         </div>
       ) : (
-        <div style={{ color: '#666', fontSize: 13, textAlign: 'center', padding: '8px 0' }}>No notes written yet.</div>
+        <div style={{ color: tc.muted, fontSize: 13, textAlign: 'center', padding: '8px 0' }}>No notes written yet.</div>
       )}
     </div>
   );
@@ -414,9 +407,9 @@ function ReportDetail({ report }: { report: ShowReport }) {
           <SubLabel text="Hourly Throughput" />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 6 }}>
             {hourlyThroughput.map((slot) => (
-              <div key={`${slot.slot_start}-${slot.slot_end}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', background: '#000000', borderRadius: 6, fontSize: 13 }}>
-                <span style={{ color: '#888' }}>{formatTime24(slot.slot_start)} – {formatTime24(slot.slot_end)}</span>
-                <span style={{ color: '#fff', fontWeight: 700 }}>{slot.guest_count}</span>
+              <div key={`${slot.slot_start}-${slot.slot_end}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', background: surface.control, borderRadius: radius.sm, fontSize: 13 }}>
+                <span style={{ color: tc.secondary }}>{formatTime24(slot.slot_start)} – {formatTime24(slot.slot_end)}</span>
+                <span style={{ color: tc.primary, fontWeight: 700, ...FONT_NUM }}>{slot.guest_count}</span>
               </div>
             ))}
           </div>
@@ -428,17 +421,17 @@ function ReportDetail({ report }: { report: ShowReport }) {
         <div>
           <SubLabel text="Delays" />
           {delays.map((d, i) => (
-            <div key={i} style={{ padding: '8px 12px', background: '#000000', borderRadius: 6, marginBottom: 6, borderLeft: '3px solid #F59E0B' }}>
+            <div key={i} style={{ padding: '8px 12px', background: surface.control, borderRadius: radius.sm, marginBottom: 6, borderLeft: '3px solid #F59E0B' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B', background: '#F59E0B22', padding: '2px 8px', borderRadius: 4 }}>
                   {d.reason || 'Unknown'}
                 </span>
-                <span style={{ fontSize: 12, color: '#888' }}>{d.duration_minutes != null ? `${d.duration_minutes} min` : 'Ongoing'}</span>
+                <span style={{ fontSize: 12, color: tc.muted, ...FONT_NUM }}>{d.duration_minutes != null ? `${d.duration_minutes} min` : 'Ongoing'}</span>
               </div>
-              <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: tc.muted, marginTop: 4 }}>
                 {formatTimestamp(d.started_at)} → {d.resolved_at ? formatTimestamp(d.resolved_at) : 'Unresolved'}
               </div>
-              {d.notes && <div style={{ fontSize: 12, color: '#aaa', marginTop: 2 }}>{d.notes}</div>}
+              {d.notes && <div style={{ fontSize: 12, color: tc.secondary, marginTop: 2 }}>{d.notes}</div>}
             </div>
           ))}
         </div>
@@ -469,7 +462,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
       {report.signature && (
         <div>
           <SubLabel text="Signature" />
-          <div style={{ background: '#000000', borderRadius: 8, padding: 12, display: 'inline-block' }}>
+          <div style={{ background: surface.control, borderRadius: radius.sm, padding: 12, display: 'inline-block' }}>
             <img
               src={report.signature}
               alt="Supervisor signature"
@@ -480,8 +473,8 @@ function ReportDetail({ report }: { report: ShowReport }) {
       )}
 
       {/* Metadata */}
-      <div style={{ fontSize: 12, color: '#666', borderTop: '1px solid #2a2a2a', paddingTop: 12 }}>
-        Submitted by <span style={{ color: '#aaa' }}>{report.submitted_by_name}</span> ({report.submitted_by_email}) &middot; {formatTimestamp(report.created_at)}
+      <div style={{ fontSize: 12, color: tc.muted, borderTop: `1px solid ${border.divider}`, paddingTop: 12 }}>
+        Submitted by <span style={{ color: tc.secondary }}>{report.submitted_by_name}</span> ({report.submitted_by_email}) &middot; {formatTimestamp(report.created_at)}
       </div>
     </div>
   );
@@ -491,7 +484,7 @@ function ReportDetail({ report }: { report: ShowReport }) {
 
 function SubLabel({ text }: { text: string }) {
   return (
-    <div style={{ color: '#888', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+    <div style={{ ...microLabel, marginBottom: 8 }}>
       {text}
     </div>
   );
@@ -499,18 +492,17 @@ function SubLabel({ text }: { text: string }) {
 
 function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div style={{ flex: 1, minWidth: 100, background: '#000000', borderRadius: 8, padding: '12px 14px', textAlign: 'center' }}>
-      <div style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{label}</div>
-      <div style={{ color, fontSize: 20, fontWeight: 800 }}>{value}</div>
+    <div style={{ flex: 1, minWidth: 100, background: surface.control, borderRadius: radius.sm, padding: '12px 14px' }}>
+      <MetricStat label={label} value={value} color={color} align="center" />
     </div>
   );
 }
 
 function ReportBlock({ label, text, borderColor }: { label: string; text: string; borderColor: string }) {
   return (
-    <div style={{ padding: '10px 14px', background: '#000000', borderRadius: 8, borderLeft: `3px solid ${borderColor}` }}>
+    <div style={{ padding: '10px 14px', background: surface.control, borderRadius: radius.sm, borderLeft: `3px solid ${borderColor}` }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: borderColor, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 13, color: '#ddd', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{text}</div>
+      <div style={{ fontSize: 13, color: tc.secondary, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{text}</div>
     </div>
   );
 }

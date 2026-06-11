@@ -8,6 +8,10 @@ import { checkAuth } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import AdminNav from '@/components/AdminNav';
 import type { AttractionType } from '@/types/database';
+import { surface, border, text, radius } from '@/lib/theme';
+import { InlineError } from '@/components/ui/Toast';
+
+const MAX_ASSET_BYTES = 10 * 1024 * 1024; // 10 MB per file
 
 interface NewAttractionPayload {
   name: string;
@@ -49,6 +53,7 @@ function AssetDropZone({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState('');
 
   useEffect(() => {
     if (!file) { setPreview(null); return; }
@@ -56,6 +61,16 @@ function AssetDropZone({
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  function handlePick(f: File | null) {
+    if (f && f.size > MAX_ASSET_BYTES) {
+      setSizeError(`"${f.name}" is ${(f.size / (1024 * 1024)).toFixed(1)} MB — the limit is 10 MB per file. Please choose a smaller image.`);
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+    setSizeError('');
+    onSelect(f);
+  }
 
   return (
     <div>
@@ -66,13 +81,14 @@ function AssetDropZone({
         type="file"
         accept="image/png,image/jpeg,image/webp,image/svg+xml"
         className="hidden"
-        onChange={(e) => onSelect(e.target.files?.[0] ?? null)}
+        onChange={(e) => handlePick(e.target.files?.[0] ?? null)}
       />
+      {sizeError && <div className="mb-1.5"><InlineError message={sizeError} /></div>}
       {file ? (
-        <div className="flex items-center gap-3 p-3 bg-[#000000] border border-[#2a2a2a] rounded-md">
+        <div className="flex items-center gap-3 p-3 bg-[#13161C] border border-[#23262E] rounded-md">
           {preview && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="" className="rounded object-contain bg-[#1a1a1a]" style={{ width: 56, height: 56 }} />
+            <img src={preview} alt="" className="rounded object-contain bg-[#181D24]" style={{ width: 56, height: 56 }} />
           )}
           <div className="flex-1 min-w-0">
             <p className="text-[#F1F5F9] text-xs truncate">{file.name}</p>
@@ -80,7 +96,7 @@ function AssetDropZone({
           </div>
           <button
             type="button"
-            onClick={() => { onSelect(null); if (inputRef.current) inputRef.current.value = ''; }}
+            onClick={() => { handlePick(null); if (inputRef.current) inputRef.current.value = ''; }}
             className="text-[#EF4444] text-xs font-semibold px-2 py-1 rounded hover:bg-[#7f1d1d]/30"
           >
             Remove
@@ -90,7 +106,7 @@ function AssetDropZone({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="w-full py-5 bg-[#000000] border border-dashed border-[#2a2a2a] rounded-md text-[#475569] text-xs
+          className="w-full py-5 bg-[#13161C] border border-dashed border-[#23262E] rounded-md text-[#475569] text-xs
                      hover:border-[#3B82F6] hover:text-[#94A3B8] transition-colors focus:outline-none focus:border-[#3B82F6]"
         >
           Click to choose an image
@@ -113,7 +129,7 @@ function ReviewSummary({
 }) {
   const assets = [logoFile && 'Logo', bgFile && 'Background', queueBgFile && 'Queue background'].filter(Boolean);
   const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
-    <div className="flex justify-between gap-4 py-1.5 border-b border-[#1f1f1f]">
+    <div className="flex justify-between gap-4 py-1.5 border-b border-[#181B21]">
       <span className="text-[#475569] text-xs">{k}</span>
       <span className="text-[#F1F5F9] text-xs text-right">{v}</span>
     </div>
@@ -134,10 +150,8 @@ function ReviewSummary({
   );
 }
 
-async function createAttraction(payload: NewAttractionPayload, performer: string) {
-  const { name, slug, type } = payload;
-
-  // Slug collision check against existing attractions
+/** Phase 1 — slug collision check BEFORE any uploads. Returns the next sort_order. */
+async function checkSlugAndGetOrder(slug: string): Promise<number> {
   const { data: existing } = await supabase
     .from('attractions')
     .select('slug,sort_order');
@@ -147,28 +161,33 @@ async function createAttraction(payload: NewAttractionPayload, performer: string
   }
 
   const orders = (existing || []).map((a) => a.sort_order).filter((n): n is number => typeof n === 'number');
-  const nextOrder = orders.length > 0 ? Math.max(...orders) + 1 : 1;
+  return orders.length > 0 ? Math.max(...orders) + 1 : 1;
+}
 
-  // Upload selected assets to Supabase Storage, collect public URLs
-  async function upload(file: File | null, kind: string): Promise<string | null> {
-    if (!file) return null;
-    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-    const path = `${slug}/${kind}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from('attraction-assets')
-      .upload(path, file, { upsert: true, contentType: file.type || undefined });
-    if (upErr) {
-      if (process.env.NODE_ENV === 'development') console.error('Asset upload failed:', upErr);
-      throw new Error(`Failed to upload ${kind} image. Please try again.`);
-    }
-    return supabase.storage.from('attraction-assets').getPublicUrl(path).data.publicUrl;
+/** Phase 2 — upload a single asset to Supabase Storage and return its public URL. */
+async function uploadAsset(slug: string, file: File, kind: string): Promise<string> {
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+  const path = `${slug}/${kind}.${ext}`;
+  const { error: upErr } = await supabase.storage
+    .from('attraction-assets')
+    .upload(path, file, { upsert: true, contentType: file.type || undefined });
+  if (upErr) {
+    if (process.env.NODE_ENV === 'development') console.error('Asset upload failed:', upErr);
+    throw new Error(`Failed to upload ${kind} image.`);
   }
+  return supabase.storage.from('attraction-assets').getPublicUrl(path).data.publicUrl;
+}
 
-  const [logoUrl, bgUrl, queueBgUrl] = await Promise.all([
-    upload(payload.logoFile, 'logo'),
-    upload(payload.bgFile, 'bg'),
-    upload(payload.queueBgFile, 'queue-bg'),
-  ]);
+/** Phase 3 — insert the attraction row (assets already uploaded). */
+async function insertAttraction(
+  payload: NewAttractionPayload,
+  performer: string,
+  nextOrder: number,
+  logoUrl: string | null,
+  bgUrl: string | null,
+  queueBgUrl: string | null,
+) {
+  const { name, slug, type } = payload;
 
   const { data, error } = await supabase
     .from('attractions')
@@ -227,9 +246,19 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
   const [submitting, setSubmitting] = useState(false);
   const [submitLabel, setSubmitLabel] = useState('');
   const [error, setError] = useState('');
+  const [failedAsset, setFailedAsset] = useState<string | null>(null);
+
+  // Uploaded asset URLs are cached so a retry after a failed upload doesn't
+  // re-upload assets that already succeeded.
+  const uploadedUrls = useRef<Record<string, string | null>>({});
+  useEffect(() => { delete uploadedUrls.current['logo']; }, [logoFile]);
+  useEffect(() => { delete uploadedUrls.current['bg']; }, [bgFile]);
+  useEffect(() => { delete uploadedUrls.current['queue-bg']; }, [queueBgFile]);
 
   const steps = type === 'show' ? WIZARD_STEPS_SHOW : WIZARD_STEPS_RIDE;
   const slug = slugify(name);
+  // Slug change invalidates all cached uploads (storage paths include the slug)
+  useEffect(() => { uploadedUrls.current = {}; }, [slug]);
   const isLastStep = step === steps.length - 1;
   const canProceed = step === 0 ? name.trim().length > 0 : true;
 
@@ -254,9 +283,35 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
     if (!name.trim()) return;
     setSubmitting(true);
     setError('');
+    setFailedAsset(null);
     try {
-      setSubmitLabel('Uploading assets…');
-      await createAttraction({
+      // 1. Check slug availability BEFORE uploading any files
+      setSubmitLabel('Checking name…');
+      const nextOrder = await checkSlugAndGetOrder(slug);
+
+      // 2. Upload each asset individually (skipping any already uploaded)
+      const assets: { kind: string; label: string; file: File | null }[] = [
+        { kind: 'logo', label: 'logo', file: logoFile },
+        { kind: 'bg', label: 'background', file: bgFile },
+        { kind: 'queue-bg', label: 'queue background', file: queueBgFile },
+      ];
+      for (const asset of assets) {
+        if (!asset.file || uploadedUrls.current[asset.kind] !== undefined) continue;
+        setSubmitLabel(`Uploading ${asset.label}…`);
+        try {
+          uploadedUrls.current[asset.kind] = await uploadAsset(slug, asset.file, asset.kind);
+        } catch {
+          setFailedAsset(asset.label);
+          setError(`Failed to upload the ${asset.label} image. Your other progress is saved — retry just this upload.`);
+          setSubmitting(false);
+          setSubmitLabel('');
+          return;
+        }
+      }
+
+      // 3. Insert the attraction row
+      setSubmitLabel('Creating attraction…');
+      await insertAttraction({
         name: name.trim(),
         slug,
         type,
@@ -268,7 +323,11 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
         glowHex: glowEnabled ? glowHex : null,
         textColorHex: textEnabled ? textHex : null,
         fearRating: type === 'ride' ? fearRating : null,
-      }, performer);
+      }, performer, nextOrder,
+        uploadedUrls.current['logo'] ?? null,
+        uploadedUrls.current['bg'] ?? null,
+        uploadedUrls.current['queue-bg'] ?? null,
+      );
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create attraction');
@@ -278,13 +337,13 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
   }
 
   return (
-    <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, display: 'flex', flexDirection: 'column' }}>
       {/* Header / step indicator */}
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid #2a2a2a' }}>
+      <div style={{ padding: '20px 24px', borderBottom: `1px solid ${border.divider}` }}>
         <div className="flex items-center gap-2">
           {steps.map((label, i) => (
             <div key={label} className="flex-1 flex flex-col gap-1">
-              <div style={{ height: 3, borderRadius: 2, background: i <= step ? '#2563EB' : '#2a2a2a' }} />
+              <div style={{ height: 3, borderRadius: 2, background: i <= step ? '#2563EB' : border.strong }} />
               <span className="text-[10px]" style={{ color: i === step ? '#F1F5F9' : '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
             </div>
           ))}
@@ -302,11 +361,11 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
               <div className="flex gap-2">
                 <button
                   onClick={() => setType('ride')}
-                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${type === 'ride' ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2a2a2a]'}`}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${type === 'ride' ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2E3543]'}`}
                 >Ride / Maze</button>
                 <button
                   onClick={() => setType('show')}
-                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${type === 'show' ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2a2a2a]'}`}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${type === 'show' ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2E3543]'}`}
                 >Live Show</button>
               </div>
             </div>
@@ -319,7 +378,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                 autoFocus
                 onChange={(e) => setName(e.target.value)}
                 placeholder={type === 'ride' ? 'Ride name' : 'Show name'}
-                className="w-full px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors"
+                className="w-full px-3 py-2 bg-[#13161C] border border-[#23262E] rounded-md text-[#F1F5F9] text-sm placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors"
               />
               {slug && <p className="text-[#475569] text-[11px] mt-1.5">Slug: <span className="text-[#94A3B8]">{slug}</span></p>}
             </div>
@@ -332,7 +391,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                     <button
                       key={s}
                       onClick={() => setTargetDispatch(s)}
-                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${targetDispatch === s ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2a2a2a]'}`}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${targetDispatch === s ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2E3543]'}`}
                     >{s}</button>
                   ))}
                 </div>
@@ -341,7 +400,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                   value={targetDispatch}
                   min={1}
                   onChange={(e) => setTargetDispatch(Math.max(1, parseInt(e.target.value || '0', 10)))}
-                  className="w-full px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
+                  className="w-full px-3 py-2 bg-[#13161C] border border-[#23262E] rounded-md text-[#F1F5F9] text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
                 />
               </div>
             )}
@@ -383,7 +442,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
               </label>
               {glowEnabled && (
                 <div className="flex items-center gap-3">
-                  <input type="color" value={glowHex} onChange={(e) => setGlowHex(e.target.value)} className="w-12 h-10 rounded bg-transparent border border-[#2a2a2a] cursor-pointer" />
+                  <input type="color" value={glowHex} onChange={(e) => setGlowHex(e.target.value)} className="w-12 h-10 rounded bg-transparent border border-[#2E3543] cursor-pointer" />
                   <span className="text-[#94A3B8] text-xs">{hexToRgbString(glowHex)}</span>
                   {logoPreview && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -400,7 +459,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
               </label>
               {textEnabled && (
                 <div className="flex items-center gap-3">
-                  <input type="color" value={textHex} onChange={(e) => setTextHex(e.target.value)} className="w-12 h-10 rounded bg-transparent border border-[#2a2a2a] cursor-pointer" />
+                  <input type="color" value={textHex} onChange={(e) => setTextHex(e.target.value)} className="w-12 h-10 rounded bg-transparent border border-[#2E3543] cursor-pointer" />
                   <span className="text-sm font-bold" style={{ color: textHex }}>Sample text</span>
                 </div>
               )}
@@ -414,7 +473,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                     <button
                       key={n}
                       onClick={() => setFearRating(fearRating === n ? null : n)}
-                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${fearRating === n ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2a2a2a]'}`}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${fearRating === n ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2E3543]'}`}
                       aria-pressed={fearRating === n}
                     >💀 {n}</button>
                   ))}
@@ -435,14 +494,14 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                   value={newShowTime}
                   onChange={(e) => setNewShowTime(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addShowTime(); } }}
-                  className="flex-1 px-3 py-2 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
+                  className="flex-1 px-3 py-2 bg-[#13161C] border border-[#23262E] rounded-md text-[#F1F5F9] text-sm focus:outline-none focus:border-[#3B82F6] transition-colors"
                 />
                 <button onClick={addShowTime} className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold rounded-md transition-colors">Add</button>
               </div>
               {showTimes.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {showTimes.map((t) => (
-                    <span key={t} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-xs">
+                    <span key={t} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#13161C] border border-[#23262E] rounded-md text-[#F1F5F9] text-xs">
                       {t}
                       <button onClick={() => setShowTimes(showTimes.filter((x) => x !== t))} className="text-[#EF4444] font-bold">×</button>
                     </span>
@@ -458,15 +517,28 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
           <ReviewSummary name={name} type={type} slug={slug} logoFile={logoFile} bgFile={bgFile} queueBgFile={queueBgFile} glowHex={glowEnabled ? glowHex : null} textHex={textEnabled ? textHex : null} fearRating={fearRating} showTimes={[]} targetDispatch={targetDispatch} />
         )}
 
-        {error && <p className="text-[#EF4444] text-xs mt-4">{error}</p>}
+        {error && (
+          <div className="mt-4 flex flex-col gap-2">
+            <InlineError message={error} />
+            {failedAsset && (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="self-center px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-40"
+              >
+                Retry upload
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer / nav */}
-      <div style={{ padding: '16px 24px', borderTop: '1px solid #2a2a2a' }} className="flex items-center justify-between gap-3">
+      <div style={{ padding: '16px 24px', borderTop: `1px solid ${border.divider}` }} className="flex items-center justify-between gap-3">
         <button
           onClick={() => setStep(Math.max(0, step - 1))}
           disabled={submitting || step === 0}
-          className="px-4 py-2 bg-transparent border border-[#2a2a2a] text-[#94A3B8] text-sm font-semibold rounded-md hover:text-[#F1F5F9] transition-colors disabled:opacity-30"
+          className="px-4 py-2 bg-transparent border border-[#2E3543] text-[#94A3B8] text-sm font-semibold rounded-md hover:text-[#F8FAFC] transition-colors disabled:opacity-30"
         >Back</button>
 
         {isLastStep ? (
@@ -514,14 +586,14 @@ export default function NewAttractionPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: surface.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-white text-xl font-semibold animate-pulse">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000', color: '#F1F5F9' }}>
+    <div style={{ minHeight: '100vh', background: surface.page, color: text.primary }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '32px 20px' }}>

@@ -12,6 +12,10 @@ import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, ThroughputLog, DispatchLog } from '@/types/database';
 import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
 import AppSwitcher from '@/components/AppSwitcher';
+import { surface, border, text, accents, radius, statusColors, FONT_NUM, microLabel, card, controlButton, primaryButton } from '@/lib/theme';
+import NumericKeypad from '@/components/ui/NumericKeypad';
+import OfflineBanner from '@/components/ui/OfflineBanner';
+import { useToasts, ToastStack } from '@/components/ui/Toast';
 
 /* ── Helpers ── */
 
@@ -106,6 +110,7 @@ export default function SupervisorDashboard() {
   const [signoffStatus, setSignoffStatus] = useState<AttractionSignoffStatus | null>(null);
   const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
   const [delayElapsed, setDelayElapsed] = useState(0);
+  const { toasts, pushToast } = useToasts();
 
   // Notes drawer
   const [notesOpen, setNotesOpen] = useState(false);
@@ -195,7 +200,7 @@ export default function SupervisorDashboard() {
       if (!attractionsRes.error && attractionsRes.data) {
         setAttractions(attractionsRes.data);
         // Restore last-selected attraction, fall back to first ride
-        const saved = localStorage.getItem('ic-control-selected');
+        const saved = typeof window !== 'undefined' ? localStorage.getItem('ic-control-selected') : null;
         const savedExists = saved && attractionsRes.data.find((a: Attraction) => a.id === saved);
         const firstRide = attractionsRes.data.find((a: Attraction) => a.attraction_type !== 'show');
         setSelectedId(savedExists ? saved : (firstRide?.id ?? null));
@@ -409,6 +414,7 @@ export default function SupervisorDashboard() {
         setNotesLastSaved(new Date().toISOString());
       } else {
         setNotesSaving('error');
+        pushToast('error', 'Failed to save show report notes');
       }
     }, 2000);
   }
@@ -516,20 +522,32 @@ export default function SupervisorDashboard() {
     }).reduce((s, d) => s + d.group_size, 0);
   }
 
-  async function saveSlotOverride(slot: { start: string; end: string }, count: number) {
+  /** Returns true on success; false (with error toast) on failure. */
+  async function saveSlotOverride(slot: { start: string; end: string }, count: number): Promise<boolean> {
     const today = getTodayDateStr();
-    await supabase.from('throughput_logs').upsert({
-      attraction_id: selectedId,
-      slot_start: slot.start,
-      slot_end: slot.end,
-      guest_count: count,
-      logged_by: displayName || userEmail,
-      log_date: today,
-    }, { onConflict: 'attraction_id,log_date,slot_start' });
-    // Refresh throughput logs
-    const { data } = await supabase.from('throughput_logs')
-      .select('*').eq('attraction_id', selectedId ?? '').eq('log_date', today);
-    setThroughputLogs(data || []);
+    try {
+      const { error } = await supabase.from('throughput_logs').upsert({
+        attraction_id: selectedId,
+        slot_start: slot.start,
+        slot_end: slot.end,
+        guest_count: count,
+        logged_by: displayName || userEmail,
+        log_date: today,
+      }, { onConflict: 'attraction_id,log_date,slot_start' });
+      if (error) {
+        pushToast('error', 'Failed to save throughput — try again');
+        return false;
+      }
+      // Refresh throughput logs
+      const { data } = await supabase.from('throughput_logs')
+        .select('*').eq('attraction_id', selectedId ?? '').eq('log_date', today);
+      setThroughputLogs(data || []);
+      pushToast('success', 'Throughput updated');
+      return true;
+    } catch {
+      pushToast('error', 'Failed to save throughput — try again');
+      return false;
+    }
   }
 
   // Handle queue time update
@@ -538,10 +556,14 @@ export default function SupervisorDashboard() {
     const oldTime = selected.wait_time || 0;
     const newTime = Math.max(0, Math.min(180, oldTime + delta));
     if (newTime === oldTime) return;
-    await supabase
+    const { error } = await supabase
       .from('attractions')
       .update({ wait_time: newTime, updated_at: new Date().toISOString() })
       .eq('id', selected.id);
+    if (error) {
+      pushToast('error', 'Failed to update queue time');
+      return;
+    }
 
     logAudit({
       actionType: 'queue_time_change',
@@ -558,18 +580,23 @@ export default function SupervisorDashboard() {
     if (dispatchGroupSize === 0 || dispatching || !selectedId) return;
     setDispatching(true);
     const today = getTodayDateStr();
-    await supabase.from('dispatch_logs').insert({
+    const { error } = await supabase.from('dispatch_logs').insert({
       attraction_id: selectedId,
       group_size: dispatchGroupSize,
       dispatched_by: displayName || userEmail,
       log_date: today,
     });
+    if (error) {
+      pushToast('error', 'Dispatch failed to log — try again');
+      setDispatching(false);
+      return;
+    }
     setDispatchGroupSize(0);
     const now = new Date().toISOString();
     setLastDispatchAt(now);
     setDispatchElapsed(0);
     // Clear any manual reset so the new dispatch shows correctly after navigation
-    if (selectedId) localStorage.removeItem(`ic-dispatch-reset-${selectedId}`);
+    if (selectedId && typeof window !== 'undefined') localStorage.removeItem(`ic-dispatch-reset-${selectedId}`);
     const { data } = await supabase.from('dispatch_logs')
       .select('*').eq('attraction_id', selectedId).eq('log_date', today)
       .order('dispatched_at', { ascending: false }).limit(200);
@@ -584,40 +611,41 @@ export default function SupervisorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-white text-2xl font-bold animate-pulse">Loading...</div>
+      <div className="flex h-screen items-center justify-center" style={{ background: surface.page }}>
+        <div className="text-2xl font-bold animate-pulse" style={{ color: text.primary }}>Loading...</div>
       </div>
     );
   }
 
   if (rides.length === 0) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page, padding: '0 24px' }}>
         <div className="text-center">
-          <p className="text-white/60 text-lg mb-4">No rides configured.</p>
-          <p className="text-white/30 text-sm">Ask a manager to add rides in the Admin panel.</p>
+          <p className="text-lg mb-4" style={{ color: text.secondary }}>No rides configured.</p>
+          <p className="text-sm" style={{ color: text.faint }}>Ask a manager to add rides in the Admin panel.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#000000', color: '#F1F5F9' }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: surface.page, color: text.primary }}>
+      <OfflineBanner />
       {/* Header */}
-      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', height: 56, padding: '0 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, height: 56, padding: '0 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="control" isAdmin={userRole === 'admin'} />
           <a href="/control" style={{ textDecoration: 'none' }}>
-            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Control</h1>
+            <h1 style={{ color: text.primary, fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Control</h1>
           </a>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: text.secondary }}>
           {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || userEmail}</span>}
           {'Notification' in (typeof window !== 'undefined' ? window : {}) && notifPermission !== 'denied' && (
             <button
               onClick={handleNotifToggle}
               title={notifEnabled ? 'Notifications on — click to disable' : 'Enable status notifications'}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 4, color: notifEnabled ? '#22C55E' : '#555', transition: 'color 0.15s', lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 4, color: notifEnabled ? '#4ADE80' : text.faint, transition: 'color 0.15s', lineHeight: 1 }}
             >
               {notifEnabled ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -634,22 +662,20 @@ export default function SupervisorDashboard() {
           <button
             onClick={handleLogout}
             style={{
+              ...controlButton,
               background: 'none',
-              border: '1px solid #2a2a2a',
-              color: '#94A3B8',
-              padding: '4px 10px',
-              borderRadius: 4,
-              cursor: 'pointer',
+              padding: '5px 10px',
+              borderRadius: radius.sm,
               fontSize: 12,
               transition: 'border-color 0.15s, color 0.15s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#444444';
-              e.currentTarget.style.color = '#F1F5F9';
+              e.currentTarget.style.borderColor = accents.control.base;
+              e.currentTarget.style.color = text.primary;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#2a2a2a';
-              e.currentTarget.style.color = '#aaa';
+              e.currentTarget.style.borderColor = border.strong;
+              e.currentTarget.style.color = text.secondary;
             }}
           >
             Sign out
@@ -661,36 +687,37 @@ export default function SupervisorDashboard() {
       <div
         ref={tabBarRef}
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 20px', flexShrink: 0, display: 'flex', gap: 0, overflowX: 'auto' }}
+        style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0 20px', flexShrink: 0, display: 'flex', gap: 0, overflowX: 'auto' }}
       >
         {rides.map((a) => {
           const isSelected = a.id === selectedId;
           return (
             <button
               key={a.id}
-              onClick={() => { setSelectedId(a.id); localStorage.setItem('ic-control-selected', a.id); }}
+              onClick={() => { setSelectedId(a.id); if (typeof window !== 'undefined') localStorage.setItem('ic-control-selected', a.id); }}
               style={{
                 flexShrink: 0,
-                color: isSelected ? '#F1F5F9' : '#64748B',
+                color: isSelected ? text.primary : text.muted,
                 fontSize: 14,
                 fontWeight: isSelected ? 600 : 500,
-                padding: '14px 14px',
+                padding: '16px 14px',
+                minHeight: 52,
                 borderRadius: 0,
                 background: 'transparent',
                 border: 'none',
-                borderBottom: isSelected ? '2px solid #3B82F6' : '2px solid transparent',
+                borderBottom: isSelected ? `2px solid ${accents.control.base}` : '2px solid transparent',
                 cursor: 'pointer',
                 transition: 'color 0.15s, border-color 0.15s',
                 touchAction: 'manipulation',
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.color = '#94A3B8';
+                  e.currentTarget.style.color = text.secondary;
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.color = '#64748B';
+                  e.currentTarget.style.color = text.muted;
                 }
               }}
             >
@@ -716,9 +743,7 @@ export default function SupervisorDashboard() {
               const logo = getAttractionLogo(selected.slug);
               const glow = getLogoGlow(selected.slug);
               const st = selected.status as string;
-              const statusColor = st === 'OPEN' ? '#22C55E' : st === 'CLOSED' ? '#EF4444' : st === 'DELAYED' ? '#F59E0B' : '#F59E0B';
-              const statusBg   = st === 'OPEN' ? 'rgba(34,197,94,0.1)' : st === 'CLOSED' ? 'rgba(239,68,68,0.1)' : st === 'DELAYED' ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.1)';
-              const statusBorder = st === 'OPEN' ? 'rgba(34,197,94,0.25)' : st === 'CLOSED' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)';
+              const sc = statusColors(st);
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
                   {logo && (
@@ -728,8 +753,9 @@ export default function SupervisorDashboard() {
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-                    padding: '7px 18px', borderRadius: 8,
-                    background: statusBg, color: statusColor, border: `1px solid ${statusBorder}`,
+                    padding: '7px 18px', borderRadius: radius.pill,
+                    background: sc.soft, color: sc.text, border: `1px solid ${sc.rail}40`,
+                    ...FONT_NUM,
                   }}>
                     {st === 'DELAYED' && delayStartedAt
                       ? `DELAYED — ${formatElapsed(delayElapsed)}`
@@ -740,14 +766,15 @@ export default function SupervisorDashboard() {
                     <button
                       onClick={() => setNotesOpen(true)}
                       style={{
+                        ...controlButton,
                         display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '8px 18px',
-                        background: '#111', border: '1px solid #2a2a2a', borderRadius: 8,
-                        color: '#94A3B8', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                        padding: '12px 20px', minHeight: 44,
+                        fontSize: 13, fontWeight: 600,
                         transition: 'border-color 0.15s, color 0.15s',
+                        touchAction: 'manipulation',
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.color = '#F1F5F9'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
                     >
                       📝 Show Report
                     </button>
@@ -760,22 +787,22 @@ export default function SupervisorDashboard() {
             {signoffStatus && (
               <div className="mb-6 flex flex-col items-center gap-3">
                 {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('OPEN').soft, color: statusColors('OPEN').text, border: `1px solid ${statusColors('OPEN').rail}40` }}>
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Signed Off
                   </span>
                 ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
                   <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('DELAYED').soft, color: statusColors('DELAYED').text, border: `1px solid ${statusColors('DELAYED').rail}40`, ...FONT_NUM }}>
                       {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} Signed Off
                     </span>
                     <a
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: '#111', border: '1px solid #2a2a2a', color: '#94A3B8', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#F1F5F9'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+                      style={{ ...controlButton, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '10px 16px', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
                     >
                       Complete Sign-Offs
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2H10V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -783,16 +810,16 @@ export default function SupervisorDashboard() {
                   </>
                 ) : (
                   <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('CLOSED').soft, color: statusColors('CLOSED').text, border: `1px solid ${statusColors('CLOSED').rail}40` }}>
                       Not Signed Off
                     </span>
                     <a
                       href="/signoff"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, background: '#111', border: '1px solid #2a2a2a', color: '#94A3B8', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#F1F5F9'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+                      style={{ ...controlButton, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '10px 16px', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
                     >
                       Complete Sign-Offs
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2H10V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -825,20 +852,20 @@ export default function SupervisorDashboard() {
               return (
                 <section style={{ marginBottom: 48 }}>
                   <div className="flex items-center gap-2.5 mb-5">
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                    <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Dispatch</h2>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
+                    <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Dispatch</h2>
                   </div>
 
-                  <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
+                  <div style={{ ...card(selected.status), padding: 32 }}>
                     {/* Timer */}
                     <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                      <div style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 6 }}>
+                      <div style={{ ...microLabel, fontSize: 11, marginBottom: 6 }}>
                         Time Since Last Dispatch
                       </div>
                       <div style={{
                         fontSize: 52,
                         fontWeight: 800,
-                        fontVariantNumeric: 'tabular-nums',
+                        ...FONT_NUM,
                         color: timerVisible ? timerColor : 'transparent',
                         transition: timerFlashing ? 'none' : 'color 0.3s',
                         letterSpacing: '-0.02em',
@@ -846,15 +873,15 @@ export default function SupervisorDashboard() {
                         {timerStr}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 6 }}>
-                        <span style={{ color: '#64748B', fontSize: 11 }}>Target: {targetSeconds}s</span>
+                        <span style={{ color: text.muted, fontSize: 11, ...FONT_NUM }}>Target: {targetSeconds}s</span>
                         {lastDispatchAt !== null && (
                           <button
                             onClick={() => {
                               setLastDispatchAt(null);
                               setDispatchElapsed(0);
-                              if (selectedId) localStorage.setItem(`ic-dispatch-reset-${selectedId}`, new Date().toISOString());
+                              if (selectedId && typeof window !== 'undefined') localStorage.setItem(`ic-dispatch-reset-${selectedId}`, new Date().toISOString());
                             }}
-                            style={{ background: 'none', border: '1px solid #2a2a2a', color: '#64748B', fontSize: 11, padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}
+                            style={{ ...controlButton, background: 'none', color: text.muted, fontSize: 11, padding: '4px 10px', borderRadius: radius.sm }}
                           >
                             Reset timer
                           </button>
@@ -876,10 +903,10 @@ export default function SupervisorDashboard() {
                         style={{ flex: 1, textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
                         title="Tap to enter number"
                       >
-                        <div style={{ fontSize: 56, fontWeight: 900, fontVariantNumeric: 'tabular-nums', color: dispatchGroupSize > 0 ? '#F1F5F9' : '#475569' }}>
+                        <div style={{ fontSize: 56, fontWeight: 900, ...FONT_NUM, color: dispatchGroupSize > 0 ? text.primary : text.faint }}>
                           {dispatchGroupSize}
                         </div>
-                        <div style={{ color: '#3B82F6', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>tap to enter</div>
+                        <div style={{ ...microLabel, color: accents.control.base, fontSize: 11 }}>tap to enter</div>
                       </button>
                       <button
                         onClick={() => setDispatchGroupSize((v) => Math.min(30, v + 1))}
@@ -894,10 +921,10 @@ export default function SupervisorDashboard() {
                     {(selected.status === 'CLOSED' || selected.status === 'DELAYED') ? (
                       <div style={{
                         width: '100%', padding: '18px 0', marginBottom: 20,
-                        background: selected.status === 'CLOSED' ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.06)',
-                        border: `1px solid ${selected.status === 'CLOSED' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'}`,
-                        borderRadius: 12, textAlign: 'center',
-                        color: selected.status === 'CLOSED' ? '#EF4444' : '#F59E0B',
+                        background: statusColors(selected.status).soft,
+                        border: `1px solid ${statusColors(selected.status).rail}40`,
+                        borderRadius: radius.lg, textAlign: 'center',
+                        color: statusColors(selected.status).text,
                         fontSize: 14, fontWeight: 600, letterSpacing: '0.04em',
                       }}>
                         {selected.status === 'CLOSED' ? 'Attraction closed — dispatch locked' : 'Attraction delayed — dispatch locked'}
@@ -907,11 +934,12 @@ export default function SupervisorDashboard() {
                         onClick={handleDispatch}
                         disabled={dispatchGroupSize === 0 || dispatching}
                         style={{
-                          width: '100%', padding: '18px 0', fontSize: 18, fontWeight: 800,
-                          letterSpacing: '0.06em', textTransform: 'uppercase', borderRadius: 12, border: 'none',
+                          ...primaryButton('control'),
+                          width: '100%', minHeight: 56, padding: '18px 0', fontSize: 18, fontWeight: 800,
+                          letterSpacing: '0.06em', textTransform: 'uppercase',
                           cursor: dispatchGroupSize === 0 || dispatching ? 'not-allowed' : 'pointer',
-                          background: dispatchGroupSize === 0 || dispatching ? '#1a2a1a' : '#2563EB',
-                          color: dispatchGroupSize === 0 || dispatching ? '#374151' : '#fff',
+                          background: dispatchGroupSize === 0 || dispatching ? surface.raised : accents.control.strong,
+                          color: dispatchGroupSize === 0 || dispatching ? text.faint : '#fff',
                           transition: 'background 0.15s, color 0.15s', marginBottom: 20,
                         }}
                         className="touch-manipulation active:bg-[#1D4ED8]"
@@ -921,15 +949,15 @@ export default function SupervisorDashboard() {
                     )}
 
                     {/* Today's dispatches summary */}
-                    <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 16 }}>
+                    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 16 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                        <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>
+                        <p style={{ color: text.muted, fontSize: 12, margin: 0, ...FONT_NUM }}>
                           {totalDispatches} dispatch{totalDispatches !== 1 ? 'es' : ''} · {totalGuests} guests today
                         </p>
                         {totalDispatches > 1 && (
                           <button
                             onClick={() => setShowAllDispatches((v) => !v)}
-                            style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: 12, cursor: 'pointer', padding: 0 }}
+                            style={{ background: 'none', border: 'none', color: accents.control.base, fontSize: 12, cursor: 'pointer', padding: '6px 0' }}
                           >
                             {showAllDispatches ? 'Show less' : `See all ${totalDispatches}`}
                           </button>
@@ -945,9 +973,9 @@ export default function SupervisorDashboard() {
                         const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
                         const timeStr = `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
                         return (
-                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 13, padding: '4px 0', borderTop: '1px solid #1a1a1a' }}>
+                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: text.secondary, fontSize: 13, padding: '4px 0', borderTop: `1px solid ${border.divider}`, ...FONT_NUM }}>
                             <span>{timeStr}</span>
-                            <span style={{ color: '#F1F5F9' }}>{log.group_size} guests</span>
+                            <span style={{ color: text.primary }}>{log.group_size} guests</span>
                           </div>
                         );
                       })}
@@ -960,18 +988,14 @@ export default function SupervisorDashboard() {
             {/* ── Queue Time Control ── */}
             <section style={{ marginBottom: 48 }}>
               <div className="flex items-center gap-2.5 mb-5">
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Queue Time</h2>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
+                <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Queue Time</h2>
               </div>
 
-              <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 32 }}>
+              <div style={{ ...card(selected.status), padding: 32 }}>
                 {selected.attraction_type === 'show' ? (
                   <div className="text-center py-4">
-                    <div className={`text-3xl font-black ${
-                      selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                      selected.status === 'CLOSED' ? 'text-[#dc3545]' :
-                      'text-[#f0ad4e]'
-                    }`}>
+                    <div className="text-3xl font-black" style={{ color: statusColors(selected.status).text, ...FONT_NUM }}>
                       {selected.status === 'DELAYED' && delayStartedAt
                         ? `DELAYED — ${formatElapsed(delayElapsed)}`
                         : selected.status}
@@ -979,14 +1003,12 @@ export default function SupervisorDashboard() {
                   </div>
                 ) : selected.status === 'CLOSED' || selected.status === 'DELAYED' ? (
                   <div className="text-center py-4">
-                    <div className={`text-4xl font-black ${
-                      selected.status === 'CLOSED' ? 'text-[#dc3545]' : 'text-[#f0ad4e]'
-                    }`}>
+                    <div className="text-4xl font-black" style={{ color: statusColors(selected.status).text, ...FONT_NUM }}>
                       {selected.status === 'DELAYED' && delayStartedAt
                         ? `DELAYED — ${formatElapsed(delayElapsed)}`
                         : selected.status}
                     </div>
-                    <p className="text-white/30 text-xs mt-2">
+                    <p className="text-xs mt-2" style={{ color: text.muted }}>
                       {selected.status === 'CLOSED'
                         ? 'Contact control to open your attraction'
                         : 'Contact control to re-open your attraction'}
@@ -1008,18 +1030,11 @@ export default function SupervisorDashboard() {
                       </button>
 
                       <div className="flex-1 text-center">
-                        <div className={`text-5xl font-black tabular-nums ${
-                          selected.status === 'OPEN' ? 'text-[#22C55E]' :
-                          selected.status === 'AT CAPACITY' ? 'text-[#F59E0B]' :
-                          'text-[#f0ad4e]'
-                        }`}>
+                        <div className="text-5xl font-black tabular-nums" style={{ color: statusColors(selected.status).text }}>
                           {selected.wait_time}
-                          <span className="text-xl text-white/30 ml-1">min</span>
+                          <span className="text-xl ml-1" style={{ color: text.muted }}>min</span>
                         </div>
-                        <p className={`text-[10px] mt-0.5 font-semibold uppercase tracking-wider ${
-                          selected.status === 'OPEN' ? 'text-[#22C55E]/50' :
-                          'text-[#f0ad4e]/50'
-                        }`}>
+                        <p className="text-[10px] mt-0.5 font-semibold uppercase tracking-wider" style={{ color: statusColors(selected.status).text, opacity: 0.6 }}>
                           {selected.status}
                         </p>
                       </div>
@@ -1043,10 +1058,10 @@ export default function SupervisorDashboard() {
             {selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
               <section style={{ marginBottom: 48 }}>
                 <div className="flex items-center gap-2.5 mb-5">
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />
-                  <h2 style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Hourly Throughput</h2>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
+                  <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Hourly Throughput</h2>
                 </div>
-                <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, overflow: 'hidden' }}>
+                <div style={{ ...card(), overflow: 'hidden' }}>
                   {hourlySlots.map((slot, idx) => {
                     const count = getDispatchCountForSlot(slot);
                     const isCurrent = idx === currentSlotIndex;
@@ -1072,27 +1087,27 @@ export default function SupervisorDashboard() {
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '14px 20px',
-                          borderTop: idx === 0 ? 'none' : '1px solid #1a1a1a',
-                          background: isCurrent ? 'rgba(59,130,246,0.06)' : 'transparent',
-                          borderLeft: isCurrent ? '3px solid #3B82F6' : '3px solid transparent',
+                          borderTop: idx === 0 ? 'none' : `1px solid ${border.divider}`,
+                          background: isCurrent ? accents.control.soft : 'transparent',
+                          borderLeft: isCurrent ? `3px solid ${accents.control.base}` : '3px solid transparent',
                           cursor: 'default',
                           userSelect: 'none',
                         }}
                       >
-                        <span style={{ color: isCurrent ? '#F1F5F9' : isPast ? '#94A3B8' : '#64748B', fontSize: 14, fontWeight: isCurrent ? 600 : 400 }}>
+                        <span style={{ color: isCurrent ? text.primary : isPast ? text.secondary : text.muted, fontSize: 14, fontWeight: isCurrent ? 600 : 400, ...FONT_NUM }}>
                           {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           {count > 0 ? (
-                            <span style={{ color: isCurrent ? '#F1F5F9' : '#94A3B8', fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                            <span style={{ color: isCurrent ? text.primary : text.secondary, fontSize: 15, fontWeight: 700, ...FONT_NUM }}>
                               {count}
                             </span>
                           ) : (
-                            <span style={{ color: '#374151', fontSize: 13 }}>
+                            <span style={{ color: text.faint, fontSize: 13 }}>
                               {isCurrent ? 'In progress' : isPast ? '—' : ''}
                             </span>
                           )}
-                          <span style={{ color: '#2a2a2a', fontSize: 11 }}>hold to edit</span>
+                          <span style={{ color: text.faint, fontSize: 11 }}>hold to edit</span>
                         </div>
                       </div>
                     );
@@ -1104,38 +1119,34 @@ export default function SupervisorDashboard() {
             {/* ── Edit Throughput Modal ── */}
             {editSlot && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-                <div style={{ width: '100%', maxWidth: 320, background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
-                  <p style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', marginBottom: 4 }}>
+                <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 24 }}>
+                  <p style={{ color: text.secondary, fontSize: 12, textAlign: 'center', marginBottom: 4, ...FONT_NUM }}>
                     {formatSlotTime(editSlot.start)} – {formatSlotTime(editSlot.end)}
                   </p>
-                  <p style={{ color: '#F1F5F9', fontSize: 14, textAlign: 'center', marginBottom: 20 }}>Edit guest count</p>
-                  <div style={{ background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
-                    <span style={{ color: '#F1F5F9', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                  <p style={{ color: text.primary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>Edit guest count</p>
+                  <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
+                    <span style={{ color: text.primary, fontSize: 48, fontWeight: 700, ...FONT_NUM }}>
                       {editValue || '0'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
-                    {['1','2','3','4','5','6','7','8','9'].map((k) => (
-                      <button key={k} onClick={() => setEditValue((v) => { const n = v + k; return parseInt(n, 10) > 9999 ? v : n; })}
-                        style={{ padding: '14px 0', fontSize: 20, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                        className="active:bg-[#1a1a1a] transition-colors touch-manipulation">{k}</button>
-                    ))}
-                    <button onClick={() => setEditValue('')}
-                      style={{ padding: '14px 0', fontSize: 13, fontWeight: 700, color: '#EF4444', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                      className="active:bg-[#EF4444]/10 transition-colors touch-manipulation">CLR</button>
-                    <button onClick={() => setEditValue((v) => { const n = v + '0'; return parseInt(n, 10) > 9999 ? v : n; })}
-                      style={{ padding: '14px 0', fontSize: 20, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                      className="active:bg-[#1a1a1a] transition-colors touch-manipulation">0</button>
-                    <button onClick={() => setEditValue((v) => v.slice(0, -1))}
-                      style={{ padding: '14px 0', fontSize: 13, fontWeight: 700, color: '#F59E0B', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                      className="active:bg-[#F59E0B]/10 transition-colors touch-manipulation">DEL</button>
+                  <div style={{ marginBottom: 12 }}>
+                    <NumericKeypad
+                      onDigit={(k) => setEditValue((v) => { const n = v + k; return parseInt(n, 10) > 9999 ? v : n; })}
+                      onDelete={() => setEditValue((v) => v.slice(0, -1))}
+                      onClear={() => setEditValue('')}
+                      buttonHeight={52}
+                    />
                   </div>
                   <div className="flex gap-3">
                     <button onClick={() => { setEditSlot(null); setEditValue(''); }}
-                      style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, cursor: 'pointer' }}
-                      className="active:bg-[#1a1a1a] transition-colors touch-manipulation">Cancel</button>
-                    <button onClick={async () => { await saveSlotOverride(editSlot, parseInt(editValue, 10) || 0); setEditSlot(null); setEditValue(''); }}
-                      style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 700, color: '#fff', background: '#2563EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                      style={{ ...controlButton, background: 'transparent', flex: 1, minHeight: 52, padding: '13px 0', fontSize: 14, fontWeight: 600 }}
+                      className="transition-colors touch-manipulation">Cancel</button>
+                    <button onClick={async () => {
+                        // Keep the modal open and show an error if the save fails
+                        const ok = await saveSlotOverride(editSlot, parseInt(editValue, 10) || 0);
+                        if (ok) { setEditSlot(null); setEditValue(''); }
+                      }}
+                      style={{ ...primaryButton('control'), flex: 1, minHeight: 52, padding: '13px 0', fontSize: 14, fontWeight: 700 }}
                       className="active:bg-[#1D4ED8] transition-colors touch-manipulation">Save</button>
                   </div>
                 </div>
@@ -1150,42 +1161,32 @@ export default function SupervisorDashboard() {
       {/* ── Group Size Pad ── */}
       {groupSizePadOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-          <div style={{ width: '100%', maxWidth: 320, background: '#111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24 }}>
-            <p style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', marginBottom: 4 }}>Group size</p>
-            <div style={{ background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ color: '#F1F5F9', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 24 }}>
+            <p style={{ color: text.secondary, fontSize: 12, textAlign: 'center', marginBottom: 4 }}>Group size</p>
+            <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
+              <span style={{ color: text.primary, fontSize: 48, fontWeight: 700, ...FONT_NUM }}>
                 {groupSizePadInput || '0'}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
-              {['1','2','3','4','5','6','7','8','9'].map((k) => (
-                <button key={k}
-                  onClick={() => setGroupSizePadInput((v) => { const n = v + k; return parseInt(n, 10) > 30 ? v : n; })}
-                  style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                  className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-                >{k}</button>
-              ))}
-              <button onClick={() => setGroupSizePadInput('')}
-                style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#EF4444', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                className="active:bg-[#EF4444]/10 transition-colors touch-manipulation">CLR</button>
-              <button onClick={() => setGroupSizePadInput((v) => { const n = v + '0'; return parseInt(n, 10) > 30 ? v : n; })}
-                style={{ padding: '14px 0', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                className="active:bg-[#1a1a1a] transition-colors touch-manipulation">0</button>
-              <button onClick={() => setGroupSizePadInput((v) => v.slice(0, -1))}
-                style={{ padding: '14px 0', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8 }}
-                className="active:bg-[#F59E0B]/10 transition-colors touch-manipulation">DEL</button>
+            <div style={{ marginBottom: 12 }}>
+              <NumericKeypad
+                onDigit={(k) => setGroupSizePadInput((v) => { const n = v + k; return parseInt(n, 10) > 30 ? v : n; })}
+                onDelete={() => setGroupSizePadInput((v) => v.slice(0, -1))}
+                onClear={() => setGroupSizePadInput('')}
+                buttonHeight={52}
+              />
             </div>
             <div className="flex gap-3">
               <button onClick={() => { setGroupSizePadOpen(false); setGroupSizePadInput(''); }}
-                style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, cursor: 'pointer' }}
-                className="active:bg-[#1a1a1a] transition-colors touch-manipulation">Cancel</button>
+                style={{ ...controlButton, background: 'transparent', flex: 1, minHeight: 52, padding: '13px 0', fontSize: 14, fontWeight: 600 }}
+                className="transition-colors touch-manipulation">Cancel</button>
               <button onClick={() => {
                   const val = Math.min(30, Math.max(0, parseInt(groupSizePadInput, 10) || 0));
                   setDispatchGroupSize(val);
                   setGroupSizePadOpen(false);
                   setGroupSizePadInput('');
                 }}
-                style={{ flex: 1, padding: '13px 0', fontSize: 14, fontWeight: 700, color: '#fff', background: '#2563EB', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                style={{ ...primaryButton('control'), flex: 1, minHeight: 52, padding: '13px 0', fontSize: 14, fontWeight: 700 }}
                 className="active:bg-[#1D4ED8] transition-colors touch-manipulation">Set</button>
             </div>
           </div>
@@ -1201,33 +1202,33 @@ export default function SupervisorDashboard() {
           <div
             style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
-              height: '85%', background: '#111111',
-              borderTop: '1px solid #2a2a2a',
+              height: '85%', background: surface.card,
+              borderTop: `1px solid ${border.default}`,
               borderRadius: '16px 16px 0 0',
               display: 'flex', flexDirection: 'column',
             }}
           >
             {/* Drawer header */}
-            <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: `1px solid ${border.default}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <p style={{ margin: 0, color: '#F1F5F9', fontSize: 16, fontWeight: 700 }}>Show Report — {selected.name}</p>
-                <p style={{ margin: 0, color: '#94A3B8', fontSize: 11, marginTop: 2 }}>
+                <p style={{ margin: 0, color: text.primary, fontSize: 16, fontWeight: 700 }}>Show Report — {selected.name}</p>
+                <p style={{ margin: 0, fontSize: 11, marginTop: 2, color: notesSaving === 'error' ? '#F87171' : notesSaving === 'saved' ? '#4ADE80' : text.secondary }}>
                   {notesSaving === 'saving' ? 'Saving...' :
-                   notesSaving === 'saved' && notesLastSaved ? `Saved ${new Date(notesLastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
-                   notesSaving === 'error' ? 'Save failed' :
+                   notesSaving === 'saved' && notesLastSaved ? `✓ Draft saved ${new Date(notesLastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
+                   notesSaving === 'error' ? 'Save failed — check connection' :
                    'Auto-saves every 2 seconds'}
                 </p>
               </div>
               <button
                 onClick={() => setNotesOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}
+                style={{ background: 'none', border: 'none', color: text.secondary, fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}
               >
                 ✕
               </button>
             </div>
             {/* Drawer body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ margin: 0, color: '#94A3B8', fontSize: 12 }}>Notes auto-save every 2 seconds. Submit final report via Sign-Off.</p>
+              <p style={{ margin: 0, color: text.secondary, fontSize: 12 }}>Notes auto-save every 2 seconds. Submit final report via Sign-Off.</p>
               {([
                 { key: 'operational_report', label: 'Operational' },
                 { key: 'technical_report', label: 'Technical' },
@@ -1236,15 +1237,15 @@ export default function SupervisorDashboard() {
                 { key: 'additional_notes', label: 'Additional Notes' },
               ] as { key: keyof typeof notesData; label: string }[]).map(({ key, label }) => (
                 <div key={key}>
-                  <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</label>
+                  <label style={{ ...microLabel, display: 'block', color: text.secondary, fontSize: 11, marginBottom: 6 }}>{label}</label>
                   <textarea
                     value={notesData[key]}
                     onChange={(e) => handleNotesChange(key, e.target.value)}
                     rows={4}
                     placeholder={`${label} notes...`}
                     style={{
-                      width: '100%', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 8,
-                      color: '#F1F5F9', fontSize: 14, padding: '10px 12px', resize: 'vertical',
+                      width: '100%', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.sm,
+                      color: text.primary, fontSize: 14, padding: '10px 12px', resize: 'vertical',
                       fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
                     }}
                   />
@@ -1257,28 +1258,30 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer style={{ flexShrink: 0, background: '#111111', borderTop: '1px solid #2a2a2a', padding: '20px 24px' }}>
+        <footer style={{ flexShrink: 0, background: surface.card, borderTop: `1px solid ${border.default}`, padding: '20px 24px' }}>
           <div className="flex items-center justify-between">
             <div>
-              <div style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
+              <div style={{ ...microLabel, marginBottom: 4 }}>
                 {selected.name} Tonight
               </div>
-              <div style={{ color: '#22C55E', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ color: '#4ADE80', fontSize: 24, fontWeight: 800, ...FONT_NUM }}>
                 {guestsTonight.toLocaleString()}
-                <span style={{ color: '#94A3B8', fontSize: 13, marginLeft: 6 }}>guests</span>
+                <span style={{ color: text.secondary, fontSize: 13, marginLeft: 6 }}>guests</span>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ color: '#94A3B8', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 4 }}>
+              <div style={{ ...microLabel, marginBottom: 4 }}>
                 Park Total
               </div>
-              <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ color: text.primary, fontSize: 24, fontWeight: 800, ...FONT_NUM }}>
                 {totalGuestsAllAttractions.toLocaleString()}
               </div>
             </div>
           </div>
         </footer>
       )}
+
+      <ToastStack toasts={toasts} />
     </div>
   );
 }

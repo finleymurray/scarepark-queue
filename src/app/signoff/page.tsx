@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import AppSwitcher from '@/components/AppSwitcher';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +14,21 @@ import {
 } from '@/lib/signoff';
 import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import ShowReportModal from '@/components/ShowReportModal';
+import PinPad from '@/components/ui/PinPad';
+import OfflineBanner from '@/components/ui/OfflineBanner';
+import { useToasts, ToastStack } from '@/components/ui/Toast';
+import {
+  surface,
+  border,
+  text,
+  accents,
+  radius,
+  microLabel,
+  FONT_NUM,
+  statusColors,
+  card,
+  controlButton,
+} from '@/lib/theme';
 import type {
   Attraction,
   SignoffSection,
@@ -23,186 +37,12 @@ import type {
   SignoffRoleKey,
 } from '@/types/database';
 
-/* ── PIN Pad Modal ── */
-function PinPadModal({
-  open,
-  onVerified,
-  onCancel,
-  requiredRole,
-  attractionId,
-}: {
-  open: boolean;
-  onVerified: (userName: string, userEmail: string) => void;
-  onCancel: () => void;
-  requiredRole: SignoffRoleKey;
-  attractionId: string;
-}) {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
-
-  function handleDigit(d: string) {
-    if (pin.length >= 4) return;
-    if (lockedUntil && Date.now() < lockedUntil) return;
-    setPin((p) => p + d);
-    setError('');
-  }
-
-  function handleBackspace() {
-    setPin((p) => p.slice(0, -1));
-    setError('');
-  }
-
-  async function handleSubmit() {
-    if (pin.length < 4) {
-      setError('PIN must be 4 digits.');
-      return;
-    }
-    // C5: Rate limiting — lock out after 5 failed attempts
-    if (lockedUntil && Date.now() < lockedUntil) {
-      const secondsLeft = Math.ceil((lockedUntil - Date.now()) / 1000);
-      setError(`Too many attempts. Try again in ${secondsLeft}s.`);
-      setPin('');
-      return;
-    }
-    setVerifying(true);
-    const result = await verifyPin(pin);
-    setVerifying(false);
-
-    if (!result.valid) {
-      const attempts = failedAttempts + 1;
-      setFailedAttempts(attempts);
-      if (attempts >= 5) {
-        // Lock for 60 seconds, doubling for each subsequent block
-        const lockDuration = 60000 * Math.pow(2, Math.floor((attempts - 5) / 5));
-        setLockedUntil(Date.now() + lockDuration);
-        setError(`Too many failed attempts. Locked for ${lockDuration / 1000}s.`);
-      } else {
-        setError(result.error);
-      }
-      setPin('');
-      return;
-    }
-
-    if (!result.signoffRoles.includes(requiredRole)) {
-      setError(`You don't have the "${SIGNOFF_ROLE_LABELS[requiredRole]}" role.`);
-      setPin('');
-      return;
-    }
-
-    // Check attraction access — null means all attractions permitted
-    if (result.allowedAttractions !== null && !result.allowedAttractions.includes(attractionId)) {
-      setError(`You don't have access to sign off this attraction.`);
-      setPin('');
-      return;
-    }
-
-    setPin('');
-    setError('');
-    setFailedAttempts(0);
-    setLockedUntil(null);
-    onVerified(result.userName, result.userEmail);
-  }
-
-  function handleClose() {
-    setPin('');
-    setError('');
-    onCancel();
-  }
-
-  // Auto-submit when 4 digits entered
-  useEffect(() => {
-    if (pin.length === 4) {
-      handleSubmit();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin]);
-
-  if (!open) return null;
-
-  const dots = Array.from({ length: 4 }, (_, i) => i < pin.length);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-      <div className="w-full max-w-sm rounded-[12px] p-8" style={{ background: '#111111', border: '1px solid #2a2a2a' }}>
-        <p style={{ color: '#F1F5F9', textAlign: 'center', fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Enter Your PIN</p>
-        <p style={{ color: '#94A3B8', textAlign: 'center', fontSize: 13, marginBottom: 24 }}>
-          Requires: {SIGNOFF_ROLE_LABELS[requiredRole]}
-        </p>
-
-        {/* Dots */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24 }}>
-          {dots.map((filled, i) => (
-            <div
-              key={i}
-              style={{
-                width: 16, height: 16, borderRadius: '50%',
-                background: filled ? '#F59E0B' : 'transparent',
-                border: `2px solid ${filled ? '#F59E0B' : '#2a2a2a'}`,
-                transition: 'background 0.15s, border-color 0.15s',
-              }}
-            />
-          ))}
-        </div>
-
-        {error && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '8px 12px', marginBottom: 16 }}>
-            <p style={{ color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>{error}</p>
-          </div>
-        )}
-
-        {/* Keypad */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
-            <button
-              key={d}
-              onClick={() => handleDigit(d)}
-              style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 10 }}
-              className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-            >
-              {d}
-            </button>
-          ))}
-          <button
-            onClick={handleBackspace}
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#F59E0B', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 10 }}
-            className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-          >
-            DEL
-          </button>
-          <button
-            onClick={() => handleDigit('0')}
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#F1F5F9', background: '#000000', border: '1px solid #2a2a2a', borderRadius: 10 }}
-            className="active:bg-[#1a1a1a] transition-colors touch-manipulation"
-          >
-            0
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={pin.length < 4 || verifying}
-            style={{ aspectRatio: '4 / 3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#fff', background: '#D97706', border: 'none', borderRadius: 10 }}
-            className="active:bg-[#B45309] transition-colors touch-manipulation disabled:opacity-50"
-          >
-            {verifying ? '...' : '\u2713'}
-          </button>
-        </div>
-
-        <button
-          onClick={handleClose}
-          style={{ width: '100%', padding: '12px', color: '#94A3B8', fontSize: 14, fontWeight: 500, border: '1px solid #2a2a2a', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
-          className="hover:border-[#444444] hover:text-[#F1F5F9] transition-colors touch-manipulation"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
+const accent = accents.signoff;
+const green = statusColors('OPEN');
 
 export default function SignoffPage() {
   const router = useRouter();
+  const { toasts, pushToast } = useToasts();
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -318,23 +158,43 @@ export default function SignoffPage() {
     }
   }, [selectedAttractionId, fetchData]);
 
-  // Realtime subscription for completions
+  // Realtime subscription for completions — re-subscribes on channel errors
   useEffect(() => {
     if (!selectedAttractionId) return;
 
-    const channel = supabase
-      .channel('signoff-completions-live')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'signoff_completions', filter: `attraction_id=eq.${selectedAttractionId}` },
-        () => {
-          fetchData(selectedAttractionId);
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    let disposed = false;
+
+    function subscribeChannel() {
+      channel = supabase
+        .channel('signoff-completions-live')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'signoff_completions', filter: `attraction_id=eq.${selectedAttractionId}` },
+          () => {
+            fetchData(selectedAttractionId);
+          }
+        )
+        .subscribe((status) => {
+          if (disposed) return;
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            if (channel) supabase.removeChannel(channel);
+            channel = null;
+            if (retryTimeout) clearTimeout(retryTimeout);
+            retryTimeout = setTimeout(() => {
+              if (!disposed) subscribeChannel();
+            }, 5000);
+          }
+        });
+    }
+
+    subscribeChannel();
 
     return () => {
-      supabase.removeChannel(channel);
+      disposed = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [selectedAttractionId, fetchData]);
 
@@ -393,7 +253,25 @@ export default function SignoffPage() {
     setShowPinPad(true);
   }
 
-  async function handlePinVerified(userName: string, pinUserEmail: string) {
+  /** Verify PIN (role + attraction access) and, on success, run the completion flow. */
+  async function handlePinVerify(pin: string): Promise<boolean> {
+    if (!pinSectionId || !selectedAttractionId) return false;
+
+    const requiredRole = (sections.find((s) => s.id === pinSectionId)?.role_key as SignoffRoleKey) || 'supervisor';
+
+    const result = await verifyPin(pin);
+    if (!result.valid) return false;
+    if (!result.signoffRoles.includes(requiredRole)) return false;
+    // Check attraction access — null means all attractions permitted
+    if (result.allowedAttractions !== null && !result.allowedAttractions.includes(selectedAttractionId)) {
+      return false;
+    }
+
+    await completeSignOff(result.userName, result.userEmail);
+    return true;
+  }
+
+  async function completeSignOff(userName: string, pinUserEmail: string) {
     if (!pinSectionId || !selectedAttractionId) return;
 
     const section = sections.find((s) => s.id === pinSectionId);
@@ -412,6 +290,7 @@ export default function SignoffPage() {
 
     if (error) {
       if (process.env.NODE_ENV === 'development') console.error('Sign-off error:', error);
+      pushToast('error', 'Could not save sign-off — please try again.');
       setShowPinPad(false);
       setPinSectionId(null);
       return;
@@ -446,34 +325,42 @@ export default function SignoffPage() {
   const closingDone = allClosingSections.length === 0 || allClosingSections.every((s) => completions.has(s.id));
   const fullySignedOff = allOpeningSections.length > 0 && openingDone && closingDone;
 
+  const pinSection = sections.find((s) => s.id === pinSectionId);
+  const pinRequiredRole = (pinSection?.role_key as SignoffRoleKey) || 'supervisor';
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
-        <div className="text-[#888] text-sm">Loading...</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
+        <div style={{ color: text.muted, fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: '#000000', color: '#F1F5F9', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: surface.page, color: text.primary, fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <OfflineBanner />
+      <ToastStack toasts={toasts} />
+
       {/* PIN Pad */}
-      <PinPadModal
-        open={showPinPad}
-        onVerified={handlePinVerified}
-        onCancel={() => { setShowPinPad(false); setPinSectionId(null); }}
-        requiredRole={(sections.find((s) => s.id === pinSectionId)?.role_key as SignoffRoleKey) || 'supervisor'}
-        attractionId={selectedAttractionId}
-      />
+      {showPinPad && (
+        <PinPad
+          app="signoff"
+          title="Enter Your PIN"
+          subtitle={`Requires: ${SIGNOFF_ROLE_LABELS[pinRequiredRole]}`}
+          verify={handlePinVerify}
+          onCancel={() => { setShowPinPad(false); setPinSectionId(null); }}
+        />
+      )}
 
       {/* Header */}
-      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="signoff" isAdmin={userRole === 'admin'} />
           <a href="/signoff" style={{ textDecoration: 'none' }}>
-            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Sign-Off</h1>
+            <h1 style={{ color: text.primary, fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Sign-Off</h1>
           </a>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: text.secondary }}>
           {(displayName || userEmail) && (
             <span title={userEmail} className="hidden sm:block" style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName || userEmail}
@@ -481,9 +368,9 @@ export default function SignoffPage() {
           )}
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push('/signoff/login'); }}
-            style={{ background: 'none', border: '1px solid #2a2a2a', color: '#94A3B8', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#444444'; e.currentTarget.style.color = '#F1F5F9'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+            style={{ ...controlButton, padding: '6px 12px', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.primary; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
           >
             Sign out
           </button>
@@ -497,7 +384,7 @@ export default function SignoffPage() {
         {/* ────────────────────────────────────────────── */}
         {!selectedAttractionId && (
           <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
-            <p className="text-[#666] text-sm text-center mb-6">Select an attraction to begin sign-off</p>
+            <p className="text-sm text-center mb-6" style={{ color: text.muted }}>Select an attraction to begin sign-off</p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {attractions.map((a) => {
@@ -509,11 +396,10 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden rounded-[14px] border border-[#2a2a2a]
-                               transition-all duration-150 touch-manipulation flex flex-col
+                    className="relative overflow-hidden transition-all duration-150 touch-manipulation flex flex-col
                                hover:border-[#F59E0B]/50 active:scale-[0.97]
                                focus:outline-none"
-                    style={{ background: '#111111' }}
+                    style={{ ...card(), borderRadius: radius.xl }}
                   >
                     {/* Logo area */}
                     <div className="relative w-full" style={{ aspectRatio: '1' }}>
@@ -529,13 +415,13 @@ export default function SignoffPage() {
                             className="object-contain w-full h-full"
                             style={{ filter: glow || undefined }} />
                         ) : (
-                          <span style={{ color: '#94A3B8', fontSize: 36, fontWeight: 700 }}>{a.name.charAt(0)}</span>
+                          <span style={{ color: text.secondary, fontSize: 36, fontWeight: 700 }}>{a.name.charAt(0)}</span>
                         )}
                       </div>
                     </div>
                     {/* Name label */}
-                    <div className="px-3 pb-4 pt-1 text-center">
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', lineHeight: 1.3 }}>{a.name}</span>
+                    <div className="px-3 pb-4 pt-1 text-center w-full">
+                      <span style={{ fontSize: 13, fontWeight: 600, color: text.secondary, lineHeight: 1.3 }}>{a.name}</span>
                     </div>
                   </button>
                 );
@@ -543,7 +429,7 @@ export default function SignoffPage() {
             </div>
 
             <div className="text-center pt-10 pb-8">
-              <Link href="/privacy" className="text-[#555] text-[11px] no-underline hover:text-[#888]">
+              <Link href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
                 Privacy Policy
               </Link>
             </div>
@@ -558,8 +444,8 @@ export default function SignoffPage() {
             {/* Back button */}
             <button
               onClick={goBackToGrid}
-              className="flex items-center gap-2 font-medium mb-6 active:text-[#F1F5F9] transition-colors touch-manipulation"
-              style={{ color: '#94A3B8', minHeight: 44, fontSize: 15 }}
+              className="flex items-center gap-2 font-medium mb-6 transition-colors touch-manipulation"
+              style={{ color: text.secondary, minHeight: 44, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                 <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -583,33 +469,33 @@ export default function SignoffPage() {
             {/* ── Sign-Off Status Badge ── */}
             <div className="mb-8 flex flex-col items-center gap-2">
               {fullySignedOff ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.2)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: green.soft, color: green.text, border: `1px solid rgba(34,197,94,0.2)` }}>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   Signed Off
                 </span>
               ) : openingDone && allClosingSections.length > 0 ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: accent.soft, color: accent.base, border: '1px solid rgba(245,158,11,0.2)' }}>
                   Opening Signed Off
                 </span>
               ) : allOpeningSections.length > 0 ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('CLOSED').soft, color: statusColors('CLOSED').rail, border: '1px solid rgba(239,68,68,0.2)' }}>
                   Not Signed Off
                 </span>
               ) : null}
-              <p className="text-[#888] text-[13px]">
+              <p className="text-[13px]" style={{ color: text.muted }}>
                 {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
 
             {/* ── Sign-Off Sections ── */}
-            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#111111', border: '1px solid #2a2a2a' }}>
-              <legend style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: '#F59E0B', color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700 }}>1</span>
+            <fieldset className="p-4 sm:p-8 mb-8" style={card()}>
+              <legend style={{ color: text.primary, fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: accent.base, color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700, ...FONT_NUM }}>1</span>
                 Sign-Off Sections
               </legend>
 
               {/* Phase tabs */}
-              <div className="flex mb-6" style={{ borderBottom: '1px solid #2a2a2a' }}>
+              <div className="flex mb-6" style={{ borderBottom: `1px solid ${border.default}` }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -624,14 +510,13 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className={`flex-1 flex items-center justify-center gap-2 font-semibold transition-colors touch-manipulation relative
-                        ${closingLocked
-                          ? 'text-[#444] cursor-not-allowed'
-                          : active
-                            ? 'text-[#F1F5F9]'
-                            : 'text-[#94A3B8]'
-                        }`}
-                      style={{ padding: '16px 8px', fontSize: 15, minHeight: 52 }}
+                      className="flex-1 flex items-center justify-center gap-2 font-semibold transition-colors touch-manipulation relative"
+                      style={{
+                        padding: '16px 8px', fontSize: 15, minHeight: 52,
+                        background: 'none', border: 'none',
+                        color: closingLocked ? text.faint : active ? text.primary : text.secondary,
+                        cursor: closingLocked ? 'not-allowed' : 'pointer',
+                      }}
                     >
                       {closingLocked && (
                         <svg width="15" height="15" viewBox="0 0 12 12" fill="none">
@@ -641,11 +526,11 @@ export default function SignoffPage() {
                       )}
                       {p.charAt(0).toUpperCase() + p.slice(1)}
                       {pSections.length > 0 && !closingLocked && (
-                        <span className={`text-sm font-medium ${active ? 'text-[#888]' : 'text-[#555]'}`}>
-                          {allDone ? '\u2713' : `${pCompleted}/${pSections.length}`}
+                        <span className="text-sm font-medium" style={{ color: active ? text.muted : text.faint, ...FONT_NUM }}>
+                          {allDone ? '✓' : `${pCompleted}/${pSections.length}`}
                         </span>
                       )}
-                      {active && <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full" style={{ background: '#F59E0B' }} />}
+                      {active && <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full" style={{ background: accent.base }} />}
                     </button>
                   );
                 })}
@@ -653,16 +538,16 @@ export default function SignoffPage() {
 
               {/* Progress bar */}
               {totalSections > 0 && (
-                <div style={{ background: '#000000', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.lg, padding: '16px 20px', marginBottom: 20 }}>
                   <div className="flex items-center justify-between mb-3">
-                    <span style={{ color: '#94A3B8', fontSize: 15, fontWeight: 500 }}>
+                    <span style={{ color: text.secondary, fontSize: 15, fontWeight: 500, ...FONT_NUM }}>
                       {completedSections}/{totalSections} sections signed off
                     </span>
                     {completedSections === totalSections && (
-                      <span className="text-[12px] font-semibold px-2.5 py-0.5 rounded-[12px] bg-[#0a3d1f] text-[#4caf50]">COMPLETE</span>
+                      <span style={{ ...microLabel, fontSize: 12, fontWeight: 600, padding: '2px 10px', borderRadius: radius.pill, background: green.soft, color: green.text }}>COMPLETE</span>
                     )}
                   </div>
-                  <div style={{ position: 'relative', width: '100%', height: 10, background: '#1a1a1a', borderRadius: 99, overflow: 'visible' }}>
+                  <div style={{ position: 'relative', width: '100%', height: 10, background: surface.raised, borderRadius: radius.pill, overflow: 'visible' }}>
                     {/* Glow layer */}
                     <div
                       style={{
@@ -670,11 +555,11 @@ export default function SignoffPage() {
                         top: 0,
                         left: 0,
                         height: '100%',
-                        borderRadius: 99,
+                        borderRadius: radius.pill,
                         width: `${(completedSections / totalSections) * 100}%`,
                         background: completedSections === totalSections
-                          ? '#22C55E'
-                          : 'linear-gradient(90deg, #D97706, #F59E0B)',
+                          ? green.rail
+                          : `linear-gradient(90deg, ${accent.strong}, ${accent.base})`,
                         filter: 'blur(8px)',
                         opacity: 0.5,
                         transition: 'width 0.5s ease',
@@ -685,11 +570,11 @@ export default function SignoffPage() {
                       style={{
                         position: 'relative',
                         height: '100%',
-                        borderRadius: 99,
+                        borderRadius: radius.pill,
                         width: `${(completedSections / totalSections) * 100}%`,
                         background: completedSections === totalSections
-                          ? '#22C55E'
-                          : 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)',
+                          ? green.rail
+                          : `linear-gradient(90deg, ${accent.strong} 0%, ${accent.base} 100%)`,
                         transition: 'width 0.5s ease',
                       }}
                     />
@@ -700,8 +585,8 @@ export default function SignoffPage() {
               {/* No sections message */}
               {totalSections === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-[#666] text-sm">No {phase} sections configured for {selectedAttraction?.name || 'this attraction'}.</p>
-                  <p className="text-[#555] text-[13px] mt-2">Ask an admin to configure sign-off sections.</p>
+                  <p className="text-sm" style={{ color: text.muted }}>No {phase} sections configured for {selectedAttraction?.name || 'this attraction'}.</p>
+                  <p className="text-[13px] mt-2" style={{ color: text.faint }}>Ask an admin to configure sign-off sections.</p>
                 </div>
               )}
 
@@ -719,9 +604,14 @@ export default function SignoffPage() {
                   return (
                     <div
                       key={section.id}
-                      style={{ background: '#000000', borderRadius: 12, overflow: 'hidden' }}
-                      className={`border transition-colors
-                        ${isCompleted ? 'border-[rgba(34,197,94,0.3)]' : locked ? 'border-[#2a2a2a] opacity-60' : isActive ? 'border-[rgba(245,158,11,0.5)]' : 'border-[#2a2a2a]'}`}
+                      className="transition-colors"
+                      style={{
+                        background: isCompleted ? green.soft : surface.control,
+                        borderRadius: radius.lg,
+                        overflow: 'hidden',
+                        opacity: locked ? 0.6 : 1,
+                        border: `1px solid ${isCompleted ? 'rgba(34,197,94,0.3)' : isActive ? 'rgba(245,158,11,0.5)' : border.default}`,
+                      }}
                     >
                       {/* Section header — clickable if not completed and not locked */}
                       <button
@@ -732,39 +622,39 @@ export default function SignoffPage() {
                       >
                         <div className="flex items-center gap-4">
                           {isCompleted ? (
-                            <div className="w-10 h-10 rounded-full bg-[#0a3d1f] flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(34,197,94,0.18)' }}>
                               <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                                <path d="M3 7L6 10L11 4" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M3 7L6 10L11 4" stroke={green.rail} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
                           ) : locked ? (
-                            <div className="w-10 h-10 rounded-full bg-[#1a1a1a] border-2 border-[#444] flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: surface.raised, border: `2px solid ${border.strong}` }}>
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="#555" strokeWidth="1.5" fill="none"/>
-                                <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke="#555" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                                <rect x="3" y="7" width="10" height="7" rx="1.5" stroke={text.faint} strokeWidth="1.5" fill="none"/>
+                                <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
                               </svg>
                             </div>
                           ) : (
-                            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '2px solid rgba(245,158,11,0.3)' }}>
+                            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: accent.soft, color: accent.base, border: '2px solid rgba(245,158,11,0.3)', ...FONT_NUM }}>
                               {idx + 1}
                             </span>
                           )}
 
                           <div>
-                            <span style={{ fontSize: 15, fontWeight: 600, color: isCompleted ? '#22C55E' : locked ? '#475569' : '#F1F5F9' }}>
+                            <span style={{ fontSize: 15, fontWeight: 600, color: isCompleted ? green.rail : locked ? text.faint : text.primary }}>
                               {section.name}
                             </span>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[12px] text-[#888] font-medium">
+                              <span className="text-[12px] font-medium" style={{ color: text.muted }}>
                                 {SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}
                               </span>
                               {isCompleted && completion && (
-                                <span className="text-[#888] text-[11px]">
+                                <span className="text-[11px]" style={{ color: text.muted }}>
                                   &middot; {completion.signed_by_name} &middot; {new Date(completion.signed_at).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                 </span>
                               )}
                               {locked && (
-                                <span className="text-[#ffc107] text-[11px]">
+                                <span className="text-[11px]" style={{ color: accent.text }}>
                                   &middot; Waiting for {blockingNames.join(', ')}
                                 </span>
                               )}
@@ -774,16 +664,16 @@ export default function SignoffPage() {
 
                         {!isCompleted && !locked && (
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform shrink-0 ${isActive ? 'rotate-180' : ''}`}>
-                            <path d="M4 6L8 10L12 6" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M4 6L8 10L12 6" stroke={text.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </button>
 
                       {/* Expanded checklist */}
                       {isActive && !isCompleted && (
-                        <div style={{ borderTop: '1px solid #2a2a2a' }}>
+                        <div style={{ borderTop: `1px solid ${border.divider}` }}>
                           {sectionItems.length === 0 ? (
-                            <p className="text-[#666] text-sm py-6 px-6">No checklist items for this section.</p>
+                            <p className="text-sm py-6 px-6" style={{ color: text.muted }}>No checklist items for this section.</p>
                           ) : (
                             <div className="px-4 pt-4 pb-2 flex flex-col gap-3">
                               {sectionItems.map((item) => {
@@ -791,14 +681,14 @@ export default function SignoffPage() {
                                 return (
                                   <label
                                     key={item.id}
-                                    style={{ minHeight: 64, borderRadius: 12, border: checked ? '1px solid rgba(34,197,94,0.4)' : '1px solid #2a2a2a', background: checked ? 'rgba(34,197,94,0.08)' : '#000000', display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', cursor: 'pointer' }}
+                                    style={{ minHeight: 64, borderRadius: radius.lg, border: checked ? '1px solid rgba(34,197,94,0.4)' : `1px solid ${border.default}`, background: checked ? green.soft : surface.card, display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', cursor: 'pointer' }}
                                     className="transition-all touch-manipulation"
                                   >
                                     <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} className="hidden" />
-                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? '#22C55E' : '#1a1a1a', border: `2px solid ${checked ? '#22C55E' : '#2a2a2a'}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
-                                      <div style={{ position: 'absolute', top: 2, left: checked ? 26 : 2, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
+                                    <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? green.rail : surface.raised, border: `2px solid ${checked ? green.rail : border.strong}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
+                                      <div style={{ position: 'absolute', top: 2, left: checked ? 26 : 2, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : text.faint, boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
                                     </div>
-                                    <span style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.3, flex: 1, color: checked ? '#22C55E' : '#F1F5F9' }}>
+                                    <span style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.3, flex: 1, color: checked ? green.text : text.primary }}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -808,26 +698,28 @@ export default function SignoffPage() {
                           )}
 
                           {/* Sign off button — sticky at bottom */}
-                          <div className="sticky bottom-0 px-4 py-4" style={{ background: 'linear-gradient(to bottom, transparent 0%, #000000 30%)' }}>
+                          <div className="sticky bottom-0 px-4 py-4" style={{ background: `linear-gradient(to bottom, transparent 0%, ${surface.control} 30%)` }}>
                             {sectionItems.length > 0 && !allChecked && (
-                              <p className="text-[#555] text-[13px] text-center mb-3">
+                              <p className="text-[13px] text-center mb-3" style={{ color: text.faint, ...FONT_NUM }}>
                                 {sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length} item{sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length !== 1 ? 's' : ''} remaining
                               </p>
                             )}
                             <button
                               onClick={() => handleSignOffClick(section.id)}
                               disabled={!allChecked && sectionItems.length > 0}
-                              className="w-full text-base font-bold rounded-[14px] transition-all touch-manipulation
+                              className="w-full text-base font-bold transition-all touch-manipulation
                                          flex items-center justify-center gap-3
                                          disabled:opacity-25 disabled:cursor-not-allowed"
                               style={{
                                 background: allChecked || sectionItems.length === 0
-                                  ? 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
-                                  : '#111111',
-                                border: allChecked || sectionItems.length === 0 ? 'none' : '1px solid #2a2a2a',
-                                color: allChecked || sectionItems.length === 0 ? '#000' : '#475569',
+                                  ? `linear-gradient(135deg, ${accent.strong} 0%, ${accent.base} 100%)`
+                                  : surface.card,
+                                border: allChecked || sectionItems.length === 0 ? 'none' : `1px solid ${border.default}`,
+                                borderRadius: radius.xl,
+                                color: allChecked || sectionItems.length === 0 ? '#000' : text.faint,
                                 minHeight: 64,
                                 fontSize: 17,
+                                cursor: 'pointer',
                                 boxShadow: allChecked || sectionItems.length === 0 ? '0 6px 24px rgba(245,158,11,0.3)' : 'none',
                               }}
                             >
@@ -847,33 +739,31 @@ export default function SignoffPage() {
 
             {/* ── Separator ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '8px 0 16px' }}>
-              <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
-              <span style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>End of Night</span>
-              <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
+              <div style={{ flex: 1, height: 1, background: border.default }} />
+              <span style={{ ...microLabel, color: text.secondary, fontSize: 11, flexShrink: 0 }}>End of Night</span>
+              <div style={{ flex: 1, height: 1, background: border.default }} />
             </div>
 
             {/* ── End of Night Report Button ── */}
-            <fieldset className="rounded-[12px] p-4 sm:p-8 mb-8" style={{ background: '#111111', border: '1px solid #2a2a2a' }}>
-              <legend style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: '#F59E0B', color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700 }}>2</span>
+            <fieldset className="p-4 sm:p-8 mb-8" style={card()}>
+              <legend style={{ color: text.primary, fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: accent.base, color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700, ...FONT_NUM }}>2</span>
                 Show Report
               </legend>
-              <p style={{ color: '#94A3B8', fontSize: 14, marginBottom: 16 }}>
+              <p style={{ color: text.secondary, fontSize: 14, marginBottom: 16 }}>
                 Submit an end-of-night report for {selectedAttraction?.name || 'this attraction'}.
               </p>
               <button
                 onClick={() => setShowReportOpen(true)}
                 style={{
+                  ...controlButton,
                   width: '100%',
                   padding: '18px 24px',
-                  background: '#000000',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: 12,
-                  color: '#fff',
+                  borderRadius: radius.lg,
+                  color: text.primary,
                   fontSize: 16,
                   fontWeight: 600,
                   minHeight: 60,
-                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -904,7 +794,7 @@ export default function SignoffPage() {
             />
 
             <div className="text-center pb-6">
-              <Link href="/privacy" className="text-[#555] text-[11px] no-underline hover:text-[#888]">
+              <Link href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
                 Privacy Policy
               </Link>
             </div>

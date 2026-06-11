@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import type { Attraction, AuditLog, AuditActionType } from '@/types/database';
+import { surface, border, text as textTok, accents, radius } from '@/lib/theme';
 
 const PAGE_SIZE = 100;
 
@@ -126,15 +127,15 @@ function ClearDataModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24, maxWidth: 520, width: '100%' }}>
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, maxWidth: 520, width: '100%' }}>
         {result ? (
           <>
             <h2 className="text-white text-lg font-bold mb-4">Data Cleared</h2>
             <div className="space-y-2 mb-6">
               {result.map((r) => (
                 <div key={r.table} className="flex justify-between text-sm">
-                  <span className="text-[#888]">{r.table}</span>
-                  <span className={r.deleted >= 0 ? 'text-[#22C55E] font-medium' : 'text-[#dc3545] font-medium'}>
+                  <span className="text-[#94A3B8]">{r.table}</span>
+                  <span className={r.deleted >= 0 ? 'text-[#22C55E] font-medium' : 'text-[#F87171] font-medium'}>
                     {r.deleted >= 0 ? `${r.deleted} rows deleted` : 'Error'}
                   </span>
                 </div>
@@ -150,25 +151,25 @@ function ClearDataModal({
         ) : (
           <>
             <h2 className="text-white text-lg font-bold mb-1">Clear Test Data</h2>
-            <p className="text-[#888] text-sm mb-5">
+            <p className="text-[#94A3B8] text-sm mb-5">
               Permanently delete analytics and sign-off data for a specific date. This cannot be undone.
             </p>
 
             <div className="mb-4">
-              <label className="text-[#888] text-xs font-medium block mb-1.5">Date to clear</label>
+              <label className="text-[#94A3B8] text-xs font-medium block mb-1.5">Date to clear</label>
               <input
                 type="date"
                 value={clearDate}
                 onChange={(e) => setClearDate(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
+                className="w-full px-3 py-2.5 bg-[#13161C] border border-[#2E3543] rounded-md text-[#F8FAFC] text-sm
                            focus:outline-none focus:border-[#EF4444] transition-colors [color-scheme:dark]"
               />
             </div>
 
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[#888] text-xs font-medium">Data to delete</label>
-                <button onClick={toggleAll} className="text-[#6ea8fe] text-xs hover:text-white transition-colors">
+                <label className="text-[#94A3B8] text-xs font-medium">Data to delete</label>
+                <button onClick={toggleAll} className="text-[#FCA5A5] text-xs hover:text-white transition-colors">
                   {selectedTables.size === CLEAR_DATA_TABLES.length ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
@@ -176,7 +177,7 @@ function ClearDataModal({
                 {CLEAR_DATA_TABLES.map((table) => (
                   <label
                     key={table.key}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors hover:bg-[#222]"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors hover:bg-[#181D24]"
                     style={{ background: selectedTables.has(table.key) ? '#EF444415' : 'transparent' }}
                   >
                     <input
@@ -185,7 +186,7 @@ function ClearDataModal({
                       onChange={() => toggleTable(table.key)}
                       className="accent-[#EF4444] w-4 h-4"
                     />
-                    <span className={`text-sm ${selectedTables.has(table.key) ? 'text-white font-medium' : 'text-[#888]'}`}>
+                    <span className={`text-sm ${selectedTables.has(table.key) ? 'text-white font-medium' : 'text-[#94A3B8]'}`}>
                       {table.label}
                     </span>
                   </label>
@@ -195,15 +196,15 @@ function ClearDataModal({
 
             {selectedTables.size > 0 && (
               <div className="mb-5">
-                <label className="text-[#888] text-xs font-medium block mb-1.5">
-                  Type <span className="text-[#dc3545] font-bold">DELETE</span> to confirm
+                <label className="text-[#94A3B8] text-xs font-medium block mb-1.5">
+                  Type <span className="text-[#F87171] font-bold">DELETE</span> to confirm
                 </label>
                 <input
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-[#F1F5F9] text-sm
+                  className="w-full px-3 py-2.5 bg-[#13161C] border border-[#2E3543] rounded-md text-[#F8FAFC] text-sm
                              placeholder-[#475569] focus:outline-none focus:border-[#EF4444] transition-colors"
                   autoComplete="off"
                 />
@@ -213,7 +214,7 @@ function ClearDataModal({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-transparent border border-[#2a2a2a] text-[#94A3B8] hover:border-[#444444]
+                className="flex-1 px-6 py-3 bg-transparent border border-[#2E3543] text-[#94A3B8] hover:border-[#475569]
                            rounded-md transition-colors font-medium"
               >
                 Cancel
@@ -224,7 +225,7 @@ function ClearDataModal({
                 style={{
                   flex: 1,
                   padding: '12px 24px',
-                  background: canConfirm ? '#DC2626' : '#2a2a2a',
+                  background: canConfirm ? accents.admin.strong : surface.raised,
                   color: canConfirm ? '#fff' : '#666',
                   fontWeight: 700,
                   borderRadius: 6,
@@ -343,14 +344,14 @@ export default function LogsPage() {
 
   if (loading && logs.length === 0) {
     return (
-      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: surface.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-white text-xl font-semibold animate-pulse">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000', color: '#F1F5F9' }}>
+    <div style={{ minHeight: '100vh', background: surface.page, color: textTok.primary }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -360,10 +361,10 @@ export default function LogsPage() {
             onClick={() => applyFilters(filterAttraction, filterType)}
             style={{
               padding: '6px 12px',
-              background: '#111111',
-              border: '1px solid #2a2a2a',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
               borderRadius: 8,
-              color: '#888',
+              color: textTok.secondary,
               fontSize: 12,
               cursor: 'pointer',
               fontWeight: 600,
@@ -385,7 +386,7 @@ export default function LogsPage() {
           <select
             value={filterAttraction}
             onChange={(e) => applyFilters(e.target.value, filterType)}
-            style={{ background: '#000000', border: '1px solid #2a2a2a', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
+            style={{ background: surface.control, border: `1px solid ${border.strong}`, color: textTok.primary, borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
           >
             <option value="">All Attractions</option>
             {attractions.map((a) => (
@@ -396,7 +397,7 @@ export default function LogsPage() {
           <select
             value={filterType}
             onChange={(e) => applyFilters(filterAttraction, e.target.value)}
-            style={{ background: '#000000', border: '1px solid #2a2a2a', color: '#F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
+            style={{ background: surface.control, border: `1px solid ${border.strong}`, color: textTok.primary, borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
           >
             <option value="">All Types</option>
             <option value="queue_time_change">Queue Time</option>
@@ -412,11 +413,11 @@ export default function LogsPage() {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.lg, overflow: 'hidden' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: '1px solid #2a2a2a', color: '#94A3B8', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                <tr style={{ borderBottom: `1px solid ${border.default}`, color: textTok.secondary, fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   <th className="text-left px-4 py-3 font-medium">Time</th>
                   <th className="text-left px-4 py-3 font-medium">Attraction</th>
                   <th className="text-left px-4 py-3 font-medium">Action</th>
@@ -433,7 +434,7 @@ export default function LogsPage() {
                   </tr>
                 )}
                 {logs.map((log) => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a' }} className="hover:bg-[#1a1a1a] transition-colors">
+                  <tr key={log.id} style={{ borderBottom: `1px solid ${border.divider}` }} className="hover:bg-[#181D24] transition-colors">
                     <td className="px-4 py-3 text-white/60 whitespace-nowrap tabular-nums text-xs">
                       {formatTimestamp(log.created_at)}
                     </td>
@@ -461,7 +462,7 @@ export default function LogsPage() {
                       )}
                       {log.action_type === 'status_change' && log.details?.includes('Reason:') && (
                         <div className="mt-1">
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#f0ad4e]/15 text-[#f0ad4e] border border-[#f0ad4e]/30">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#F59E0B]/15 text-[#FBBF24] border border-[#F59E0B]/30">
                             {log.details.split('Reason: ')[1]?.split('.')[0]}
                           </span>
                         </div>
@@ -483,7 +484,7 @@ export default function LogsPage() {
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              style={{ padding: '8px 24px', background: '#111111', border: '1px solid #2a2a2a', borderRadius: 8, color: '#94A3B8', fontSize: 14, fontWeight: 500, cursor: 'pointer' }} className="hover:border-[#444444] hover:text-[#F1F5F9] transition-colors disabled:opacity-50"
+              style={{ padding: '8px 24px', background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.lg, color: textTok.secondary, fontSize: 14, fontWeight: 500, cursor: 'pointer' }} className="hover:border-[#475569] hover:text-[#F8FAFC] transition-colors disabled:opacity-50"
             >
               {loadingMore ? 'Loading...' : 'Load More'}
             </button>
@@ -492,7 +493,7 @@ export default function LogsPage() {
 
         {/* Clear Test Data — only visible to finley@immersivecore.network */}
         {userEmail === 'finley@immersivecore.network' && (
-          <div className="mt-12 pt-6 border-t border-[#222]">
+          <div className="mt-12 pt-6 border-t border-[#181B21]">
             <button
               onClick={() => setShowClearData(true)}
               className="px-4 py-2.5 bg-transparent border border-[#EF4444]/30 text-[#EF4444] hover:bg-[#EF4444]/10

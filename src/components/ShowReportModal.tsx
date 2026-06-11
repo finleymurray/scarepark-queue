@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import SignatureCanvas from './SignatureCanvas';
 import { fetchReportData, getExistingReport, submitShowReport } from '@/lib/showReport';
 import { verifyPin } from '@/lib/signoff';
+import { surface, border, text, radius, statusColors, FONT_NUM, microLabel, controlButton, primaryButton } from '@/lib/theme';
+import PinPad from '@/components/ui/PinPad';
+import { InlineError } from '@/components/ui/Toast';
 import type { HourlyThroughputSnapshot, DelaySnapshot } from '@/types/database';
 
 interface ShowReportModalProps {
@@ -60,6 +63,7 @@ interface DraftData {
 
 function saveDraftToStorage(attractionId: string, dateStr: string, draft: Omit<DraftData, 'savedAt'>): void {
   try {
+    if (typeof window === 'undefined') return;
     const data: DraftData = { ...draft, savedAt: new Date().toISOString() };
     localStorage.setItem(getDraftKey(attractionId, dateStr), JSON.stringify(data));
   } catch { /* localStorage might be unavailable */ }
@@ -67,6 +71,7 @@ function saveDraftToStorage(attractionId: string, dateStr: string, draft: Omit<D
 
 function loadDraftFromStorage(attractionId: string, dateStr: string): DraftData | null {
   try {
+    if (typeof window === 'undefined') return null;
     const raw = localStorage.getItem(getDraftKey(attractionId, dateStr));
     if (!raw) return null;
     return JSON.parse(raw) as DraftData;
@@ -75,6 +80,7 @@ function loadDraftFromStorage(attractionId: string, dateStr: string): DraftData 
 
 function clearDraftFromStorage(attractionId: string, dateStr: string): void {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(getDraftKey(attractionId, dateStr));
   } catch { /* ignore */ }
 }
@@ -84,8 +90,8 @@ export default function ShowReportModal({
   attractionId,
   attractionName,
   dateStr,
-  userEmail,
-  displayName,
+  userEmail, // eslint-disable-line @typescript-eslint/no-unused-vars
+  displayName, // eslint-disable-line @typescript-eslint/no-unused-vars
   onClose,
   onSubmitted,
 }: ShowReportModalProps) {
@@ -116,15 +122,12 @@ export default function ShowReportModal({
   // Draft from Control
   const [draftFromField, setDraftFromField] = useState(false);
 
-  // PIN verification — submitter identity
+  // PIN verification — submitter identity (no lockout by design; wrong PIN = retry)
   const [pinVerified, setPinVerified] = useState(false);
   const [pinUserName, setPinUserName] = useState('');
   const [pinUserEmail, setPinUserEmail] = useState('');
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState('');
-  const [pinVerifying, setPinVerifying] = useState(false);
-  const [pinFailedAttempts, setPinFailedAttempts] = useState(0);
-  const [pinLockedUntil, setPinLockedUntil] = useState<number | null>(null);
+  const [pinPadOpen, setPinPadOpen] = useState(false);
+  const [pinAccessError, setPinAccessError] = useState('');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -199,10 +202,8 @@ export default function ShowReportModal({
       setPinVerified(false);
       setPinUserName('');
       setPinUserEmail('');
-      setPinInput('');
-      setPinError('');
-      setPinFailedAttempts(0);
-      setPinLockedUntil(null);
+      setPinPadOpen(false);
+      setPinAccessError('');
       loadData();
     }
   }, [open, loadData]);
@@ -220,44 +221,24 @@ export default function ShowReportModal({
     setTimeout(() => setDraftSaved(false), 2000);
   };
 
-  async function handlePinDigit(d: string) {
-    if (pinLockedUntil && Date.now() < pinLockedUntil) return;
-    const next = (pinInput + d).slice(0, 4);
-    setPinInput(next);
-    setPinError('');
+  // PinPad verify callback — returns true on success (closes pad), false to retry.
+  async function handlePinVerify(pin: string): Promise<boolean> {
+    setPinAccessError('');
+    const result = await verifyPin(pin);
+    if (!result.valid) return false;
 
-    if (next.length === 4) {
-      setPinVerifying(true);
-      const result = await verifyPin(next);
-      setPinVerifying(false);
-      setPinInput('');
-
-      if (!result.valid) {
-        const attempts = pinFailedAttempts + 1;
-        setPinFailedAttempts(attempts);
-        if (attempts >= 5) {
-          const lockDuration = 60000 * Math.pow(2, Math.floor((attempts - 5) / 5));
-          setPinLockedUntil(Date.now() + lockDuration);
-          setPinError(`Too many attempts. Locked for ${lockDuration / 1000}s.`);
-        } else {
-          setPinError(result.error || 'Invalid PIN');
-        }
-        return;
-      }
-
-      // Check attraction access — null means all attractions permitted
-      if (result.allowedAttractions !== null && !result.allowedAttractions.includes(attractionId)) {
-        setPinError(`You don't have access to submit reports for this attraction.`);
-        return;
-      }
-
-      setPinVerified(true);
-      setPinUserName(result.userName);
-      setPinUserEmail(result.userEmail);
-      setPinError('');
-      setPinFailedAttempts(0);
-      setPinLockedUntil(null);
+    // Check attraction access — null means all attractions permitted
+    if (result.allowedAttractions !== null && !result.allowedAttractions.includes(attractionId)) {
+      setPinAccessError(`You don't have access to submit reports for this attraction.`);
+      setPinPadOpen(false);
+      return true; // close the pad; access error shown inline
     }
+
+    setPinVerified(true);
+    setPinUserName(result.userName);
+    setPinUserEmail(result.userEmail);
+    setPinPadOpen(false);
+    return true;
   }
 
   const handleSubmit = async () => {
@@ -304,13 +285,15 @@ export default function ShowReportModal({
 
   if (!open) return null;
 
+  const delayedColors = statusColors('DELAYED');
+
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 50,
-        background: 'rgba(0,0,0,0.9)',
+        background: 'rgba(0,0,0,0.85)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
@@ -322,15 +305,15 @@ export default function ShowReportModal({
         style={{
           width: '100%',
           maxWidth: 600,
-          background: '#111',
-          border: '1px solid #333',
-          borderRadius: 16,
+          background: surface.card,
+          border: `1px solid ${border.default}`,
+          borderRadius: radius.xl,
           padding: '24px 20px',
         }}
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: 0 }}>
+          <h2 style={{ color: text.primary, fontSize: 20, fontWeight: 700, margin: 0 }}>
             Show Report — {attractionName}
           </h2>
           <button
@@ -338,7 +321,7 @@ export default function ShowReportModal({
             style={{
               background: 'none',
               border: 'none',
-              color: '#aaa',
+              color: text.secondary,
               fontSize: 24,
               cursor: 'pointer',
               padding: '4px 8px',
@@ -350,13 +333,13 @@ export default function ShowReportModal({
         </div>
 
         {existingReport && (
-          <div style={{ background: '#1a1a1a', border: '1px solid #f0ad4e33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#f0ad4e' }}>
+          <div style={{ background: delayedColors.soft, border: `1px solid ${delayedColors.rail}40`, borderRadius: radius.sm, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: delayedColors.text }}>
             Previously submitted by {existingReport.submittedBy} at {formatTimestamp(existingReport.submittedAt)}
           </div>
         )}
 
         {!existingReport && draftFromField && (
-          <div style={{ background: '#1a1a1a', border: '1px solid #22C55E33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#22C55E', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: radius.sm, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#4ADE80', display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
@@ -365,7 +348,7 @@ export default function ShowReportModal({
           </div>
         )}
         {!existingReport && !draftFromField && draftInfo && (
-          <div style={{ background: '#1a1a1a', border: '1px solid #6ea8fe33', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#6ea8fe', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: radius.sm, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#93C5FD', display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
@@ -376,7 +359,7 @@ export default function ShowReportModal({
         )}
 
         {loading ? (
-          <div style={{ color: '#aaa', textAlign: 'center', padding: 40 }}>Loading report data...</div>
+          <div style={{ color: text.secondary, textAlign: 'center', padding: 40 }}>Loading report data...</div>
         ) : (
           <>
             {/* ── Section 1: Operating Summary ── */}
@@ -400,15 +383,16 @@ export default function ShowReportModal({
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '8px 14px',
-                      background: '#1a1a1a',
-                      borderRadius: 8,
+                      background: surface.control,
+                      border: `1px solid ${border.divider}`,
+                      borderRadius: radius.sm,
                       marginBottom: 6,
                     }}
                   >
-                    <span style={{ color: '#aaa', fontSize: 14 }}>
+                    <span style={{ color: text.secondary, fontSize: 14 }}>
                       {formatTime24(slot.slot_start)} – {formatTime24(slot.slot_end)}
                     </span>
-                    <span style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>
+                    <span style={{ color: text.primary, fontSize: 16, fontWeight: 700, ...FONT_NUM }}>
                       {slot.guest_count}
                     </span>
                   </div>
@@ -427,33 +411,33 @@ export default function ShowReportModal({
                     key={i}
                     style={{
                       padding: '10px 14px',
-                      background: '#1a1a1a',
-                      borderRadius: 8,
+                      background: surface.control,
+                      borderRadius: radius.sm,
                       marginBottom: 6,
-                      borderLeft: '3px solid #f0ad4e',
+                      borderLeft: `3px solid ${delayedColors.rail}`,
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <span style={{
                         fontSize: 12,
                         fontWeight: 600,
-                        color: '#f0ad4e',
-                        background: '#f0ad4e22',
+                        color: delayedColors.text,
+                        background: delayedColors.soft,
                         padding: '2px 8px',
                         borderRadius: 4,
                       }}>
                         {d.reason || 'Unknown'}
                       </span>
-                      <span style={{ fontSize: 13, color: '#aaa' }}>
+                      <span style={{ fontSize: 13, color: text.secondary, ...FONT_NUM }}>
                         {d.duration_minutes != null ? `${d.duration_minutes} min` : 'Ongoing'}
                       </span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#888' }}>
+                    <div style={{ fontSize: 12, color: text.muted }}>
                       {formatTimestamp(d.started_at)}
                       {d.resolved_at ? ` → ${formatTimestamp(d.resolved_at)}` : ' → Unresolved'}
                     </div>
                     {d.notes && (
-                      <div style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>{d.notes}</div>
+                      <div style={{ fontSize: 12, color: text.secondary, marginTop: 4 }}>{d.notes}</div>
                     )}
                   </div>
                 ))}
@@ -499,62 +483,53 @@ export default function ShowReportModal({
             <SectionLabel label="Verify Identity" />
             {!pinVerified ? (
               <div style={{ marginBottom: 24 }}>
-                <p style={{ color: '#888', fontSize: 13, marginBottom: 16 }}>
+                <p style={{ color: text.muted, fontSize: 13, marginBottom: 12 }}>
                   Enter your PIN to identify yourself as the submitter. This will be logged against your name.
                 </p>
 
-                {/* PIN dots */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginBottom: 16 }}>
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <div key={i} style={{
-                      width: 18, height: 18, borderRadius: '50%',
-                      background: i < pinInput.length ? '#6ea8fe' : 'transparent',
-                      border: `2px solid ${i < pinInput.length ? '#6ea8fe' : '#444'}`,
-                      transition: 'background 0.15s, border-color 0.15s',
-                    }} />
-                  ))}
-                </div>
-
-                {pinError && (
-                  <div style={{ background: '#2a1010', border: '1px solid #d43518', borderRadius: 6, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#f0a0a0', textAlign: 'center' }}>
-                    {pinError}
+                {pinAccessError && (
+                  <div style={{ marginBottom: 12 }}>
+                    <InlineError message={pinAccessError} />
                   </div>
                 )}
 
-                {pinVerifying && (
-                  <div style={{ textAlign: 'center', color: '#888', fontSize: 13, marginBottom: 12 }}>Verifying…</div>
-                )}
+                <button
+                  onClick={() => { setPinAccessError(''); setPinPadOpen(true); }}
+                  style={{
+                    ...controlButton,
+                    width: '100%',
+                    minHeight: 52,
+                    padding: '14px 16px',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: text.primary,
+                    touchAction: 'manipulation',
+                  }}
+                >
+                  Enter PIN
+                </button>
 
-                {/* Keypad */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, maxWidth: 280, margin: '0 auto' }}>
-                  {['1','2','3','4','5','6','7','8','9'].map((d) => (
-                    <button key={d} onClick={() => handlePinDigit(d)}
-                      style={{ aspectRatio: '1', fontSize: 22, fontWeight: 700, color: '#e0e0e0', background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {d}
-                    </button>
-                  ))}
-                  <button onClick={() => setPinInput((p) => p.slice(0, -1))}
-                    style={{ aspectRatio: '1', fontSize: 14, fontWeight: 700, color: '#ffc107', background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    DEL
-                  </button>
-                  <button onClick={() => handlePinDigit('0')}
-                    style={{ aspectRatio: '1', fontSize: 22, fontWeight: 700, color: '#e0e0e0', background: '#1a1a1a', border: '1px solid #333', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    0
-                  </button>
-                  <div /> {/* spacer */}
-                </div>
+                {pinPadOpen && (
+                  <PinPad
+                    app="control"
+                    title="Verify Identity"
+                    subtitle="Enter your 4-digit PIN to sign this report"
+                    verify={handlePinVerify}
+                    onCancel={() => setPinPadOpen(false)}
+                  />
+                )}
               </div>
             ) : (
-              <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: radius.md, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 8L6.5 11.5L13 4.5" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 8L6.5 11.5L13 4.5" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <div>
-                  <span style={{ color: '#4caf50', fontSize: 14, fontWeight: 600 }}>{pinUserName}</span>
-                  <span style={{ color: '#666', fontSize: 13 }}> — verified</span>
+                  <span style={{ color: '#4ADE80', fontSize: 14, fontWeight: 600 }}>{pinUserName}</span>
+                  <span style={{ color: text.muted, fontSize: 13 }}> — verified</span>
                 </div>
-                <button onClick={() => { setPinVerified(false); setPinInput(''); setSignature(null); }}
-                  style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#666', fontSize: 12, cursor: 'pointer', padding: '2px 6px' }}>
+                <button onClick={() => { setPinVerified(false); setSignature(null); }}
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', color: text.muted, fontSize: 12, cursor: 'pointer', padding: '2px 6px' }}>
                   Change
                 </button>
               </div>
@@ -576,8 +551,8 @@ export default function ShowReportModal({
 
             {/* ── Error ── */}
             {error && (
-              <div style={{ background: '#dc354520', border: '1px solid #dc354555', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#dc3545' }}>
-                {error}
+              <div style={{ marginBottom: 16 }}>
+                <InlineError message={error} />
               </div>
             )}
 
@@ -587,11 +562,16 @@ export default function ShowReportModal({
                 onClick={handleSaveDraft}
                 disabled={submitting || submitted}
                 style={{
-                  flex: 1, padding: '14px 16px', borderRadius: 12, border: '1px solid #444',
-                  fontSize: 14, fontWeight: 600, cursor: submitting || submitted ? 'not-allowed' : 'pointer',
-                  background: draftSaved ? '#1a3a2a' : '#1a1a1a',
-                  color: draftSaved ? '#22C55E' : '#ccc',
+                  ...controlButton,
+                  borderRadius: radius.lg,
+                  flex: 1, minHeight: 52, padding: '14px 16px',
+                  fontSize: 14, fontWeight: 600,
+                  cursor: submitting || submitted ? 'not-allowed' : 'pointer',
+                  background: draftSaved ? 'rgba(34,197,94,0.12)' : surface.control,
+                  borderColor: draftSaved ? 'rgba(34,197,94,0.4)' : border.strong,
+                  color: draftSaved ? '#4ADE80' : text.secondary,
                   transition: 'background 0.2s, color 0.2s',
+                  touchAction: 'manipulation',
                 }}
               >
                 {draftSaved ? '✓ Draft Saved' : 'Save Draft'}
@@ -600,12 +580,14 @@ export default function ShowReportModal({
                 onClick={handleSubmit}
                 disabled={!signature || !pinVerified || submitting || submitted}
                 style={{
-                  flex: 2, padding: '14px 24px', borderRadius: 12, border: 'none',
+                  ...primaryButton('control'),
+                  flex: 2, minHeight: 52, padding: '14px 24px',
                   fontSize: 16, fontWeight: 700,
                   cursor: !signature || !pinVerified || submitting || submitted ? 'not-allowed' : 'pointer',
-                  background: submitted ? '#22C55E' : (!signature || !pinVerified) ? '#333' : '#dc3545',
-                  color: submitted || (signature && pinVerified) ? '#fff' : '#666',
+                  background: submitted ? '#22C55E' : (!signature || !pinVerified) ? surface.raised : undefined,
+                  color: submitted || (signature && pinVerified) ? '#fff' : text.faint,
                   transition: 'background 0.2s, color 0.2s',
+                  touchAction: 'manipulation',
                 }}
               >
                 {submitted ? '✓ Report Submitted' : submitting ? 'Submitting...' : existingReport ? 'Update Report' : 'Submit Report'}
@@ -622,7 +604,7 @@ export default function ShowReportModal({
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+    <div style={{ ...microLabel, color: text.secondary, fontSize: 12, marginBottom: 10 }}>
       {label}
     </div>
   );
@@ -630,17 +612,17 @@ function SectionLabel({ label }: { label: string }) {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ flex: 1, background: '#1a1a1a', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
-      <div style={{ color: '#aaa', fontSize: 12, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div style={{ color: '#22C55E', fontSize: 24, fontWeight: 800 }}>{value}</div>
+    <div style={{ flex: 1, background: surface.control, border: `1px solid ${border.divider}`, borderRadius: radius.md, padding: '14px 16px', textAlign: 'center' }}>
+      <div style={{ ...microLabel, marginBottom: 4 }}>{label}</div>
+      <div style={{ color: '#4ADE80', fontSize: 24, fontWeight: 800, ...FONT_NUM }}>{value}</div>
     </div>
   );
 }
 
-function EmptyState({ text }: { text: string }) {
+function EmptyState({ text: emptyText }: { text: string }) {
   return (
-    <div style={{ background: '#1a1a1a', borderRadius: 8, padding: '16px 14px', marginBottom: 24, fontSize: 13, color: '#666', textAlign: 'center' }}>
-      {text}
+    <div style={{ background: surface.control, border: `1px solid ${border.divider}`, borderRadius: radius.sm, padding: '16px 14px', marginBottom: 24, fontSize: 13, color: text.muted, textAlign: 'center' }}>
+      {emptyText}
     </div>
   );
 }
@@ -658,9 +640,9 @@ function TextArea({
 }) {
   return (
     <div>
-      <label style={{ display: 'block', color: '#aaa', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+      <label style={{ display: 'block', color: text.secondary, fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
         {label}
-        <span style={{ color: '#666', fontSize: 11, marginLeft: 6 }}>Optional</span>
+        <span style={{ color: text.muted, fontSize: 11, marginLeft: 6 }}>Optional</span>
       </label>
       <textarea
         value={value}
@@ -669,10 +651,10 @@ function TextArea({
         rows={3}
         style={{
           width: '100%',
-          background: '#1a1a1a',
-          border: '1px solid #333',
-          borderRadius: 8,
-          color: '#fff',
+          background: surface.control,
+          border: `1px solid ${border.strong}`,
+          borderRadius: radius.sm,
+          color: text.primary,
           fontSize: 14,
           padding: '10px 12px',
           resize: 'vertical',

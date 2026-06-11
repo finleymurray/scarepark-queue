@@ -8,6 +8,23 @@ const ID_STORAGE_KEY = 'ic-screen-id';
 const PATH_STORAGE_KEY = 'ic-last-path';
 const POLL_INTERVAL = 30_000;
 
+/** Static TV routes that exist in the build. */
+const STATIC_SCREEN_PATHS = new Set([
+  '/tv', '/tv1', '/tv2', '/tv2.5', '/tv3', '/tv3.5', '/tv4', '/tv4.5', '/tv5', '/tv-ops',
+]);
+
+/**
+ * A screen may only be sent to a known TV route, a legacy /queue/<slug> page,
+ * or the dynamic /queue?a=<slug> page. Anything else (typos, arbitrary URLs)
+ * is ignored so an unattended kiosk can never be redirected to a 404.
+ */
+export function isValidScreenPath(path: string): boolean {
+  if (STATIC_SCREEN_PATHS.has(path)) return true;
+  if (/^\/queue\/[a-z0-9-]+$/.test(path)) return true;
+  if (/^\/queue\?(a|slug)=[a-z0-9-]+$/.test(path)) return true;
+  return false;
+}
+
 /**
  * Persistent screen identity hook — polling-first, realtime-optional.
  *
@@ -35,6 +52,10 @@ export function useScreenIdentity(pagePath: string) {
 
     function handleAssignment(assignedPath: string | null) {
       if (!assignedPath) return;
+      // Validate before redirecting: a typo'd assignment (e.g. '/tv-1') would
+      // otherwise strand the kiosk on a 404 all night. Accept only known
+      // static screen routes or the query-param queue page.
+      if (!isValidScreenPath(assignedPath)) return;
       // Only navigate if the assigned path differs from where we are
       if (assignedPath !== pagePath) {
         localStorage.setItem(PATH_STORAGE_KEY, assignedPath);

@@ -11,28 +11,30 @@ import { resolveLogo, resolveLogoGlow } from '@/lib/logos';
 import { getAllSignoffStatuses, getTodayDateStr } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting, DelayReason } from '@/types/database';
+import { surface, border, text as textTok, accents, radius, FONT_NUM, microLabel, card, controlButton, primaryButton } from '@/lib/theme';
+import { useToasts, ToastStack } from '@/components/ui/Toast';
 
 const STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'CLOSED', 'DELAYED', 'AT CAPACITY'];
 const SHOW_STATUS_OPTIONS: AttractionStatus[] = ['OPEN', 'DELAYED'];
 
 const STATUS_COLORS: Record<AttractionStatus, string> = {
   'OPEN': 'bg-[#22C55E]',
-  'CLOSED': 'bg-[#dc3545]',
-  'DELAYED': 'bg-[#f0ad4e]',
+  'CLOSED': 'bg-[#EF4444]',
+  'DELAYED': 'bg-[#F59E0B]',
   'AT CAPACITY': 'bg-[#F59E0B]',
 };
 
 const STATUS_INLINE_COLORS: Record<AttractionStatus, string> = {
   'OPEN': '#22C55E',
-  'CLOSED': '#dc3545',
-  'DELAYED': '#f0ad4e',
+  'CLOSED': '#EF4444',
+  'DELAYED': '#F59E0B',
   'AT CAPACITY': '#F59E0B',
 };
 
 const STATUS_PILL_BG: Record<AttractionStatus, string> = {
   'OPEN': '#22C55E',
-  'CLOSED': '#dc3545',
-  'DELAYED': '#f0ad4e',
+  'CLOSED': '#EF4444',
+  'DELAYED': '#F59E0B',
   'AT CAPACITY': '#F59E0B',
 };
 
@@ -82,14 +84,14 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
         <div className="text-[#EF4444] text-5xl mb-2">⚠</div>
         <h2 className="text-white text-xl font-bold">{title}</h2>
         <p className="text-[#94A3B8] text-sm">{message}</p>
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={onCancel}
-            className="px-6 py-3 bg-transparent border border-[#2a2a2a] text-[#94A3B8] hover:border-[#444444]
+            className="px-6 py-3 bg-transparent border border-[#2E3543] text-[#94A3B8] hover:border-[#475569]
                        rounded-md transition-colors font-medium"
           >
             Cancel
@@ -133,7 +135,7 @@ function DelayReasonModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, maxWidth: 480, width: '100%' }}>
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, maxWidth: 480, width: '100%' }}>
         <h2 className="text-white text-lg font-bold mb-1">Delay Reason</h2>
         <p className="text-[#94A3B8] text-sm mb-5">
           Why is <span className="text-white font-medium">{attractionName}</span> being delayed?
@@ -147,9 +149,9 @@ function DelayReasonModal({
               style={{
                 padding: '12px 8px',
                 borderRadius: 6,
-                border: selectedReason === reason ? '2px solid #F59E0B' : '1px solid #2a2a2a',
-                background: selectedReason === reason ? '#F59E0B15' : '#000000',
-                color: selectedReason === reason ? '#f0ad4e' : '#ccc',
+                border: selectedReason === reason ? '2px solid #F59E0B' : `1px solid ${border.strong}`,
+                background: selectedReason === reason ? 'rgba(245,158,11,0.12)' : surface.control,
+                color: selectedReason === reason ? '#FBBF24' : textTok.secondary,
                 fontSize: 14,
                 fontWeight: selectedReason === reason ? 600 : 400,
                 cursor: 'pointer',
@@ -162,7 +164,7 @@ function DelayReasonModal({
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', color: '#888', fontSize: 12, marginBottom: 6 }}>
+          <label style={{ display: 'block', color: textTok.muted, fontSize: 12, marginBottom: 6 }}>
             Notes (optional)
           </label>
           <input
@@ -170,7 +172,7 @@ function DelayReasonModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Additional details..."
-            className="w-full px-3 py-2.5 bg-[#000000] border border-[#2a2a2a] rounded-md text-white text-sm
+            className="w-full px-3 py-2.5 bg-[#13161C] border border-[#2E3543] rounded-md text-white text-sm
                        placeholder-[#475569] focus:outline-none focus:border-[#F59E0B] transition-colors"
           />
         </div>
@@ -178,7 +180,7 @@ function DelayReasonModal({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-6 py-3 bg-transparent border border-[#2a2a2a] text-[#94A3B8] hover:border-[#444444]
+            className="flex-1 px-6 py-3 bg-transparent border border-[#2E3543] text-[#94A3B8] hover:border-[#475569]
                        rounded-md transition-colors font-medium"
           >
             Cancel
@@ -189,8 +191,8 @@ function DelayReasonModal({
             style={{
               flex: 1,
               padding: '12px 24px',
-              background: selectedReason ? '#f0ad4e' : '#333',
-              color: selectedReason ? '#000' : '#666',
+              background: selectedReason ? '#F59E0B' : surface.raised,
+              color: selectedReason ? '#000' : textTok.faint,
               fontWeight: 700,
               borderRadius: 6,
               border: 'none',
@@ -267,8 +269,8 @@ function EditableName({
           if (e.key === 'Enter') commit();
           if (e.key === 'Escape') { setValue(name); setEditing(false); }
         }}
-        className="text-[#F1F5F9] text-lg font-bold bg-[#000000] border border-[#2a2a2a] rounded-md px-2 py-0.5 mr-2
-                   focus:outline-none focus:border-[#3B82F6] transition-colors min-w-0 flex-1"
+        className="text-[#F8FAFC] text-lg font-bold bg-[#13161C] border border-[#2E3543] rounded-md px-2 py-0.5 mr-2
+                   focus:outline-none focus:border-[#EF4444] transition-colors min-w-0 flex-1"
       />
     );
   }
@@ -276,7 +278,7 @@ function EditableName({
   return (
     <h3
       onClick={() => setEditing(true)}
-      className="text-[#F1F5F9] text-lg font-bold truncate mr-2 cursor-pointer hover:text-[#94A3B8] transition-colors"
+      className="text-[#F8FAFC] text-lg font-bold truncate mr-2 cursor-pointer hover:text-[#94A3B8] transition-colors"
       title="Click to edit name"
     >
       {name}
@@ -321,25 +323,25 @@ function OperatingHoursControl({
   const hasChanges = openValue !== openingTime || closeValue !== closingTime;
 
   return (
-    <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24, position: 'relative' }}>
+    <div style={{ ...card(), padding: 24, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[#F1F5F9] text-base font-semibold" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Operating Hours</h3>
-        <span style={{ background: '#1a1a1a', color: '#94A3B8', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, letterSpacing: '0.04em' }}>INFO</span>
+        <h3 className="text-[#F8FAFC] text-base font-semibold" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Operating Hours</h3>
+        <span style={{ background: surface.raised, color: textTok.secondary, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, letterSpacing: '0.04em' }}>INFO</span>
       </div>
 
       <div className="flex gap-4 text-center mb-3">
         <div className="flex-1">
-          <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Opens</span>
-          <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+          <span style={{ color: textTok.secondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Opens</span>
+          <div style={{ color: textTok.primary, fontSize: 24, fontWeight: 700, ...FONT_NUM, marginTop: 4 }}>
             {openingTime || '--:--'}
           </div>
         </div>
-        <div style={{ color: '#64748B', alignSelf: 'center', fontSize: 18 }}>—</div>
+        <div style={{ color: textTok.muted, alignSelf: 'center', fontSize: 18 }}>—</div>
         <div className="flex-1">
-          <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Closes</span>
-          <div style={{ color: '#F1F5F9', fontSize: 24, fontWeight: 700, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+          <span style={{ color: textTok.secondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Closes</span>
+          <div style={{ color: textTok.primary, fontSize: 24, fontWeight: 700, ...FONT_NUM, marginTop: 4 }}>
             {closingTime || '--:--'}
           </div>
         </div>
@@ -348,25 +350,25 @@ function OperatingHoursControl({
       <div className="space-y-2">
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Opening</label>
+            <label style={{ display: 'block', color: textTok.secondary, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Opening</label>
             <input
               type="time"
               value={openValue}
               onChange={(e) => setOpenValue(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44 }}
-              onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
+              style={{ width: '100%', padding: '10px 12px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.primary, fontSize: 14, outline: 'none', minHeight: 44 }}
+              onFocus={(e) => { e.target.style.borderColor = accents.admin.base; }}
+              onBlur={(e) => { e.target.style.borderColor = border.strong; }}
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Closing</label>
+            <label style={{ display: 'block', color: textTok.secondary, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Closing</label>
             <input
               type="time"
               value={closeValue}
               onChange={(e) => setCloseValue(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44 }}
-              onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
-              onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
+              style={{ width: '100%', padding: '10px 12px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.primary, fontSize: 14, outline: 'none', minHeight: 44 }}
+              onFocus={(e) => { e.target.style.borderColor = accents.admin.base; }}
+              onBlur={(e) => { e.target.style.borderColor = border.strong; }}
             />
           </div>
         </div>
@@ -374,9 +376,9 @@ function OperatingHoursControl({
           onClick={handleSave}
           disabled={saving || !hasChanges}
           style={{
+            ...primaryButton('admin'),
             width: '100%', padding: '11px 0', marginTop: 8,
-            background: '#2563EB', border: 'none', borderRadius: 8,
-            color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving || !hasChanges ? 'not-allowed' : 'pointer',
+            fontSize: 13, fontWeight: 700, cursor: saving || !hasChanges ? 'not-allowed' : 'pointer',
             opacity: saving || !hasChanges ? 0.3 : 1, transition: 'opacity 0.15s', minHeight: 44,
           }}
           className="btn-quick"
@@ -403,7 +405,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('up')}
         disabled={isFirst}
-        className="p-1 text-[#94A3B8] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-[#94A3B8] hover:text-[#F8FAFC] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move up"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -413,7 +415,7 @@ function ReorderButtons({
       <button
         onClick={() => onMove('down')}
         disabled={isLast}
-        className="p-1 text-[#94A3B8] hover:text-[#F1F5F9] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="p-1 text-[#94A3B8] hover:text-[#F8FAFC] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         title="Move down"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -441,8 +443,8 @@ function TargetDispatchField({ value, onSave }: { value: number | null; onSave: 
   }
 
   return (
-    <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 12, marginBottom: 4, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-      <span style={{ color: '#64748B', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Target Dispatch</span>
+    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 12, marginBottom: 4, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <span style={{ color: textTok.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Target Dispatch</span>
       {editing ? (
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <input
@@ -453,18 +455,18 @@ function TargetDispatchField({ value, onSave }: { value: number | null; onSave: 
             autoFocus
             min={1}
             max={600}
-            style={{ width: 64, padding: '4px 8px', background: '#000', border: '1px solid #3B82F6', borderRadius: 6, color: '#F1F5F9', fontSize: 13, outline: 'none' }}
+            style={{ width: 64, padding: '4px 8px', background: surface.control, border: `1px solid ${accents.admin.base}`, borderRadius: 6, color: textTok.primary, fontSize: 13, outline: 'none' }}
           />
-          <span style={{ color: '#64748B', fontSize: 12 }}>s</span>
-          <button onClick={confirm} style={{ padding: '4px 10px', background: '#2563EB', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>OK</button>
-          <button onClick={() => setEditing(false)} style={{ padding: '4px 8px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 6, color: '#94A3B8', fontSize: 12, cursor: 'pointer' }}>✕</button>
+          <span style={{ color: textTok.muted, fontSize: 12 }}>s</span>
+          <button onClick={confirm} style={{ padding: '4px 10px', background: accents.admin.strong, border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>OK</button>
+          <button onClick={() => setEditing(false)} style={{ ...controlButton, padding: '4px 8px', fontSize: 12 }}>✕</button>
         </div>
       ) : (
         <button
           onClick={startEdit}
-          style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3B82F6'; e.currentTarget.style.color = '#F1F5F9'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#94A3B8'; }}
+          style={{ fontSize: 13, fontWeight: 600, color: textTok.secondary, background: 'transparent', border: `1px solid ${border.strong}`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.admin.base; e.currentTarget.style.color = textTok.primary; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = textTok.secondary; }}
         >
           {value !== null ? `${value}s` : '90s'}
         </button>
@@ -556,7 +558,7 @@ const RideControl = React.memo(function RideControl({
   }
 
   return (
-    <div style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
+    <div style={{ ...card(status), padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
       <SaveFeedback show={showSaved} />
 
       {/* Reorder buttons — top right corner */}
@@ -601,7 +603,7 @@ const RideControl = React.memo(function RideControl({
           ))}
         </select>
         {status === 'DELAYED' && delayStartedAt && (
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#f0ad4e', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#F59E0B', ...FONT_NUM, letterSpacing: '0.05em' }}>
             {formatElapsed(delayElapsed)}
           </span>
         )}
@@ -694,18 +696,18 @@ const RideControl = React.memo(function RideControl({
           max={180}
           style={{
             flex: 1, padding: '10px 12px',
-            background: '#000', border: '1px solid #2a2a2a', borderRadius: 8,
-            color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44,
+            background: surface.control, border: `1px solid ${border.strong}`, borderRadius: 8,
+            color: textTok.primary, fontSize: 14, outline: 'none', minHeight: 44,
           }}
           className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-          onFocus={(e) => { e.target.style.borderColor = '#3B82F6'; }}
-          onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; }}
+          onFocus={(e) => { e.target.style.borderColor = accents.admin.base; }}
+          onBlur={(e) => { e.target.style.borderColor = border.strong; }}
         />
         <button
           onClick={handleSetTime}
           disabled={saving || !customTime}
           style={{
-            padding: '10px 18px', background: '#DC2626', border: 'none',
+            padding: '10px 18px', background: accents.admin.strong, border: 'none',
             borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700,
             cursor: !customTime || saving ? 'not-allowed' : 'pointer',
             opacity: !customTime || saving ? 0.3 : 1, minHeight: 44,
@@ -724,7 +726,7 @@ const RideControl = React.memo(function RideControl({
       />
 
       {/* Remove */}
-      <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: 12, width: '100%' }}>
+      <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 12, width: '100%' }}>
         <button
           onClick={() => onDelete(attraction.id, attraction.name)}
           className="w-full py-2 text-xs text-[#94A3B8] hover:text-[#EF4444] hover:bg-[#EF4444]/10
@@ -790,7 +792,7 @@ const ShowControl = React.memo(function ShowControl({
   }
 
   return (
-    <div style={{ background: '#111', border: '1px solid rgba(126,34,206,0.2)', borderRadius: 14, padding: 20, position: 'relative' }}>
+    <div style={{ ...card(status), padding: 20, position: 'relative' }}>
       <SaveFeedback show={showSaved} />
 
       {/* Header row: SHOW badge + status + reorder */}
@@ -859,10 +861,10 @@ const ShowControl = React.memo(function ShowControl({
 
       {/* Show times */}
       <div style={{ width: '100%' }}>
-        <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Show Times</p>
+        <p style={{ color: textTok.secondary, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Show Times</p>
 
         {sortedTimes.length === 0 ? (
-          <p style={{ color: '#374151', fontSize: 12, fontStyle: 'italic', marginBottom: 10 }}>No show times added</p>
+          <p style={{ color: textTok.faint, fontSize: 12, fontStyle: 'italic', marginBottom: 10 }}>No show times added</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {sortedTimes.map((time) => (
@@ -881,7 +883,7 @@ const ShowControl = React.memo(function ShowControl({
         <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
           <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddTime(); }}
-            style={{ flex: 1, padding: '10px 12px', background: '#000', border: '1px solid #2a2a2a', borderRadius: 8, color: '#F1F5F9', fontSize: 14, outline: 'none', minHeight: 44 }}
+            style={{ flex: 1, padding: '10px 12px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.primary, fontSize: 14, outline: 'none', minHeight: 44 }}
           />
           <button onClick={handleAddTime} disabled={saving || !newTime || showTimes.includes(newTime)}
             style={{ padding: '10px 18px', background: 'rgba(126,34,206,0.6)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!newTime || showTimes.includes(newTime)) ? 0.3 : 1, minHeight: 44 }}>
@@ -891,15 +893,15 @@ const ShowControl = React.memo(function ShowControl({
       </div>
 
       {/* Footer actions */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid #1a1a1a' }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${border.divider}` }}>
         {sortedTimes.length > 0 && (
           <button onClick={handleClearAll} disabled={saving}
-            style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, color: '#64748B', fontSize: 12, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.3 : 1 }}>
+            style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.muted, fontSize: 12, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.3 : 1 }}>
             Clear Times
           </button>
         )}
         <button onClick={() => onDelete(attraction.id, attraction.name)}
-          style={{ flex: sortedTimes.length > 0 ? '0 0 auto' : 1, padding: '9px 12px', background: 'transparent', border: '1px solid #2a2a2a', borderRadius: 8, color: '#64748B', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+          style={{ flex: sortedTimes.length > 0 ? '0 0 auto' : 1, padding: '9px 12px', background: 'transparent', border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.muted, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
           Remove
         </button>
       </div>
@@ -932,6 +934,16 @@ export default function AdminDashboard() {
   const userEmailRef = useRef('');
   const displayNameRef = useRef('');
   const signoffDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { toasts, pushToast } = useToasts();
+
+  /** Re-sync local attractions state from the server (used after failed bulk ops). */
+  const refetchAttractions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('attractions')
+      .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating')
+      .order('sort_order', { ascending: true });
+    if (!error && data) setAttractions(data);
+  }, []);
 
   // Keep refs in sync for stable callbacks
   attractionsRef.current = attractions;
@@ -1080,13 +1092,15 @@ export default function AdminDashboard() {
 
     if (error) {
       if (process.env.NODE_ENV === 'development') console.error('Error updating attraction:', error);
+      pushToast('error', `Failed to update ${current?.name || 'attraction'}`);
       return;
     }
 
     if (current) {
       const performer = displayNameRef.current || userEmailRef.current;
+      try {
       if ('status' in updates && updates.status !== current.status) {
-        logAudit({
+        await logAudit({
           actionType: 'status_change',
           attractionId: id,
           attractionName: current.name,
@@ -1097,7 +1111,7 @@ export default function AdminDashboard() {
         });
 
         // Structured status log
-        logStatusChange({
+        await logStatusChange({
           attractionId: id,
           status: updates.status as AttractionStatus,
           previousStatus: current.status as AttractionStatus,
@@ -1106,11 +1120,11 @@ export default function AdminDashboard() {
 
         // Resolve previous delay if transitioning FROM DELAYED
         if (current.status === 'DELAYED') {
-          resolveDelay(id);
+          await resolveDelay(id);
         }
       }
       if ('wait_time' in updates && updates.wait_time !== current.wait_time) {
-        logAudit({
+        await logAudit({
           actionType: 'queue_time_change',
           attractionId: id,
           attractionName: current.name,
@@ -1126,7 +1140,7 @@ export default function AdminDashboard() {
         const added = newTimes.filter((t) => !oldTimes.includes(t));
         const removed = oldTimes.filter((t) => !newTimes.includes(t));
         for (const time of added) {
-          logAudit({
+          await logAudit({
             actionType: 'show_time_added',
             attractionId: id,
             attractionName: current.name,
@@ -1135,7 +1149,7 @@ export default function AdminDashboard() {
           });
         }
         for (const time of removed) {
-          logAudit({
+          await logAudit({
             actionType: 'show_time_removed',
             attractionId: id,
             attractionName: current.name,
@@ -1144,8 +1158,12 @@ export default function AdminDashboard() {
           });
         }
       }
+      } catch (e) {
+        // Never block UX on audit failure — but record it
+        console.error('Audit logging failed:', e);
+      }
     }
-  }, []);
+  }, [pushToast]);
 
   const handleDelayConfirm = useCallback(async (reason: DelayReason, notes: string) => {
     if (!delayModal) return;
@@ -1159,12 +1177,14 @@ export default function AdminDashboard() {
 
     if (error) {
       if (process.env.NODE_ENV === 'development') console.error('Error updating attraction:', error);
+      pushToast('error', `Failed to delay ${attractionName}`);
       return;
     }
 
     const performer = displayNameRef.current || userEmailRef.current;
 
-    logAudit({
+    try {
+    await logAudit({
       actionType: 'status_change',
       attractionId,
       attractionName,
@@ -1174,7 +1194,7 @@ export default function AdminDashboard() {
       details: `Status changed from ${previousStatus} to DELAYED. Reason: ${reason}${notes ? '. ' + notes : ''}`,
     });
 
-    logStatusChange({
+    await logStatusChange({
       attractionId,
       status: 'DELAYED',
       previousStatus,
@@ -1182,15 +1202,21 @@ export default function AdminDashboard() {
       notes: notes || null,
       changedBy: performer,
     });
-  }, [delayModal]);
+    } catch (e) {
+      console.error('Audit logging failed:', e);
+    }
+  }, [delayModal, pushToast]);
 
   const handleOpeningTimeUpdate = useCallback(async (value: string) => {
     const { error } = await supabase
       .from('park_settings')
       .upsert({ key: 'opening_time', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 
-    if (error && process.env.NODE_ENV === 'development') console.error('Error updating opening time:', error);
-  }, []);
+    if (error) {
+      if (process.env.NODE_ENV === 'development') console.error('Error updating opening time:', error);
+      pushToast('error', 'Failed to update opening time');
+    }
+  }, [pushToast]);
 
   const handleClosingTimeUpdate = useCallback(async (value: string) => {
     const { error } = await supabase
@@ -1198,8 +1224,11 @@ export default function AdminDashboard() {
       .update({ value, updated_at: new Date().toISOString() })
       .eq('key', 'closing_time');
 
-    if (error && process.env.NODE_ENV === 'development') console.error('Error updating closing time:', error);
-  }, []);
+    if (error) {
+      if (process.env.NODE_ENV === 'development') console.error('Error updating closing time:', error);
+      pushToast('error', 'Failed to update closing time');
+    }
+  }, [pushToast]);
 
   const handleDeleteAttraction = useCallback(async (id: string, name: string) => {
     const current = attractionsRef.current.find((a) => a.id === id);
@@ -1208,22 +1237,29 @@ export default function AdminDashboard() {
 
     // Log before delete so the FK reference is still valid
     const performer = displayNameRef.current || userEmailRef.current;
-    await logAudit({
-      actionType: 'attraction_deleted',
-      attractionId: id,
-      attractionName,
-      performedBy: performer,
-      oldValue: attractionType,
-    });
+    try {
+      await logAudit({
+        actionType: 'attraction_deleted',
+        attractionId: id,
+        attractionName,
+        performedBy: performer,
+        oldValue: attractionType,
+      });
+    } catch (e) {
+      console.error('Audit logging failed:', e);
+    }
 
     const { error } = await supabase
       .from('attractions')
       .delete()
       .eq('id', id);
 
-    if (error && process.env.NODE_ENV === 'development') console.error('Error deleting attraction:', error);
+    if (error) {
+      if (process.env.NODE_ENV === 'development') console.error('Error deleting attraction:', error);
+      pushToast('error', `Failed to remove ${attractionName}`);
+    }
     setDeleteTarget(null);
-  }, []);
+  }, [pushToast]);
 
   async function handleCloseAll() {
     setClosingAll(true);
@@ -1231,15 +1267,25 @@ export default function AdminDashboard() {
 
     const rides = attractions.filter((a) => a.attraction_type !== 'show');
     const rideIds = rides.map((a) => a.id);
-    await supabase
-      .from('attractions')
-      .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
-      .in('id', rideIds);
+    try {
+      const { error } = await supabase
+        .from('attractions')
+        .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
+        .in('id', rideIds);
+      if (error) throw error;
+    } catch (e) {
+      console.error('Bulk close failed:', e);
+      pushToast('error', `Failed to close ${rideIds.length} ride${rideIds.length !== 1 ? 's' : ''}`);
+      await refetchAttractions();
+      setClosingAll(false);
+      return;
+    }
 
     const performer = displayName || userEmail;
+    try {
     for (const ride of rides) {
       if (ride.status !== 'CLOSED') {
-        logAudit({
+        await logAudit({
           actionType: 'status_change',
           attractionId: ride.id,
           attractionName: ride.name,
@@ -1248,16 +1294,19 @@ export default function AdminDashboard() {
           newValue: 'CLOSED',
           details: 'Bulk close all rides',
         });
-        logStatusChange({
+        await logStatusChange({
           attractionId: ride.id,
           status: 'CLOSED',
           previousStatus: ride.status as AttractionStatus,
           changedBy: performer,
         });
         if (ride.status === 'DELAYED') {
-          resolveDelay(ride.id);
+          await resolveDelay(ride.id);
         }
       }
+    }
+    } catch (e) {
+      console.error('Audit logging failed:', e);
     }
 
     setClosingAll(false);
@@ -1272,23 +1321,43 @@ export default function AdminDashboard() {
     const rideIds = rides.map((a) => a.id);
     const showIds = shows.map((a) => a.id);
 
+    const failures: string[] = [];
     if (rideIds.length > 0) {
-      await supabase
-        .from('attractions')
-        .update({ status: 'OPEN', wait_time: 5, updated_at: new Date().toISOString() })
-        .in('id', rideIds);
+      try {
+        const { error } = await supabase
+          .from('attractions')
+          .update({ status: 'OPEN', wait_time: 5, updated_at: new Date().toISOString() })
+          .in('id', rideIds);
+        if (error) throw error;
+      } catch (e) {
+        console.error('Bulk open rides failed:', e);
+        failures.push(`${rideIds.length} ride${rideIds.length !== 1 ? 's' : ''}`);
+      }
     }
     if (showIds.length > 0) {
-      await supabase
-        .from('attractions')
-        .update({ status: 'OPEN', updated_at: new Date().toISOString() })
-        .in('id', showIds);
+      try {
+        const { error } = await supabase
+          .from('attractions')
+          .update({ status: 'OPEN', updated_at: new Date().toISOString() })
+          .in('id', showIds);
+        if (error) throw error;
+      } catch (e) {
+        console.error('Bulk open shows failed:', e);
+        failures.push(`${showIds.length} show${showIds.length !== 1 ? 's' : ''}`);
+      }
+    }
+    if (failures.length > 0) {
+      pushToast('error', `Failed to open ${failures.join(' and ')}`);
+      await refetchAttractions();
+      setOpeningAll(false);
+      return;
     }
 
     const performer = displayName || userEmail;
+    try {
     for (const a of [...rides, ...shows]) {
       if (a.status !== 'OPEN') {
-        logAudit({
+        await logAudit({
           actionType: 'status_change',
           attractionId: a.id,
           attractionName: a.name,
@@ -1297,20 +1366,20 @@ export default function AdminDashboard() {
           newValue: 'OPEN',
           details: 'Bulk open all attractions',
         });
-        logStatusChange({
+        await logStatusChange({
           attractionId: a.id,
           status: 'OPEN',
           previousStatus: a.status as AttractionStatus,
           changedBy: performer,
         });
         if (a.status === 'DELAYED') {
-          resolveDelay(a.id);
+          await resolveDelay(a.id);
         }
       }
     }
     for (const ride of rides) {
       if (ride.status !== 'OPEN' || ride.wait_time !== 5) {
-        logAudit({
+        await logAudit({
           actionType: 'queue_time_change',
           attractionId: ride.id,
           attractionName: ride.name,
@@ -1320,6 +1389,9 @@ export default function AdminDashboard() {
           details: `Wait time reset to 5min (was ${ride.wait_time}min)`,
         });
       }
+    }
+    } catch (e) {
+      console.error('Audit logging failed:', e);
     }
 
     setOpeningAll(false);
@@ -1333,9 +1405,14 @@ export default function AdminDashboard() {
   async function handleToggleAutoSort() {
     const newValue = !autoSort;
     setAutoSort(newValue);
-    await supabase
+    const { error } = await supabase
       .from('park_settings')
       .upsert({ key: 'auto_sort_by_wait', value: String(newValue), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) {
+      console.error('Auto-sort toggle failed:', error);
+      setAutoSort(!newValue); // revert optimistic state
+      pushToast('error', 'Failed to update auto-sort setting');
+    }
   }
 
   async function handleMoveAttraction(id: string, direction: 'up' | 'down') {
@@ -1348,10 +1425,22 @@ export default function AdminDashboard() {
     const swap = attractions[swapIdx];
 
     // Swap sort_order values
-    await Promise.all([
-      supabase.from('attractions').update({ sort_order: swap.sort_order, updated_at: new Date().toISOString() }).eq('id', current.id),
-      supabase.from('attractions').update({ sort_order: current.sort_order, updated_at: new Date().toISOString() }).eq('id', swap.id),
-    ]);
+    let failedCount = 0;
+    try {
+      const results = await Promise.all([
+        supabase.from('attractions').update({ sort_order: swap.sort_order, updated_at: new Date().toISOString() }).eq('id', current.id),
+        supabase.from('attractions').update({ sort_order: current.sort_order, updated_at: new Date().toISOString() }).eq('id', swap.id),
+      ]);
+      failedCount = results.filter((r) => r.error).length;
+    } catch (e) {
+      console.error('Reorder failed:', e);
+      failedCount = 2;
+    }
+    if (failedCount > 0) {
+      pushToast('error', `Reorder failed (${failedCount} of 2 updates)`);
+      await refetchAttractions();
+      return;
+    }
 
     // Optimistic local update
     setAttractions((prev) => {
@@ -1364,14 +1453,14 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
-        <div style={{ color: '#94A3B8', fontSize: 14 }}>Loading...</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
+        <div style={{ color: textTok.secondary, fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#000000' }}>
+    <div className="min-h-screen" style={{ background: surface.page }}>
       {/* Close All Modal */}
       <ConfirmModal
         open={showCloseAll}
@@ -1417,8 +1506,8 @@ export default function AdminDashboard() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 32 }}>
 
         {/* Quick Actions card */}
-        <div style={{ background: '#111', border: '1px solid #2a2a2a', borderRadius: 14, padding: '20px 20px' }}>
-          <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 14px' }}>Quick Actions</p>
+        <div style={{ ...card(), padding: '20px 20px' }}>
+          <p style={{ ...microLabel, margin: '0 0 14px' }}>Quick Actions</p>
 
           {/* Open / Close */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
@@ -1429,19 +1518,19 @@ export default function AdminDashboard() {
             </button>
             <button onClick={() => setShowCloseAll(true)} disabled={closingAll}
               className="btn-quick"
-              style={{ flex: 1, padding: '12px 8px', background: '#DC2626', color: '#fff', fontWeight: 700, fontSize: 13, borderRadius: 8, border: 'none', cursor: 'pointer', opacity: closingAll ? 0.5 : 1 }}>
+              style={{ flex: 1, padding: '12px 8px', background: accents.admin.strong, color: '#fff', fontWeight: 700, fontSize: 13, borderRadius: 8, border: 'none', cursor: 'pointer', opacity: closingAll ? 0.5 : 1 }}>
               {closingAll ? 'Closing…' : 'Close All'}
             </button>
           </div>
 
           {/* Auto-sort */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 12, borderTop: '1px solid #1a1a1a', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 12, borderTop: `1px solid ${border.divider}`, marginBottom: 14 }}>
             <button onClick={handleToggleAutoSort}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${autoSort ? 'bg-[#22C55E]' : 'bg-[#1a1a1a] border border-[#2a2a2a]'}`}>
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${autoSort ? 'bg-[#22C55E]' : 'bg-[#181D24] border border-[#2E3543]'}`}>
               <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${autoSort ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
-            <span style={{ color: '#94A3B8', fontSize: 13 }}>
-              Auto-sort {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>ON</span> : <span style={{ color: '#64748B' }}>OFF</span>}
+            <span style={{ color: textTok.secondary, fontSize: 13 }}>
+              Auto-sort {autoSort ? <span style={{ color: '#22C55E', fontWeight: 600 }}>ON</span> : <span style={{ color: textTok.muted }}>OFF</span>}
             </span>
           </div>
 
@@ -1452,20 +1541,32 @@ export default function AdminDashboard() {
             const uniqueTargets = [...new Set(rides.map((r) => r.target_dispatch_seconds ?? 90))];
             const currentBulk = uniqueTargets.length === 1 ? uniqueTargets[0] : null;
             return (
-              <div style={{ paddingTop: 12, borderTop: '1px solid #1a1a1a' }}>
-                <p style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Target Dispatch</p>
+              <div style={{ paddingTop: 12, borderTop: `1px solid ${border.divider}` }}>
+                <p style={{ color: textTok.secondary, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Target Dispatch</p>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {[45, 60, 90, 120].map((secs) => (
                     <button key={secs}
                       onClick={async () => {
                         const ids = rides.map((r) => r.id);
-                        for (const id of ids) await supabase.from('attractions').update({ target_dispatch_seconds: secs }).eq('id', id);
+                        let failed = 0;
+                        for (const id of ids) {
+                          try {
+                            const { error } = await supabase.from('attractions').update({ target_dispatch_seconds: secs }).eq('id', id);
+                            if (error) failed++;
+                          } catch {
+                            failed++;
+                          }
+                        }
+                        if (failed > 0) {
+                          pushToast('error', `Failed to set target dispatch on ${failed} of ${ids.length} rides`);
+                          await refetchAttractions();
+                        }
                       }}
                       style={{
                         flex: 1, padding: '9px 4px', borderRadius: 7, border: '1px solid',
-                        borderColor: currentBulk === secs ? '#3B82F6' : '#2a2a2a',
-                        background: currentBulk === secs ? 'rgba(59,130,246,0.12)' : '#000',
-                        color: currentBulk === secs ? '#60A5FA' : '#64748B',
+                        borderColor: currentBulk === secs ? accents.admin.base : border.strong,
+                        background: currentBulk === secs ? accents.admin.soft : surface.control,
+                        color: currentBulk === secs ? accents.admin.text : textTok.muted,
                         fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
                       }}>
                       {secs}s
@@ -1550,6 +1651,8 @@ export default function AdminDashboard() {
         )}
       </div>
       </main>
+
+      <ToastStack toasts={toasts} />
     </div>
   );
 }

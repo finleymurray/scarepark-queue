@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { surface, border, text, accents, radius, microLabel, card } from '@/lib/theme';
+import { InlineError } from '@/components/ui/Toast';
+
+const accent = accents.signoff;
 
 export default function SignoffLoginPage() {
   const router = useRouter();
@@ -41,16 +45,27 @@ export default function SignoffLoginPage() {
     router.push('/signoff');
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 12px',
+    background: surface.control,
+    border: `1px solid ${border.default}`,
+    borderRadius: radius.sm,
+    color: text.primary,
+    fontSize: 14,
+    outline: 'none',
+  };
+
   if (checking) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000' }}>
-        <div style={{ color: '#475569', fontSize: 14 }}>Loading...</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
+        <div style={{ color: text.faint, fontSize: 14 }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000000', padding: '0 24px' }}>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page, padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
           <Image
@@ -61,20 +76,20 @@ export default function SignoffLoginPage() {
             priority
             style={{ width: 48, height: 'auto', marginBottom: 16 }}
           />
-          <h1 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Sign-Off</h1>
-          <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>CoreLink Operations Platform</p>
+          <h1 style={{ color: text.primary, fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>Sign-Off</h1>
+          <p style={{ color: text.faint, fontSize: 13, marginTop: 4 }}>CoreLink Operations Platform</p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 12, padding: 28 }}>
+        <form onSubmit={handleSubmit} style={{ ...card(), padding: 28 }}>
           {error && (
-            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 12px', marginBottom: 20 }}>
-              <p style={{ color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>{error}</p>
+            <div style={{ marginBottom: 20 }}>
+              <InlineError message={error} />
             </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label style={{ ...microLabel, display: 'block', color: text.secondary, fontSize: 11, marginBottom: 6 }}>
                 Email
               </label>
               <input
@@ -83,22 +98,13 @@ export default function SignoffLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@immersivecore.network"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  background: '#000000',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: 8,
-                  color: '#F1F5F9',
-                  fontSize: 14,
-                  outline: 'none',
-                }}
-                onFocus={(e) => { e.target.style.borderColor = '#F59E0B'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                style={inputStyle}
+                onFocus={(e) => { e.target.style.borderColor = accent.base; e.target.style.boxShadow = `0 0 0 3px ${accent.soft}`; }}
+                onBlur={(e) => { e.target.style.borderColor = border.default; e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 11, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <label style={{ ...microLabel, display: 'block', color: text.secondary, fontSize: 11, marginBottom: 6 }}>
                 Password
               </label>
               <input
@@ -107,18 +113,9 @@ export default function SignoffLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  background: '#000000',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: 8,
-                  color: '#F1F5F9',
-                  fontSize: 14,
-                  outline: 'none',
-                }}
-                onFocus={(e) => { e.target.style.borderColor = '#F59E0B'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.15)'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#2a2a2a'; e.target.style.boxShadow = 'none'; }}
+                style={inputStyle}
+                onFocus={(e) => { e.target.style.borderColor = accent.base; e.target.style.boxShadow = `0 0 0 3px ${accent.soft}`; }}
+                onBlur={(e) => { e.target.style.borderColor = border.default; e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
@@ -129,18 +126,18 @@ export default function SignoffLoginPage() {
             style={{
               width: '100%',
               padding: '11px 16px',
-              background: '#D97706',
+              background: accent.strong,
               color: '#fff',
               fontSize: 14,
               fontWeight: 600,
-              borderRadius: 8,
+              borderRadius: radius.sm,
               border: 'none',
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.5 : 1,
               transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => { if (!loading) (e.target as HTMLButtonElement).style.background = '#B45309'; }}
-            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = '#D97706'; }}
+            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = accent.strong; }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>

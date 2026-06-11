@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppSwitcher from './AppSwitcher';
+import { surface, border, text, accents, radius } from '@/lib/theme';
 
 const PRIMARY_TABS = [
   { label: 'Attractions', href: '/admin' },
@@ -75,23 +76,23 @@ export default function AdminNav({
   return (
     <>
       {/* Header bar */}
-      <div style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="admin" isAdmin={isAdmin} />
           <Link href="/admin" style={{ textDecoration: 'none' }}>
-            <h1 style={{ color: '#F1F5F9', fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
+            <h1 style={{ color: text.primary, fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
           </Link>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#94A3B8' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: text.secondary }}>
           {userEmail && (
-            <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#94A3B8' }}>
+            <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: text.secondary }}>
               {displayName || userEmail}
             </span>
           )}
           <button
             onClick={onLogout}
             className="admin-nav-signout"
-            style={{ background: 'none', border: '1px solid #2a2a2a', color: '#94A3B8', padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}
+            style={{ background: surface.control, border: `1px solid ${border.strong}`, color: text.secondary, padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}
           >
             Sign out
           </button>
@@ -101,7 +102,7 @@ export default function AdminNav({
       {/* Nav tabs */}
       <div
         className="scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ background: '#111111', borderBottom: '1px solid #2a2a2a', padding: '0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
+        style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0', overflowX: moreOpen ? 'visible' : 'auto', position: 'relative', zIndex: 40 }}
       >
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 0 }}>
           {PRIMARY_TABS.map((tab) => {
@@ -117,7 +118,7 @@ export default function AdminNav({
                   fontWeight: active ? 600 : 500,
                   padding: '14px 14px',
                   flexShrink: 0,
-                  borderBottom: active ? '2px solid #EF4444' : '2px solid transparent',
+                  borderBottom: active ? `2px solid ${accents.admin.base}` : '2px solid transparent',
                   transition: 'color 0.15s, border-color 0.15s',
                 }}
               >
@@ -149,7 +150,7 @@ export default function AdminNav({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
-                borderBottom: moreIsActive ? '2px solid #EF4444' : '2px solid transparent',
+                borderBottom: moreIsActive ? `2px solid ${accents.admin.base}` : '2px solid transparent',
                 transition: 'color 0.15s, border-color 0.15s',
                 background: 'transparent',
               }}
@@ -165,9 +166,9 @@ export default function AdminNav({
                 position: 'fixed',
                 top: dropdownPos.top,
                 left: dropdownPos.left,
-                background: '#111111',
-                border: '1px solid #2a2a2a',
-                borderRadius: 8,
+                background: surface.raised,
+                border: `1px solid ${border.strong}`,
+                borderRadius: radius.sm,
                 padding: '4px 0',
                 minWidth: 160,
                 zIndex: 9999,
@@ -200,7 +201,7 @@ export default function AdminNav({
           {/* External links — hidden in standalone PWA mode */}
           {!isStandalone && (
             <>
-              <div style={{ width: 1, height: 16, background: '#2a2a2a', margin: '0 8px', flexShrink: 0 }} />
+              <div style={{ width: 1, height: 16, background: border.default, margin: '0 8px', flexShrink: 0 }} />
 
               {EXTERNAL_LINKS.map((link) => (
                 <a

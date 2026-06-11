@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import type { Screen, ParkSetting } from '@/types/database';
+import { surface, border, text, radius, FONT_NUM, microLabel } from '@/lib/theme';
+import MetricStat from '@/components/ui/MetricStat';
+import { useToasts, ToastStack } from '@/components/ui/Toast';
 
 /* ── Assignable paths ── */
 
@@ -73,9 +76,9 @@ function getPathLabel(path: string | null, paths: { value: string; label: string
 /* ── Styles ── */
 
 const cardStyle: React.CSSProperties = {
-  background: '#111111',
-  border: '1px solid #2a2a2a',
-  borderRadius: 12,
+  background: surface.card,
+  border: `1px solid ${border.default}`,
+  borderRadius: radius.xl,
   padding: 20,
 };
 
@@ -88,12 +91,12 @@ const statCardStyle: React.CSSProperties = {
 };
 
 const selectStyle: React.CSSProperties = {
-  background: '#000000',
-  border: '1px solid #2a2a2a',
-  borderRadius: 8,
-  color: '#94A3B8',
+  background: surface.control,
+  border: `1px solid ${border.strong}`,
+  borderRadius: radius.md,
+  color: text.secondary,
   fontSize: 13,
-  padding: '6px 10px',
+  padding: '9px 10px',
   width: '100%',
   outline: 'none',
   cursor: 'pointer',
@@ -110,6 +113,7 @@ export default function ScreensPage() {
   const [attractions, setAttractions] = useState<{ name: string; slug: string }[]>([]);
   const [parkClosed, setParkClosed] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const { toasts, pushToast } = useToasts();
 
   const assignablePaths = buildAssignablePaths(attractions);
 
@@ -193,28 +197,52 @@ export default function ScreensPage() {
   async function handleAssignPath(screen: Screen, newPath: string) {
     if (!newPath) return;
     // Set the path — screen picks this up via polling (30s) or realtime (instant)
-    await supabase.from('screens').update({
+    const { error } = await supabase.from('screens').update({
       assigned_path: newPath,
     }).eq('id', screen.id);
+    if (error) {
+      pushToast('error', 'Failed to assign screen path');
+      return;
+    }
+    // Audit trail (same column pattern as src/lib/audit.ts)
+    const pathLabel = getPathLabel(newPath, assignablePaths) || newPath;
+    const { error: auditError } = await supabase.from('audit_logs').insert({
+      action_type: 'screen_assigned',
+      attraction_id: null,
+      attraction_name: screen.label || screen.code,
+      performed_by: userEmail || 'admin',
+      old_value: screen.assigned_path || null,
+      new_value: newPath,
+      details: `Screen "${screen.label || screen.code}" (${screen.code}) assigned to ${pathLabel}`,
+    });
+    if (auditError && process.env.NODE_ENV === 'development') {
+      console.error('Audit log error:', auditError);
+    }
   }
 
   async function handleToggleBlackout() {
     setToggling(true);
     const newValue = !parkClosed;
-    await supabase
+    const { error } = await supabase
       .from('park_settings')
       .upsert({ key: 'park_closed', value: String(newValue) }, { onConflict: 'key' });
-    setParkClosed(newValue);
+    if (error) {
+      pushToast('error', 'Failed to toggle screen blackout');
+    } else {
+      setParkClosed(newValue);
+    }
     setToggling(false);
   }
 
   async function handleDeleteScreen(screen: Screen) {
-    await supabase.from('screens').delete().eq('id', screen.id);
+    const { error } = await supabase.from('screens').delete().eq('id', screen.id);
+    if (error) pushToast('error', 'Failed to remove screen');
     fetchData();
   }
 
   async function handleLabelChange(screen: Screen, label: string) {
-    await supabase.from('screens').update({ label: label || null }).eq('id', screen.id);
+    const { error } = await supabase.from('screens').update({ label: label || null }).eq('id', screen.id);
+    if (error) pushToast('error', 'Failed to rename screen');
   }
 
   async function handleLogout() {
@@ -224,7 +252,7 @@ export default function ScreensPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: surface.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-white/60 text-lg">Loading...</div>
       </div>
     );
@@ -235,25 +263,26 @@ export default function ScreensPage() {
   const managedAssigned = managedScreens.filter((s) => s.assigned_path).length;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000000', color: '#F1F5F9' }}>
+    <div style={{ minHeight: '100vh', background: surface.page, color: text.primary }}>
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
+      <ToastStack toasts={toasts} />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Screen Controller</h2>
-            <p style={{ fontSize: 14, color: '#94A3B8', marginTop: 4, marginBottom: 0 }}>
-              Manage and assign display screens. Point each Pi to <code style={{ background: '#1a1a1a', padding: '1px 5px', borderRadius: 3, fontSize: 13 }}>/screen</code> to register.
+            <p style={{ fontSize: 14, color: text.secondary, marginTop: 4, marginBottom: 0 }}>
+              Manage and assign display screens. Point each Pi to <code style={{ background: surface.raised, padding: '1px 5px', borderRadius: 3, fontSize: 13 }}>/screen</code> to register.
             </p>
           </div>
           <button
             onClick={() => fetchData()}
             style={{
-              padding: '6px 12px',
-              background: '#111111',
-              border: '1px solid #2a2a2a',
-              borderRadius: 8,
-              color: '#94A3B8',
+              padding: '8px 14px',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
+              borderRadius: radius.md,
+              color: text.secondary,
               fontSize: 12,
               cursor: 'pointer',
               fontWeight: 600,
@@ -278,14 +307,14 @@ export default function ScreensPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: parkClosed ? '1px solid #EF444440' : '1px solid #2a2a2a',
+          border: parkClosed ? '1px solid #EF444440' : `1px solid ${border.default}`,
           transition: 'border-color 0.3s ease',
         }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: text.primary, marginBottom: 2 }}>
               Black Out Screens
             </div>
-            <div style={{ fontSize: 12, color: parkClosed ? '#EF4444' : '#666' }}>
+            <div style={{ fontSize: 12, color: parkClosed ? '#F87171' : text.muted }}>
               {parkClosed ? 'All displays are blacked out' : 'All displays showing live content'}
             </div>
           </div>
@@ -299,7 +328,7 @@ export default function ScreensPage() {
               borderRadius: 14,
               border: 'none',
               cursor: toggling ? 'wait' : 'pointer',
-              background: parkClosed ? '#EF4444' : '#333',
+              background: parkClosed ? '#EF4444' : surface.raised,
               transition: 'background 0.3s ease',
               flexShrink: 0,
             }}
@@ -321,20 +350,16 @@ export default function ScreensPage() {
         {/* Stats row */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           <div style={statCardStyle}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{managedScreens.length}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Registered</div>
+            <MetricStat label="Registered" value={managedScreens.length} size={28} align="center" />
           </div>
           <div style={statCardStyle}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#22C55E' }}>{managedOnline}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Online</div>
+            <MetricStat label="Online" value={managedOnline} size={28} align="center" color="#4ADE80" />
           </div>
           <div style={statCardStyle}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#8B5CF6' }}>{managedAssigned}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assigned</div>
+            <MetricStat label="Assigned" value={managedAssigned} size={28} align="center" color="#A78BFA" />
           </div>
           <div style={statCardStyle}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{managedScreens.length - managedAssigned}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Awaiting</div>
+            <MetricStat label="Awaiting" value={managedScreens.length - managedAssigned} size={28} align="center" color="#FBBF24" />
           </div>
         </div>
 
@@ -342,9 +367,9 @@ export default function ScreensPage() {
         {managedScreens.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 20px', marginBottom: 32 }}>
             <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>📺</div>
-            <p style={{ color: '#94A3B8', fontSize: 15, marginBottom: 4 }}>No screens registered yet</p>
-            <p style={{ color: '#94A3B8', fontSize: 13 }}>
-              Open <code style={{ background: '#1a1a1a', padding: '1px 5px', borderRadius: 3 }}>/screen</code> on a device to register it.
+            <p style={{ color: text.secondary, fontSize: 15, marginBottom: 4 }}>No screens registered yet</p>
+            <p style={{ color: text.secondary, fontSize: 13 }}>
+              Open <code style={{ background: surface.raised, padding: '1px 5px', borderRadius: 3 }}>/screen</code> on a device to register it.
             </p>
           </div>
         ) : (
@@ -428,9 +453,9 @@ function ManagedScreenCard({
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
                 placeholder="Enter screen name..."
                 style={{
-                  fontSize: 16, fontWeight: 700, color: '#fff',
-                  background: '#111111', border: '1px solid #8B5CF6',
-                  borderRadius: 6, padding: '2px 8px', width: '100%',
+                  fontSize: 16, fontWeight: 700, color: text.primary,
+                  background: surface.control, border: '1px solid #8B5CF6',
+                  borderRadius: radius.sm, padding: '2px 8px', width: '100%',
                   outline: 'none',
                 }}
               />
@@ -441,18 +466,18 @@ function ManagedScreenCard({
                   fontWeight: screen.label ? 700 : 800,
                   letterSpacing: screen.label ? 'normal' : '0.2em',
                   fontFamily: screen.label ? 'inherit' : 'monospace',
-                  color: '#fff',
+                  color: text.primary,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {screen.label || screen.code}
                 </div>
                 {screen.label && (
-                  <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: text.secondary, fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: 2 }}>
                     {screen.code}
                   </div>
                 )}
                 {!screen.label && (
-                  <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: text.faint, marginTop: 2 }}>
                     Click to name this screen
                   </div>
                 )}
@@ -498,14 +523,14 @@ function ManagedScreenCard({
         <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {screen.assigned_path && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 600 }}>Assigned:</span>
-              <span style={{ fontSize: 11, color: '#ccc' }}>{getPathLabel(screen.assigned_path, assignablePaths)}</span>
+              <span style={{ fontSize: 11, color: '#A78BFA', fontWeight: 600 }}>Assigned:</span>
+              <span style={{ fontSize: 11, color: text.secondary }}>{getPathLabel(screen.assigned_path, assignablePaths)}</span>
             </div>
           )}
           {screen.current_page && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Showing:</span>
-              <span style={{ fontSize: 11, color: '#999' }}>{getPathLabel(screen.current_page, assignablePaths)}</span>
+              <span style={{ fontSize: 11, color: text.secondary, fontWeight: 600 }}>Showing:</span>
+              <span style={{ fontSize: 11, color: text.muted }}>{getPathLabel(screen.current_page, assignablePaths)}</span>
             </div>
           )}
         </div>
@@ -513,7 +538,7 @@ function ManagedScreenCard({
 
       {/* Path assignment / reassignment */}
       <div style={{ marginBottom: 8 }}>
-        <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 4 }}>
+        <label style={{ ...microLabel, display: 'block', marginBottom: 4 }}>
           {screen.assigned_path ? 'Reassign Display' : 'Assign Display'}
         </label>
         <select
@@ -529,9 +554,9 @@ function ManagedScreenCard({
       </div>
 
       {/* Last seen */}
-      <div style={{ fontSize: 11, color: '#94A3B8' }}>
+      <div style={{ fontSize: 11, color: text.secondary, ...FONT_NUM }}>
         Last seen: {timeAgo(screen.last_seen)}
-        {screen.name && <span style={{ marginLeft: 8, color: '#94A3B8' }}>({screen.name})</span>}
+        {screen.name && <span style={{ marginLeft: 8, color: text.secondary }}>({screen.name})</span>}
       </div>
 
       <style>{`
