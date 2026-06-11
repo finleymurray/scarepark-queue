@@ -568,7 +568,7 @@ export default function NewAttractionPage() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || auth.role !== 'admin') {
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
       setUserEmail(auth.email || '');
@@ -580,7 +580,7 @@ export default function NewAttractionPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   if (loading) {
@@ -600,7 +600,7 @@ export default function NewAttractionPage() {
         <h2 className="text-2xl font-bold" style={{ margin: '12px 0 24px' }}>New Attraction</h2>
         <NewAttractionWizard
           performer={displayName || userEmail}
-          onCreated={() => router.push('/admin')}
+          onCreated={() => window.location.href = '/admin'}
         />
       </div>
     </div>

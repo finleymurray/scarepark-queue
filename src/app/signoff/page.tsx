@@ -197,7 +197,7 @@ export default function SignoffPage() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated) {
-        router.push('/signoff/login');
+        window.location.href = '/signoff/login';
         return;
       }
       setUserEmail(auth.email || '');
@@ -479,7 +479,7 @@ export default function SignoffPage() {
             </span>
           )}
           <button
-            onClick={async () => { await supabase.auth.signOut(); router.push('/signoff/login'); }}
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/signoff/login'; }}
             style={{ ...controlButton, padding: '6px 12px', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.primary; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}

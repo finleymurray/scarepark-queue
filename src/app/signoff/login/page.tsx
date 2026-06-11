@@ -42,7 +42,7 @@ export default function SignoffLoginPage() {
       return;
     }
 
-    router.push('/signoff');
+    window.location.href = '/signoff';
   }
 
   const inputStyle: React.CSSProperties = {

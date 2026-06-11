@@ -743,7 +743,7 @@ export default function OperationsPage() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || auth.role !== 'admin') {
-        router.push('/admin/login');
+        window.location.href = '/admin/login';
         return;
       }
       setUserEmail(auth.email || '');
@@ -789,7 +789,7 @@ export default function OperationsPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/admin/login');
+    window.location.href = '/admin/login';
   }
 
   if (loading) {

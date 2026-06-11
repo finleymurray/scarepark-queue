@@ -52,7 +52,7 @@ export default function ControlLoginPage() {
       return;
     }
 
-    router.push('/control');
+    window.location.href = '/control';
   }
 
   if (checking) {

@@ -53,7 +53,7 @@ function LoginForm() {
       return;
     }
 
-    router.push(nextUrl || '/landing');
+    window.location.href = nextUrl || '/landing';
   }
 
   if (checking) {

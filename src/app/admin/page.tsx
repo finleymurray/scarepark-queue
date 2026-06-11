@@ -1034,7 +1034,7 @@ export default function AdminDashboard() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || auth.role !== 'admin') {
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
       setUserEmail(auth.email || '');
@@ -1475,7 +1475,7 @@ export default function AdminDashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   async function handleToggleAutoSort() {

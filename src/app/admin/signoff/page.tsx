@@ -304,7 +304,7 @@ export default function SignoffConfigPage() {
   useEffect(() => {
     async function init() {
       const auth = await checkAuth();
-      if (!auth.authenticated || auth.role !== 'admin') { router.push('/login'); return; }
+      if (!auth.authenticated || auth.role !== 'admin') { window.location.href = '/login'; return; }
       setUserEmail(auth.email || '');
       setDisplayName(auth.displayName || '');
       const { data: attractionsData } = await supabase.from('attractions').select('*').order('sort_order', { ascending: true });
@@ -316,7 +316,7 @@ export default function SignoffConfigPage() {
 
   useEffect(() => { if (selectedAttractionId) fetchSections(selectedAttractionId); }, [selectedAttractionId, fetchSections]);
 
-  async function handleLogout() { await supabase.auth.signOut(); router.push('/login'); }
+  async function handleLogout() { await supabase.auth.signOut(); window.location.href = '/login'; }
 
   async function handleAddSection() {
     if (!addingSectionPhase || !newSectionName.trim() || !selectedAttractionId) return;

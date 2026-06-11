@@ -86,7 +86,7 @@ export default function ResetPasswordPage() {
     }
 
     setSuccess(true);
-    setTimeout(() => router.push('/login'), 2000);
+    setTimeout(() => window.location.href = '/login', 2000);
   }
 
   const inputStyle: React.CSSProperties = {

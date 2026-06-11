@@ -58,7 +58,7 @@ export default function ShowReportsPage() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || auth.role !== 'admin') {
-        router.push('/admin/login');
+        window.location.href = '/admin/login';
         return;
       }
       setUserEmail(auth.email || '');
@@ -122,7 +122,7 @@ export default function ShowReportsPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   if (loading) {

@@ -130,7 +130,7 @@ export default function ScreensPage() {
     async function init() {
       const auth = await checkAuth();
       if (!auth.authenticated || auth.role !== 'admin') {
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
       setUserEmail(auth.email || '');
@@ -247,7 +247,7 @@ export default function ScreensPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   if (loading) {
