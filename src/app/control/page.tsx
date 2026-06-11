@@ -9,13 +9,16 @@ import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
-import type { Attraction, ThroughputLog, DispatchLog } from '@/types/database';
+import type { Attraction, ThroughputLog, DispatchLog, OperatorSession } from '@/types/database';
 import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
 import AppSwitcher from '@/components/AppSwitcher';
 import { surface, border, text, accents, radius, statusColors, FONT_NUM, microLabel, card, controlButton, primaryButton } from '@/lib/theme';
 import NumericKeypad from '@/components/ui/NumericKeypad';
 import OfflineBanner from '@/components/ui/OfflineBanner';
+import PinPad from '@/components/ui/PinPad';
 import { useToasts, ToastStack } from '@/components/ui/Toast';
+import useOperatorSession from '@/hooks/useOperatorSession';
+import OperatorChip from '@/components/OperatorChip';
 
 /* ── Helpers ── */
 
@@ -111,6 +114,11 @@ export default function SupervisorDashboard() {
   const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
   const [delayElapsed, setDelayElapsed] = useState(0);
   const { toasts, pushToast } = useToasts();
+
+  // Operator session — per-attraction "who's on the panel" state
+  const { session: operatorSession, loading: operatorLoading, login: operatorLogin, changeOperator, endShift } = useOperatorSession(selectedId);
+  const [lockPinOpen, setLockPinOpen] = useState(false);
+  const [lastSession, setLastSession] = useState<OperatorSession | null>(null);
 
   // Notes drawer
   const [notesOpen, setNotesOpen] = useState(false);
@@ -310,6 +318,26 @@ export default function SupervisorDashboard() {
     };
   }, [selectedId]);
 
+  // Fetch the most recent ended session today (shown under the lock card)
+  useEffect(() => {
+    if (!selectedId || operatorSession) { setLastSession(null); return; }
+    let cancelled = false;
+    async function fetchLast() {
+      const { data } = await supabase
+        .from('operator_sessions')
+        .select('*')
+        .eq('attraction_id', selectedId!)
+        .eq('log_date', getTodayDateStr())
+        .not('ended_at', 'is', null)
+        .order('ended_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setLastSession((data as OperatorSession) || null);
+    }
+    fetchLast();
+    return () => { cancelled = true; };
+  }, [selectedId, operatorSession]);
+
   // Fetch dispatch logs when selectedId changes
   useEffect(() => {
     if (!selectedId) { setDispatchLogs([]); setLastDispatchAt(null); setDispatchElapsed(0); return; }
@@ -450,6 +478,13 @@ export default function SupervisorDashboard() {
   // Selected attraction
   const selected = useMemo(() => rides.find((a) => a.id === selectedId) || null, [rides, selectedId]);
 
+  // Fully signed off today = all opening sections complete
+  const fullySignedOff = !!signoffStatus && signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal;
+  // CLOSED reads as NOT SIGNED OFF until the opening sign-off is complete
+  const displayStatus = selected && selected.status === 'CLOSED' && !fullySignedOff ? 'NOT SIGNED OFF' : selected?.status;
+  // Panel is locked until an operator picks up the shift via PIN
+  const panelLocked = !operatorLoading && !operatorSession;
+
   // Fetch delay start time when selected attraction is DELAYED
   useEffect(() => {
     if (!selected || selected.status !== 'DELAYED') {
@@ -569,7 +604,7 @@ export default function SupervisorDashboard() {
       actionType: 'queue_time_change',
       attractionId: selected.id,
       attractionName: selected.name,
-      performedBy: displayName || userEmail,
+      performedBy: operatorSession?.operator_name || displayName || userEmail,
       oldValue: String(oldTime),
       newValue: String(newTime),
       details: `Wait time changed from ${oldTime}min to ${newTime}min`,
@@ -583,7 +618,7 @@ export default function SupervisorDashboard() {
     const { error } = await supabase.from('dispatch_logs').insert({
       attraction_id: selectedId,
       group_size: dispatchGroupSize,
-      dispatched_by: displayName || userEmail,
+      dispatched_by: operatorSession?.operator_name || displayName || userEmail,
       log_date: today,
     });
     if (error) {
@@ -640,7 +675,15 @@ export default function SupervisorDashboard() {
           </a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: text.secondary }}>
-          {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || userEmail}</span>}
+          {selected && (
+            <OperatorChip
+              session={operatorSession}
+              attractionName={selected.name}
+              verifyPin={changeOperator}
+              onEndShift={endShift}
+            />
+          )}
+          {(displayName || userEmail) && <span title={userEmail} style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="hidden sm:inline">{displayName || userEmail}</span>}
           {'Notification' in (typeof window !== 'undefined' ? window : {}) && notifPermission !== 'denied' && (
             <button
               onClick={handleNotifToggle}
@@ -759,6 +802,8 @@ export default function SupervisorDashboard() {
                   }}>
                     {st === 'DELAYED' && delayStartedAt
                       ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                      : st === 'CLOSED' && !fullySignedOff
+                      ? 'NOT SIGNED OFF'
                       : st}
                   </span>
                   {/* Show Report button — always visible under logo */}
@@ -783,51 +828,9 @@ export default function SupervisorDashboard() {
               );
             })()}
 
-            {/* ── Sign-Off Status ── */}
-            {signoffStatus && (
-              <div className="mb-6 flex flex-col items-center gap-3">
-                {signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('OPEN').soft, color: statusColors('OPEN').text, border: `1px solid ${statusColors('OPEN').rail}40` }}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Signed Off
-                  </span>
-                ) : signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted > 0 ? (
-                  <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('DELAYED').soft, color: statusColors('DELAYED').text, border: `1px solid ${statusColors('DELAYED').rail}40`, ...FONT_NUM }}>
-                      {signoffStatus.openingCompleted}/{signoffStatus.openingTotal} Signed Off
-                    </span>
-                    <a
-                      href="/signoff"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ ...controlButton, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '10px 16px', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
-                    >
-                      Complete Sign-Offs
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2H10V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('CLOSED').soft, color: statusColors('CLOSED').text, border: `1px solid ${statusColors('CLOSED').rail}40` }}>
-                      Not Signed Off
-                    </span>
-                    <a
-                      href="/signoff"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ ...controlButton, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '10px 16px', textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
-                    >
-                      Complete Sign-Offs
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2H10V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </a>
-                  </>
-                )}
-              </div>
-            )}
+            {/* ── Operator-gated panel: Dispatch + Queue Time ── */}
+            <div style={{ position: 'relative' }}>
+            <div style={panelLocked ? { opacity: 0.35, pointerEvents: 'none', userSelect: 'none' } : undefined} aria-hidden={panelLocked || undefined}>
 
             {/* ── Dispatch Clicker ── */}
             {selected.attraction_type !== 'show' && (() => {
@@ -948,6 +951,16 @@ export default function SupervisorDashboard() {
                       </button>
                     )}
 
+                    {/* Attribution hint */}
+                    {operatorSession && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: text.faint, fontSize: 11, marginTop: -10, marginBottom: 16 }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 3" />
+                        </svg>
+                        Dispatched by {operatorSession.operator_name} · logged automatically
+                      </div>
+                    )}
+
                     {/* Today's dispatches summary */}
                     <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 16 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -1006,7 +1019,7 @@ export default function SupervisorDashboard() {
                     <div className="text-4xl font-black" style={{ color: statusColors(selected.status).text, ...FONT_NUM }}>
                       {selected.status === 'DELAYED' && delayStartedAt
                         ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                        : selected.status}
+                        : displayStatus}
                     </div>
                     <p className="text-xs mt-2" style={{ color: text.muted }}>
                       {selected.status === 'CLOSED'
@@ -1053,6 +1066,57 @@ export default function SupervisorDashboard() {
                 )}
               </div>
             </section>
+
+            </div>
+
+            {/* ── Lock overlay — no operator on shift ── */}
+            {panelLocked && (
+              <div style={{
+                position: 'absolute', inset: 0, zIndex: 10,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: 24,
+              }}>
+                <div style={{
+                  width: '100%', maxWidth: 360,
+                  background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl,
+                  padding: 28, textAlign: 'center',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: radius.md,
+                    background: accents.control.soft,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 14,
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accents.control.base} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                  <p style={{ color: text.primary, fontSize: 15, fontWeight: 600, margin: 0 }}>Panel locked</p>
+                  <p style={{ color: text.muted, fontSize: 12, margin: '6px 0 18px' }}>
+                    Enter your PIN to take over as operator of {selected.name}
+                  </p>
+                  <button
+                    onClick={() => setLockPinOpen(true)}
+                    style={{ ...primaryButton('control'), width: '100%', minHeight: 48, padding: '13px 0', fontSize: 14, fontWeight: 700 }}
+                    className="active:bg-[#1D4ED8] transition-colors touch-manipulation"
+                  >
+                    Enter PIN to operate
+                  </button>
+                </div>
+                {lastSession && lastSession.ended_at && (
+                  <div style={{
+                    marginTop: 12, width: '100%', maxWidth: 360,
+                    background: 'rgba(255,255,255,0.03)', borderRadius: radius.md,
+                    padding: '8px 14px', textAlign: 'center',
+                    color: text.faint, fontSize: 12, ...FONT_NUM,
+                  }}>
+                    Last operator&nbsp;&nbsp;{lastSession.operator_name} · until {new Date(lastSession.ended_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
 
             {/* ── Hourly Throughput (view + hold-to-edit) ── */}
             {selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
@@ -1119,11 +1183,11 @@ export default function SupervisorDashboard() {
             {/* ── Edit Throughput Modal ── */}
             {editSlot && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-                <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 24 }}>
-                  <p style={{ color: text.secondary, fontSize: 12, textAlign: 'center', marginBottom: 4, ...FONT_NUM }}>
+                <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 28 }}>
+                  <p style={{ ...microLabel, textAlign: 'center', marginBottom: 6 }}>Edit Guest Count</p>
+                  <p style={{ color: text.primary, fontSize: 14, fontWeight: 600, textAlign: 'center', marginBottom: 20, ...FONT_NUM }}>
                     {formatSlotTime(editSlot.start)} – {formatSlotTime(editSlot.end)}
                   </p>
-                  <p style={{ color: text.primary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>Edit guest count</p>
                   <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
                     <span style={{ color: text.primary, fontSize: 48, fontWeight: 700, ...FONT_NUM }}>
                       {editValue || '0'}
@@ -1161,8 +1225,8 @@ export default function SupervisorDashboard() {
       {/* ── Group Size Pad ── */}
       {groupSizePadOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
-          <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 24 }}>
-            <p style={{ color: text.secondary, fontSize: 12, textAlign: 'center', marginBottom: 4 }}>Group size</p>
+          <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 28 }}>
+            <p style={{ ...microLabel, textAlign: 'center', marginBottom: 12 }}>Group Size</p>
             <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.md, padding: '16px', textAlign: 'center', marginBottom: 16 }}>
               <span style={{ color: text.primary, fontSize: 48, fontWeight: 700, ...FONT_NUM }}>
                 {groupSizePadInput || '0'}
@@ -1279,6 +1343,24 @@ export default function SupervisorDashboard() {
             </div>
           </div>
         </footer>
+      )}
+
+      {/* ── Operator PIN — take over the panel ── */}
+      {lockPinOpen && selected && (
+        <PinPad
+          app="control"
+          title="Enter PIN to operate"
+          subtitle={selected.name}
+          verify={async (pin) => {
+            const ok = await operatorLogin(pin);
+            if (ok) {
+              setLockPinOpen(false);
+              pushToast('success', 'You are now operating ' + selected.name);
+            }
+            return ok;
+          }}
+          onCancel={() => setLockPinOpen(false)}
+        />
       )}
 
       <ToastStack toasts={toasts} />

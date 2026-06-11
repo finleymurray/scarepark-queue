@@ -12,7 +12,7 @@ import {
   SIGNOFF_ROLE_LABELS,
   getTodayDateStr,
 } from '@/lib/signoff';
-import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
+import { resolveLogo, resolveGlowRgb } from '@/lib/logos';
 import ShowReportModal from '@/components/ShowReportModal';
 import PinPad from '@/components/ui/PinPad';
 import OfflineBanner from '@/components/ui/OfflineBanner';
@@ -26,8 +26,8 @@ import {
   microLabel,
   FONT_NUM,
   statusColors,
-  card,
   controlButton,
+  primaryButton,
 } from '@/lib/theme';
 import type {
   Attraction,
@@ -39,6 +39,63 @@ import type {
 
 const accent = accents.signoff;
 const green = statusColors('OPEN');
+const TRACK = '#1C1F26';
+
+/* ── Small SVG progress ring ── */
+function ProgressRing({ size, pct, showPct = true }: { size: number; pct: number; showPct?: boolean }) {
+  const stroke = 3.5;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  const done = clamped >= 100;
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={TRACK} strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={done ? green.rail : accent.base}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - clamped / 100)}
+          style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.3s ease' }}
+        />
+      </svg>
+      {showPct && (
+        <span style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: size >= 44 ? 11 : 10, fontWeight: 600, color: done ? green.text : accent.text, ...FONT_NUM,
+        }}>
+          {Math.round(clamped)}%
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ── Tinted logo square for attraction rows ── */
+function LogoSquare({ a }: { a: Attraction }) {
+  const logo = resolveLogo(a);
+  const glowRgb = resolveGlowRgb(a) || '148, 163, 184';
+  return (
+    <div style={{
+      width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+      background: `rgba(${glowRgb}, 0.10)`,
+      border: `1px solid rgba(${glowRgb}, 0.18)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+    }}>
+      {logo ? (
+        <img src={logo} alt={a.name} loading="lazy" decoding="async"
+          style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
+      ) : (
+        <span style={{ color: `rgba(${glowRgb}, 0.9)`, fontSize: 15, fontWeight: 700 }}>
+          {a.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function SignoffPage() {
   const router = useRouter();
@@ -53,10 +110,14 @@ export default function SignoffPage() {
   const [selectedAttractionId, setSelectedAttractionId] = useState<string>('');
   const [phase, setPhase] = useState<'opening' | 'closing'>('opening');
 
-  // Sections + items + completions
+  // Sections + items + completions (selected attraction)
   const [sections, setSections] = useState<SignoffSection[]>([]);
   const [items, setItems] = useState<Map<string, SignoffChecklistItem[]>>(new Map());
   const [completions, setCompletions] = useState<Map<string, SignoffCompletion>>(new Map());
+
+  // Home dashboard overview — sections + today's completions across all allowed attractions
+  const [overviewSections, setOverviewSections] = useState<SignoffSection[]>([]);
+  const [overviewCompletions, setOverviewCompletions] = useState<SignoffCompletion[]>([]);
 
   // Active section being signed off
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
@@ -113,6 +174,26 @@ export default function SignoffPage() {
     }
   }, []);
 
+  /** Read-only overview fetch for the home dashboard (per-attraction progress). */
+  const fetchOverview = useCallback(async (attractionIds: string[]) => {
+    if (attractionIds.length === 0) return;
+    const today = getTodayDateStr();
+    const [sectionsRes, completionsRes] = await Promise.all([
+      supabase
+        .from('signoff_sections')
+        .select('*')
+        .in('attraction_id', attractionIds)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('signoff_completions')
+        .select('*')
+        .in('attraction_id', attractionIds)
+        .eq('sign_date', today),
+    ]);
+    setOverviewSections(sectionsRes.data || []);
+    setOverviewCompletions(completionsRes.data || []);
+  }, []);
+
   useEffect(() => {
     async function init() {
       const auth = await checkAuth();
@@ -138,17 +219,15 @@ export default function SignoffPage() {
 
       if (attractionsData && attractionsData.length > 0) {
         setAttractions(attractionsData);
-        // Restore last-selected attraction if it's still in the allowed list
-        const saved = localStorage.getItem('ic-signoff-selected');
-        if (saved && attractionsData.find((a: Attraction) => a.id === saved)) {
-          setSelectedAttractionId(saved);
-        }
+        // Always open on the attraction grid (home), never auto-jump into a
+        // remembered attraction — staff found that disorienting.
+        fetchOverview(attractionsData.map((a: Attraction) => a.id));
       }
 
       setLoading(false);
     }
     init();
-  }, [router]);
+  }, [router, fetchOverview]);
 
   useEffect(() => {
     if (selectedAttractionId) {
@@ -200,7 +279,6 @@ export default function SignoffPage() {
 
   function selectAttraction(id: string) {
     setSelectedAttractionId(id);
-    localStorage.setItem('ic-signoff-selected', id);
     setPhase('opening');
     setActiveSectionId(null);
     setCheckedItems(new Set());
@@ -213,6 +291,8 @@ export default function SignoffPage() {
     setCompletions(new Map());
     setActiveSectionId(null);
     setCheckedItems(new Set());
+    // Refresh the dashboard so home progress reflects what was just signed off
+    fetchOverview(attractions.map((a) => a.id));
   }
 
   /** Check if a section is locked (requires_all_complete and not all other sections done). */
@@ -328,6 +408,39 @@ export default function SignoffPage() {
   const pinSection = sections.find((s) => s.id === pinSectionId);
   const pinRequiredRole = (pinSection?.role_key as SignoffRoleKey) || 'supervisor';
 
+  /* ── Home dashboard derived data ── */
+  const completedSectionIds = new Set(overviewCompletions.map((c) => c.section_id));
+
+  /** Per-attraction stats for the dashboard. */
+  function attractionStats(attractionId: string) {
+    const secs = overviewSections.filter((s) => s.attraction_id === attractionId);
+    const opening = secs.filter((s) => s.phase === 'opening');
+    const closing = secs.filter((s) => s.phase === 'closing');
+    const openDone = opening.length > 0 && opening.every((s) => completedSectionIds.has(s.id));
+    // Current phase per attraction: opening until it's complete, then closing
+    const phaseSecs = openDone && closing.length > 0 ? closing : opening;
+    const phaseName: 'opening' | 'closing' = openDone && closing.length > 0 ? 'closing' : 'opening';
+    const done = phaseSecs.filter((s) => completedSectionIds.has(s.id)).length;
+    const ready = secs.length > 0 && secs.every((s) => completedSectionIds.has(s.id));
+    const latest = overviewCompletions
+      .filter((c) => c.attraction_id === attractionId)
+      .sort((a, b) => new Date(b.signed_at).getTime() - new Date(a.signed_at).getTime())[0];
+    const latestSection = latest ? overviewSections.find((s) => s.id === latest.section_id) : null;
+    return { total: phaseSecs.length, done, ready, phaseName, latest, latestSection, hasAny: secs.length > 0 };
+  }
+
+  // Park-wide phase: closing once every attraction with opening sections has finished opening
+  const parkOpening = overviewSections.filter((s) => s.phase === 'opening');
+  const parkOpeningDone = parkOpening.length > 0 && parkOpening.every((s) => completedSectionIds.has(s.id));
+  const parkPhase: 'opening' | 'closing' = parkOpeningDone ? 'closing' : 'opening';
+  const parkPhaseSections = overviewSections.filter((s) => s.phase === parkPhase);
+  const parkPhaseDone = parkPhaseSections.filter((s) => completedSectionIds.has(s.id)).length;
+  const parkPct = parkPhaseSections.length > 0 ? (parkPhaseDone / parkPhaseSections.length) * 100 : 0;
+  const readyCount = attractions.filter((a) => attractionStats(a.id).ready).length;
+
+  const detailPct = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
+  const selectedGlowRgb = selectedAttraction ? (resolveGlowRgb(selectedAttraction) || '148, 163, 184') : '148, 163, 184';
+
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
@@ -352,7 +465,7 @@ export default function SignoffPage() {
         />
       )}
 
-      {/* Header */}
+      {/* Top bar */}
       <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0 20px', height: 56, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="signoff" isAdmin={userRole === 'admin'} />
@@ -380,49 +493,106 @@ export default function SignoffPage() {
       {/* Main Content — Scrollable */}
       <div className="flex-1 overflow-y-auto">
         {/* ────────────────────────────────────────────── */}
-        {/* Attraction Grid (no attraction selected)      */}
+        {/* Home dashboard (no attraction selected)        */}
         {/* ────────────────────────────────────────────── */}
         {!selectedAttractionId && (
-          <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
-            <p className="text-sm text-center mb-6" style={{ color: text.muted }}>Select an attraction to begin sign-off</p>
+          <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '24px 20px' }}>
+            {/* Dashboard header + night progress ring */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: '-0.02em', color: text.primary }}>Sign-Off</h2>
+                <p style={{ margin: '3px 0 0', fontSize: 11, color: text.muted }}>
+                  {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} · Tonight&rsquo;s checks
+                </p>
+              </div>
+              <ProgressRing size={46} pct={parkPct} />
+            </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {/* Slim summary bar */}
+            <div style={{
+              background: surface.control, border: `1px solid ${border.default}`, borderRadius: 12,
+              padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16,
+            }}>
+              <span style={{ fontSize: 12, color: text.secondary, ...FONT_NUM }}>
+                {readyCount} of {attractions.length} attractions ready
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: accent.text, letterSpacing: '0.04em' }}>
+                {parkPhase === 'opening' ? 'Opening phase' : 'Closing phase'}
+              </span>
+            </div>
+
+            {/* Attraction rows — art-washed full-width cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {attractions.map((a) => {
-                const logo = getAttractionLogo(a.slug);
-                const glow = getLogoGlow(a.slug);
-                const glowRgb = getGlowRgb(a.slug);
+                const glowRgb = resolveGlowRgb(a) || '148, 163, 184';
+                const st = attractionStats(a.id);
+                const pct = st.total > 0 ? (st.done / st.total) * 100 : 0;
+                const complete = st.ready || (st.total > 0 && st.done === st.total);
 
                 return (
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="relative overflow-hidden transition-all duration-150 touch-manipulation flex flex-col
-                               hover:border-[#F59E0B]/50 active:scale-[0.97]
-                               focus:outline-none"
-                    style={{ ...card(), borderRadius: radius.xl }}
+                    className="touch-manipulation text-left w-full"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 16px',
+                      borderRadius: 16,
+                      border: `1px solid ${border.default}`,
+                      background: `linear-gradient(105deg, rgba(${glowRgb}, 0.14) 0%, #0A0B0E 60%, ${surface.page} 100%)`,
+                      cursor: 'pointer',
+                      transition: 'background 0.15s, border-color 0.15s, transform 0.1s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = border.strong; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.default; }}
                   >
-                    {/* Logo area */}
-                    <div className="relative w-full" style={{ aspectRatio: '1' }}>
-                      {glowRgb && (
-                        <div
-                          className="absolute inset-0"
-                          style={{ background: `radial-gradient(circle at center, rgba(${glowRgb}, 0.15) 0%, transparent 70%)` }}
-                        />
-                      )}
-                      <div className="relative z-10 flex items-center justify-center w-full h-full p-4">
-                        {logo ? (
-                          <img src={logo} alt={a.name} loading="lazy" decoding="async"
-                            className="object-contain w-full h-full"
-                            style={{ filter: glow || undefined }} />
+                    <LogoSquare a={a} />
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                        <span style={{ fontSize: 14, fontWeight: 500, color: text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {a.name}
+                        </span>
+                        {st.ready ? (
+                          <span style={{ ...microLabel, color: green.text, flexShrink: 0 }}>READY</span>
+                        ) : st.hasAny ? (
+                          <span style={{ fontSize: 12, color: text.muted, flexShrink: 0, ...FONT_NUM }}>
+                            {st.done}/{st.total}
+                          </span>
                         ) : (
-                          <span style={{ color: text.secondary, fontSize: 36, fontWeight: 700 }}>{a.name.charAt(0)}</span>
+                          <span style={{ ...microLabel, color: text.faint, flexShrink: 0 }}>NO CHECKS</span>
                         )}
                       </div>
+
+                      {/* Slim progress bar */}
+                      <div style={{ height: 4, borderRadius: 2, background: TRACK, marginTop: 8, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: 2,
+                          width: `${pct}%`,
+                          background: complete ? green.rail : accent.base,
+                          transition: 'width 0.4s ease, background 0.3s ease',
+                        }} />
+                      </div>
+
+                      {/* Last action */}
+                      <div style={{ marginTop: 7, fontSize: 10, color: text.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {st.latest && st.latestSection
+                          ? `Last: ${st.latestSection.name} · ${st.latest.signed_by_name.split(' ')[0]}, ${new Date(st.latest.signed_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                          : st.hasAny ? `No ${st.phaseName} checks signed yet` : 'No sections configured'}
+                      </div>
                     </div>
-                    {/* Name label */}
-                    <div className="px-3 pb-4 pt-1 text-center w-full">
-                      <span style={{ fontSize: 13, fontWeight: 600, color: text.secondary, lineHeight: 1.3 }}>{a.name}</span>
-                    </div>
+
+                    {/* Right affordance */}
+                    {st.ready ? (
+                      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                        <circle cx="8" cy="8" r="7" stroke={green.rail} strokeWidth="1.4" />
+                        <path d="M5 8.2L7.2 10.4L11 5.8" stroke={green.rail} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                        <path d="M6 3L11 8L6 13" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
                   </button>
                 );
               })}
@@ -437,65 +607,46 @@ export default function SignoffPage() {
         )}
 
         {/* ────────────────────────────────────────────── */}
-        {/* Sign-Off View (attraction selected)           */}
+        {/* Attraction detail (checklist)                  */}
         {/* ────────────────────────────────────────────── */}
         {selectedAttraction && (
-          <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: '16px 20px 40px' }}>
-            {/* Back button */}
-            <button
-              onClick={goBackToGrid}
-              className="flex items-center gap-2 font-medium mb-6 transition-colors touch-manipulation"
-              style={{ color: text.secondary, minHeight: 44, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              All Attractions
-            </button>
+          <div>
+            {/* Hero header with attraction tint */}
+            <div style={{ background: `linear-gradient(160deg, rgba(${selectedGlowRgb}, 0.14) 0%, ${surface.page} 70%)` }}>
+              <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '14px 20px 18px' }}>
+                <button
+                  onClick={goBackToGrid}
+                  className="touch-manipulation"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: text.muted, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', minHeight: 36 }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  All attractions
+                </button>
 
-            {/* ── Attraction Logo (centered) ── */}
-            {(() => {
-              const logo = getAttractionLogo(selectedAttraction.slug);
-              const glow = getLogoGlow(selectedAttraction.slug);
-              return logo ? (
-                <div className="flex justify-center mb-6">
-                  <img src={logo} alt={selectedAttraction.name} loading="lazy" decoding="async"
-                       className="object-contain w-[100px] sm:w-[140px]"
-                       style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                    <LogoSquare a={selectedAttraction} />
+                    <div style={{ minWidth: 0 }}>
+                      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 500, letterSpacing: '-0.01em', color: text.primary }}>
+                        {selectedAttraction.name}
+                      </h2>
+                      <p style={{ margin: '3px 0 0', fontSize: 11, color: fullySignedOff ? green.text : accent.text, ...FONT_NUM }}>
+                        {fullySignedOff
+                          ? 'All checks signed off'
+                          : `${phase.charAt(0).toUpperCase() + phase.slice(1)} checks · ${completedSections} of ${totalSections} sections`}
+                      </p>
+                    </div>
+                  </div>
+                  <ProgressRing size={40} pct={detailPct} />
                 </div>
-              ) : null;
-            })()}
-
-            {/* ── Sign-Off Status Badge ── */}
-            <div className="mb-8 flex flex-col items-center gap-2">
-              {fullySignedOff ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: green.soft, color: green.text, border: `1px solid rgba(34,197,94,0.2)` }}>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  Signed Off
-                </span>
-              ) : openingDone && allClosingSections.length > 0 ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: accent.soft, color: accent.base, border: '1px solid rgba(245,158,11,0.2)' }}>
-                  Opening Signed Off
-                </span>
-              ) : allOpeningSections.length > 0 ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: radius.sm, background: statusColors('CLOSED').soft, color: statusColors('CLOSED').rail, border: '1px solid rgba(239,68,68,0.2)' }}>
-                  Not Signed Off
-                </span>
-              ) : null}
-              <p className="text-[13px]" style={{ color: text.muted }}>
-                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
+              </div>
             </div>
 
-            {/* ── Sign-Off Sections ── */}
-            <fieldset className="p-4 sm:p-8 mb-8" style={card()}>
-              <legend style={{ color: text.primary, fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: accent.base, color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700, ...FONT_NUM }}>1</span>
-                Sign-Off Sections
-              </legend>
-
-              {/* Phase tabs */}
-              <div className="flex mb-6" style={{ borderBottom: `1px solid ${border.default}` }}>
+            <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '4px 20px 40px' }}>
+              {/* Phase switch — segmented control */}
+              <div style={{ display: 'flex', gap: 6, background: surface.control, border: `1px solid ${border.default}`, borderRadius: 12, padding: 4, marginBottom: 16 }}>
                 {(['opening', 'closing'] as const).map((p) => {
                   const active = phase === p;
                   const pSections = sections.filter((s) => s.phase === p);
@@ -510,89 +661,62 @@ export default function SignoffPage() {
                         setPhase(p); setActiveSectionId(null); setCheckedItems(new Set());
                       }}
                       disabled={closingLocked}
-                      className="flex-1 flex items-center justify-center gap-2 font-semibold transition-colors touch-manipulation relative"
+                      className="touch-manipulation"
                       style={{
-                        padding: '16px 8px', fontSize: 15, minHeight: 52,
-                        background: 'none', border: 'none',
-                        color: closingLocked ? text.faint : active ? text.primary : text.secondary,
+                        flex: 1, minHeight: 44, borderRadius: 9, border: 'none',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        fontSize: 13, fontWeight: 600,
+                        background: active ? surface.raised : 'transparent',
+                        color: closingLocked ? text.faint : active ? text.primary : text.muted,
                         cursor: closingLocked ? 'not-allowed' : 'pointer',
+                        transition: 'background 0.15s, color 0.15s',
+                        boxShadow: active ? `inset 0 0 0 1px ${border.strong}` : 'none',
                       }}
                     >
                       {closingLocked && (
-                        <svg width="15" height="15" viewBox="0 0 12 12" fill="none">
-                          <rect x="2" y="5.5" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                          <path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+                        <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+                          <rect x="2" y="5.5" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                          <path d="M4 5.5V3.5C4 2.4 4.9 1.5 6 1.5C7.1 1.5 8 2.4 8 3.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" />
                         </svg>
                       )}
                       {p.charAt(0).toUpperCase() + p.slice(1)}
                       {pSections.length > 0 && !closingLocked && (
-                        <span className="text-sm font-medium" style={{ color: active ? text.muted : text.faint, ...FONT_NUM }}>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: allDone ? green.text : active ? accent.text : text.faint, ...FONT_NUM }}>
                           {allDone ? '✓' : `${pCompleted}/${pSections.length}`}
                         </span>
                       )}
-                      {active && <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full" style={{ background: accent.base }} />}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Progress bar */}
-              {totalSections > 0 && (
-                <div style={{ background: surface.control, border: `1px solid ${border.default}`, borderRadius: radius.lg, padding: '16px 20px', marginBottom: 20 }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <span style={{ color: text.secondary, fontSize: 15, fontWeight: 500, ...FONT_NUM }}>
-                      {completedSections}/{totalSections} sections signed off
-                    </span>
-                    {completedSections === totalSections && (
-                      <span style={{ ...microLabel, fontSize: 12, fontWeight: 600, padding: '2px 10px', borderRadius: radius.pill, background: green.soft, color: green.text }}>COMPLETE</span>
-                    )}
-                  </div>
-                  <div style={{ position: 'relative', width: '100%', height: 10, background: surface.raised, borderRadius: radius.pill, overflow: 'visible' }}>
-                    {/* Glow layer */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        height: '100%',
-                        borderRadius: radius.pill,
-                        width: `${(completedSections / totalSections) * 100}%`,
-                        background: completedSections === totalSections
-                          ? green.rail
-                          : `linear-gradient(90deg, ${accent.strong}, ${accent.base})`,
-                        filter: 'blur(8px)',
-                        opacity: 0.5,
-                        transition: 'width 0.5s ease',
-                      }}
-                    />
-                    {/* Fill layer */}
-                    <div
-                      style={{
-                        position: 'relative',
-                        height: '100%',
-                        borderRadius: radius.pill,
-                        width: `${(completedSections / totalSections) * 100}%`,
-                        background: completedSections === totalSections
-                          ? green.rail
-                          : `linear-gradient(90deg, ${accent.strong} 0%, ${accent.base} 100%)`,
-                        transition: 'width 0.5s ease',
-                      }}
-                    />
-                  </div>
+              {/* Closing locked affordance (visible while on opening, closing exists) */}
+              {phase === 'opening' && !openingDone && allClosingSections.length > 0 && (
+                <div style={{
+                  border: `1px dashed ${border.strong}`, borderRadius: 14, padding: '12px 16px',
+                  display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <rect x="3" y="7" width="10" height="7" rx="1.5" stroke={text.faint} strokeWidth="1.5" fill="none" />
+                    <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                  </svg>
+                  <span style={{ fontSize: 11, color: text.faint }}>
+                    Closing checks — available after opening complete
+                  </span>
                 </div>
               )}
 
               {/* No sections message */}
               {totalSections === 0 && (
-                <div className="text-center py-8">
+                <div className="text-center py-10" style={{ border: `1px dashed ${border.strong}`, borderRadius: 14 }}>
                   <p className="text-sm" style={{ color: text.muted }}>No {phase} sections configured for {selectedAttraction?.name || 'this attraction'}.</p>
                   <p className="text-[13px] mt-2" style={{ color: text.faint }}>Ask an admin to configure sign-off sections.</p>
                 </div>
               )}
 
-              {/* Section cards */}
-              <div className="flex flex-col" style={{ gap: 12 }}>
-                {phaseSections.map((section, idx) => {
+              {/* Section list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {phaseSections.map((section) => {
                   const completion = completions.get(section.id);
                   const isCompleted = !!completion;
                   const isActive = activeSectionId === section.id;
@@ -600,95 +724,122 @@ export default function SignoffPage() {
                   const allChecked = sectionItems.length > 0 && sectionItems.every((i) => checkedItems.has(i.id));
                   const locked = isSectionLocked(section.id);
                   const blockingNames = locked ? getBlockingSections(section.id) : [];
+                  const checkedCount = sectionItems.filter((i) => checkedItems.has(i.id)).length;
+                  const canSign = allChecked || sectionItems.length === 0;
 
+                  /* ── Completed: green receipt ── */
+                  if (isCompleted && completion) {
+                    return (
+                      <div
+                        key={section.id}
+                        style={{
+                          borderRadius: 14,
+                          border: '1px solid rgba(34,197,94,0.25)',
+                          background: 'rgba(34,197,94,0.06)',
+                          padding: '12px 16px',
+                          display: 'flex', alignItems: 'center', gap: 12,
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                          <circle cx="8" cy="8" r="7" stroke={green.rail} strokeWidth="1.4" />
+                          <path d="M5 8.2L7.2 10.4L11 5.8" stroke={green.rail} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#86EFAC' }}>{section.name}</div>
+                          <div style={{ fontSize: 10, color: '#4D7C5F', marginTop: 2, ...FONT_NUM }}>
+                            {completion.signed_by_name} · {new Date(completion.signed_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · {SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  /* ── Locked: dashed waiting row ── */
+                  if (locked) {
+                    return (
+                      <div
+                        key={section.id}
+                        style={{
+                          border: `1px dashed ${border.strong}`, borderRadius: 14,
+                          padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12,
+                        }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                          <rect x="3" y="7" width="10" height="7" rx="1.5" stroke={text.faint} strokeWidth="1.5" fill="none" />
+                          <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                        </svg>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: text.faint }}>{section.name}</div>
+                          <div style={{ fontSize: 11, color: accent.text, marginTop: 2 }}>
+                            Waiting for {blockingNames.join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  /* ── Incomplete: working card (expands when active) ── */
                   return (
                     <div
                       key={section.id}
-                      className="transition-colors"
                       style={{
-                        background: isCompleted ? green.soft : surface.control,
-                        borderRadius: radius.lg,
+                        background: surface.card,
+                        borderRadius: 14,
+                        border: `1px solid ${isActive ? 'rgba(245,158,11,0.45)' : border.strong}`,
                         overflow: 'hidden',
-                        opacity: locked ? 0.6 : 1,
-                        border: `1px solid ${isCompleted ? 'rgba(34,197,94,0.3)' : isActive ? 'rgba(245,158,11,0.5)' : border.default}`,
+                        transition: 'border-color 0.15s',
                       }}
                     >
-                      {/* Section header — clickable if not completed and not locked */}
                       <button
-                        onClick={() => !isCompleted && !locked && openSection(section.id)}
-                        disabled={isCompleted || locked}
-                        className="w-full text-left px-6 py-6 flex items-center justify-between touch-manipulation bg-transparent border-none"
-                        style={{ cursor: isCompleted || locked ? 'default' : 'pointer' }}
+                        onClick={() => (isActive ? setActiveSectionId(null) : openSection(section.id))}
+                        className="w-full text-left touch-manipulation"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 56 }}
                       >
-                        <div className="flex items-center gap-4">
-                          {isCompleted ? (
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(34,197,94,0.18)' }}>
-                              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                                <path d="M3 7L6 10L11 4" stroke={green.rail} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-                          ) : locked ? (
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: surface.raised, border: `2px solid ${border.strong}` }}>
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <rect x="3" y="7" width="10" height="7" rx="1.5" stroke={text.faint} strokeWidth="1.5" fill="none"/>
-                                <path d="M5 7V5C5 3.34 6.34 2 8 2C9.66 2 11 3.34 11 5V7" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                              </svg>
-                            </div>
-                          ) : (
-                            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ background: accent.soft, color: accent.base, border: '2px solid rgba(245,158,11,0.3)', ...FONT_NUM }}>
-                              {idx + 1}
-                            </span>
-                          )}
-
-                          <div>
-                            <span style={{ fontSize: 15, fontWeight: 600, color: isCompleted ? green.rail : locked ? text.faint : text.primary }}>
-                              {section.name}
-                            </span>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[12px] font-medium" style={{ color: text.muted }}>
-                                {SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}
-                              </span>
-                              {isCompleted && completion && (
-                                <span className="text-[11px]" style={{ color: text.muted }}>
-                                  &middot; {completion.signed_by_name} &middot; {new Date(completion.signed_at).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                </span>
-                              )}
-                              {locked && (
-                                <span className="text-[11px]" style={{ color: accent.text }}>
-                                  &middot; Waiting for {blockingNames.join(', ')}
-                                </span>
-                              )}
-                            </div>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: text.primary }}>{section.name}</span>
+                          <div style={{ fontSize: 11, color: text.muted, marginTop: 2 }}>
+                            {SIGNOFF_ROLE_LABELS[section.role_key as SignoffRoleKey] || section.role_key}
                           </div>
                         </div>
-
-                        {!isCompleted && !locked && (
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform shrink-0 ${isActive ? 'rotate-180' : ''}`}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                          {isActive && sectionItems.length > 0 && (
+                            <span style={{ fontSize: 11, fontWeight: 600, color: accent.text, ...FONT_NUM }}>
+                              {checkedCount} of {sectionItems.length}
+                            </span>
+                          )}
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className={`transition-transform ${isActive ? 'rotate-180' : ''}`}>
                             <path d="M4 6L8 10L12 6" stroke={text.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
-                        )}
+                        </div>
                       </button>
 
                       {/* Expanded checklist */}
-                      {isActive && !isCompleted && (
+                      {isActive && (
                         <div style={{ borderTop: `1px solid ${border.divider}` }}>
                           {sectionItems.length === 0 ? (
-                            <p className="text-sm py-6 px-6" style={{ color: text.muted }}>No checklist items for this section.</p>
+                            <p className="text-sm py-5 px-4" style={{ color: text.muted }}>No checklist items for this section.</p>
                           ) : (
-                            <div className="px-4 pt-4 pb-2 flex flex-col gap-3">
+                            <div style={{ padding: '12px 12px 4px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                               {sectionItems.map((item) => {
                                 const checked = checkedItems.has(item.id);
                                 return (
                                   <label
                                     key={item.id}
-                                    style={{ minHeight: 64, borderRadius: radius.lg, border: checked ? '1px solid rgba(34,197,94,0.4)' : `1px solid ${border.default}`, background: checked ? green.soft : surface.card, display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', cursor: 'pointer' }}
-                                    className="transition-all touch-manipulation"
+                                    className="touch-manipulation"
+                                    style={{
+                                      minHeight: 64, borderRadius: 10,
+                                      border: checked ? '1px solid rgba(34,197,94,0.4)' : `1px solid ${border.default}`,
+                                      background: checked ? green.soft : surface.control,
+                                      display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px',
+                                      cursor: 'pointer',
+                                      transition: 'background 0.15s, border-color 0.15s',
+                                    }}
                                   >
                                     <input type="checkbox" checked={checked} onChange={() => toggleItem(item.id)} className="hidden" />
                                     <div style={{ width: 56, height: 30, borderRadius: 15, background: checked ? green.rail : surface.raised, border: `2px solid ${checked ? green.rail : border.strong}`, position: 'relative', flexShrink: 0, transition: 'background 0.2s, border-color 0.2s' }}>
                                       <div style={{ position: 'absolute', top: 2, left: checked ? 26 : 2, width: 22, height: 22, borderRadius: '50%', background: checked ? '#fff' : text.faint, boxShadow: '0 1px 4px rgba(0,0,0,0.5)', transition: 'left 0.18s ease, background 0.2s' }} />
                                     </div>
-                                    <span style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.3, flex: 1, color: checked ? green.text : text.primary }}>
+                                    <span style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.35, flex: 1, color: checked ? green.text : text.primary }}>
                                       {item.label}
                                     </span>
                                   </label>
@@ -697,37 +848,32 @@ export default function SignoffPage() {
                             </div>
                           )}
 
-                          {/* Sign off button — sticky at bottom */}
-                          <div className="sticky bottom-0 px-4 py-4" style={{ background: `linear-gradient(to bottom, transparent 0%, ${surface.control} 30%)` }}>
-                            {sectionItems.length > 0 && !allChecked && (
-                              <p className="text-[13px] text-center mb-3" style={{ color: text.faint, ...FONT_NUM }}>
-                                {sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length} item{sectionItems.length - Array.from(checkedItems).filter(id => sectionItems.some(i => i.id === id)).length !== 1 ? 's' : ''} remaining
-                              </p>
-                            )}
+                          {/* Sign-off footer */}
+                          <div className="sticky bottom-0" style={{ padding: '12px 12px 14px', background: `linear-gradient(to bottom, transparent 0%, ${surface.card} 35%)` }}>
                             <button
                               onClick={() => handleSignOffClick(section.id)}
-                              disabled={!allChecked && sectionItems.length > 0}
-                              className="w-full text-base font-bold transition-all touch-manipulation
-                                         flex items-center justify-center gap-3
-                                         disabled:opacity-25 disabled:cursor-not-allowed"
+                              disabled={!canSign}
+                              className="w-full touch-manipulation flex items-center justify-center gap-3"
                               style={{
-                                background: allChecked || sectionItems.length === 0
-                                  ? `linear-gradient(135deg, ${accent.strong} 0%, ${accent.base} 100%)`
-                                  : surface.card,
-                                border: allChecked || sectionItems.length === 0 ? 'none' : `1px solid ${border.default}`,
-                                borderRadius: radius.xl,
-                                color: allChecked || sectionItems.length === 0 ? '#000' : text.faint,
-                                minHeight: 64,
-                                fontSize: 17,
-                                cursor: 'pointer',
-                                boxShadow: allChecked || sectionItems.length === 0 ? '0 6px 24px rgba(245,158,11,0.3)' : 'none',
+                                ...primaryButton('signoff'),
+                                minHeight: 60,
+                                fontSize: 15,
+                                opacity: canSign ? 1 : 0.45,
+                                cursor: canSign ? 'pointer' : 'not-allowed',
+                                transition: 'opacity 0.15s, background 0.15s',
+                                boxShadow: canSign ? '0 6px 20px rgba(245,158,11,0.25)' : 'none',
                               }}
                             >
-                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
                                 <path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
-                              Sign Off with PIN
+                              Sign off section · enter PIN
                             </button>
+                            {sectionItems.length > 0 && !allChecked && (
+                              <p className="text-center" style={{ fontSize: 11, color: text.faint, marginTop: 8, ...FONT_NUM }}>
+                                {sectionItems.length - checkedCount} item{sectionItems.length - checkedCount !== 1 ? 's' : ''} remaining
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -735,40 +881,34 @@ export default function SignoffPage() {
                   );
                 })}
               </div>
-            </fieldset>
 
-            {/* ── Separator ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '8px 0 16px' }}>
-              <div style={{ flex: 1, height: 1, background: border.default }} />
-              <span style={{ ...microLabel, color: text.secondary, fontSize: 11, flexShrink: 0 }}>End of Night</span>
-              <div style={{ flex: 1, height: 1, background: border.default }} />
-            </div>
+              {/* ── End of night ── */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '28px 0 14px' }}>
+                <div style={{ flex: 1, height: 1, background: border.default }} />
+                <span style={{ ...microLabel, color: text.secondary, fontSize: 11, flexShrink: 0 }}>End of Night</span>
+                <div style={{ flex: 1, height: 1, background: border.default }} />
+              </div>
 
-            {/* ── End of Night Report Button ── */}
-            <fieldset className="p-4 sm:p-8 mb-8" style={card()}>
-              <legend style={{ color: text.primary, fontSize: 15, fontWeight: 600, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: accent.base, color: '#000', borderRadius: '50%', fontSize: 13, fontWeight: 700, ...FONT_NUM }}>2</span>
-                Show Report
-              </legend>
-              <p style={{ color: text.secondary, fontSize: 14, marginBottom: 16 }}>
-                Submit an end-of-night report for {selectedAttraction?.name || 'this attraction'}.
-              </p>
               <button
                 onClick={() => setShowReportOpen(true)}
+                className="touch-manipulation"
                 style={{
                   ...controlButton,
                   width: '100%',
-                  padding: '18px 24px',
-                  borderRadius: radius.lg,
+                  padding: '16px 24px',
+                  borderRadius: 14,
                   color: text.primary,
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: 600,
                   minHeight: 60,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 12,
+                  transition: 'background 0.15s, border-color 0.15s',
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = surface.raised; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = surface.control; }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -779,24 +919,24 @@ export default function SignoffPage() {
                 </svg>
                 End of Night Report
               </button>
-            </fieldset>
 
-            {/* Show Report Modal */}
-            <ShowReportModal
-              open={showReportOpen}
-              attractionId={selectedAttractionId}
-              attractionName={selectedAttraction?.name || ''}
-              dateStr={getTodayDateStr()}
-              userEmail={userEmail}
-              displayName={displayName}
-              onClose={() => setShowReportOpen(false)}
-              onSubmitted={() => setShowReportOpen(false)}
-            />
+              {/* Show Report Modal */}
+              <ShowReportModal
+                open={showReportOpen}
+                attractionId={selectedAttractionId}
+                attractionName={selectedAttraction?.name || ''}
+                dateStr={getTodayDateStr()}
+                userEmail={userEmail}
+                displayName={displayName}
+                onClose={() => setShowReportOpen(false)}
+                onSubmitted={() => setShowReportOpen(false)}
+              />
 
-            <div className="text-center pb-6">
-              <Link href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
-                Privacy Policy
-              </Link>
+              <div className="text-center pt-8 pb-6">
+                <Link href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
+                  Privacy Policy
+                </Link>
+              </div>
             </div>
           </div>
         )}

@@ -83,23 +83,28 @@ function ConfirmModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, maxWidth: 448, width: '100%', textAlign: 'center' as const }} className="space-y-6">
-        <div className="text-[#EF4444] text-5xl mb-2">⚠</div>
-        <h2 className="text-white text-xl font-bold">{title}</h2>
-        <p className="text-[#94A3B8] text-sm">{message}</p>
-        <div className="flex gap-3 justify-center pt-2">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, maxWidth: 400, width: '100%', textAlign: 'center' as const }}>
+        {/* Icon in soft tinted square */}
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(239,68,68,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+        <h2 style={{ color: textTok.primary, fontSize: 16, fontWeight: 600, margin: '0 0 8px' }}>{title}</h2>
+        <p style={{ color: textTok.muted, fontSize: 13, lineHeight: 1.5, margin: '0 0 20px' }}>{message}</p>
+        <div style={{ display: 'flex', gap: 10 }}>
           <button
             onClick={onCancel}
-            className="px-6 py-3 bg-transparent border border-[#2E3543] text-[#94A3B8] hover:border-[#475569]
-                       rounded-md transition-colors font-medium"
+            style={{ ...controlButton, flex: 1, minHeight: 48, padding: '12px 16px', fontSize: 13, fontWeight: 600, borderRadius: 10 }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-6 py-3 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md
-                       transition-colors font-bold"
+            style={{ ...primaryButton('admin'), flex: 1, minHeight: 48, padding: '12px 16px', fontSize: 13, borderRadius: 10 }}
           >
             {confirmLabel}
           </button>
@@ -134,33 +139,37 @@ function DelayReasonModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, maxWidth: 480, width: '100%' }}>
-        <h2 className="text-white text-lg font-bold mb-1">Delay Reason</h2>
-        <p className="text-[#94A3B8] text-sm mb-5">
-          Why is <span className="text-white font-medium">{attractionName}</span> being delayed?
+        <h2 style={{ color: textTok.primary, fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>Delay Reason</h2>
+        <p style={{ color: textTok.muted, fontSize: 13, margin: '0 0 20px' }}>
+          Why is <span style={{ color: textTok.primary, fontWeight: 500 }}>{attractionName}</span> being delayed?
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-          {DELAY_REASONS.map((reason) => (
-            <button
-              key={reason}
-              onClick={() => setSelectedReason(reason)}
-              style={{
-                padding: '12px 8px',
-                borderRadius: 6,
-                border: selectedReason === reason ? '2px solid #F59E0B' : `1px solid ${border.strong}`,
-                background: selectedReason === reason ? 'rgba(245,158,11,0.12)' : surface.control,
-                color: selectedReason === reason ? '#FBBF24' : textTok.secondary,
-                fontSize: 14,
-                fontWeight: selectedReason === reason ? 600 : 400,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {reason}
-            </button>
-          ))}
+          {DELAY_REASONS.map((reason) => {
+            const selected = selectedReason === reason;
+            return (
+              <button
+                key={reason}
+                onClick={() => setSelectedReason(reason)}
+                style={{
+                  padding: '12px 8px',
+                  minHeight: 52,
+                  borderRadius: 12,
+                  border: selected ? `1.5px solid ${accents.signoff.base}` : `1px solid ${border.strong}`,
+                  background: selected ? 'rgba(245,158,11,0.08)' : surface.control,
+                  color: selected ? accents.signoff.text : textTok.secondary,
+                  fontSize: 13,
+                  fontWeight: selected ? 600 : 400,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {reason}
+              </button>
+            );
+          })}
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -172,16 +181,33 @@ function DelayReasonModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Additional details..."
-            className="w-full px-3 py-2.5 bg-[#13161C] border border-[#2E3543] rounded-md text-white text-sm
-                       placeholder-[#475569] focus:outline-none focus:border-[#F59E0B] transition-colors"
+            style={{
+              width: '100%',
+              padding: '12px 14px',
+              background: surface.control,
+              border: `1px solid ${border.strong}`,
+              borderRadius: 10,
+              color: textTok.primary,
+              fontSize: 13,
+              outline: 'none',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+              boxSizing: 'border-box' as const,
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = accents.signoff.base;
+              e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.15)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = border.strong;
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
-        <div className="flex gap-3">
+        <div style={{ display: 'flex', gap: 10 }}>
           <button
             onClick={onCancel}
-            className="flex-1 px-6 py-3 bg-transparent border border-[#2E3543] text-[#94A3B8] hover:border-[#475569]
-                       rounded-md transition-colors font-medium"
+            style={{ ...controlButton, flex: 1, minHeight: 48, padding: '12px 16px', fontSize: 13, fontWeight: 600, borderRadius: 10 }}
           >
             Cancel
           </button>
@@ -190,11 +216,13 @@ function DelayReasonModal({
             disabled={!selectedReason}
             style={{
               flex: 1,
-              padding: '12px 24px',
-              background: selectedReason ? '#F59E0B' : surface.raised,
-              color: selectedReason ? '#000' : textTok.faint,
-              fontWeight: 700,
-              borderRadius: 6,
+              minHeight: 48,
+              padding: '12px 16px',
+              background: selectedReason ? '#D97706' : surface.raised,
+              color: selectedReason ? '#fff' : textTok.faint,
+              fontSize: 13,
+              fontWeight: 600,
+              borderRadius: 10,
               border: 'none',
               cursor: selectedReason ? 'pointer' : 'not-allowed',
               transition: 'all 0.15s',

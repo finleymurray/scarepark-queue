@@ -7,8 +7,8 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
-import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog, ThroughputLog, DispatchLog } from '@/types/database';
-import { surface, border, text, radius, card, microLabel, FONT_NUM, statusColors } from '@/lib/theme';
+import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog, ThroughputLog, DispatchLog, OperatorSession, AuditLog } from '@/types/database';
+import { surface, border, text, radius, card, microLabel, FONT_NUM, statusColors, accents } from '@/lib/theme';
 import MetricStat from '@/components/ui/MetricStat';
 import { useToasts, ToastStack } from '@/components/ui/Toast';
 import {
@@ -270,9 +270,124 @@ function DelayTimer({ startedAt }: { startedAt: string }) {
   );
 }
 
+/* ── Operator timeline ── */
+
+function formatHM(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function operatorInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function OperatorTimeline({
+  sessions,
+  dispatches,
+  queueAudits,
+}: {
+  sessions: OperatorSession[];
+  dispatches: DispatchLog[];
+  queueAudits: AuditLog[];
+}) {
+  const sorted = [...sessions].sort(
+    (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+  );
+
+  return (
+    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 16 }}>
+      <div style={{ ...microLabel, marginBottom: 12 }}>Operators</div>
+
+      {sorted.length === 0 ? (
+        <div style={{ color: text.faint, fontSize: 11 }}>No operator sessions logged</div>
+      ) : (
+        <div style={{ position: 'relative' }}>
+          {/* Vertical connector line */}
+          {sorted.length > 1 && (
+            <div style={{ position: 'absolute', left: 11, top: 12, bottom: 12, width: 2, background: border.divider }} />
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {sorted.map((session) => {
+              const active = session.ended_at === null;
+              const windowStart = new Date(session.started_at).getTime();
+              const windowEnd = session.ended_at ? new Date(session.ended_at).getTime() : Date.now();
+
+              const sessionDispatches = dispatches.filter((d) => {
+                if (d.dispatched_by !== session.operator_name) return false;
+                const t = new Date(d.dispatched_at).getTime();
+                return t >= windowStart && t <= windowEnd;
+              });
+              const guests = sessionDispatches.reduce((s, d) => s + d.group_size, 0);
+
+              const queueChanges = queueAudits.filter((a) => {
+                if (a.performed_by !== session.operator_name) return false;
+                const t = new Date(a.created_at).getTime();
+                return t >= windowStart && t <= windowEnd;
+              }).length;
+
+              return (
+                <div key={session.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', position: 'relative' }}>
+                  {/* Avatar */}
+                  <div style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    border: `3px solid ${surface.card}`,
+                    background: active ? accents.control.strong : '#374151',
+                    color: active ? '#fff' : '#CBD5E1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    zIndex: 1,
+                  }}>
+                    {operatorInitials(session.operator_name)}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{
+                        color: active ? text.primary : text.secondary,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {session.operator_name}
+                      </span>
+                      <span style={{
+                        color: active ? '#4ADE80' : text.muted,
+                        fontSize: 11,
+                        whiteSpace: 'nowrap',
+                        ...FONT_NUM,
+                      }}>
+                        {formatHM(session.started_at)} — {session.ended_at ? formatHM(session.ended_at) : 'now'}
+                      </span>
+                    </div>
+                    <div style={{ color: text.muted, fontSize: 11, marginTop: 2 }}>
+                      {guests} guests · {sessionDispatches.length} dispatches · {queueChanges} queue changes
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Ops Card ── */
 
-function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; dateStr: string; openTime: string; closeTime: string }) {
+function OpsCard({ ops, dateStr, openTime, closeTime, sessions, dispatches, queueAudits }: { ops: AttractionOps; dateStr: string; openTime: string; closeTime: string; sessions: OperatorSession[]; dispatches: DispatchLog[]; queueAudits: AuditLog[] }) {
   const { attraction, currentStatus, openedAt, closedAt, delays, totalDowntimeSecs, activeDelay, history, totalGuests, avgDispatchIntervalSecs, totalDispatches, hourlyBreakdown } = ops;
 
   const sc = statusColors(currentStatus);
@@ -430,6 +545,9 @@ function OpsCard({ ops, dateStr, openTime, closeTime }: { ops: AttractionOps; da
           />
         </div>
       )}
+
+      {/* Operator timeline */}
+      <OperatorTimeline sessions={sessions} dispatches={dispatches} queueAudits={queueAudits} />
     </div>
   );
 }
@@ -565,6 +683,8 @@ export default function OperationsPage() {
   const [history, setHistory] = useState<AttractionHistory[]>([]);
   const [throughput, setThroughput] = useState<ThroughputLog[]>([]);
   const [dispatches, setDispatches] = useState<DispatchLog[]>([]);
+  const [operatorSessions, setOperatorSessions] = useState<OperatorSession[]>([]);
+  const [queueAudits, setQueueAudits] = useState<AuditLog[]>([]);
   const [openTime, setOpenTime] = useState('');
   const [closeTime, setCloseTime] = useState('');
   const [selectedDate, setSelectedDate] = useState(getTodayDateStr());
@@ -575,7 +695,7 @@ export default function OperationsPage() {
     const start = new Date(`${dateStr}T00:00:00`).toISOString();
     const end   = new Date(`${dateStr}T23:59:59`).toISOString();
 
-    const [attractionsRes, allLogs, historyRes, throughputRes, dispatchRes, openRes, closeRes] = await Promise.all([
+    const [attractionsRes, allLogs, historyRes, throughputRes, dispatchRes, openRes, closeRes, sessionsRes, auditRes] = await Promise.all([
       supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
       getAllStatusLogs(dateStr),
       supabase
@@ -588,6 +708,13 @@ export default function OperationsPage() {
       supabase.from('dispatch_logs').select('*').eq('log_date', dateStr).order('dispatched_at', { ascending: true }),
       supabase.from('park_settings').select('value').eq('key', 'opening_time').single(),
       supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
+      supabase.from('operator_sessions').select('*').eq('log_date', dateStr).order('started_at', { ascending: false }),
+      supabase
+        .from('audit_logs')
+        .select('id,action_type,attraction_id,attraction_name,performed_by,old_value,new_value,details,created_at')
+        .eq('action_type', 'queue_time_change')
+        .gte('created_at', start)
+        .lte('created_at', end),
     ]);
 
     if (attractionsRes.error || historyRes.error || throughputRes.error || dispatchRes.error) {
@@ -604,6 +731,8 @@ export default function OperationsPage() {
     setHistory(hist);
     setThroughput(tp);
     setDispatches(dp);
+    setOperatorSessions((sessionsRes.data as OperatorSession[]) || []);
+    setQueueAudits((auditRes.data as AuditLog[]) || []);
     setOpenTime(openRes.data?.value || '');
     setCloseTime(closeRes.data?.value || '');
     setOpsData(buildOpsData(attrs, allLogs, hist, tp, dp, openRes.data?.value || '', closeRes.data?.value || '', dateStr));
@@ -643,6 +772,8 @@ export default function OperationsPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'throughput_logs' },
         () => { fetchData(selectedDate); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dispatch_logs' },
+        () => { fetchData(selectedDate); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'operator_sessions' },
         () => { fetchData(selectedDate); })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'attractions' },
         (payload) => {
@@ -705,7 +836,16 @@ export default function OperationsPage() {
         {/* Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {opsData.map((ops) => (
-            <OpsCard key={ops.attraction.id} ops={ops} dateStr={selectedDate} openTime={openTime} closeTime={closeTime} />
+            <OpsCard
+              key={ops.attraction.id}
+              ops={ops}
+              dateStr={selectedDate}
+              openTime={openTime}
+              closeTime={closeTime}
+              sessions={operatorSessions.filter((s) => s.attraction_id === ops.attraction.id)}
+              dispatches={dispatches.filter((d) => d.attraction_id === ops.attraction.id)}
+              queueAudits={queueAudits.filter((a) => a.attraction_id === ops.attraction.id)}
+            />
           ))}
           {opsData.length === 0 && (
             <div style={{ color: text.faint, fontSize: 14, textAlign: 'center', padding: '48px 0' }}>

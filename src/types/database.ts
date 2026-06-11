@@ -32,6 +32,18 @@ export interface DispatchLog {
   log_date: string;
 }
 
+export interface OperatorSession {
+  id: string;
+  attraction_id: string;
+  user_id: string | null;
+  operator_name: string;
+  operator_email: string | null;
+  started_at: string;
+  ended_at: string | null;
+  ended_reason: 'logout' | 'takeover' | 'auto' | null;
+  log_date: string;
+}
+
 export interface ParkSetting {
   id: string;
   key: string;
