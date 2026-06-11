@@ -7,7 +7,7 @@ import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { logAudit } from '@/lib/audit';
 import { logStatusChange, resolveDelay, DELAY_REASONS } from '@/lib/statusLog';
-import { resolveLogo, resolveLogoGlow } from '@/lib/logos';
+import { resolveLogo, resolveLogoGlow, resolveGlowRgb } from '@/lib/logos';
 import { getAllSignoffStatuses, getTodayDateStr } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, AttractionStatus, AttractionType, ParkSetting, DelayReason } from '@/types/database';
@@ -44,6 +44,39 @@ const STATUS_PILL_TEXT: Record<AttractionStatus, string> = {
   'DELAYED': '#000',
   'AT CAPACITY': '#000',
 };
+
+/* ── Small SVG progress ring (matches Sign-Off's ring style) ── */
+const RING_TRACK = '#1C1F26';
+function ProgressRing({ size, pct, label }: { size: number; pct: number; label?: string }) {
+  const stroke = 3.5;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  const done = clamped >= 100;
+  const green = '#22C55E';
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={RING_TRACK} strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={done ? green : accents.admin.base}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - clamped / 100)}
+          style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.3s ease' }}
+        />
+      </svg>
+      <span style={{
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: size >= 44 ? 11 : 10, fontWeight: 600, color: done ? '#4ADE80' : accents.admin.text, ...FONT_NUM,
+      }}>
+        {label ?? `${Math.round(clamped)}%`}
+      </span>
+    </div>
+  );
+}
 
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -585,8 +618,16 @@ const RideControl = React.memo(function RideControl({
     }
   }
 
+  const glowRgb = resolveGlowRgb(attraction) || '148, 163, 184';
+
   return (
-    <div style={{ ...card(status), padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
+    <div style={{
+      ...card(status),
+      padding: 24, position: 'relative', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4,
+      // Art-wash: attraction glow tint on the left edge, fading into the card surface.
+      // The 3px status rail (from card()) stays — it's load-bearing for at-a-glance status.
+      background: `linear-gradient(105deg, rgba(${glowRgb}, 0.12) 0%, ${surface.card} 55%)`,
+    }}>
       <SaveFeedback show={showSaved} />
 
       {/* Reorder buttons — top right corner */}
@@ -819,8 +860,15 @@ const ShowControl = React.memo(function ShowControl({
     handleUpdate({ show_times: [] });
   }
 
+  const glowRgb = resolveGlowRgb(attraction) || '148, 163, 184';
+
   return (
-    <div style={{ ...card(status), padding: 20, position: 'relative' }}>
+    <div style={{
+      ...card(status),
+      padding: 20, position: 'relative',
+      // Art-wash: attraction glow tint on the left edge, fading into the card surface (rail stays).
+      background: `linear-gradient(105deg, rgba(${glowRgb}, 0.12) 0%, ${surface.card} 55%)`,
+    }}>
       <SaveFeedback show={showSaved} />
 
       {/* Header row: SHOW badge + status + reorder */}
@@ -1530,6 +1578,25 @@ export default function AdminDashboard() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <main style={{ padding: '24px 20px' }}>
+      {/* ── Dashboard header — title + park-open progress ring ── */}
+      {(() => {
+        const total = attractions.length;
+        const open = attractions.filter((a) => a.status === 'OPEN').length;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: '-0.02em', color: textTok.primary }}>Park Control</h2>
+              <p style={{ ...microLabel, margin: '4px 0 0' }}>
+                {open} of {total} attractions open
+              </p>
+            </div>
+            {total > 0 && (
+              <ProgressRing size={46} pct={(open / total) * 100} label={`${open}/${total}`} />
+            )}
+          </div>
+        );
+      })()}
+
       {/* Quick Actions + Operating Hours */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2" style={{ marginBottom: 32 }}>
 
@@ -1651,33 +1718,57 @@ export default function AdminDashboard() {
         );
       })()}
 
-      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {attractions.map((attraction, idx) =>
-          attraction.attraction_type === 'show' ? (
-            <ShowControl
-              key={attraction.id}
-              attraction={attraction}
-              onUpdate={handleUpdate}
-              onDelete={(id, name) => setDeleteTarget({ id, name })}
-              onMove={!autoSort ? (dir) => handleMoveAttraction(attraction.id, dir) : undefined}
-              isFirst={idx === 0}
-              isLast={idx === attractions.length - 1}
-              signoffStatus={signoffStatuses.get(attraction.id)}
-            />
-          ) : (
-            <RideControl
-              key={attraction.id}
-              attraction={attraction}
-              onUpdate={handleUpdate}
-              onDelete={(id, name) => setDeleteTarget({ id, name })}
-              onMove={!autoSort ? (dir) => handleMoveAttraction(attraction.id, dir) : undefined}
-              isFirst={idx === 0}
-              isLast={idx === attractions.length - 1}
-              signoffStatus={signoffStatuses.get(attraction.id)}
-            />
-          )
-        )}
-      </div>
+      {(() => {
+        const rides = attractions.filter((a) => a.attraction_type !== 'show');
+        const shows = attractions.filter((a) => a.attraction_type === 'show');
+
+        // Section header — Sign-Off-style title + microLabel subline
+        const sectionHeader = (title: string, sub: string) => (
+          <div style={{ margin: '0 0 16px' }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em', color: textTok.primary }}>{title}</h2>
+            <p style={{ ...microLabel, margin: '3px 0 0' }}>{sub}</p>
+          </div>
+        );
+
+        // isFirst/isLast + reordering stay relative to the GLOBAL sort order —
+        // grouping into sections is purely visual.
+        const renderCard = (attraction: Attraction) => {
+          const idx = attractions.findIndex((a) => a.id === attraction.id);
+          const common = {
+            attraction,
+            onUpdate: handleUpdate,
+            onDelete: (id: string, name: string) => setDeleteTarget({ id, name }),
+            onMove: !autoSort ? (dir: 'up' | 'down') => handleMoveAttraction(attraction.id, dir) : undefined,
+            isFirst: idx === 0,
+            isLast: idx === attractions.length - 1,
+            signoffStatus: signoffStatuses.get(attraction.id),
+          };
+          return attraction.attraction_type === 'show'
+            ? <ShowControl key={attraction.id} {...common} />
+            : <RideControl key={attraction.id} {...common} />;
+        };
+
+        return (
+          <>
+            {rides.length > 0 && (
+              <section style={{ marginBottom: 36 }}>
+                {sectionHeader('Rides', `${rides.filter((a) => a.status === 'OPEN').length} of ${rides.length} open`)}
+                <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {rides.map(renderCard)}
+                </div>
+              </section>
+            )}
+            {shows.length > 0 && (
+              <section style={{ marginBottom: 36 }}>
+                {sectionHeader('Shows', `${shows.filter((a) => a.status === 'OPEN').length} of ${shows.length} open`)}
+                <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {shows.map(renderCard)}
+                </div>
+              </section>
+            )}
+          </>
+        );
+      })()}
       </main>
 
       <ToastStack toasts={toasts} />

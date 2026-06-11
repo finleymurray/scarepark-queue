@@ -8,7 +8,7 @@ import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
 import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
 import type { Attraction, AttractionHistory, AttractionStatus, AttractionStatusLog, ThroughputLog, DispatchLog, OperatorSession, AuditLog } from '@/types/database';
-import { surface, border, text, radius, card, microLabel, FONT_NUM, statusColors, accents } from '@/lib/theme';
+import { surface, border, text, radius, card, microLabel, FONT_NUM, statusColors, accents, controlButton } from '@/lib/theme';
 import MetricStat from '@/components/ui/MetricStat';
 import { useToasts, ToastStack } from '@/components/ui/Toast';
 import {
@@ -678,6 +678,7 @@ export default function OperationsPage() {
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [logs, setLogs] = useState<AttractionStatusLog[]>([]);
   const [history, setHistory] = useState<AttractionHistory[]>([]);
@@ -815,22 +816,80 @@ export default function OperationsPage() {
               {isToday ? "Tonight's operational picture" : `Operational picture for ${selectedDate}`}
             </p>
           </div>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            style={{
-              background: surface.control,
-              border: `1px solid ${border.strong}`,
-              color: text.primary,
-              borderRadius: radius.md,
-              padding: '10px 14px',
-              fontSize: 14,
-              outline: 'none',
-              cursor: 'pointer',
-              ...FONT_NUM,
-            }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={async () => {
+                setRefreshing(true);
+                try {
+                  await fetchData(selectedDate);
+                } finally {
+                  setRefreshing(false);
+                }
+              }}
+              disabled={refreshing}
+              title="Refresh data"
+              style={{
+                ...controlButton,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                fontSize: 14,
+                fontWeight: 600,
+                opacity: refreshing ? 0.5 : 1,
+              }}
+            >
+              <svg
+                width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden
+                style={refreshing ? { animation: 'ops-spin 0.8s linear infinite' } : undefined}
+              >
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                <polyline points="21 3 21 9 15 9" />
+              </svg>
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <style>{`@keyframes ops-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                background: surface.control,
+                border: `1px solid ${border.strong}`,
+                color: text.primary,
+                borderRadius: radius.md,
+                padding: '10px 14px',
+                fontSize: 14,
+                outline: 'none',
+                cursor: 'pointer',
+                ...FONT_NUM,
+              }}
+            />
+            {/* Plain <a> (not next/link) for static-export reliability */}
+            <a
+              href={`/admin/operations/print?date=${selectedDate}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                ...controlButton,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              Print Report
+            </a>
+          </div>
         </div>
 
         {/* Cards */}

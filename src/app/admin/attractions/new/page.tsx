@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
@@ -597,7 +596,7 @@ export default function NewAttractionPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '32px 20px' }}>
-        <Link href="/admin" style={{ color: '#94A3B8', fontSize: 13, textDecoration: 'none' }}>← Attractions</Link>
+        <a href="/admin" style={{ color: '#94A3B8', fontSize: 13, textDecoration: 'none' }}>← Attractions</a>
         <h2 className="text-2xl font-bold" style={{ margin: '12px 0 24px' }}>New Attraction</h2>
         <NewAttractionWizard
           performer={displayName || userEmail}

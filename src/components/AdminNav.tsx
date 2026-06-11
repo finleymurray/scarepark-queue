@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AppSwitcher from './AppSwitcher';
 import { surface, border, text, accents, radius } from '@/lib/theme';
@@ -79,9 +78,9 @@ export default function AdminNav({
       <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="admin" isAdmin={isAdmin} />
-          <Link href="/admin" style={{ textDecoration: 'none' }}>
+          <a href="/admin" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: text.primary, fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
-          </Link>
+          </a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: text.secondary }}>
           {userEmail && (
@@ -108,7 +107,7 @@ export default function AdminNav({
           {PRIMARY_TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
-              <Link
+              <a
                 key={tab.href}
                 href={tab.href}
                 className={`admin-nav-tab ${active ? 'admin-nav-tab-active' : ''}`}
@@ -123,7 +122,7 @@ export default function AdminNav({
                 }}
               >
                 {tab.label}
-              </Link>
+              </a>
             );
           })}
 
@@ -177,7 +176,7 @@ export default function AdminNav({
                 {MORE_TABS.map((tab) => {
                   const active = isActive(tab.href);
                   return (
-                    <Link
+                    <a
                       key={tab.href}
                       href={tab.href}
                       onClick={() => setMoreOpen(false)}
@@ -191,7 +190,7 @@ export default function AdminNav({
                       }}
                     >
                       {tab.label}
-                    </Link>
+                    </a>
                   );
                 })}
               </div>

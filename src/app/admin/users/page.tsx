@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
@@ -855,9 +854,9 @@ export default function UsersPage() {
         )}
 
         <div className="mt-12 text-center">
-          <Link href="/privacy" className="text-[#64748B] text-[11px] no-underline hover:text-[#555]">
+          <a href="/privacy" className="text-[#64748B] text-[11px] no-underline hover:text-[#555]">
             Privacy Policy
-          </Link>
+          </a>
         </div>
       </main>
 

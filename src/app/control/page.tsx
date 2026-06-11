@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
-import { getAttractionLogo, getLogoGlow } from '@/lib/logos';
+import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
 import type { Attraction, ThroughputLog, DispatchLog, OperatorSession } from '@/types/database';
@@ -734,6 +734,7 @@ export default function SupervisorDashboard() {
       >
         {rides.map((a) => {
           const isSelected = a.id === selectedId;
+          const tabGlowRgb = getGlowRgb(a.slug) || '148, 163, 184';
           return (
             <button
               key={a.id}
@@ -745,12 +746,13 @@ export default function SupervisorDashboard() {
                 fontWeight: isSelected ? 600 : 500,
                 padding: '16px 14px',
                 minHeight: 52,
-                borderRadius: 0,
-                background: 'transparent',
+                borderRadius: isSelected ? '10px 10px 0 0' : 0,
+                background: isSelected ? `rgba(${tabGlowRgb}, 0.12)` : 'transparent',
                 border: 'none',
-                borderBottom: isSelected ? `2px solid ${accents.control.base}` : '2px solid transparent',
+                boxShadow: isSelected ? `inset 1px 1px 0 rgba(${tabGlowRgb}, 0.3), inset -1px 0 0 rgba(${tabGlowRgb}, 0.3)` : 'none',
+                borderBottom: isSelected ? `2px solid rgba(${tabGlowRgb}, 0.9)` : '2px solid transparent',
                 cursor: 'pointer',
-                transition: 'color 0.15s, border-color 0.15s',
+                transition: 'color 0.15s, border-color 0.15s, background 0.15s',
                 touchAction: 'manipulation',
               }}
               onMouseEnter={(e) => {
@@ -785,10 +787,17 @@ export default function SupervisorDashboard() {
             {(() => {
               const logo = getAttractionLogo(selected.slug);
               const glow = getLogoGlow(selected.slug);
+              const heroGlowRgb = getGlowRgb(selected.slug) || '148, 163, 184';
               const st = selected.status as string;
               const sc = statusColors(st);
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                  // Hero wash — attraction-tinted gradient bleeding edge-to-edge under the app bar
+                  margin: '-32px -24px 24px',
+                  padding: '32px 24px 24px',
+                  background: `linear-gradient(160deg, rgba(${heroGlowRgb}, 0.14) 0%, ${surface.page} 70%)`,
+                }}>
                   {logo && (
                     <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
                   )}
@@ -851,6 +860,7 @@ export default function SupervisorDashboard() {
 
               const totalDispatches = dispatchLogs.length;
               const totalGuests = dispatchLogs.reduce((s, l) => s + l.group_size, 0);
+              const cardGlowRgb = getGlowRgb(selected.slug) || '148, 163, 184';
 
               return (
                 <section style={{ marginBottom: 48 }}>
@@ -859,7 +869,12 @@ export default function SupervisorDashboard() {
                     <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Dispatch</h2>
                   </div>
 
-                  <div style={{ ...card(selected.status), padding: 32 }}>
+                  <div style={{
+                    ...card(selected.status),
+                    padding: 32,
+                    // Subtle attraction art-wash — status rail stays load-bearing on the left
+                    background: `linear-gradient(105deg, rgba(${cardGlowRgb}, 0.08) 0%, ${surface.card} 55%)`,
+                  }}>
                     {/* Timer */}
                     <div style={{ textAlign: 'center', marginBottom: 28 }}>
                       <div style={{ ...microLabel, fontSize: 11, marginBottom: 6 }}>

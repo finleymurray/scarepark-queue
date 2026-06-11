@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppSwitcher from '@/components/AppSwitcher';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { checkAuth } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -12,7 +11,7 @@ import {
   SIGNOFF_ROLE_LABELS,
   getTodayDateStr,
 } from '@/lib/signoff';
-import { resolveLogo, resolveGlowRgb } from '@/lib/logos';
+import { resolveLogo, resolveGlowRgb, resolveLogoGlow } from '@/lib/logos';
 import ShowReportModal from '@/components/ShowReportModal';
 import PinPad from '@/components/ui/PinPad';
 import OfflineBanner from '@/components/ui/OfflineBanner';
@@ -521,13 +520,11 @@ export default function SignoffPage() {
               </span>
             </div>
 
-            {/* Attraction rows — art-washed full-width cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Attraction banners — big, art-forward tap targets */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {attractions.map((a) => {
                 const glowRgb = resolveGlowRgb(a) || '148, 163, 184';
-                const st = attractionStats(a.id);
-                const pct = st.total > 0 ? (st.done / st.total) * 100 : 0;
-                const complete = st.ready || (st.total > 0 && st.done === st.total);
+                const logo = resolveLogo(a);
 
                 return (
                   <button
@@ -536,72 +533,44 @@ export default function SignoffPage() {
                     className="touch-manipulation text-left w-full"
                     style={{
                       display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '14px 16px',
+                      minHeight: 104,
+                      padding: '16px 18px',
                       borderRadius: 16,
                       border: `1px solid ${border.default}`,
-                      background: `linear-gradient(105deg, rgba(${glowRgb}, 0.14) 0%, #0A0B0E 60%, ${surface.page} 100%)`,
+                      background: `linear-gradient(105deg, rgba(${glowRgb}, 0.18) 0%, #0A0B0E 60%, ${surface.page} 100%)`,
                       cursor: 'pointer',
-                      transition: 'background 0.15s, border-color 0.15s, transform 0.1s',
+                      transition: 'background 0.15s, border-color 0.15s',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = border.strong; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = `rgba(${glowRgb}, 0.35)`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.default; }}
+                    onTouchStart={(e) => { e.currentTarget.style.borderColor = `rgba(${glowRgb}, 0.35)`; }}
+                    onTouchEnd={(e) => { e.currentTarget.style.borderColor = border.default; }}
                   >
-                    <LogoSquare a={a} />
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                        <span style={{ fontSize: 14, fontWeight: 500, color: text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+                      {logo ? (
+                        <img
+                          src={logo} alt={a.name} loading="lazy" decoding="async"
+                          style={{ height: 68, maxWidth: '85%', objectFit: 'contain', objectPosition: 'left center', filter: resolveLogoGlow(a) }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 20, fontWeight: 600, color: text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {a.name}
                         </span>
-                        {st.ready ? (
-                          <span style={{ ...microLabel, color: green.text, flexShrink: 0 }}>READY</span>
-                        ) : st.hasAny ? (
-                          <span style={{ fontSize: 12, color: text.muted, flexShrink: 0, ...FONT_NUM }}>
-                            {st.done}/{st.total}
-                          </span>
-                        ) : (
-                          <span style={{ ...microLabel, color: text.faint, flexShrink: 0 }}>NO CHECKS</span>
-                        )}
-                      </div>
-
-                      {/* Slim progress bar */}
-                      <div style={{ height: 4, borderRadius: 2, background: TRACK, marginTop: 8, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', borderRadius: 2,
-                          width: `${pct}%`,
-                          background: complete ? green.rail : accent.base,
-                          transition: 'width 0.4s ease, background 0.3s ease',
-                        }} />
-                      </div>
-
-                      {/* Last action */}
-                      <div style={{ marginTop: 7, fontSize: 10, color: text.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {st.latest && st.latestSection
-                          ? `Last: ${st.latestSection.name} · ${st.latest.signed_by_name.split(' ')[0]}, ${new Date(st.latest.signed_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
-                          : st.hasAny ? `No ${st.phaseName} checks signed yet` : 'No sections configured'}
-                      </div>
+                      )}
                     </div>
 
-                    {/* Right affordance */}
-                    {st.ready ? (
-                      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                        <circle cx="8" cy="8" r="7" stroke={green.rail} strokeWidth="1.4" />
-                        <path d="M5 8.2L7.2 10.4L11 5.8" stroke={green.rail} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                        <path d="M6 3L11 8L6 13" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                      <path d="M6 3L11 8L6 13" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </button>
                 );
               })}
             </div>
 
             <div className="text-center pt-10 pb-8">
-              <Link href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
+              <a href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
                 Privacy Policy
-              </Link>
+              </a>
             </div>
           </div>
         )}
@@ -933,9 +902,9 @@ export default function SignoffPage() {
               />
 
               <div className="text-center pt-8 pb-6">
-                <Link href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
+                <a href="/privacy" className="text-[11px] no-underline" style={{ color: text.faint }}>
                   Privacy Policy
-                </Link>
+                </a>
               </div>
             </div>
           </div>
