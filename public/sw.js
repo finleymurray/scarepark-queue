@@ -1,4 +1,4 @@
-const CACHE_NAME = 'immersive-core-v3';
+const CACHE_NAME = 'immersive-core-v4';
 
 // Static assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -38,7 +38,27 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   if (url.hostname.includes('supabase')) return;
 
-  // Next.js chunks (_next/) — network-first so deploys don't break navigation
+  // Next.js static chunks are content-hashed (immutable) — CACHE-FIRST.
+  // GitHub Pages only sends max-age=600, so network-first re-downloaded the
+  // entire JS bundle every ~10 minutes on every full page load. A new deploy
+  // produces new hashes, so stale entries are never served for new builds.
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Other _next/ requests (non-hashed) — network-first
   if (url.pathname.startsWith('/_next/')) {
     event.respondWith(
       fetch(request)

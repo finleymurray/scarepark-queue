@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import AdminNav from '@/components/AdminNav';
 import type { AttractionType } from '@/types/database';
@@ -579,7 +579,7 @@ export default function NewAttractionPage() {
   }, [router]);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/login';
   }
 

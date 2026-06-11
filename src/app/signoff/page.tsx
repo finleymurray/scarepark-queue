@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppSwitcher from '@/components/AppSwitcher';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import {
   verifyPin,
@@ -479,7 +479,7 @@ export default function SignoffPage() {
             </span>
           )}
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/signoff/login'; }}
+            onClick={async () => { clearAuthCache(); await supabase.auth.signOut(); window.location.href = '/signoff/login'; }}
             style={{ ...controlButton, padding: '6px 12px', fontSize: 12, fontWeight: 500, minHeight: 40, transition: 'border-color 0.15s, color 0.15s' }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.primary; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}

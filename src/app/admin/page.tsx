@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { logAudit } from '@/lib/audit';
 import { logStatusChange, resolveDelay, DELAY_REASONS } from '@/lib/statusLog';
@@ -1474,7 +1474,7 @@ export default function AdminDashboard() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/login';
   }
 

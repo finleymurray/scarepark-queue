@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getAllStatusLogs } from '@/lib/statusLog';
 import type { Attraction, AttractionHistory, ThroughputLog, AttractionStatusLog, ShowReport } from '@/types/database';
@@ -420,7 +420,7 @@ export default function AnalyticsPage() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/login';
   }
 

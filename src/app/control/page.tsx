@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
@@ -640,7 +640,7 @@ export default function SupervisorDashboard() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/control/login';
   }
 

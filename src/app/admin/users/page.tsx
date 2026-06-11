@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { ALL_SIGNOFF_ROLES, SIGNOFF_ROLE_LABELS } from '@/lib/signoff';
 import type { Attraction, UserRole, SignoffPin, SignoffRoleKey } from '@/types/database';
@@ -443,7 +443,7 @@ export default function UsersPage() {
   }, [router, fetchUsers]);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/login';
   }
 

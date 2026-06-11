@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import type { Attraction, AuditLog, AuditActionType } from '@/types/database';
 import { surface, border, text as textTok, accents, radius } from '@/lib/theme';
@@ -338,7 +338,7 @@ export default function LogsPage() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/login';
   }
 

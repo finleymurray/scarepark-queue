@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { ALL_SIGNOFF_ROLES, SIGNOFF_ROLE_LABELS, getTodayDateStr } from '@/lib/signoff';
 import type { Attraction, SignoffSection, SignoffChecklistItem, SignoffCompletion, SignoffRoleKey } from '@/types/database';
@@ -316,7 +316,7 @@ export default function SignoffConfigPage() {
 
   useEffect(() => { if (selectedAttractionId) fetchSections(selectedAttractionId); }, [selectedAttractionId, fetchSections]);
 
-  async function handleLogout() { await supabase.auth.signOut(); window.location.href = '/login'; }
+  async function handleLogout() { clearAuthCache(); await supabase.auth.signOut(); window.location.href = '/login'; }
 
   async function handleAddSection() {
     if (!addingSectionPhase || !newSectionName.trim() || !selectedAttractionId) return;

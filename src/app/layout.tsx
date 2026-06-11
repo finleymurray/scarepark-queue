@@ -52,6 +52,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${bebasNeue.variable}`}>
       <head>
+        {/* Preconnect: saves a DNS+TLS handshake on the first Supabase call of every page load */}
+        <link rel="preconnect" href="https://eugqphnpqvqubusqemgv.supabase.co" crossOrigin="anonymous" />
         <meta
           httpEquiv="Content-Security-Policy"
           content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none';"

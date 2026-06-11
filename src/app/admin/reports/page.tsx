@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { checkAuth } from '@/lib/auth';
+import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
 import { getTodayDateStr } from '@/lib/signoff';
 import type { Attraction, ShowReport, HourlyThroughputSnapshot, DelaySnapshot } from '@/types/database';
@@ -121,7 +121,7 @@ export default function ShowReportsPage() {
   const isToday = selectedDate === getTodayDateStr();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/login';
   };
 
