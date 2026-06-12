@@ -170,6 +170,17 @@ export default function SupervisorDashboard() {
 
   const tabBarRef = useRef<HTMLDivElement>(null);
 
+  // Tablet-first layout: 2-column grid on iPad-width viewports and up.
+  // Initialised in an effect (default false) to avoid SSR hydration mismatch.
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    setWide(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   // Auth & initial data fetch
   useEffect(() => {
     let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -781,11 +792,14 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }}>
-        {selected && (
-          <>
+      <div style={{ flex: 1, overflowY: 'auto', padding: wide ? '20px 24px' : '32px 24px' }}>
+        {selected && (() => {
+            // Layout-only restructure: each block is built once, then slotted
+            // into either the single-column (phone) or 2-column (tablet) layout.
+            const gatedStyle = panelLocked ? { opacity: 0.35, pointerEvents: 'none' as const, userSelect: 'none' as const } : undefined;
+
             {/* ── Attraction Logo + Status + Show Report ── */}
-            {(() => {
+            const heroBlock = (() => {
               const logo = getAttractionLogo(selected.slug);
               const glow = getLogoGlow(selected.slug);
               const heroGlowRgb = getGlowRgb(selected.slug) || '148, 163, 184';
@@ -794,9 +808,11 @@ export default function SupervisorDashboard() {
               return (
                 <div style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-                  // Hero wash — attraction-tinted gradient bleeding edge-to-edge under the app bar
-                  margin: '-32px -24px 24px',
-                  padding: '32px 24px 24px',
+                  // Hero wash — attraction-tinted gradient. Bleeds edge-to-edge on
+                  // phones; wraps just the left column as a rounded panel on tablets.
+                  margin: wide ? '0 0 20px' : '-32px -24px 24px',
+                  padding: wide ? '24px 24px 20px' : '32px 24px 24px',
+                  borderRadius: wide ? radius.xl : 0,
                   background: `linear-gradient(160deg, rgba(${heroGlowRgb}, 0.14) 0%, ${surface.page} 70%)`,
                 }}>
                   {logo && (
@@ -836,14 +852,10 @@ export default function SupervisorDashboard() {
                   )}
                 </div>
               );
-            })()}
+            })();
 
-            {/* ── Operator-gated panel: Dispatch + Queue Time ── */}
-            <div style={{ position: 'relative' }}>
-            <div style={panelLocked ? { opacity: 0.35, pointerEvents: 'none', userSelect: 'none' } : undefined} aria-hidden={panelLocked || undefined}>
-
-            {/* ── Dispatch Clicker ── */}
-            {selected.attraction_type !== 'show' && (() => {
+            {/* ── Dispatch Clicker (operator-gated) ── */}
+            const dispatchSection = selected.attraction_type !== 'show' && (() => {
               const targetSeconds = selected.target_dispatch_seconds ?? 90;
               const timerColor = lastDispatchAt === null ? '#64748B'
                 : dispatchElapsed > targetSeconds + 30 ? '#EF4444'
@@ -863,7 +875,7 @@ export default function SupervisorDashboard() {
               const cardGlowRgb = getGlowRgb(selected.slug) || '148, 163, 184';
 
               return (
-                <section style={{ marginBottom: 48 }}>
+                <section style={{ marginBottom: wide ? 20 : 48 }}>
                   <div className="flex items-center gap-2.5 mb-5">
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                     <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Dispatch</h2>
@@ -1010,10 +1022,11 @@ export default function SupervisorDashboard() {
                   </div>
                 </section>
               );
-            })()}
+            })();
 
-            {/* ── Queue Time Control ── */}
-            <section style={{ marginBottom: 48 }}>
+            {/* ── Queue Time Control (operator-gated) ── */}
+            const queueSection = (
+            <section style={{ marginBottom: wide ? 20 : 48 }}>
               <div className="flex items-center gap-2.5 mb-5">
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                 <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Queue Time</h2>
@@ -1080,11 +1093,10 @@ export default function SupervisorDashboard() {
                 )}
               </div>
             </section>
-
-            </div>
+            );
 
             {/* ── Lock overlay — no operator on shift ── */}
-            {panelLocked && (
+            const lockOverlay = (
               <div style={{
                 position: 'absolute', inset: 0, zIndex: 10,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -1129,17 +1141,16 @@ export default function SupervisorDashboard() {
                   </div>
                 )}
               </div>
-            )}
-            </div>
+            );
 
             {/* ── Hourly Throughput (view + hold-to-edit) ── */}
-            {selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
-              <section style={{ marginBottom: 48 }}>
+            const throughputSection = selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
+              <section style={{ marginBottom: wide ? 20 : 48 }}>
                 <div className="flex items-center gap-2.5 mb-5">
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                   <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Hourly Throughput</h2>
                 </div>
-                <div style={{ ...card(), overflow: 'hidden' }}>
+                <div style={{ ...card(), overflow: 'hidden', ...(wide ? { maxHeight: '40vh', overflowY: 'auto' as const } : {}) }}>
                   {hourlySlots.map((slot, idx) => {
                     const count = getDispatchCountForSlot(slot);
                     const isCurrent = idx === currentSlotIndex;
@@ -1192,10 +1203,10 @@ export default function SupervisorDashboard() {
                   })}
                 </div>
               </section>
-            )}
+            );
 
             {/* ── Edit Throughput Modal ── */}
-            {editSlot && (
+            const editModal = editSlot && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
                 <div style={{ ...card(), width: '100%', maxWidth: 320, padding: 28 }}>
                   <p style={{ ...microLabel, textAlign: 'center', marginBottom: 6 }}>Edit Guest Count</p>
@@ -1229,11 +1240,53 @@ export default function SupervisorDashboard() {
                   </div>
                 </div>
               </div>
-            )}
+            );
 
+            // ── Layouts ──
+            if (wide) {
+              // Tablet / desktop: 2-column grid so everything core fits without scrolling.
+              // LEFT: hero + Dispatch. RIGHT: Queue Time + Hourly Throughput.
+              return (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+                    <div>
+                      {heroBlock}
+                      <div style={{ position: 'relative' }}>
+                        <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
+                          {dispatchSection}
+                        </div>
+                        {panelLocked && lockOverlay}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
+                        {queueSection}
+                      </div>
+                      {throughputSection}
+                    </div>
+                  </div>
+                  {editModal}
+                </>
+              );
+            }
 
-          </>
-        )}
+            // Phones: existing single-column layout
+            return (
+              <>
+                {heroBlock}
+                {/* ── Operator-gated panel: Dispatch + Queue Time ── */}
+                <div style={{ position: 'relative' }}>
+                  <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
+                    {dispatchSection}
+                    {queueSection}
+                  </div>
+                  {panelLocked && lockOverlay}
+                </div>
+                {throughputSection}
+                {editModal}
+              </>
+            );
+        })()}
       </div>
 
       {/* ── Group Size Pad ── */}

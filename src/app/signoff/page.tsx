@@ -410,32 +410,25 @@ export default function SignoffPage() {
   /* ── Home dashboard derived data ── */
   const completedSectionIds = new Set(overviewCompletions.map((c) => c.section_id));
 
-  /** Per-attraction stats for the dashboard. */
-  function attractionStats(attractionId: string) {
-    const secs = overviewSections.filter((s) => s.attraction_id === attractionId);
-    const opening = secs.filter((s) => s.phase === 'opening');
-    const closing = secs.filter((s) => s.phase === 'closing');
-    const openDone = opening.length > 0 && opening.every((s) => completedSectionIds.has(s.id));
-    // Current phase per attraction: opening until it's complete, then closing
-    const phaseSecs = openDone && closing.length > 0 ? closing : opening;
-    const phaseName: 'opening' | 'closing' = openDone && closing.length > 0 ? 'closing' : 'opening';
-    const done = phaseSecs.filter((s) => completedSectionIds.has(s.id)).length;
-    const ready = secs.length > 0 && secs.every((s) => completedSectionIds.has(s.id));
-    const latest = overviewCompletions
-      .filter((c) => c.attraction_id === attractionId)
-      .sort((a, b) => new Date(b.signed_at).getTime() - new Date(a.signed_at).getTime())[0];
-    const latestSection = latest ? overviewSections.find((s) => s.id === latest.section_id) : null;
-    return { total: phaseSecs.length, done, ready, phaseName, latest, latestSection, hasAny: secs.length > 0 };
+  /** Per-phase readiness: attraction is phase-ready when ALL its sections in that
+   *  phase are completed today. Attractions with no sections in a phase don't
+   *  count toward that phase's denominator. */
+  function phaseReadiness(p: 'opening' | 'closing') {
+    let total = 0;
+    let ready = 0;
+    for (const a of attractions) {
+      const secs = overviewSections.filter((s) => s.attraction_id === a.id && s.phase === p);
+      if (secs.length === 0) continue;
+      total += 1;
+      if (secs.every((s) => completedSectionIds.has(s.id))) ready += 1;
+    }
+    return { ready, total };
   }
-
-  // Park-wide phase: closing once every attraction with opening sections has finished opening
-  const parkOpening = overviewSections.filter((s) => s.phase === 'opening');
-  const parkOpeningDone = parkOpening.length > 0 && parkOpening.every((s) => completedSectionIds.has(s.id));
-  const parkPhase: 'opening' | 'closing' = parkOpeningDone ? 'closing' : 'opening';
-  const parkPhaseSections = overviewSections.filter((s) => s.phase === parkPhase);
-  const parkPhaseDone = parkPhaseSections.filter((s) => completedSectionIds.has(s.id)).length;
-  const parkPct = parkPhaseSections.length > 0 ? (parkPhaseDone / parkPhaseSections.length) * 100 : 0;
-  const readyCount = attractions.filter((a) => attractionStats(a.id).ready).length;
+  const openingReadiness = phaseReadiness('opening');
+  const closingReadiness = phaseReadiness('closing');
+  // Overall night progress across both phases (for the header ring)
+  const parkDone = overviewSections.filter((s) => completedSectionIds.has(s.id)).length;
+  const parkPct = overviewSections.length > 0 ? (parkDone / overviewSections.length) * 100 : 0;
 
   const detailPct = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
   const selectedGlowRgb = selectedAttraction ? (resolveGlowRgb(selectedAttraction) || '148, 163, 184') : '148, 163, 184';
@@ -507,21 +500,38 @@ export default function SignoffPage() {
               <ProgressRing size={46} pct={parkPct} />
             </div>
 
-            {/* Slim summary bar */}
-            <div style={{
-              background: surface.control, border: `1px solid ${border.default}`, borderRadius: 12,
-              padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16,
-            }}>
-              <span style={{ fontSize: 12, color: text.secondary, ...FONT_NUM }}>
-                {readyCount} of {attractions.length} attractions ready
-              </span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: accent.text, letterSpacing: '0.04em' }}>
-                {parkPhase === 'opening' ? 'Opening phase' : 'Closing phase'}
-              </span>
+            {/* Phase readiness summary — opening / closing stat blocks */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              {([
+                { label: 'Opening', r: openingReadiness },
+                { label: 'Closing', r: closingReadiness },
+              ] as const).map(({ label, r }) => {
+                const allReady = r.total > 0 && r.ready === r.total;
+                return (
+                  <div
+                    key={label}
+                    style={{
+                      flex: 1,
+                      background: surface.control,
+                      border: `1px solid ${allReady ? 'rgba(34,197,94,0.3)' : border.default}`,
+                      borderRadius: 12,
+                      padding: '10px 14px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                    }}
+                  >
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: text.secondary }}>
+                      {label}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: allReady ? green.text : accent.text, ...FONT_NUM }}>
+                      {r.ready}/{r.total} <span style={{ fontSize: 10, fontWeight: 500, color: text.muted }}>ready</span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Attraction banners — big, art-forward tap targets */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Attraction tiles — square, art-washed, logo-forward */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
               {attractions.map((a) => {
                 const glowRgb = resolveGlowRgb(a) || '148, 163, 184';
                 const logo = resolveLogo(a);
@@ -530,38 +540,43 @@ export default function SignoffPage() {
                   <button
                     key={a.id}
                     onClick={() => selectAttraction(a.id)}
-                    className="touch-manipulation text-left w-full"
+                    className="touch-manipulation"
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      minHeight: 104,
-                      padding: '16px 18px',
+                      aspectRatio: '1',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      padding: 12,
                       borderRadius: 16,
                       border: `1px solid ${border.default}`,
-                      background: `linear-gradient(105deg, rgba(${glowRgb}, 0.18) 0%, #0A0B0E 60%, ${surface.page} 100%)`,
+                      background: `linear-gradient(135deg, rgba(${glowRgb}, 0.16) 0%, #0A0B0E 70%)`,
                       cursor: 'pointer',
-                      transition: 'background 0.15s, border-color 0.15s',
+                      transition: 'border-color 0.15s',
+                      overflow: 'hidden',
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = `rgba(${glowRgb}, 0.35)`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.default; }}
                     onTouchStart={(e) => { e.currentTarget.style.borderColor = `rgba(${glowRgb}, 0.35)`; }}
                     onTouchEnd={(e) => { e.currentTarget.style.borderColor = border.default; }}
                   >
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
-                      {logo ? (
-                        <img
-                          src={logo} alt={a.name} loading="lazy" decoding="async"
-                          style={{ height: 68, maxWidth: '85%', objectFit: 'contain', objectPosition: 'left center', filter: resolveLogoGlow(a) }}
-                        />
-                      ) : (
-                        <span style={{ fontSize: 20, fontWeight: 600, color: text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {logo ? (
+                      <>
+                        <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+                          <img
+                            src={logo} alt={a.name} loading="lazy" decoding="async"
+                            style={{ width: '70%', maxHeight: '100%', objectFit: 'contain', filter: resolveLogoGlow(a) }}
+                          />
+                        </div>
+                        <span style={{
+                          fontSize: 11, color: text.secondary, textAlign: 'center', width: '100%',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0, marginTop: 6,
+                        }}>
                           {a.name}
                         </span>
-                      )}
-                    </div>
-
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                      <path d="M6 3L11 8L6 13" stroke={text.faint} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 16, fontWeight: 600, color: text.primary, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {a.name}
+                      </span>
+                    )}
                   </button>
                 );
               })}

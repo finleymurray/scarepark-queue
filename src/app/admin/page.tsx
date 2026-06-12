@@ -1580,14 +1580,16 @@ export default function AdminDashboard() {
       <main style={{ padding: '24px 20px' }}>
       {/* ── Dashboard header — title + park-open progress ring ── */}
       {(() => {
-        const total = attractions.length;
-        const open = attractions.filter((a) => a.status === 'OPEN').length;
+        // Shows have no CLOSED mode, so "open" counts only make sense for rides.
+        const rides = attractions.filter((a) => a.attraction_type !== 'show');
+        const total = rides.length;
+        const open = rides.filter((a) => a.status === 'OPEN').length;
         return (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
               <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: '-0.02em', color: textTok.primary }}>Park Control</h2>
               <p style={{ ...microLabel, margin: '4px 0 0' }}>
-                {open} of {total} attractions open
+                Rides · {open} of {total} open
               </p>
             </div>
             {total > 0 && (
@@ -1760,7 +1762,7 @@ export default function AdminDashboard() {
             )}
             {shows.length > 0 && (
               <section style={{ marginBottom: 36 }}>
-                {sectionHeader('Shows', `${shows.filter((a) => a.status === 'OPEN').length} of ${shows.length} open`)}
+                {sectionHeader('Shows', `${shows.filter((a) => (a.show_times || []).length > 0).length} of ${shows.length} with show times`)}
                 <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {shows.map(renderCard)}
                 </div>

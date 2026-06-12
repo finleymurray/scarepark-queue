@@ -20,9 +20,9 @@ const MORE_TABS = [
   { label: 'Add Attraction', href: '/admin/attractions/new' },
 ];
 
+// App switching (Control / Sign-Off) now happens via the AppSwitcher logo;
+// only the TV Screens directory remains as an external link.
 const EXTERNAL_LINKS = [
-  { label: 'Control', href: '/control' },
-  { label: 'Sign-Off', href: '/signoff' },
   { label: 'TV Screens', href: '/tv' },
 ];
 
