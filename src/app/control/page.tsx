@@ -792,7 +792,7 @@ export default function SupervisorDashboard() {
       </div>
 
       {/* Main Content — Scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: wide ? '20px 24px' : '32px 24px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: wide ? '12px 24px' : '32px 24px' }}>
         {selected && (() => {
             // Layout-only restructure: each block is built once, then slotted
             // into either the single-column (phone) or 2-column (tablet) layout.
@@ -807,49 +807,52 @@ export default function SupervisorDashboard() {
               const sc = statusColors(st);
               return (
                 <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: wide ? 8 : 12,
                   // Hero wash — attraction-tinted gradient. Bleeds edge-to-edge on
                   // phones; wraps just the left column as a rounded panel on tablets.
-                  margin: wide ? '0 0 20px' : '-32px -24px 24px',
-                  padding: wide ? '24px 24px 20px' : '32px 24px 24px',
+                  margin: wide ? '0 0 12px' : '-32px -24px 24px',
+                  padding: wide ? '12px 16px' : '32px 24px 24px',
                   borderRadius: wide ? radius.xl : 0,
                   background: `linear-gradient(160deg, rgba(${heroGlowRgb}, 0.14) 0%, ${surface.page} 70%)`,
                 }}>
                   {logo && (
-                    <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: 100, filter: glow || undefined }} />
+                    <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: wide ? 80 : 100, filter: glow || undefined }} />
                   )}
-                  {/* Attraction status — prominent */}
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-                    padding: '7px 18px', borderRadius: radius.pill,
-                    background: sc.soft, color: sc.text, border: `1px solid ${sc.rail}40`,
-                    ...FONT_NUM,
-                  }}>
-                    {st === 'DELAYED' && delayStartedAt
-                      ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                      : st === 'CLOSED' && !fullySignedOff
-                      ? 'NOT SIGNED OFF'
-                      : st}
-                  </span>
-                  {/* Show Report button — always visible under logo */}
-                  {selected.attraction_type !== 'show' && (
-                    <button
-                      onClick={() => setNotesOpen(true)}
-                      style={{
-                        ...controlButton,
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '12px 20px', minHeight: 44,
-                        fontSize: 13, fontWeight: 600,
-                        transition: 'border-color 0.15s, color 0.15s',
-                        touchAction: 'manipulation',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
-                    >
-                      📝 Show Report
-                    </button>
-                  )}
+                  {/* Wide: status pill + Show Report sit on one row to save height */}
+                  <div style={{ display: 'flex', flexDirection: wide ? 'row' : 'column', alignItems: 'center', gap: wide ? 12 : 12 }}>
+                    {/* Attraction status — prominent */}
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                      padding: '7px 18px', borderRadius: radius.pill,
+                      background: sc.soft, color: sc.text, border: `1px solid ${sc.rail}40`,
+                      ...FONT_NUM,
+                    }}>
+                      {st === 'DELAYED' && delayStartedAt
+                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                        : st === 'CLOSED' && !fullySignedOff
+                        ? 'NOT SIGNED OFF'
+                        : st}
+                    </span>
+                    {/* Show Report button — always visible under logo */}
+                    {selected.attraction_type !== 'show' && (
+                      <button
+                        onClick={() => setNotesOpen(true)}
+                        style={{
+                          ...controlButton,
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: wide ? '8px 16px' : '12px 20px', minHeight: wide ? 38 : 44,
+                          fontSize: 13, fontWeight: 600,
+                          transition: 'border-color 0.15s, color 0.15s',
+                          touchAction: 'manipulation',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = accents.control.base; e.currentTarget.style.color = text.primary; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
+                      >
+                        📝 Show Report
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })();
@@ -875,25 +878,25 @@ export default function SupervisorDashboard() {
               const cardGlowRgb = getGlowRgb(selected.slug) || '148, 163, 184';
 
               return (
-                <section style={{ marginBottom: wide ? 20 : 48 }}>
-                  <div className="flex items-center gap-2.5 mb-5">
+                <section style={{ marginBottom: wide ? 12 : 48 }}>
+                  <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                     <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Dispatch</h2>
                   </div>
 
                   <div style={{
                     ...card(selected.status),
-                    padding: 32,
+                    padding: wide ? 16 : 32,
                     // Subtle attraction art-wash — status rail stays load-bearing on the left
                     background: `linear-gradient(105deg, rgba(${cardGlowRgb}, 0.08) 0%, ${surface.card} 55%)`,
                   }}>
                     {/* Timer */}
-                    <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                    <div style={{ textAlign: 'center', marginBottom: wide ? 14 : 28 }}>
                       <div style={{ ...microLabel, fontSize: 11, marginBottom: 6 }}>
                         Time Since Last Dispatch
                       </div>
                       <div className={timerFlashing ? 'ic-dispatch-blink' : undefined} style={{
-                        fontSize: 52,
+                        fontSize: wide ? 40 : 52,
                         fontWeight: 800,
                         ...FONT_NUM,
                         color: timerColor,
@@ -919,11 +922,11 @@ export default function SupervisorDashboard() {
                     </div>
 
                     {/* Group size counter */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: wide ? 14 : 24 }}>
                       <button
                         onClick={() => setDispatchGroupSize((v) => Math.max(0, v - 1))}
                         className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400 text-red-400 text-3xl font-black active:bg-red-900/20 transition-colors touch-manipulation"
-                        style={{ minWidth: 72, minHeight: 72 }}
+                        style={{ minWidth: wide ? 60 : 72, minHeight: wide ? 60 : 72 }}
                       >
                         −
                       </button>
@@ -932,7 +935,7 @@ export default function SupervisorDashboard() {
                         style={{ flex: 1, textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
                         title="Tap to enter number"
                       >
-                        <div style={{ fontSize: 56, fontWeight: 900, ...FONT_NUM, color: dispatchGroupSize > 0 ? text.primary : text.faint }}>
+                        <div style={{ fontSize: wide ? 40 : 56, fontWeight: 900, ...FONT_NUM, color: dispatchGroupSize > 0 ? text.primary : text.faint }}>
                           {dispatchGroupSize}
                         </div>
                         <div style={{ ...microLabel, color: accents.control.base, fontSize: 11 }}>tap to enter</div>
@@ -940,7 +943,7 @@ export default function SupervisorDashboard() {
                       <button
                         onClick={() => setDispatchGroupSize((v) => Math.min(30, v + 1))}
                         className="flex items-center justify-center rounded-xl bg-transparent border-2 border-[#22C55E] text-[#22C55E] text-3xl font-black active:bg-green-900/20 transition-colors touch-manipulation"
-                        style={{ minWidth: 72, minHeight: 72 }}
+                        style={{ minWidth: wide ? 60 : 72, minHeight: wide ? 60 : 72 }}
                       >
                         +
                       </button>
@@ -949,7 +952,7 @@ export default function SupervisorDashboard() {
                     {/* Dispatch button — locked when CLOSED or DELAYED */}
                     {(selected.status === 'CLOSED' || selected.status === 'DELAYED') ? (
                       <div style={{
-                        width: '100%', padding: '18px 0', marginBottom: 20,
+                        width: '100%', padding: wide ? '14px 0' : '18px 0', marginBottom: wide ? 12 : 20,
                         background: statusColors(selected.status).soft,
                         border: `1px solid ${statusColors(selected.status).rail}40`,
                         borderRadius: radius.lg, textAlign: 'center',
@@ -964,12 +967,12 @@ export default function SupervisorDashboard() {
                         disabled={dispatchGroupSize === 0 || dispatching}
                         style={{
                           ...primaryButton('control'),
-                          width: '100%', minHeight: 56, padding: '18px 0', fontSize: 18, fontWeight: 800,
+                          width: '100%', minHeight: 56, padding: wide ? '14px 0' : '18px 0', fontSize: 18, fontWeight: 800,
                           letterSpacing: '0.06em', textTransform: 'uppercase',
                           cursor: dispatchGroupSize === 0 || dispatching ? 'not-allowed' : 'pointer',
                           background: dispatchGroupSize === 0 || dispatching ? surface.raised : accents.control.strong,
                           color: dispatchGroupSize === 0 || dispatching ? text.faint : '#fff',
-                          transition: 'background 0.15s, color 0.15s', marginBottom: 20,
+                          transition: 'background 0.15s, color 0.15s', marginBottom: wide ? 12 : 20,
                         }}
                         className="touch-manipulation active:bg-[#1D4ED8]"
                       >
@@ -979,7 +982,7 @@ export default function SupervisorDashboard() {
 
                     {/* Attribution hint */}
                     {operatorSession && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: text.faint, fontSize: 11, marginTop: -10, marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: text.faint, fontSize: 11, marginTop: wide ? -6 : -10, marginBottom: wide ? 10 : 16 }}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 3" />
                         </svg>
@@ -988,7 +991,7 @@ export default function SupervisorDashboard() {
                     )}
 
                     {/* Today's dispatches summary */}
-                    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 16 }}>
+                    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: wide ? 10 : 16 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <p style={{ color: text.muted, fontSize: 12, margin: 0, ...FONT_NUM }}>
                           {totalDispatches} dispatch{totalDispatches !== 1 ? 'es' : ''} · {totalGuests} guests today
@@ -1026,13 +1029,13 @@ export default function SupervisorDashboard() {
 
             {/* ── Queue Time Control (operator-gated) ── */}
             const queueSection = (
-            <section style={{ marginBottom: wide ? 20 : 48 }}>
-              <div className="flex items-center gap-2.5 mb-5">
+            <section style={{ marginBottom: wide ? 12 : 48 }}>
+              <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                 <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Queue Time</h2>
               </div>
 
-              <div style={{ ...card(selected.status), padding: 32 }}>
+              <div style={{ ...card(selected.status), padding: wide ? 16 : 32 }}>
                 {selected.attraction_type === 'show' ? (
                   <div className="text-center py-4">
                     <div className="text-3xl font-black" style={{ color: statusColors(selected.status).text, ...FONT_NUM }}>
@@ -1145,12 +1148,23 @@ export default function SupervisorDashboard() {
 
             {/* ── Hourly Throughput (view + hold-to-edit) ── */}
             const throughputSection = selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
-              <section style={{ marginBottom: wide ? 20 : 48 }}>
-                <div className="flex items-center gap-2.5 mb-5">
+              <section style={{ marginBottom: wide ? 12 : 48, ...(wide ? { minHeight: 0 } : {}) }}>
+                <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                   <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Hourly Throughput</h2>
                 </div>
-                <div style={{ ...card(), overflow: 'hidden', ...(wide ? { maxHeight: '40vh', overflowY: 'auto' as const } : {}) }}>
+                <div
+                  // Scrolling this list must never trigger hold-to-edit
+                  onScroll={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                  style={{
+                    ...card(),
+                    overflow: 'hidden',
+                    // Wide mode: this card absorbs all vertical overflow internally.
+                    // 440px = header 56 + tabs 54 + content padding 24 + queue column
+                    // above (~228) + footer 68 + breathing room.
+                    ...(wide ? { maxHeight: 'max(160px, calc(100dvh - 440px))', minHeight: 0, overflowY: 'auto' as const } : {}),
+                  }}
+                >
                   {hourlySlots.map((slot, idx) => {
                     const count = getDispatchCountForSlot(slot);
                     const isCurrent = idx === currentSlotIndex;
@@ -1162,7 +1176,7 @@ export default function SupervisorDashboard() {
                           longPressTimer.current = setTimeout(() => {
                             setEditSlot(slot);
                             setEditValue(String(count));
-                          }, 600);
+                          }, 650);
                         }}
                         onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
                         onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
@@ -1170,9 +1184,12 @@ export default function SupervisorDashboard() {
                           longPressTimer.current = setTimeout(() => {
                             setEditSlot(slot);
                             setEditValue(String(count));
-                          }, 600);
+                          }, 650);
                         }}
+                        // Finger moved = the user is scrolling, not holding — cancel the edit timer
+                        onTouchMove={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
                         onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                        onTouchCancel={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '14px 20px',
@@ -1197,6 +1214,28 @@ export default function SupervisorDashboard() {
                             </span>
                           )}
                           <span style={{ color: text.faint, fontSize: 11 }}>hold to edit</span>
+                          <button
+                            aria-label={`Edit guest count for ${formatSlotTime(slot.start)}`}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                              setEditSlot(slot);
+                              setEditValue(String(count));
+                            }}
+                            style={{
+                              width: 32, height: 32, flexShrink: 0,
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              background: 'none', border: 'none', borderRadius: radius.sm,
+                              color: text.faint, cursor: 'pointer', padding: 0,
+                              touchAction: 'manipulation',
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     );
@@ -1389,7 +1428,7 @@ export default function SupervisorDashboard() {
 
       {/* ── Sticky Footer — Guest Stats ── */}
       {selected && (
-        <footer style={{ flexShrink: 0, background: surface.card, borderTop: `1px solid ${border.default}`, padding: '20px 24px' }}>
+        <footer style={{ flexShrink: 0, background: surface.card, borderTop: `1px solid ${border.default}`, padding: wide ? '12px 24px' : '20px 24px' }}>
           <div className="flex items-center justify-between">
             <div>
               <div style={{ ...microLabel, marginBottom: 4 }}>

@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getAttractionBg } from '@/lib/logos';
-import LightningBorder from '@/components/LightningBorder';
-import ElectricHeader from '@/components/ElectricHeader';
+import { resolveLogo, resolveBg, resolveLogoGlow, resolveQueueTextTheme } from '@/lib/logos';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+
+const ATTRACTION_SELECT =
+  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -21,35 +22,6 @@ function formatTime12h(time: string): string {
 
 /* ── Static styles ── */
 
-const headerStyle: React.CSSProperties = {
-  padding: '1.5vw 0 0',
-  textAlign: 'center' as const,
-  marginBottom: '0.8vw',
-  flexShrink: 0,
-};
-
-const headerTitleStyle: React.CSSProperties = {
-  fontSize: '2.2vw',
-  fontWeight: 900,
-  textTransform: 'uppercase',
-  letterSpacing: '0.2em',
-  color: '#fff',
-  margin: 0,
-};
-
-const footerStyle: React.CSSProperties = {
-  marginTop: '0.8vw',
-  flexShrink: 0,
-};
-
-const footerInnerStyle: React.CSSProperties = {
-  padding: '1.2vw 0',
-  display: 'flex',
-  alignItems: 'baseline',
-  justifyContent: 'center',
-  gap: '1vw',
-};
-
 const bgImgStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
@@ -59,31 +31,13 @@ const bgImgStyle: React.CSSProperties = {
   objectPosition: 'center center',
 };
 
-const darkenStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  background: 'rgba(0, 0, 0, 0.15)',
-  zIndex: 2,
-};
-
+/* Right-side dark scrim so wait digits always read over the photo */
 const gradientStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
   background:
-    'linear-gradient(to right, transparent 35%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.75) 72%, rgba(0,0,0,0.92) 85%, rgba(0,0,0,0.98) 100%), linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.15) 100%)',
+    'linear-gradient(90deg, transparent 45%, rgba(0,0,0,0.5) 62%, rgba(0,0,0,0.8) 78%, rgba(0,0,0,0.9) 100%), linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 100%)',
   zIndex: 3,
-};
-
-const logoStyle: React.CSSProperties = {
-  position: 'absolute',
-  left: '3%',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  zIndex: 6,
-  height: '85%',
-  width: 'auto',
-  maxWidth: '55%',
-  objectFit: 'contain',
 };
 
 const statusOverlayStyle: React.CSSProperties = {
@@ -101,7 +55,16 @@ const statusOverlayStyle: React.CSSProperties = {
 const fallbackBgStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
-  background: 'linear-gradient(135deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.95) 100%)',
+  background: 'linear-gradient(135deg, #15181E 0%, #0A0C10 100%)',
+};
+
+/* Fixed right column so digits align across rows */
+const waitColStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  width: '10vw',
+  flexShrink: 0,
 };
 
 /* ── BannerRow Component ── */
@@ -114,8 +77,10 @@ const BannerRow = React.memo(function BannerRow({
   style?: React.CSSProperties;
 }) {
   const status = attraction.status as AttractionStatus;
-  const bgSrc = getAttractionBg(attraction.slug);
-  const logoSrc = getAttractionLogo(attraction.slug);
+  const bgSrc = resolveBg(attraction);
+  const logoSrc = resolveLogo(attraction);
+  const logoGlow = resolveLogoGlow(attraction);
+  const theme = resolveQueueTextTheme(attraction);
 
   const rowStyle = useMemo<React.CSSProperties>(
     () => ({
@@ -124,99 +89,117 @@ const BannerRow = React.memo(function BannerRow({
       borderRadius: 0,
       overflow: 'hidden',
       minHeight: 0,
+      background: '#0A0C10',
     }),
     [style],
   );
 
-  // No glow filter on TV2.5 — drop-shadow filters are too expensive during scroll animation
-  const logoImgStyle = logoStyle;
+  const logoImgStyle = useMemo<React.CSSProperties>(
+    () => ({
+      position: 'absolute',
+      left: '3%',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      zIndex: 6,
+      height: '80%',
+      width: 'auto',
+      maxWidth: '50%',
+      objectFit: 'contain',
+      filter: logoGlow || undefined,
+    }),
+    [logoGlow],
+  );
 
   return (
     <div style={rowStyle}>
       {/* Background art */}
       {bgSrc ? (
-        <img src={bgSrc} alt="" style={bgImgStyle} />
+        <img src={bgSrc} alt="" decoding="async" style={bgImgStyle} />
       ) : (
         <div style={fallbackBgStyle} />
       )}
-      <div style={darkenStyle} />
       <div style={gradientStyle} />
 
-      {/* Logo overlay */}
+      {/* Glowing logo overlay */}
       {logoSrc && (
-        <img src={logoSrc} alt={attraction.name} style={logoImgStyle} />
+        <img src={logoSrc} alt={attraction.name} decoding="async" style={logoImgStyle} />
       )}
 
-      {/* Status / wait time — text sits within the gradient fade */}
+      {/* Status / wait time — fixed-width right column for consistent alignment */}
       <div style={statusOverlayStyle}>
-        {status === 'OPEN' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={waitColStyle}>
+          {status === 'OPEN' && (
+            <div key={attraction.wait_time} className="tv-fade" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span
+                style={{
+                  fontSize: '4vw',
+                  fontWeight: 500,
+                  fontVariantNumeric: 'tabular-nums',
+                  lineHeight: 1,
+                  color: theme.color,
+                }}
+              >
+                {attraction.wait_time}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.65vw',
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3em',
+                  color: '#475569',
+                  marginTop: 3,
+                }}
+              >
+                Minutes
+              </span>
+            </div>
+          )}
+          {status === 'CLOSED' && (
             <span
+              className="tv-fade"
               style={{
-                fontSize: '4vw',
-                fontWeight: 900,
-                fontVariantNumeric: 'tabular-nums',
-                lineHeight: 1,
-                color: '#fff',
-              }}
-            >
-              {attraction.wait_time}
-            </span>
-            <span
-              style={{
-                fontSize: '0.7vw',
-                fontWeight: 700,
+                fontSize: '1.8vw',
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                color: 'rgba(255,255,255,0.45)',
-                marginTop: 2,
+                letterSpacing: '0.14em',
+                color: '#F87171',
               }}
             >
-              Minutes
+              Closed
             </span>
-          </div>
-        )}
-        {status === 'CLOSED' && (
-          <span
-            style={{
-              fontSize: '1.8vw',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: '#f87171',
-            }}
-          >
-            Closed
-          </span>
-        )}
-        {status === 'DELAYED' && (
-          <span
-            style={{
-              fontSize: '1.6vw',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: '#f0ad4e',
-              textAlign: 'center' as const,
-              lineHeight: 1.2,
-            }}
-          >
-            Technical<br />Delay
-          </span>
-        )}
-        {status === 'AT CAPACITY' && (
-          <span
-            style={{
-              fontSize: '1.6vw',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: '#F59E0B',
-            }}
-          >
-            At Capacity
-          </span>
-        )}
+          )}
+          {status === 'DELAYED' && (
+            <span
+              className="tv-fade"
+              style={{
+                fontSize: '1.5vw',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                color: '#FBBF24',
+                textAlign: 'center' as const,
+                lineHeight: 1.25,
+              }}
+            >
+              Technical<br />Delay
+            </span>
+          )}
+          {status === 'AT CAPACITY' && (
+            <span
+              className="tv-fade"
+              style={{
+                fontSize: '1.5vw',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                color: '#FBBF24',
+              }}
+            >
+              At Capacity
+            </span>
+          )}
+        </div>
 
         {/* Fallback: show name if no logo */}
         {!logoSrc && (
@@ -232,7 +215,10 @@ const BannerRow = React.memo(function BannerRow({
             <span
               style={{
                 fontSize: '2vw',
-                fontWeight: 900,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: '#E2E8F0',
               }}
             >
               {attraction.name}
@@ -281,7 +267,7 @@ export default function TV25Display() {
       const [attractionsRes, autoSortRes, closingRes] = await Promise.all([
         supabase
           .from('attractions')
-          .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at')
+          .select(ATTRACTION_SELECT)
           .order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
@@ -367,8 +353,8 @@ export default function TV25Display() {
   useEffect(() => {
     if (attractions.length === 0) return;
     attractions.forEach((a) => {
-      const bg = getAttractionBg(a.slug);
-      const logo = getAttractionLogo(a.slug);
+      const bg = resolveBg(a);
+      const logo = resolveLogo(a);
       if (bg) { const img = new Image(); img.src = bg; }
       if (logo) { const img = new Image(); img.src = logo; }
     });
@@ -445,7 +431,7 @@ export default function TV25Display() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div className="flex h-screen items-center justify-center" style={{ background: '#07080B' }}>
         <h1 className="text-white/60 text-2xl font-semibold">Loading...</h1>
       </div>
     );
@@ -453,8 +439,9 @@ export default function TV25Display() {
 
   return (
     <div
-      className="h-screen bg-black flex flex-col overflow-hidden"
+      className="h-screen flex flex-col overflow-hidden"
       style={{
+        background: '#07080B',
         paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
         paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
         paddingTop: isEmbedded ? 0 : '2%',
@@ -462,15 +449,57 @@ export default function TV25Display() {
       }}
     >
       <ParkClosedOverlay />
+      <style>{`
+        .tv-fade {
+          animation: tv25fade 400ms ease;
+        }
+        @keyframes tv25fade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
+
       {/* Header */}
       {!isEmbedded && (
-        <div style={{ flexShrink: 0 }}>
-          <ElectricHeader title="Maze Queue Times" fontSize="3.5vw" />
-          <LightningBorder />
+        <div
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            paddingBottom: '0.8vw',
+            borderBottom: '1px solid #15181E',
+            marginBottom: '1vw',
+          }}
+        >
+          <h1
+            style={{
+              fontSize: '1.6vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: '#E2E8F0',
+              margin: 0,
+            }}
+          >
+            Wait Times
+          </h1>
+          <span
+            style={{
+              fontSize: '0.8vw',
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: '#475569',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            Park Closes {formatTime12h(closingTime)}
+          </span>
         </div>
       )}
 
-      {/* Scrolling ride banners — 4 visible */}
+      {/* Ride banners — compact 4-up */}
       <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
         <div
           ref={scrollRef}
@@ -490,18 +519,25 @@ export default function TV25Display() {
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Footer — park brand strip */}
       {!isEmbedded && (
-        <div style={{ flexShrink: 0 }}>
-          <LightningBorder />
-          <div style={{ textAlign: 'center', padding: '0.3vw 0' }}>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1vw', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
-              Park Closes{' '}
-            </span>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.7vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.7)' }}>
-              {formatTime12h(closingTime)}
-            </span>
-          </div>
+        <div
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            borderTop: '1px solid #15181E',
+            marginTop: '1vw',
+            paddingTop: '0.7vw',
+            fontSize: 10,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.3em',
+          }}
+        >
+          <span style={{ color: '#475569' }}>Immersive Core · Fright Nights</span>
+          <span style={{ color: '#334155' }}>@immersivecore</span>
         </div>
       )}
     </div>

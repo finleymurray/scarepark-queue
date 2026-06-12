@@ -17,6 +17,7 @@ const MORE_TABS = [
   { label: 'Screens', href: '/admin/screens' },
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Logs', href: '/admin/logs' },
+  { label: 'Attraction Details', href: '/admin/attractions' },
   { label: 'Add Attraction', href: '/admin/attractions/new' },
 ];
 
@@ -45,6 +46,8 @@ export default function AdminNav({
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
+    // Exact match so /admin/attractions/new doesn't also highlight 'Attraction Details'
+    if (href === '/admin/attractions') return pathname === '/admin/attractions';
     return pathname.startsWith(href);
   }
 

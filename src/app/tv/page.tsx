@@ -84,7 +84,7 @@ export default function TVHub() {
             {TV_SCREENS.map((screen) => (
               <a
                 key={screen.path}
-                href={screen.path}
+                href={`${screen.path}?preview=1`}
                 style={{
                   ...card(),
                   display: 'flex',
@@ -126,7 +126,7 @@ export default function TVHub() {
                 return (
                   <a
                     key={a.id}
-                    href={`/queue?a=${a.slug}`}
+                    href={`/queue?a=${a.slug}&preview=1`}
                     style={{
                       ...card(),
                       display: 'flex',

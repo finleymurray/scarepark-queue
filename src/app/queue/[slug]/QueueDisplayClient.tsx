@@ -8,6 +8,18 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 
+/** Next show time ("HH:MM") from a show_times list, or null if none left today. */
+function getNextShowTime(showTimes: string[] | null, nowMs: number): string | null {
+  if (!showTimes || showTimes.length === 0) return null;
+  const d = new Date(nowMs);
+  const nowMinutes = d.getHours() * 60 + d.getMinutes();
+  for (const time of [...showTimes].sort()) {
+    const [h, m] = time.split(':');
+    if (parseInt(h, 10) * 60 + parseInt(m, 10) > nowMinutes) return time;
+  }
+  return null;
+}
+
 export default function QueueDisplayClient({ slug, identityPath }: { slug: string; identityPath?: string }) {
   useConnectionHealth(`queue-${slug}`);
   // identityPath must match the screen's assigned_path exactly, or the
@@ -16,6 +28,12 @@ export default function QueueDisplayClient({ slug, identityPath }: { slug: strin
   useScreenIdentity(identityPath ?? `/queue/${slug}`);
   const [attraction, setAttraction] = useState<Attraction | null>(null);
   const [loading, setLoading] = useState(true);
+  // Minute tick so a show display rolls over to the next show time live
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Prefer uploaded assets from the attraction record; fall back to hardcoded slug assets
   const bgSrc = attraction ? resolveQueueBg(attraction) : getQueueBg(slug);
@@ -75,6 +93,9 @@ export default function QueueDisplayClient({ slug, identityPath }: { slug: strin
   const isDelayed = attraction.status === 'DELAYED';
   const isAtCapacity = attraction.status === 'AT CAPACITY';
   const showVignette = slug !== 'the-bunker';
+  // Shows display the next show time, not a queue wait
+  const isShow = attraction.attraction_type === 'show';
+  const nextShowTime = isShow ? getNextShowTime(attraction.show_times, now) : null;
 
   return (
     <div
@@ -125,36 +146,76 @@ export default function QueueDisplayClient({ slug, identityPath }: { slug: strin
             textAlign: 'center',
           }}
         >
-          <span
-            style={{
-              display: 'block',
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: 'min(55vh, 45vw)',
-              fontWeight: 900,
-              lineHeight: 0.85,
-              color: theme.color,
-              textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
-            }}
-          >
-            {attraction.wait_time}
-          </span>
-          <span
-            style={{
-              display: 'block',
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: 'min(10vh, 8vw)',
-              fontWeight: 700,
-              lineHeight: 1,
-              letterSpacing: '0.35em',
-              textIndent: '0.35em',
-              textTransform: 'uppercase',
-              color: theme.color,
-              textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
-              marginTop: '1vh',
-            }}
-          >
-            Minutes
-          </span>
+          {isShow ? (
+            <>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: nextShowTime ? 'min(38vh, 30vw)' : 'min(14vh, 11vw)',
+                  fontWeight: 900,
+                  lineHeight: 0.95,
+                  color: theme.color,
+                  fontVariantNumeric: 'tabular-nums',
+                  textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
+                }}
+              >
+                {nextShowTime ?? 'No More Shows'}
+              </span>
+              {nextShowTime && (
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 'min(9vh, 7vw)',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '0.35em',
+                    textIndent: '0.35em',
+                    textTransform: 'uppercase',
+                    color: theme.color,
+                    textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
+                    marginTop: '2vh',
+                  }}
+                >
+                  Next Show
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 'min(55vh, 45vw)',
+                  fontWeight: 900,
+                  lineHeight: 0.85,
+                  color: theme.color,
+                  textShadow: `0 0 50px rgba(${theme.rgb},0.7), 0 0 100px rgba(${theme.rgb},0.4), 0 0 150px rgba(${theme.rgb},0.2), 0 4px 30px rgba(0,0,0,0.8)`,
+                }}
+              >
+                {attraction.wait_time}
+              </span>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 'min(10vh, 8vw)',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '0.35em',
+                  textIndent: '0.35em',
+                  textTransform: 'uppercase',
+                  color: theme.color,
+                  textShadow: `0 0 25px rgba(${theme.rgb},0.5), 0 2px 15px rgba(0,0,0,0.8)`,
+                  marginTop: '1vh',
+                }}
+              >
+                Minutes
+              </span>
+            </>
+          )}
         </div>
       )}
 

@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import LightningBorder from '@/components/LightningBorder';
-import ElectricHeader from '@/components/ElectricHeader';
+import { resolveGlowRgb, resolveQueueTextTheme } from '@/lib/logos';
 import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+
+const ATTRACTION_SELECT =
+  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -38,16 +40,11 @@ function getNextShowTime(showTimes: string[] | null): string | null {
   return null;
 }
 
-/* ── Ride Row Component ── */
+/* ── Ride Row ── */
 function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boolean }) {
   const status = attraction.status as AttractionStatus;
-
-  // Colour-coded status text
-  const statusColour =
-    status === 'CLOSED' ? '#ef4444' :
-    status === 'DELAYED' ? '#f0ad4e' :
-    status === 'AT CAPACITY' ? '#F59E0B' :
-    '#22C55E';
+  const glowRgb = resolveGlowRgb(attraction) ?? '251,191,36';
+  const theme = resolveQueueTextTheme(attraction);
 
   const statusLabel =
     status === 'CLOSED' ? 'Closed' :
@@ -55,28 +52,47 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
     status === 'AT CAPACITY' ? 'At Capacity' :
     null;
 
+  const statusColour =
+    status === 'CLOSED' ? '#F87171' : '#FBBF24';
+
   return (
     <div
       className="tv1-ride-row"
       style={{
         flex: 1,
         minHeight: 0,
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 1%',
-        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.15)',
+        padding: '0 2.5%',
+        borderBottom: isLast ? 'none' : '1px solid #15181E',
+        background: `linear-gradient(90deg, rgba(${glowRgb}, 0.10) 0%, transparent 55%)`,
       }}
     >
-      {/* Name — white text */}
+      {/* Left glow rail */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: '12%',
+          bottom: '12%',
+          width: 3,
+          background: `rgb(${glowRgb})`,
+        }}
+      />
+
+      {/* Name */}
       <span
         className="tv1-ride-name"
         style={{
           fontSize: '1.9vw',
-          fontWeight: 700,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          color: '#fff',
+          color: '#E2E8F0',
           minWidth: 0,
           maxWidth: '70%',
         }}
@@ -84,7 +100,7 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
         {attraction.name}
       </span>
 
-      {/* Status / wait time — colour coded, right aligned */}
+      {/* Status / wait time — right aligned */}
       {status === 'OPEN' ? (
         <div
           style={{
@@ -93,17 +109,18 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
             paddingLeft: 16,
             display: 'flex',
             alignItems: 'baseline',
-            gap: 6,
+            gap: 8,
           }}
         >
           <span
-            className="tv1-wait-time"
+            key={attraction.wait_time}
+            className="tv1-wait-time tv-fade"
             style={{
-              fontSize: '2.8vw',
-              fontWeight: 900,
+              fontSize: '3.2vw',
+              fontWeight: 500,
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1,
-              color: statusColour,
+              color: theme.color,
             }}
           >
             {attraction.wait_time}
@@ -111,11 +128,11 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
           <span
             className="tv1-wait-label"
             style={{
-              fontSize: '1vw',
-              fontWeight: 600,
+              fontSize: '0.9vw',
+              fontWeight: 500,
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'rgba(255,255,255,0.35)',
+              letterSpacing: '0.2em',
+              color: '#475569',
             }}
           >
             min
@@ -123,13 +140,14 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
         </div>
       ) : (
         <span
-          className="tv1-status-pill"
+          key={status}
+          className="tv1-status-pill tv-fade"
           style={{
             color: statusColour,
-            fontSize: '1.5vw',
-            fontWeight: 800,
+            fontSize: '1.4vw',
+            fontWeight: 600,
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.14em',
             flexShrink: 0,
             marginLeft: 'auto',
             paddingLeft: 16,
@@ -142,55 +160,56 @@ function RideRow({ attraction, isLast }: { attraction: Attraction; isLast: boole
   );
 }
 
-/* ── Show Card Component ── */
+/* ── Show Card ── */
 function ShowCard({ show }: { show: Attraction }) {
   const status = show.status as AttractionStatus;
   const nextShow = getNextShowTime(show.show_times);
+  const glowRgb = resolveGlowRgb(show) ?? '168,85,247';
+  const theme = resolveQueueTextTheme(show);
 
   return (
     <div
       className="tv1-show-card"
       style={{
-        background: 'linear-gradient(180deg, rgba(88, 28, 135, 0.5) 0%, rgba(50, 15, 90, 0.35) 100%)',
-        border: '1px solid rgba(168, 85, 247, 0.4)',
-        borderRadius: 6,
+        position: 'relative',
+        background: `linear-gradient(160deg, rgba(${glowRgb}, 0.12) 0%, rgba(0,0,0,0.4) 100%)`,
+        border: '1px solid #15181E',
+        borderRadius: 4,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1.2vw 2%',
         textAlign: 'center',
+        overflow: 'hidden',
       }}
     >
       {/* Show Name */}
       <div
         className="tv1-show-name"
         style={{
-          fontSize: '1.3vw',
-          fontWeight: 800,
-          color: '#fff',
-          letterSpacing: '0.04em',
-          marginBottom: '0.2vw',
+          fontSize: '1.2vw',
+          fontWeight: 600,
+          color: '#E2E8F0',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          marginBottom: '0.3vw',
           lineHeight: 1.1,
         }}
       >
         {show.name}
       </div>
 
-      {/* Live Show badge */}
+      {/* Live Show micro-label */}
       <div
         className="tv1-show-badge"
         style={{
           fontSize: '0.55vw',
-          fontWeight: 700,
-          padding: '2px 10px',
-          borderRadius: 20,
+          fontWeight: 600,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          background: 'rgba(168, 85, 247, 0.25)',
-          border: '1px solid rgba(168, 85, 247, 0.4)',
-          color: 'rgba(200, 170, 255, 0.9)',
-          marginBottom: '0.4vw',
+          letterSpacing: '0.25em',
+          color: '#475569',
+          marginBottom: '0.5vw',
         }}
       >
         Live Show
@@ -199,37 +218,40 @@ function ShowCard({ show }: { show: Attraction }) {
       {/* Status / Next Show — time is the hero */}
       {status === 'CLOSED' ? (
         <span
-          className="tv1-show-status"
+          className="tv1-show-status tv-fade"
           style={{
-            color: '#ef4444',
-            fontSize: '1.6vw',
-            fontWeight: 800,
+            color: '#F87171',
+            fontSize: '1.5vw',
+            fontWeight: 600,
             textTransform: 'uppercase',
+            letterSpacing: '0.12em',
           }}
         >
           Closed
         </span>
       ) : status === 'DELAYED' ? (
         <span
-          className="tv1-show-status"
+          className="tv1-show-status tv-fade"
           style={{
-            color: '#f0ad4e',
-            fontSize: '1.6vw',
-            fontWeight: 800,
+            color: '#FBBF24',
+            fontSize: '1.5vw',
+            fontWeight: 600,
             textTransform: 'uppercase',
+            letterSpacing: '0.12em',
           }}
         >
           Technical Delay
         </span>
       ) : nextShow ? (
         <div
-          className="tv1-show-time"
+          key={nextShow}
+          className="tv1-show-time tv-fade"
           style={{
-            fontSize: '2.8vw',
-            fontWeight: 900,
+            fontSize: '2.6vw',
+            fontWeight: 500,
             fontVariantNumeric: 'tabular-nums',
             lineHeight: 1,
-            color: '#fff',
+            color: theme.color,
           }}
         >
           {formatTime12h(nextShow)}
@@ -238,10 +260,11 @@ function ShowCard({ show }: { show: Attraction }) {
         <div
           className="tv1-show-status"
           style={{
-            fontSize: '1.2vw',
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.25)',
+            fontSize: '1.1vw',
+            fontWeight: 500,
+            color: '#334155',
             textTransform: 'uppercase',
+            letterSpacing: '0.12em',
           }}
         >
           No More Shows
@@ -306,7 +329,7 @@ export default function TVDisplay() {
   useEffect(() => {
     async function fetchData() {
       const [attractionsRes, closingRes, autoSortRes] = await Promise.all([
-        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at').order('sort_order', { ascending: true }),
+        supabase.from('attractions').select(ATTRACTION_SELECT).order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
       ]);
@@ -388,7 +411,7 @@ export default function TVDisplay() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div className="flex h-screen items-center justify-center" style={{ background: '#07080B' }}>
         <h1 className="text-white/60 text-2xl font-semibold">Loading...</h1>
       </div>
     );
@@ -399,7 +422,7 @@ export default function TVDisplay() {
       style={{
         width: '100vw',
         height: '100vh',
-        background: '#000',
+        background: '#07080B',
         overflow: 'hidden',
       }}
     >
@@ -423,48 +446,31 @@ export default function TVDisplay() {
         color: '#fff',
       }}
     >
-      {/* Portrait orientation overrides */}
       <style>{`
+        .tv-fade {
+          animation: tv1fade 400ms ease;
+        }
+        @keyframes tv1fade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         @media (orientation: portrait) {
-          .tv1-root .tv1-header-title {
-            font-size: 4vw !important;
-          }
+          .tv1-root .tv1-header-title { font-size: 3.4vw !important; }
           .tv1-root .tv1-ride-row {
             flex: 0 0 auto !important;
             min-height: 0 !important;
             padding-top: 2.5vw !important;
             padding-bottom: 2.5vw !important;
           }
-          .tv1-root .tv1-ride-name {
-            font-size: 2.8vw !important;
-          }
-          .tv1-root .tv1-wait-time {
-            font-size: 4vw !important;
-          }
-          .tv1-root .tv1-wait-label {
-            font-size: 1.6vw !important;
-          }
-          .tv1-root .tv1-status-pill {
-            font-size: 2vw !important;
-          }
-          .tv1-root .tv1-section-label {
-            font-size: 1.8vw !important;
-          }
-          .tv1-root .tv1-show-name {
-            font-size: 2.2vw !important;
-          }
-          .tv1-root .tv1-show-time {
-            font-size: 4.5vw !important;
-          }
-          .tv1-root .tv1-show-status {
-            font-size: 2vw !important;
-          }
-          .tv1-root .tv1-footer-label {
-            font-size: 2.5vw !important;
-          }
-          .tv1-root .tv1-footer-time {
-            font-size: 3.5vw !important;
-          }
+          .tv1-root .tv1-ride-name { font-size: 2.8vw !important; }
+          .tv1-root .tv1-wait-time { font-size: 4.4vw !important; }
+          .tv1-root .tv1-wait-label { font-size: 1.4vw !important; }
+          .tv1-root .tv1-status-pill { font-size: 2vw !important; }
+          .tv1-root .tv1-section-label { font-size: 1.8vw !important; }
+          .tv1-root .tv1-show-name { font-size: 2.2vw !important; }
+          .tv1-root .tv1-show-time { font-size: 4.2vw !important; }
+          .tv1-root .tv1-show-status { font-size: 2vw !important; }
+          .tv1-root .tv1-footer-strip { font-size: 1.6vw !important; }
           .tv1-root .tv1-rides-list {
             flex: 0 1 auto !important;
             overflow: visible !important;
@@ -476,18 +482,51 @@ export default function TVDisplay() {
         }
       `}</style>
 
-      {/* ── Header ── full-width bar with lightning border */}
+      {/* ── Header ── */}
       {!isEmbedded && (
-        <header style={{ flexShrink: 0 }}>
-          <ElectricHeader title="Mazes & Shows" fontSize="3.2vw" />
-          <LightningBorder />
+        <header
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            paddingBottom: '0.8vw',
+            borderBottom: '1px solid #15181E',
+            marginBottom: '0.8vw',
+          }}
+        >
+          <h1
+            className="tv1-header-title"
+            style={{
+              fontSize: '1.6vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: '#E2E8F0',
+              margin: 0,
+            }}
+          >
+            Wait Times
+          </h1>
+          <span
+            style={{
+              fontSize: '0.8vw',
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: '#475569',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            Park Closes {formatTime12h(closingTime)}
+          </span>
         </header>
       )}
 
       {/* ── Content ── */}
       <div className="tv1-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6vw', overflow: 'hidden' }}>
 
-        {/* Centred attractions table */}
+        {/* Attractions list — full width rows */}
         <div
           className="tv1-attractions-table"
           style={{
@@ -495,34 +534,25 @@ export default function TVDisplay() {
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            width: '60%',
-            maxWidth: 900,
-            margin: '0 auto',
           }}
         >
           {/* Section label — ATTRACTIONS */}
-          <div
-            style={{
-              flexShrink: 0,
-              padding: '0.3vw 0',
-              textAlign: 'center',
-            }}
-          >
+          <div style={{ flexShrink: 0, padding: '0.3vw 0' }}>
             <span
               className="tv1-section-label"
               style={{
-                fontSize: '0.9vw',
-                fontWeight: 700,
+                fontSize: '0.8vw',
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                letterSpacing: '0.25em',
-                color: 'rgba(255,255,255,0.3)',
+                letterSpacing: '0.3em',
+                color: '#334155',
               }}
             >
               Attractions
             </span>
           </div>
 
-          {/* Rides list — clean table rows with thin separators */}
+          {/* Rides list — rows sized to fill viewport height */}
           <div className="tv1-rides-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {sortedRides.map((ride, i) => (
               <RideRow key={ride.id} attraction={ride} isLast={i === sortedRides.length - 1} />
@@ -530,73 +560,61 @@ export default function TVDisplay() {
           </div>
         </div>
 
-        {/* Section label — SHOWS */}
-        <div
-          style={{
-            flexShrink: 0,
-            padding: '0.3vw 0',
-            marginTop: '0.4vw',
-            textAlign: 'center',
-          }}
-        >
-          <span
-            className="tv1-section-label"
-            style={{
-              fontSize: '0.9vw',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.25em',
-              color: 'rgba(255,255,255,0.3)',
-            }}
-          >
-            Shows
-          </span>
-        </div>
+        {/* Shows section */}
+        {shows.length > 0 && (
+          <>
+            <div style={{ flexShrink: 0, padding: '0.3vw 0', marginTop: '0.4vw' }}>
+              <span
+                className="tv1-section-label"
+                style={{
+                  fontSize: '0.8vw',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3em',
+                  color: '#334155',
+                }}
+              >
+                Shows
+              </span>
+            </div>
 
-        {/* Show cards grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${shows.length || 3}, 1fr)`,
-            gap: '0.6vw',
-            flex: '0 0 auto',
-            minHeight: 0,
-          }}
-        >
-          {shows.map((show) => (
-            <ShowCard key={show.id} show={show} />
-          ))}
-        </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${shows.length || 3}, 1fr)`,
+                gap: '0.6vw',
+                flex: '0 0 auto',
+                minHeight: 0,
+              }}
+            >
+              {shows.map((show) => (
+                <ShowCard key={show.id} show={show} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* ── Footer ── lightning border + closing time */}
+      {/* ── Footer ── park brand strip */}
       {!isEmbedded && (
         <footer style={{ flexShrink: 0 }}>
-          <LightningBorder />
-          <div style={{ textAlign: 'center', padding: '0.3vw 0' }}>
-            <span
-              className="tv1-footer-label"
-              style={{
-                fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '1vw',
-                letterSpacing: '0.2em',
-                color: 'rgba(255,255,255,0.3)',
-              }}
-            >
-              Park Closes{' '}
-            </span>
-            <span
-              className="tv1-footer-time"
-              style={{
-                fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-                fontSize: '1.7vw',
-                fontVariantNumeric: 'tabular-nums',
-                letterSpacing: '0.06em',
-                color: 'rgba(255,255,255,0.7)',
-              }}
-            >
-              {formatTime12h(closingTime)}
-            </span>
+          <div
+            className="tv1-footer-strip"
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              borderTop: '1px solid #15181E',
+              marginTop: '0.8vw',
+              paddingTop: '0.7vw',
+              fontSize: 10,
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '0.3em',
+            }}
+          >
+            <span style={{ color: '#475569' }}>Immersive Core · Fright Nights</span>
+            <span style={{ color: '#334155' }}>@immersivecore</span>
           </div>
         </footer>
       )}

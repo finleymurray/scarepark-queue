@@ -14,6 +14,7 @@ const MAX_ASSET_BYTES = 10 * 1024 * 1024; // 10 MB per file
 
 interface NewAttractionPayload {
   name: string;
+  tagline: string | null;
   slug: string;
   type: AttractionType;
   targetDispatchSeconds: number;
@@ -192,6 +193,7 @@ async function insertAttraction(
     .from('attractions')
     .insert({
       name,
+      tagline: payload.tagline,
       slug,
       status: 'CLOSED',
       wait_time: 0,
@@ -231,6 +233,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
   const [step, setStep] = useState(0);
   const [type, setType] = useState<AttractionType>('ride');
   const [name, setName] = useState('');
+  const [tagline, setTagline] = useState('');
   const [targetDispatch, setTargetDispatch] = useState(90);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bgFile, setBgFile] = useState<File | null>(null);
@@ -312,6 +315,7 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
       setSubmitLabel('Creating attraction…');
       await insertAttraction({
         name: name.trim(),
+        tagline: tagline.trim() || null,
         slug,
         type,
         targetDispatchSeconds: targetDispatch,
@@ -380,6 +384,17 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                 className="w-full px-3 py-2 bg-[#13161C] border border-[#23262E] rounded-md text-[#F1F5F9] text-sm placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors"
               />
               {slug && <p className="text-[#475569] text-[11px] mt-1.5">Slug: <span className="text-[#94A3B8]">{slug}</span></p>}
+            </div>
+
+            <div>
+              <label className="block text-[#94A3B8] text-xs font-semibold mb-1.5" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tagline <span className="text-[#475569] font-normal normal-case">(optional)</span></label>
+              <input
+                type="text"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                placeholder="One-line hook shown on TV screens…"
+                className="w-full px-3 py-2 bg-[#13161C] border border-[#23262E] rounded-md text-[#F1F5F9] text-sm placeholder-[#475569] focus:outline-none focus:border-[#3B82F6] transition-colors"
+              />
             </div>
 
             {type === 'ride' && (

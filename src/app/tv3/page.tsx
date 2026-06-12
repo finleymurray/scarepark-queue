@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getAttractionLogo, getAttractionBg } from '@/lib/logos';
-import LightningBorder from '@/components/LightningBorder';
-import ElectricHeader from '@/components/ElectricHeader';
+import { resolveLogo, resolveBg, resolveLogoGlow, resolveGlowRgb, resolveQueueTextTheme } from '@/lib/logos';
 import type { Attraction, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+
+const ATTRACTION_SELECT =
+  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
 
 function formatTime12h(time: string): string {
   if (!time) return '--:--';
@@ -38,38 +39,219 @@ function getNextShowTime(showTimes: string[] | null): string | null {
   return null;
 }
 
-/* ── Clean header/footer — borderline style ── */
-
-const headerStyle: React.CSSProperties = {
-  padding: '1.5vw 0 0',
-  textAlign: 'center' as const,
-  marginBottom: '0.8vw',
-  flexShrink: 0,
-};
-
-const headerTitleStyle: React.CSSProperties = {
-  fontSize: '2.5vw',
-  fontWeight: 900,
-  textTransform: 'uppercase',
-  letterSpacing: '0.2em',
-  color: '#fff',
-  margin: 0,
-};
-
-const footerStyle: React.CSSProperties = {
-  marginTop: '0.8vw',
-  flexShrink: 0,
-};
-
-const footerInnerStyle: React.CSSProperties = {
-  padding: '1.2vw 0',
-  display: 'flex',
-  alignItems: 'baseline',
-  justifyContent: 'center',
-  gap: '1vw',
-};
-
 const TV_SAFE_PADDING = '3.5%';
+
+/* ── Hero card — the next show, attraction-tinted gradient over its photo ── */
+function HeroShowCard({ show }: { show: Attraction }) {
+  const nextShow = getNextShowTime(show.show_times);
+  const logo = resolveLogo(show);
+  const bg = resolveBg(show);
+  const glowRgb = resolveGlowRgb(show) ?? '168,85,247';
+  const theme = resolveQueueTextTheme(show);
+
+  return (
+    <div
+      key={`${show.id}-${nextShow ?? 'none'}-${show.status}`}
+      className="tv-fade"
+      style={{
+        position: 'relative',
+        flex: 1,
+        minHeight: 0,
+        borderRadius: 6,
+        overflow: 'hidden',
+        background: '#0A0C10',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+      }}
+    >
+      {/* Background photo */}
+      {bg && (
+        <img
+          src={bg}
+          alt=""
+          decoding="async"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center center',
+          }}
+        />
+      )}
+      {/* Attraction-tinted gradient + bottom scrim so text always reads */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `linear-gradient(160deg, rgba(${glowRgb}, 0.25) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.8) 100%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.8) 100%)',
+        }}
+      />
+
+      {/* Content */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '2.5vw 3vw' }}>
+        {/* Micro-label */}
+        <div
+          style={{
+            fontSize: '0.9vw',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.3em',
+            color: theme.color,
+            marginBottom: '0.8vw',
+          }}
+        >
+          {show.status === 'DELAYED'
+            ? 'Technical Delay'
+            : show.status === 'CLOSED'
+            ? 'Closed'
+            : nextShow
+            ? `Up Next · ${formatTime12h(nextShow)}`
+            : 'No More Shows Tonight'}
+        </div>
+
+        {/* Logo or name, large */}
+        {logo ? (
+          <img
+            src={logo}
+            alt={show.name}
+            decoding="async"
+            style={{
+              height: '9vw',
+              width: 'auto',
+              maxWidth: '60%',
+              objectFit: 'contain',
+              objectPosition: 'left center',
+              filter: resolveLogoGlow(show) || undefined,
+              marginBottom: '0.8vw',
+            }}
+          />
+        ) : (
+          <h2
+            style={{
+              fontSize: '3.4vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              color: '#fff',
+              margin: 0,
+              marginBottom: '0.8vw',
+              lineHeight: 1.05,
+            }}
+          >
+            {show.name}
+          </h2>
+        )}
+
+        {/* Tagline line */}
+        {show.tagline && (
+          <div
+            style={{
+              fontSize: '1vw',
+              fontWeight: 500,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: '#94A3B8',
+            }}
+          >
+            {show.tagline}
+          </div>
+        )}
+
+        {/* Status text in amber/red when not running normally */}
+        {show.status === 'DELAYED' && (
+          <div
+            style={{
+              marginTop: '0.6vw',
+              fontSize: '1.4vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.14em',
+              color: '#FBBF24',
+            }}
+          >
+            Technical Delay
+          </div>
+        )}
+        {show.status === 'CLOSED' && (
+          <div
+            style={{
+              marginTop: '0.6vw',
+              fontSize: '1.4vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.14em',
+              color: '#F87171',
+            }}
+          >
+            Closed
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Upcoming show card — small: time + name ── */
+function UpcomingShowCard({ show, time }: { show: Attraction; time: string }) {
+  const glowRgb = resolveGlowRgb(show) ?? '168,85,247';
+  const theme = resolveQueueTextTheme(show);
+
+  return (
+    <div
+      key={`${show.id}-${time}`}
+      className="tv-fade"
+      style={{
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: '0.4vw',
+        padding: '1.2vw 1.6vw',
+        borderRadius: 4,
+        border: '1px solid #15181E',
+        background: `linear-gradient(160deg, rgba(${glowRgb}, 0.08) 0%, rgba(0,0,0,0.3) 100%)`,
+        overflow: 'hidden',
+      }}
+    >
+      <span
+        style={{
+          fontSize: '1.9vw',
+          fontWeight: 500,
+          fontVariantNumeric: 'tabular-nums',
+          lineHeight: 1,
+          color: theme.color,
+        }}
+      >
+        {formatTime12h(time)}
+      </span>
+      <span
+        style={{
+          fontSize: '0.85vw',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          color: '#94A3B8',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {show.name}
+      </span>
+    </div>
+  );
+}
 
 export default function TV3ShowTimes() {
   useConnectionHealth('tv3');
@@ -95,7 +277,7 @@ export default function TV3ShowTimes() {
       const [attractionsRes, closingRes] = await Promise.all([
         supabase
           .from('attractions')
-          .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at')
+          .select(ATTRACTION_SELECT)
           .order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
       ]);
@@ -159,9 +341,27 @@ export default function TV3ShowTimes() {
   // Filter to shows only
   const shows = attractions.filter((a) => a.attraction_type === 'show');
 
+  // Flatten all upcoming (show, time) pairs, chronological
+  const nowDate = new Date(now);
+  const nowMinutes = nowDate.getHours() * 60 + nowDate.getMinutes();
+  const upcoming = shows
+    .flatMap((show) =>
+      (show.show_times ?? []).map((time) => {
+        const [h, m] = time.split(':');
+        return { show, time, minutes: parseInt(h, 10) * 60 + parseInt(m, 10) };
+      })
+    )
+    .filter((e) => e.minutes > nowMinutes)
+    .sort((a, b) => a.minutes - b.minutes);
+
+  // Hero = the show with the soonest upcoming time (fallback to first show)
+  const heroShow = upcoming[0]?.show ?? shows[0] ?? null;
+  // Upcoming cards = subsequent entries (skip the hero's next slot)
+  const upcomingCards = upcoming.slice(1, 6);
+
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div className="flex h-screen items-center justify-center" style={{ background: '#07080B' }}>
         <h1 className="text-white/60 text-2xl font-semibold">Loading...</h1>
       </div>
     );
@@ -169,8 +369,9 @@ export default function TV3ShowTimes() {
 
   return (
     <div
-      className="h-screen bg-black flex flex-col overflow-hidden"
+      className="h-screen flex flex-col overflow-hidden"
       style={{
+        background: '#07080B',
         paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
         paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
         paddingTop: isEmbedded ? 0 : '2%',
@@ -179,115 +380,110 @@ export default function TV3ShowTimes() {
       }}
     >
       <ParkClosedOverlay />
+      <style>{`
+        .tv-fade {
+          animation: tv3fade 400ms ease;
+        }
+        @keyframes tv3fade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
+
       {/* Header */}
       {!isEmbedded && (
-        <div style={{ flexShrink: 0 }}>
-          <ElectricHeader title="Show Schedule" fontSize="3.5vw" />
-          <LightningBorder />
+        <div
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            paddingBottom: '0.8vw',
+            borderBottom: '1px solid #15181E',
+            marginBottom: '1vw',
+          }}
+        >
+          <h1
+            style={{
+              fontSize: '1.6vw',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: '#E2E8F0',
+              margin: 0,
+            }}
+          >
+            Tonight&apos;s Shows
+          </h1>
+          <span
+            style={{
+              fontSize: '0.8vw',
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+              color: '#475569',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            Park Closes {formatTime12h(closingTime)}
+          </span>
         </div>
       )}
 
-      {/* Show Cards Grid */}
-      <main className="flex-1 flex items-center justify-center" style={{ overflow: 'hidden', minHeight: 0 }}>
-        {shows.length === 0 ? (
-          <p className="text-white/30 text-2xl">No shows configured</p>
-        ) : (
-          <div
-            className="w-full grid items-stretch"
-            style={{
-              gridTemplateColumns: `repeat(${shows.length}, 1fr)`,
-              gap: isEmbedded ? '0.8vw' : '1.5rem',
-              height: '100%',
-              maxHeight: '100%',
-            }}
-          >
-            {shows.map((show) => {
-              const nextShow = getNextShowTime(show.show_times);
-              const logo = getAttractionLogo(show.slug);
-              const bg = getAttractionBg(show.slug);
-
-              return (
-                <div
-                  key={show.id}
-                  className="relative flex flex-col items-center justify-center rounded-lg overflow-hidden"
-                  style={{ padding: '3% 4%', background: bg ? undefined : 'rgba(88, 28, 135, 0.4)', minHeight: 0 }}
-                >
-                  {/* Background art */}
-                  {bg && (
-                    <>
-                      <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${bg})`, opacity: 0.3, transform: 'scale(1.4)' }}
-                      />
-                      <div
-                        className="absolute inset-0"
-                        style={{ background: 'rgba(30, 10, 50, 0.6)' }}
-                      />
-                    </>
-                  )}
-
-                  {/* Logo + Show Time grouped together, centered */}
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-[1vw]" style={{ minHeight: 0, maxHeight: '100%' }}>
-                    {/* Show Name / Logo */}
-                    {logo ? (
-                      <img
-                        src={logo}
-                        alt={show.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="object-contain"
-                        style={{
-                          width: '95%',
-                          maxWidth: 550,
-                          height: 'auto',
-                          maxHeight: '70%',
-                          flexShrink: 1,
-                          filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.8)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 80px rgba(168, 85, 247, 0.3))',
-                        }}
-                      />
-                    ) : (
-                      <h2 className="text-white text-[4vw] font-black text-center leading-tight">
-                        {show.name}
-                      </h2>
-                    )}
-
-                    {/* "Next Show" label */}
-                    <div className="text-center">
-                      {show.status === 'DELAYED' ? (
-                        <p className="text-[#f0ad4e] text-[3.5vw] font-bold" style={{ lineHeight: 1.2, textAlign: 'center', textTransform: 'uppercase' }}>Technical<br />Delay</p>
-                      ) : nextShow ? (
-                        <>
-                          <p className="text-white/70 text-[1.5vw] font-semibold uppercase tracking-wider mb-[0.5vw]">
-                            Next Show
-                          </p>
-                          <p className="text-white text-[4vw] font-black tabular-nums leading-none">
-                            {formatTime12h(nextShow)}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-white/30 text-[2.5vw] font-bold">No More Shows</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* Show rail */}
+      <main
+        className="flex-1"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1vw',
+          overflow: 'hidden',
+          minHeight: 0,
+        }}
+      >
+        {shows.length === 0 || !heroShow ? (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ color: '#334155', fontSize: '1.5vw', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+              No shows configured
+            </p>
           </div>
+        ) : (
+          <>
+            {/* Hero — next show */}
+            <HeroShowCard show={heroShow} />
+
+            {/* Upcoming show cards */}
+            {upcomingCards.length > 0 && (
+              <div style={{ flexShrink: 0, display: 'flex', gap: '1vw', height: '14%', minHeight: 0 }}>
+                {upcomingCards.map(({ show, time }) => (
+                  <UpcomingShowCard key={`${show.id}-${time}`} show={show} time={time} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      {/* Footer */}
+      {/* Footer — park brand strip */}
       {!isEmbedded && (
-        <footer style={{ flexShrink: 0 }}>
-          <LightningBorder />
-          <div style={{ textAlign: 'center', padding: '0.3vw 0' }}>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1vw', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
-              Park Closes{' '}
-            </span>
-            <span style={{ fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif", fontSize: '1.7vw', fontVariantNumeric: 'tabular-nums', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.7)' }}>
-              {formatTime12h(closingTime)}
-            </span>
-          </div>
+        <footer
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            borderTop: '1px solid #15181E',
+            marginTop: '1vw',
+            paddingTop: '0.7vw',
+            fontSize: 10,
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.3em',
+          }}
+        >
+          <span style={{ color: '#475569' }}>Immersive Core · Fright Nights</span>
+          <span style={{ color: '#475569' }}>Share your screams · #ImmersiveCore</span>
+          <span style={{ color: '#334155' }}>@immersivecore</span>
         </footer>
       )}
     </div>

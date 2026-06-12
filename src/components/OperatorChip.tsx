@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { surface, border, text, accents, radius, microLabel } from '@/lib/theme';
+import { surface, border, text, accents, radius, microLabel, controlButton, primaryButton } from '@/lib/theme';
 import PinPad from '@/components/ui/PinPad';
 import type { OperatorSession } from '@/types/database';
 
@@ -35,6 +35,8 @@ export default function OperatorChip({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Outside-click closes the menu
@@ -117,10 +119,9 @@ export default function OperatorChip({
             Change operator
           </button>
           <button
-            onClick={async () => {
-              if (!window.confirm(`End ${session.operator_name}'s shift? The panel will lock until a new operator enters their PIN.`)) return;
+            onClick={() => {
               setMenuOpen(false);
-              await onEndShift();
+              setConfirmOpen(true);
             }}
             style={{
               display: 'flex', alignItems: 'center', gap: 10, width: '100%',
@@ -134,6 +135,67 @@ export default function OperatorChip({
             </svg>
             End shift
           </button>
+        </div>
+      )}
+
+      {confirmOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.75)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget && !ending) setConfirmOpen(false); }}
+        >
+          <div style={{
+            width: '100%', maxWidth: 360,
+            background: surface.card, border: `1px solid ${border.default}`,
+            borderRadius: 14, padding: 24, textAlign: 'center',
+          }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: radius.md,
+              background: 'rgba(239,68,68,0.12)',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 12,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" />
+              </svg>
+            </div>
+            <p style={{ color: text.primary, fontSize: 16, fontWeight: 600, margin: 0 }}>End shift?</p>
+            <p style={{ color: text.muted, fontSize: 13, margin: '8px 0 20px', lineHeight: 1.5 }}>
+              This locks dispatch and queue controls for {attractionName} until another operator signs in.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                disabled={ending}
+                style={{ ...controlButton, flex: 1, minHeight: 44, padding: '11px 0', fontSize: 13, fontWeight: 600, touchAction: 'manipulation' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setEnding(true);
+                  try {
+                    await onEndShift();
+                  } finally {
+                    setEnding(false);
+                    setConfirmOpen(false);
+                  }
+                }}
+                disabled={ending}
+                style={{
+                  ...primaryButton('admin'),
+                  flex: 1, minHeight: 44, padding: '11px 0', fontSize: 13, fontWeight: 700,
+                  opacity: ending ? 0.6 : 1, touchAction: 'manipulation',
+                }}
+              >
+                {ending ? 'Ending…' : 'End shift'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

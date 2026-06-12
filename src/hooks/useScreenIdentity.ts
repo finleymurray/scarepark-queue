@@ -45,6 +45,12 @@ export function useScreenIdentity(pagePath: string) {
   const screenIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Preview mode: links from the /tv directory carry ?preview=1 so a staff
+    // device that was once registered via /screen can browse TV pages without
+    // being yanked to its assigned path (and without heartbeating as the
+    // kiosk, which would corrupt the real screen's last_seen).
+    if (new URLSearchParams(window.location.search).get('preview') === '1') return;
+
     const screenId = localStorage.getItem(ID_STORAGE_KEY);
     if (!screenId) return; // Not registered via /screen — do nothing
 
