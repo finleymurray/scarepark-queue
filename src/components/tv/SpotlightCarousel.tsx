@@ -8,6 +8,7 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 import { useTvAttractions } from './useTvAttractions';
+import TvFooter from './TvFooter';
 
 /**
  * SpotlightCarousel — single-page photo spotlight carousel for TV4 / TV4.5.
@@ -43,21 +44,21 @@ function Chip({ glowRgb, label, children }: { glowRgb: string; label: string; ch
       style={{
         background: 'rgba(0,0,0,0.55)',
         border: `1px solid rgba(${glowRgb},0.35)`,
-        borderRadius: 10,
-        padding: '1vh 1.6vw',
+        borderRadius: 14,
+        padding: '2.5vh 3vw',
         textAlign: 'center',
-        minWidth: '9vw',
+        minWidth: '12vw',
       }}
     >
       <div
         style={{
-          fontSize: '1vw',
+          fontSize: '1.8vh',
           fontWeight: 700,
-          letterSpacing: '0.3em',
-          textIndent: '0.3em',
+          letterSpacing: '0.35em',
+          textIndent: '0.35em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.55)',
-          marginBottom: '0.4vh',
+          color: 'rgba(255,255,255,0.6)',
+          marginBottom: '1vh',
         }}
       >
         {label}
@@ -74,17 +75,17 @@ function WaitChip({ attraction, glowRgb }: { attraction: Attraction; glowRgb: st
       <Chip glowRgb={glowRgb} label="Wait">
         <span
           style={{
-            fontSize: '3.2vw',
+            fontSize: '9.5vh',
             fontWeight: 900,
             lineHeight: 1,
             fontVariantNumeric: 'tabular-nums',
             color: glowColor,
-            textShadow: `0 0 25px rgba(${glowRgb},0.6)`,
+            textShadow: `0 0 35px rgba(${glowRgb},0.6)`,
           }}
         >
           {attraction.wait_time}
         </span>
-        <span style={{ fontSize: '1.1vw', fontWeight: 700, color: `rgba(${glowRgb},0.8)`, marginLeft: '0.4vw' }}>
+        <span style={{ fontSize: '2.6vh', fontWeight: 700, color: `rgba(${glowRgb},0.8)`, marginLeft: '0.5vw' }}>
           MIN
         </span>
       </Chip>
@@ -101,7 +102,7 @@ function WaitChip({ attraction, glowRgb }: { attraction: Attraction; glowRgb: st
     <Chip glowRgb={glowRgb} label="Wait">
       <span
         style={{
-          fontSize: '1.6vw',
+          fontSize: '3.6vh',
           fontWeight: 800,
           lineHeight: 1.2,
           letterSpacing: '0.08em',
@@ -119,7 +120,7 @@ function FearChip({ rating, glowRgb }: { rating: number; glowRgb: string }) {
   const stars = Math.max(0, Math.min(5, Math.round(rating)));
   return (
     <Chip glowRgb={glowRgb} label="Fear">
-      <span style={{ fontSize: '1.9vw', lineHeight: 1.2, letterSpacing: '0.12em', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: '3vh', lineHeight: 1.2, letterSpacing: '0.12em', whiteSpace: 'nowrap' }}>
         <span style={{ color: '#E2E8F0' }}>{'★'.repeat(stars)}</span>
         <span style={{ color: 'rgba(255,255,255,0.22)' }}>{'☆'.repeat(5 - stars)}</span>
       </span>
@@ -136,9 +137,9 @@ function ProgressDots({ count, active, glowRgb }: { count: number; active: numbe
         <div
           key={i}
           style={{
-            height: 4,
-            borderRadius: 2,
-            width: i === active ? 16 : 8,
+            height: '0.6vh',
+            borderRadius: '0.3vh',
+            width: i === active ? '3.5vh' : '1.4vh',
             background: i === active ? `rgb(${glowRgb})` : 'rgba(255,255,255,0.18)',
             boxShadow: i === active ? `0 0 10px rgba(${glowRgb},0.7)` : 'none',
           }}
@@ -190,14 +191,14 @@ function AttractionSlide({
 
       {/* Glowing logo art — top centre */}
       {logo && (
-        <div style={{ position: 'absolute', top: '6vh', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', top: '13vh', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logo}
             alt={attraction.name}
             style={{
-              height: '28vh',
-              maxWidth: '70vw',
+              height: '40vh',
+              maxWidth: '78vw',
               objectFit: 'contain',
               filter: resolveLogoGlow(attraction, 'strong'),
             }}
@@ -206,12 +207,12 @@ function AttractionSlide({
       )}
 
       {/* Bottom-left: tagline + progress dots */}
-      <div style={{ position: 'absolute', left: '4vw', bottom: '7vh', maxWidth: '52vw' }}>
+      <div style={{ position: 'absolute', left: '4.5vw', bottom: '8vh', maxWidth: '40vw' }}>
         {attraction.tagline && (
           <p
             style={{
-              margin: '0 0 2vh',
-              fontSize: '2vw',
+              margin: '0 0 2.5vh',
+              fontSize: '2.6vh',
               fontWeight: 600,
               lineHeight: 1.3,
               color: 'rgba(255,255,255,0.92)',
@@ -229,7 +230,7 @@ function AttractionSlide({
       </div>
 
       {/* Bottom-right: glass chips */}
-      <div style={{ position: 'absolute', right: '4vw', bottom: '7vh', display: 'flex', gap: '1vw', alignItems: 'stretch' }}>
+      <div style={{ position: 'absolute', right: '4.5vw', bottom: '8vh', display: 'flex', gap: '1.2vw', alignItems: 'stretch' }}>
         <WaitChip attraction={attraction} glowRgb={glowRgb} />
         {attraction.fear_rating != null && <FearChip rating={attraction.fear_rating} glowRgb={glowRgb} />}
       </div>
@@ -445,32 +446,18 @@ export default function SpotlightCarousel({
         <SlideView slide={slides[safeIndex]} slideIndex={safeIndex} slideCount={slides.length} />
       </div>
 
-      {/* Park brand strip — subtle, above the scrim at the bottom edge */}
+      {/* Park brand strip — overlays the photo bottom edge */}
       <div
         style={{
           position: 'absolute',
           left: 0,
           right: 0,
-          bottom: '1.2vh',
+          bottom: 0,
           zIndex: 3,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'baseline',
-          gap: '1.2vw',
           pointerEvents: 'none',
         }}
       >
-        <span style={{ fontSize: '0.95vw', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
-          Immersive Core · Fright Nights
-        </span>
-        <span style={{ fontSize: '0.85vw', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.25)' }}>
-          @immersivecore
-        </span>
-        {closingTime && (
-          <span style={{ fontSize: '0.85vw', letterSpacing: '0.15em', color: 'rgba(255,255,255,0.25)', fontVariantNumeric: 'tabular-nums' }}>
-            Park closes {formatTime12h(closingTime)}
-          </span>
-        )}
+        <TvFooter closeTime={closingTime ? formatTime12h(closingTime) : null} />
       </div>
     </div>
   );

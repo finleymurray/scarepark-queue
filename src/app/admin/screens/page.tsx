@@ -113,6 +113,8 @@ export default function ScreensPage() {
   const [attractions, setAttractions] = useState<{ name: string; slug: string }[]>([]);
   const [parkClosed, setParkClosed] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [brandText, setBrandText] = useState('');
+  const [socialHandle, setSocialHandle] = useState('');
   const { toasts, pushToast } = useToasts();
 
   const assignablePaths = buildAssignablePaths(attractions);
@@ -138,13 +140,16 @@ export default function ScreensPage() {
 
       await fetchData();
 
-      // Fetch park_closed setting
-      const { data: closedSetting } = await supabase
+      // Fetch park_closed + branding settings
+      const { data: settings } = await supabase
         .from('park_settings')
         .select('key,value')
-        .eq('key', 'park_closed')
-        .single();
-      if (closedSetting) setParkClosed(closedSetting.value === 'true');
+        .in('key', ['park_closed', 'tv_brand_text', 'tv_social_handle']);
+      for (const row of settings || []) {
+        if (row.key === 'park_closed') setParkClosed(row.value === 'true');
+        if (row.key === 'tv_brand_text') setBrandText(row.value || '');
+        if (row.key === 'tv_social_handle') setSocialHandle(row.value || '');
+      }
 
       setLoading(false);
     }
@@ -232,6 +237,17 @@ export default function ScreensPage() {
       setParkClosed(newValue);
     }
     setToggling(false);
+  }
+
+  async function handleSaveBranding(key: 'tv_brand_text' | 'tv_social_handle', value: string) {
+    const { error } = await supabase
+      .from('park_settings')
+      .upsert({ key, value: value.trim(), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) {
+      pushToast('error', 'Failed to save screen branding');
+    } else {
+      pushToast('success', 'Screen branding saved');
+    }
   }
 
   async function handleDeleteScreen(screen: Screen) {
@@ -386,6 +402,38 @@ export default function ScreensPage() {
             ))}
           </div>
         )}
+
+        {/* ── Screen branding ── */}
+        <div style={{ ...cardStyle, marginBottom: 32 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: text.primary, marginBottom: 2 }}>
+            Screen branding
+          </div>
+          <p style={{ fontSize: 12, color: text.muted, marginTop: 2, marginBottom: 14 }}>
+            Shown in the footer of all TV screens. Screens pick up changes on their next load.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            <div>
+              <label style={{ ...microLabel, display: 'block', marginBottom: 4 }}>Brand line</label>
+              <input
+                value={brandText}
+                onChange={(e) => setBrandText(e.target.value)}
+                onBlur={(e) => handleSaveBranding('tv_brand_text', e.target.value)}
+                placeholder="Immersive Core · Fright Nights"
+                style={{ ...selectStyle, cursor: 'text' }}
+              />
+            </div>
+            <div>
+              <label style={{ ...microLabel, display: 'block', marginBottom: 4 }}>Social handle</label>
+              <input
+                value={socialHandle}
+                onChange={(e) => setSocialHandle(e.target.value)}
+                onBlur={(e) => handleSaveBranding('tv_social_handle', e.target.value)}
+                placeholder="@immersivecore"
+                style={{ ...selectStyle, cursor: 'text' }}
+              />
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>

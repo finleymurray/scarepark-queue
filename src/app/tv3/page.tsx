@@ -7,6 +7,7 @@ import type { Attraction, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+import TvFooter from '@/components/tv/TvFooter';
 
 const ATTRACTION_SELECT =
   'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
@@ -62,7 +63,7 @@ function HeroShowCard({ show }: { show: Attraction }) {
         background: '#0A0C10',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
       }}
     >
       {/* Background photo */}
@@ -81,33 +82,46 @@ function HeroShowCard({ show }: { show: Attraction }) {
           }}
         />
       )}
-      {/* Attraction-tinted gradient + bottom scrim so text always reads */}
+      {/* Left-to-right cinematic scrim + attraction-tinted wash so text always reads */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: `linear-gradient(160deg, rgba(${glowRgb}, 0.25) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.8) 100%)`,
+          background:
+            'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.72) 32%, rgba(0,0,0,0.3) 62%, rgba(0,0,0,0.05) 100%)',
         }}
       />
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.8) 100%)',
+          background: `linear-gradient(160deg, rgba(${glowRgb}, 0.18) 0%, transparent 55%)`,
         }}
       />
 
-      {/* Content */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '2.5vw 3vw' }}>
+      {/* Content — vertically centred stack on the left */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          padding: '4vh 4.5vw',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          maxWidth: '62%',
+        }}
+      >
         {/* Micro-label */}
         <div
           style={{
-            fontSize: '0.9vw',
-            fontWeight: 600,
+            fontSize: '2vh',
+            fontWeight: 700,
             textTransform: 'uppercase',
-            letterSpacing: '0.3em',
+            letterSpacing: '0.35em',
             color: theme.color,
-            marginBottom: '0.8vw',
+            textShadow: `0 0 18px rgba(${glowRgb}, 0.6)`,
+            marginBottom: '2.5vh',
           }}
         >
           {show.status === 'DELAYED'
@@ -115,7 +129,7 @@ function HeroShowCard({ show }: { show: Attraction }) {
             : show.status === 'CLOSED'
             ? 'Closed'
             : nextShow
-            ? `Up Next · ${formatTime12h(nextShow)}`
+            ? 'Up Next'
             : 'No More Shows Tonight'}
         </div>
 
@@ -126,25 +140,25 @@ function HeroShowCard({ show }: { show: Attraction }) {
             alt={show.name}
             decoding="async"
             style={{
-              height: '9vw',
+              height: '28vh',
               width: 'auto',
-              maxWidth: '60%',
+              maxWidth: '100%',
               objectFit: 'contain',
               objectPosition: 'left center',
-              filter: resolveLogoGlow(show) || undefined,
-              marginBottom: '0.8vw',
+              filter: resolveLogoGlow(show, 'strong') || undefined,
+              marginBottom: '3vh',
             }}
           />
         ) : (
           <h2
             style={{
-              fontSize: '3.4vw',
-              fontWeight: 600,
+              fontSize: '7vh',
+              fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               color: '#fff',
               margin: 0,
-              marginBottom: '0.8vw',
+              marginBottom: '3vh',
               lineHeight: 1.05,
             }}
           >
@@ -152,15 +166,32 @@ function HeroShowCard({ show }: { show: Attraction }) {
           </h2>
         )}
 
-        {/* Tagline line */}
+        {/* Time — huge */}
+        {nextShow && show.status !== 'CLOSED' && (
+          <div
+            style={{
+              fontSize: '10vh',
+              fontWeight: 800,
+              lineHeight: 1,
+              fontVariantNumeric: 'tabular-nums',
+              color: theme.color,
+              textShadow: `0 0 35px rgba(${glowRgb}, 0.55)`,
+              marginBottom: '2vh',
+            }}
+          >
+            {formatTime12h(nextShow)}
+          </div>
+        )}
+
+        {/* Tagline / venue line */}
         {show.tagline && (
           <div
             style={{
-              fontSize: '1vw',
+              fontSize: '2.2vh',
               fontWeight: 500,
-              letterSpacing: '0.12em',
+              letterSpacing: '0.16em',
               textTransform: 'uppercase',
-              color: '#94A3B8',
+              color: '#CBD5E1',
             }}
           >
             {show.tagline}
@@ -171,9 +202,9 @@ function HeroShowCard({ show }: { show: Attraction }) {
         {show.status === 'DELAYED' && (
           <div
             style={{
-              marginTop: '0.6vw',
-              fontSize: '1.4vw',
-              fontWeight: 600,
+              marginTop: '1.5vh',
+              fontSize: '3.2vh',
+              fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.14em',
               color: '#FBBF24',
@@ -185,9 +216,9 @@ function HeroShowCard({ show }: { show: Attraction }) {
         {show.status === 'CLOSED' && (
           <div
             style={{
-              marginTop: '0.6vw',
-              fontSize: '1.4vw',
-              fontWeight: 600,
+              marginTop: '1.5vh',
+              fontSize: '3.2vh',
+              fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.14em',
               color: '#F87171',
@@ -216,18 +247,19 @@ function UpcomingShowCard({ show, time }: { show: Attraction; time: string }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        gap: '0.4vw',
-        padding: '1.2vw 1.6vw',
+        gap: '1.4vh',
+        padding: '0 1.6vw',
         borderRadius: 4,
         border: '1px solid #15181E',
+        borderLeft: `4px solid rgba(${glowRgb}, 0.65)`,
         background: `linear-gradient(160deg, rgba(${glowRgb}, 0.08) 0%, rgba(0,0,0,0.3) 100%)`,
         overflow: 'hidden',
       }}
     >
       <span
         style={{
-          fontSize: '1.9vw',
-          fontWeight: 500,
+          fontSize: '4.5vh',
+          fontWeight: 600,
           fontVariantNumeric: 'tabular-nums',
           lineHeight: 1,
           color: theme.color,
@@ -237,8 +269,9 @@ function UpcomingShowCard({ show, time }: { show: Attraction; time: string }) {
       </span>
       <span
         style={{
-          fontSize: '0.85vw',
+          fontSize: '2.4vh',
           fontWeight: 600,
+          lineHeight: 1.2,
           textTransform: 'uppercase',
           letterSpacing: '0.14em',
           color: '#94A3B8',
@@ -415,18 +448,6 @@ export default function TV3ShowTimes() {
           >
             Tonight&apos;s Shows
           </h1>
-          <span
-            style={{
-              fontSize: '0.8vw',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: '#475569',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            Park Closes {formatTime12h(closingTime)}
-          </span>
         </div>
       )}
 
@@ -454,7 +475,7 @@ export default function TV3ShowTimes() {
 
             {/* Upcoming show cards */}
             {upcomingCards.length > 0 && (
-              <div style={{ flexShrink: 0, display: 'flex', gap: '1vw', height: '14%', minHeight: 0 }}>
+              <div style={{ flexShrink: 0, display: 'flex', gap: '1vw', height: '17vh' }}>
                 {upcomingCards.map(({ show, time }) => (
                   <UpcomingShowCard key={`${show.id}-${time}`} show={show} time={time} />
                 ))}
@@ -466,24 +487,11 @@ export default function TV3ShowTimes() {
 
       {/* Footer — park brand strip */}
       {!isEmbedded && (
-        <footer
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            borderTop: '1px solid #15181E',
-            marginTop: '1vw',
-            paddingTop: '0.7vw',
-            fontSize: 10,
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.3em',
-          }}
-        >
-          <span style={{ color: '#475569' }}>Immersive Core · Fright Nights</span>
-          <span style={{ color: '#475569' }}>Share your screams · #ImmersiveCore</span>
-          <span style={{ color: '#334155' }}>@immersivecore</span>
+        <footer style={{ flexShrink: 0, marginTop: '1vw' }}>
+          <TvFooter
+            closeTime={closingTime ? formatTime12h(closingTime) : null}
+            center="Share your screams · #ImmersiveCore"
+          />
         </footer>
       )}
     </div>

@@ -791,8 +791,14 @@ export default function SupervisorDashboard() {
         })}
       </div>
 
-      {/* Main Content — Scrollable */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: wide ? '12px 24px' : '32px 24px' }}>
+      {/* Main Content — viewport-locked grid in wide mode, scrollable column on phones */}
+      <div
+        style={
+          wide
+            ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: '12px 20px', overflow: 'hidden' }
+            : { flex: 1, overflowY: 'auto', padding: '32px 24px' }
+        }
+      >
         {selected && (() => {
             // Layout-only restructure: each block is built once, then slotted
             // into either the single-column (phone) or 2-column (tablet) layout.
@@ -810,13 +816,15 @@ export default function SupervisorDashboard() {
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: wide ? 8 : 12,
                   // Hero wash — attraction-tinted gradient. Bleeds edge-to-edge on
                   // phones; wraps just the left column as a rounded panel on tablets.
-                  margin: wide ? '0 0 12px' : '-32px -24px 24px',
+                  // Wide: fixed-height flex child — never grows or shrinks the column.
+                  ...(wide ? { flexShrink: 0 as const } : {}),
+                  margin: wide ? 0 : '-32px -24px 24px',
                   padding: wide ? '12px 16px' : '32px 24px 24px',
                   borderRadius: wide ? radius.xl : 0,
                   background: `linear-gradient(160deg, rgba(${heroGlowRgb}, 0.14) 0%, ${surface.page} 70%)`,
                 }}>
                   {logo && (
-                    <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: wide ? 80 : 100, filter: glow || undefined }} />
+                    <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: wide ? 'clamp(56px, 10vh, 90px)' : 100, filter: glow || undefined }} />
                   )}
                   {/* Wide: status pill + Show Report sit on one row to save height */}
                   <div style={{ display: 'flex', flexDirection: wide ? 'row' : 'column', alignItems: 'center', gap: wide ? 12 : 12 }}>
@@ -878,8 +886,10 @@ export default function SupervisorDashboard() {
               const cardGlowRgb = getGlowRgb(selected.slug) || '148, 163, 184';
 
               return (
-                <section style={{ marginBottom: wide ? 12 : 48 }}>
-                  <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
+                <section style={wide
+                  ? { marginBottom: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+                  : { marginBottom: 48 }}>
+                  <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20, ...(wide ? { flexShrink: 0 } : {}) }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                     <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Dispatch</h2>
                   </div>
@@ -889,6 +899,9 @@ export default function SupervisorDashboard() {
                     padding: wide ? 16 : 32,
                     // Subtle attraction art-wash — status rail stays load-bearing on the left
                     background: `linear-gradient(105deg, rgba(${cardGlowRgb}, 0.08) 0%, ${surface.card} 55%)`,
+                    // Wide: dispatch card absorbs the column's spare height; internals
+                    // vertically centred so it never pushes the page taller.
+                    ...(wide ? { flex: 1, minHeight: 0, display: 'flex' as const, flexDirection: 'column' as const, justifyContent: 'center' as const, overflow: 'hidden' as const } : {}),
                   }}>
                     {/* Timer */}
                     <div style={{ textAlign: 'center', marginBottom: wide ? 14 : 28 }}>
@@ -896,7 +909,7 @@ export default function SupervisorDashboard() {
                         Time Since Last Dispatch
                       </div>
                       <div className={timerFlashing ? 'ic-dispatch-blink' : undefined} style={{
-                        fontSize: wide ? 40 : 52,
+                        fontSize: wide ? 'clamp(28px, 5vh, 44px)' : 52,
                         fontWeight: 800,
                         ...FONT_NUM,
                         color: timerColor,
@@ -935,7 +948,7 @@ export default function SupervisorDashboard() {
                         style={{ flex: 1, textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
                         title="Tap to enter number"
                       >
-                        <div style={{ fontSize: wide ? 40 : 56, fontWeight: 900, ...FONT_NUM, color: dispatchGroupSize > 0 ? text.primary : text.faint }}>
+                        <div style={{ fontSize: wide ? 'clamp(32px, 6vh, 48px)' : 56, fontWeight: 900, ...FONT_NUM, color: dispatchGroupSize > 0 ? text.primary : text.faint }}>
                           {dispatchGroupSize}
                         </div>
                         <div style={{ ...microLabel, color: accents.control.base, fontSize: 11 }}>tap to enter</div>
@@ -1029,7 +1042,7 @@ export default function SupervisorDashboard() {
 
             {/* ── Queue Time Control (operator-gated) ── */}
             const queueSection = (
-            <section style={{ marginBottom: wide ? 12 : 48 }}>
+            <section style={wide ? { marginBottom: 0, flexShrink: 0 } : { marginBottom: 48 }}>
               <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                 <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Queue Time</h2>
@@ -1073,7 +1086,7 @@ export default function SupervisorDashboard() {
                       </button>
 
                       <div className="flex-1 text-center">
-                        <div className="text-5xl font-black tabular-nums" style={{ color: statusColors(selected.status).text }}>
+                        <div className={wide ? 'font-black tabular-nums' : 'text-5xl font-black tabular-nums'} style={{ color: statusColors(selected.status).text, ...(wide ? { fontSize: 'clamp(36px, 7vh, 56px)', lineHeight: 1.1 } : {}) }}>
                           {selected.wait_time}
                           <span className="text-xl ml-1" style={{ color: text.muted }}>min</span>
                         </div>
@@ -1148,8 +1161,10 @@ export default function SupervisorDashboard() {
 
             {/* ── Hourly Throughput (view + hold-to-edit) ── */}
             const throughputSection = selected.attraction_type !== 'show' && hourlySlots.length > 0 && (
-              <section style={{ marginBottom: wide ? 12 : 48, ...(wide ? { minHeight: 0 } : {}) }}>
-                <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
+              <section style={wide
+                ? { marginBottom: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+                : { marginBottom: 48 }}>
+                <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20, ...(wide ? { flexShrink: 0 } : {}) }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
                   <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Hourly Throughput</h2>
                 </div>
@@ -1159,10 +1174,9 @@ export default function SupervisorDashboard() {
                   style={{
                     ...card(),
                     overflow: 'hidden',
-                    // Wide mode: this card absorbs all vertical overflow internally.
-                    // 440px = header 56 + tabs 54 + content padding 24 + queue column
-                    // above (~228) + footer 68 + breathing room.
-                    ...(wide ? { maxHeight: 'max(160px, calc(100dvh - 440px))', minHeight: 0, overflowY: 'auto' as const } : {}),
+                    // Wide mode: the slot list is the ONLY scrollable element on the
+                    // page — it fills the column's remaining height and scrolls inside.
+                    ...(wide ? { flex: 1, minHeight: 0, overflowY: 'auto' as const } : {}),
                   }}
                 >
                   {hourlySlots.map((slot, idx) => {
@@ -1283,26 +1297,28 @@ export default function SupervisorDashboard() {
 
             // ── Layouts ──
             if (wide) {
-              // Tablet / desktop: 2-column grid so everything core fits without scrolling.
-              // LEFT: hero + Dispatch. RIGHT: Queue Time + Hourly Throughput.
+              // Tablet / desktop: the parent container is the 2-column grid
+              // (overflow hidden) — these two columns are its direct children.
+              // Page scroll is impossible by construction; the only scrollable
+              // element is the throughput slot list inside its card.
+              // LEFT: hero + Dispatch (absorbs spare height).
+              // RIGHT: Queue Time (fixed) + Hourly Throughput (internal scroll).
               return (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
-                    <div>
-                      {heroBlock}
-                      <div style={{ position: 'relative' }}>
-                        <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
-                          {dispatchSection}
-                        </div>
-                        {panelLocked && lockOverlay}
+                  <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 12 }}>
+                    {heroBlock}
+                    <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ ...gatedStyle, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} aria-hidden={panelLocked || undefined}>
+                        {dispatchSection}
                       </div>
+                      {panelLocked && lockOverlay}
                     </div>
-                    <div>
-                      <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
-                        {queueSection}
-                      </div>
-                      {throughputSection}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 12 }}>
+                    <div style={{ ...gatedStyle, flexShrink: 0 }} aria-hidden={panelLocked || undefined}>
+                      {queueSection}
                     </div>
+                    {throughputSection}
                   </div>
                   {editModal}
                 </>

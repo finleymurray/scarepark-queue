@@ -7,6 +7,7 @@ import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+import TvFooter from '@/components/tv/TvFooter';
 
 const ATTRACTION_SELECT =
   'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
@@ -510,18 +511,6 @@ export default function TV25Display() {
           >
             Wait Times
           </h1>
-          <span
-            style={{
-              fontSize: '0.8vw',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: '#475569',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            Park Closes {formatTime12h(closingTime)}
-          </span>
         </div>
       )}
 
@@ -547,23 +536,8 @@ export default function TV25Display() {
 
       {/* Footer — park brand strip */}
       {!isEmbedded && (
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            borderTop: '1px solid #15181E',
-            marginTop: '1vw',
-            paddingTop: '0.7vw',
-            fontSize: 10,
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.3em',
-          }}
-        >
-          <span style={{ color: '#475569' }}>Immersive Core · Fright Nights</span>
-          <span style={{ color: '#334155' }}>@immersivecore</span>
+        <div style={{ flexShrink: 0, marginTop: '1vw' }}>
+          <TvFooter closeTime={closingTime ? formatTime12h(closingTime) : null} />
         </div>
       )}
     </div>
