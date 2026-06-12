@@ -68,27 +68,36 @@ function Chip({ glowRgb, label, children }: { glowRgb: string; label: string; ch
   );
 }
 
-function WaitChip({ attraction, glowRgb }: { attraction: Attraction; glowRgb: string }) {
+/** Centre-stage wait display, directly under the logo — the slide's key info. */
+function CentreWait({ attraction, glowRgb }: { attraction: Attraction; glowRgb: string }) {
   const glowColor = `rgb(${glowRgb})`;
   if (attraction.status === 'OPEN') {
     return (
-      <Chip glowRgb={glowRgb} label="Wait">
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '1.2vw' }}>
         <span
           style={{
-            fontSize: '9.5vh',
+            fontSize: '15vh',
             fontWeight: 900,
             lineHeight: 1,
             fontVariantNumeric: 'tabular-nums',
             color: glowColor,
-            textShadow: `0 0 35px rgba(${glowRgb},0.6)`,
+            textShadow: `0 0 45px rgba(${glowRgb},0.7), 0 0 110px rgba(${glowRgb},0.35), 0 4px 30px rgba(0,0,0,0.8)`,
           }}
         >
           {attraction.wait_time}
         </span>
-        <span style={{ fontSize: '2.6vh', fontWeight: 700, color: `rgba(${glowRgb},0.8)`, marginLeft: '0.5vw' }}>
-          MIN
+        <span
+          style={{
+            fontSize: '4.2vh',
+            fontWeight: 800,
+            letterSpacing: '0.22em',
+            color: `rgba(${glowRgb},0.85)`,
+            textShadow: `0 0 25px rgba(${glowRgb},0.4), 0 2px 15px rgba(0,0,0,0.8)`,
+          }}
+        >
+          MIN WAIT
         </span>
-      </Chip>
+      </div>
     );
   }
   const statusText =
@@ -98,21 +107,23 @@ function WaitChip({ attraction, glowRgb }: { attraction: Attraction; glowRgb: st
         ? 'AT CAPACITY'
         : 'CLOSED';
   const statusColor = attraction.status === 'CLOSED' ? '#f87171' : '#F59E0B';
+  const statusRgb = attraction.status === 'CLOSED' ? '248,113,113' : '245,158,11';
   return (
-    <Chip glowRgb={glowRgb} label="Wait">
+    <div style={{ textAlign: 'center' }}>
       <span
         style={{
-          fontSize: '3.6vh',
-          fontWeight: 800,
-          lineHeight: 1.2,
-          letterSpacing: '0.08em',
+          fontSize: '8vh',
+          fontWeight: 900,
+          lineHeight: 1.1,
+          letterSpacing: '0.1em',
           color: statusColor,
           whiteSpace: 'nowrap',
+          textShadow: `0 0 40px rgba(${statusRgb},0.55), 0 4px 30px rgba(0,0,0,0.8)`,
         }}
       >
         {statusText}
       </span>
-    </Chip>
+    </div>
   );
 }
 
@@ -189,22 +200,36 @@ function AttractionSlide({
         }}
       />
 
-      {/* Glowing logo art — top centre */}
-      {logo && (
-        <div style={{ position: 'absolute', top: '9vh', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* Glowing logo art — top centre, with the wait time centre-stage beneath it */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '6vh',
+          left: 0,
+          right: 0,
+          bottom: '18vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '5vh',
+        }}
+      >
+        {logo && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={logo}
             alt={attraction.name}
             style={{
-              height: '52vh',
+              height: '46vh',
               maxWidth: '86vw',
               objectFit: 'contain',
               filter: resolveLogoGlow(attraction, 'strong'),
             }}
           />
-        </div>
-      )}
+        )}
+        <CentreWait attraction={attraction} glowRgb={glowRgb} />
+      </div>
 
       {/* Bottom-left: tagline + progress dots */}
       <div style={{ position: 'absolute', left: '4.5vw', bottom: '8vh', maxWidth: '40vw' }}>
@@ -229,11 +254,12 @@ function AttractionSlide({
         <ProgressDots count={slideCount} active={slideIndex} glowRgb={glowRgb} />
       </div>
 
-      {/* Bottom-right: glass chips */}
-      <div style={{ position: 'absolute', right: '4.5vw', bottom: '8vh', display: 'flex', gap: '1.2vw', alignItems: 'stretch' }}>
-        <WaitChip attraction={attraction} glowRgb={glowRgb} />
-        {attraction.fear_rating != null && <FearChip rating={attraction.fear_rating} glowRgb={glowRgb} />}
-      </div>
+      {/* Bottom-right: fear rating chip */}
+      {attraction.fear_rating != null && (
+        <div style={{ position: 'absolute', right: '4.5vw', bottom: '8vh', display: 'flex', alignItems: 'stretch' }}>
+          <FearChip rating={attraction.fear_rating} glowRgb={glowRgb} />
+        </div>
+      )}
     </div>
   );
 }
