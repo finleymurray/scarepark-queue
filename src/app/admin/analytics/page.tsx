@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
@@ -10,42 +11,19 @@ import type { Attraction, AttractionHistory, ThroughputLog, AttractionStatusLog,
 import { surface, border, text, radius, accents, FONT_NUM } from '@/lib/theme';
 import MetricStat from '@/components/ui/MetricStat';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, ReferenceArea,
-  BarChart, Bar, ComposedChart,
-} from 'recharts';
+  LINE_COLORS, STATUS_BAND_COLORS, STATUS_LABEL_COLORS,
+  CHART_TOOLTIP_STYLE, formatTimeShort,
+} from './chartTheme';
+import type { StatusPeriod } from './chartTheme';
 
-const LINE_COLORS = [
-  '#22C55E',
-  '#3B82F6',
-  '#F59E0B',
-  '#EF4444',
-  '#8B5CF6',
-  '#EC4899',
-  '#06B6D4',
-  '#F97316',
-  '#14B8A6',
-  '#A855F7',
-];
-
-const STATUS_BAND_COLORS: Record<string, string> = {
-  'CLOSED': '#dc354525',
-  'DELAYED': '#f0ad4e25',
-  'AT CAPACITY': '#F59E0B25',
-};
-
-const STATUS_LABEL_COLORS: Record<string, string> = {
-  'CLOSED': '#dc3545',
-  'DELAYED': '#f0ad4e',
-  'AT CAPACITY': '#F59E0B',
-};
-
-interface StatusPeriod {
-  attractionName: string;
-  status: string;
-  start: number;
-  end: number;
-}
+// Recharts is ~300KB — load all chart blocks from an async chunk so page
+// loads / tab switches without charts don't pay for it.
+const chartLoading = () => <div style={{ height: 280, background: surface.card }} />;
+const WaitTimesChart = dynamic(() => import('./ChartsSection').then((m) => m.WaitTimesChart), { ssr: false, loading: chartLoading });
+const ThroughputBarChart = dynamic(() => import('./ChartsSection').then((m) => m.ThroughputBarChart), { ssr: false, loading: chartLoading });
+const CombinedChart = dynamic(() => import('./ChartsSection').then((m) => m.CombinedChart), { ssr: false, loading: chartLoading });
+const SeasonPerNightChart = dynamic(() => import('./ChartsSection').then((m) => m.SeasonPerNightChart), { ssr: false, loading: chartLoading });
+const SeasonByHourChart = dynamic(() => import('./ChartsSection').then((m) => m.SeasonByHourChart), { ssr: false, loading: chartLoading });
 
 function getTimeRange(dateStr: string): { start: string; end: string } {
   const start = new Date(`${dateStr}T00:00:00`);
@@ -54,14 +32,6 @@ function getTimeRange(dateStr: string): { start: string; end: string } {
     start: start.toISOString(),
     end: end.toISOString(),
   };
-}
-
-function formatTimeShort(ts: number): string {
-  return new Date(ts).toLocaleTimeString('en-GB', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
 }
 
 function formatSlotTime(time: string): string {
@@ -99,17 +69,6 @@ function hourLabel(slotStart: string): string {
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${h12} ${ampm}`;
 }
-
-const CHART_TOOLTIP_STYLE = {
-  backgroundColor: surface.card,
-  border: `1px solid ${border.default}`,
-  borderRadius: '8px',
-  color: text.primary,
-  fontSize: 12,
-};
-
-const AXIS_TICK_STYLE = { fill: text.faint, fontSize: 11 };
-const GRID_STROKE = border.divider;
 
 /** Simple viewport check for the responsive season table (client page). */
 function useIsMobile(breakpoint = 640): boolean {
@@ -236,19 +195,7 @@ function SeasonView({
           {agg.perNight.length > 0 && (
             <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
               <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Guests Per Night</h3>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={agg.perNight}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                  <XAxis dataKey="label" stroke="transparent" tick={AXIS_TICK_STYLE} angle={-30} textAnchor="end" height={60} interval="preserveStartEnd" />
-                  <YAxis
-                    stroke="transparent"
-                    tick={AXIS_TICK_STYLE}
-                    label={{ value: 'Guests', angle: -90, position: 'insideLeft', fill: '#475569', style: { fontSize: 11 } }}
-                  />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [Number(v).toLocaleString(), 'Guests']} />
-                  <Bar dataKey="guests" fill={LINE_COLORS[1]} radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <SeasonPerNightChart data={agg.perNight} tooltipStyle={tooltipStyle} />
             </div>
           )}
 
@@ -347,19 +294,7 @@ function SeasonView({
             <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
               <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Busiest Hours of the Night</h3>
               <p className="text-[#94A3B8] text-xs mb-5">Total guests by hour slot, summed across all nights.</p>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={agg.byHour}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                  <XAxis dataKey="label" stroke="transparent" tick={AXIS_TICK_STYLE} />
-                  <YAxis
-                    stroke="transparent"
-                    tick={AXIS_TICK_STYLE}
-                    label={{ value: 'Guests', angle: -90, position: 'insideLeft', fill: '#475569', style: { fontSize: 11 } }}
-                  />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [Number(v).toLocaleString(), 'Guests']} />
-                  <Bar dataKey="guests" fill={LINE_COLORS[4]} radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <SeasonByHourChart data={agg.byHour} tooltipStyle={tooltipStyle} />
             </div>
           )}
         </>
@@ -489,25 +424,38 @@ export default function AnalyticsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, selectedDate, refreshKey]);
 
-  // Lazy-load season data on first open of the Season tab
+  // Lazy-load season data on first open of the Season tab, bounded to the
+  // selected date range; refetch when the range changes.
+  const seasonFetchedRange = useRef<string | null>(null);
   useEffect(() => {
-    if (!authenticated || activeTab !== 'season' || seasonLoaded) return;
+    if (!authenticated || activeTab !== 'season') return;
+    const rangeKey = `${seasonFrom}|${seasonTo}`;
+    if (seasonLoaded && seasonFetchedRange.current === rangeKey) return;
     async function fetchSeason() {
       setSeasonLoading(true);
+      const changedStart = new Date(`${seasonFrom}T00:00:00`).toISOString();
+      const changedEnd = new Date(`${seasonTo}T23:59:59`).toISOString();
       const [reportsRes, throughputRes, statusRes] = await Promise.all([
         supabase
           .from('show_reports')
           .select('attraction_id,report_date,total_guests,total_operating_minutes,delays,hourly_throughput')
-          .eq('is_draft', false),
+          .eq('is_draft', false)
+          .gte('report_date', seasonFrom)
+          .lte('report_date', seasonTo),
         supabase
           .from('throughput_logs')
-          .select('attraction_id,guest_count,log_date'),
+          .select('attraction_id,guest_count,log_date')
+          .gte('log_date', seasonFrom)
+          .lte('log_date', seasonTo),
         supabase
           .from('attraction_status_logs')
           .select('id,attraction_id,status,previous_status,reason,notes,changed_by,changed_at,resolved_at')
-          .eq('status', 'DELAYED'),
+          .eq('status', 'DELAYED')
+          .gte('changed_at', changedStart)
+          .lte('changed_at', changedEnd),
       ]);
 
+      seasonFetchedRange.current = rangeKey;
       setSeasonReports((reportsRes.data as ShowReport[]) || []);
       setSeasonThroughput(throughputRes.data || []);
       setSeasonStatusLogs((statusRes.data as AttractionStatusLog[]) || []);
@@ -516,38 +464,41 @@ export default function AnalyticsPage() {
     }
     fetchSeason();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, activeTab, seasonLoaded]);
+  }, [authenticated, activeTab, seasonLoaded, seasonFrom, seasonTo]);
 
   // Filter data by selected time window
-  const filteredHistory = useMemo(() => {
+  const timeWindow = useMemo(() => {
     const fromMin = (() => { const [h, m] = fromTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
     const toMin = (() => { const [h, m] = toTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    return { fromMin, toMin };
+  }, [fromTime, toTime]);
+
+  const filteredHistory = useMemo(() => {
+    const { fromMin, toMin } = timeWindow;
     return historyData.filter((r) => {
       const d = new Date(r.recorded_at);
       const min = d.getHours() * 60 + d.getMinutes();
       return min >= fromMin && min <= toMin;
     });
-  }, [historyData, fromTime, toTime]);
+  }, [historyData, timeWindow]);
 
   const filteredStatusLogs = useMemo(() => {
-    const fromMin = (() => { const [h, m] = fromTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
-    const toMin = (() => { const [h, m] = toTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    const { fromMin, toMin } = timeWindow;
     return statusLogs.filter((r) => {
       const d = new Date(r.changed_at);
       const min = d.getHours() * 60 + d.getMinutes();
       return min >= fromMin && min <= toMin;
     });
-  }, [statusLogs, fromTime, toTime]);
+  }, [statusLogs, timeWindow]);
 
   const filteredThroughput = useMemo(() => {
-    const fromMin = (() => { const [h, m] = fromTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
-    const toMin = (() => { const [h, m] = toTime.split(':'); return parseInt(h, 10) * 60 + parseInt(m, 10); })();
+    const { fromMin, toMin } = timeWindow;
     return throughputData.filter((r) => {
       const [h, m] = r.slot_start.split(':');
       const min = parseInt(h, 10) * 60 + parseInt(m || '0', 10);
       return min >= fromMin && min <= toMin;
     });
-  }, [throughputData, fromTime, toTime]);
+  }, [throughputData, timeWindow]);
 
   // Transform data for wait time line chart
   const { chartData, attractionNames, statusPeriods, colorMap } = useMemo(() => {
@@ -1121,60 +1072,12 @@ export default function AnalyticsPage() {
                 ) : (
                   <>
                     <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Wait Times — {selectedDate}</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                        {statusPeriods.map((period, i) => (
-                          <ReferenceArea
-                            key={`${period.attractionName}-${period.start}-${i}`}
-                            x1={period.start}
-                            x2={period.end}
-                            fill={STATUS_BAND_COLORS[period.status] || '#ffffff10'}
-                            fillOpacity={1}
-                            strokeOpacity={0}
-                          />
-                        ))}
-                        <XAxis
-                          dataKey="time"
-                          type="number"
-                          domain={['dataMin', 'dataMax']}
-                          tickFormatter={(ts) => formatTimeShort(Number(ts))}
-                          stroke="transparent"
-                          tick={AXIS_TICK_STYLE}
-                        />
-                        <YAxis
-                          stroke="transparent"
-                          tick={AXIS_TICK_STYLE}
-                          label={{
-                            value: 'Wait (min)',
-                            angle: -90,
-                            position: 'insideLeft',
-                            fill: '#475569',
-                            style: { fontSize: 11 },
-                          }}
-                        />
-                        <Tooltip
-                          contentStyle={tooltipStyle}
-                          labelFormatter={(ts) => formatTimeShort(Number(ts))}
-                          formatter={(value, name) => {
-                            if (value === null || value === undefined) return ['--', name];
-                            return [`${value} min`, name];
-                          }}
-                        />
-                        <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 12 }} />
-                        {attractionNames.map((name, i) => (
-                          <Line
-                            key={name}
-                            type="monotone"
-                            dataKey={name}
-                            stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                            strokeWidth={2}
-                            dot={false}
-                            connectNulls={false}
-                          />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <WaitTimesChart
+                      chartData={chartData}
+                      statusPeriods={statusPeriods}
+                      attractionNames={attractionNames}
+                      tooltipStyle={tooltipStyle}
+                    />
 
                     {/* Status band legend */}
                     {statusPeriods.length > 0 && (
@@ -1213,40 +1116,11 @@ export default function AnalyticsPage() {
                     {/* Bar chart */}
                     <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                       <h3 className="text-[#F1F5F9] text-base font-semibold mb-5">Guest Throughput — {selectedDate}</h3>
-                      <ResponsiveContainer width="100%" height={280}>
-                        <BarChart data={throughputChartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                          <XAxis
-                            dataKey="slot"
-                            stroke="transparent"
-                            tick={AXIS_TICK_STYLE}
-                            angle={-30}
-                            textAnchor="end"
-                            height={60}
-                          />
-                          <YAxis
-                            stroke="transparent"
-                            tick={AXIS_TICK_STYLE}
-                            label={{
-                              value: 'Guests',
-                              angle: -90,
-                              position: 'insideLeft',
-                              fill: '#475569',
-                              style: { fontSize: 11 },
-                            }}
-                          />
-                          <Tooltip contentStyle={tooltipStyle} />
-                          <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 12 }} />
-                          {throughputAttractionNames.map((name, i) => (
-                            <Bar
-                              key={name}
-                              dataKey={name}
-                              fill={LINE_COLORS[i % LINE_COLORS.length]}
-                              radius={[3, 3, 0, 0]}
-                            />
-                          ))}
-                        </BarChart>
-                      </ResponsiveContainer>
+                      <ThroughputBarChart
+                        data={throughputChartData}
+                        names={throughputAttractionNames}
+                        tooltipStyle={tooltipStyle}
+                      />
                     </div>
 
                     {/* Combined chart */}
@@ -1254,68 +1128,11 @@ export default function AnalyticsPage() {
                       <div className="bg-[#101318] border border-[#23262E] rounded-[14px] p-6">
                         <h3 className="text-[#F1F5F9] text-base font-semibold mb-1">Wait Time vs Throughput</h3>
                         <p className="text-[#94A3B8] text-xs mb-5">Lines: avg wait time per slot. Bars: guest throughput.</p>
-                        <ResponsiveContainer width="100%" height={280}>
-                          <ComposedChart data={combinedChartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                            <XAxis
-                              dataKey="slot"
-                              stroke="transparent"
-                              tick={AXIS_TICK_STYLE}
-                              angle={-30}
-                              textAnchor="end"
-                              height={60}
-                            />
-                            <YAxis
-                              yAxisId="left"
-                              stroke="transparent"
-                              tick={AXIS_TICK_STYLE}
-                              label={{
-                                value: 'Wait (min)',
-                                angle: -90,
-                                position: 'insideLeft',
-                                fill: '#475569',
-                                style: { fontSize: 11 },
-                              }}
-                            />
-                            <YAxis
-                              yAxisId="right"
-                              orientation="right"
-                              stroke="transparent"
-                              tick={AXIS_TICK_STYLE}
-                              label={{
-                                value: 'Guests',
-                                angle: 90,
-                                position: 'insideRight',
-                                fill: '#475569',
-                                style: { fontSize: 11 },
-                              }}
-                            />
-                            <Tooltip contentStyle={tooltipStyle} />
-                            <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 12 }} />
-                            {combinedAttractionNames.map((name, i) => (
-                              <Bar
-                                key={`bar-${name}`}
-                                yAxisId="right"
-                                dataKey={`${name} (guests)`}
-                                fill={LINE_COLORS[i % LINE_COLORS.length]}
-                                fillOpacity={0.35}
-                                radius={[2, 2, 0, 0]}
-                              />
-                            ))}
-                            {combinedAttractionNames.map((name, i) => (
-                              <Line
-                                key={`line-${name}`}
-                                yAxisId="left"
-                                type="monotone"
-                                dataKey={`${name} (wait)`}
-                                stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                                strokeWidth={2.5}
-                                dot={{ r: 3, fill: LINE_COLORS[i % LINE_COLORS.length] }}
-                                connectNulls={false}
-                              />
-                            ))}
-                          </ComposedChart>
-                        </ResponsiveContainer>
+                        <CombinedChart
+                          data={combinedChartData}
+                          names={combinedAttractionNames}
+                          tooltipStyle={tooltipStyle}
+                        />
                       </div>
                     )}
 

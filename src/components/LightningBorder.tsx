@@ -74,7 +74,7 @@ export default function LightningBorder() {
   // Buzzy idle bolt — regenerate frequently for jittery feel
   const [idleKey, setIdleKey] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => setIdleKey((k) => k + 1), 1800);
+    const interval = setInterval(() => setIdleKey((k) => k + 1), 3500);
     return () => clearInterval(interval);
   }, []);
 
@@ -95,10 +95,15 @@ export default function LightningBorder() {
       branches.push({ d: generateBranch(bx, by, len, angle), cls: `b${(i % 4) + 1}` });
     }
 
-    // Small sparks
-    const sparks: { cx: number; cy: number }[] = [];
+    // Small sparks (CSS-animated; duration/delay randomised per spark)
+    const sparks: { cx: number; cy: number; dur: string; delay: string }[] = [];
     for (let i = 0; i < 3; i++) {
-      sparks.push({ cx: 100 + Math.random() * 800, cy: cy + (Math.random() - 0.5) * 2 });
+      sparks.push({
+        cx: 100 + Math.random() * 800,
+        cy: cy + (Math.random() - 0.5) * 2,
+        dur: (1 + Math.random() * 1).toFixed(1),
+        delay: (Math.random() * 1.5).toFixed(1),
+      });
     }
 
     return { bolt1, bolt2, branches, sparks };
@@ -173,6 +178,7 @@ export default function LightningBorder() {
           @keyframes lb-idle-hot { 0%,100%{opacity:0.35}20%{opacity:0.7}40%{opacity:0.3}60%{opacity:0.65}80%{opacity:0.4} }
           @keyframes lb-idle-bf { 0%,100%{opacity:0;stroke:#8B5CF6}5%{opacity:0.8;stroke:#e0e7ff}10%{opacity:0.1;stroke:#a78bfa}15%{opacity:0.6;stroke:#c4b5fd}22%{opacity:0;stroke:#8B5CF6} }
           @keyframes lb-idle-bfg { 0%,100%{opacity:0;stroke:#7c3aed}5%{opacity:0.4;stroke:#c4b5fd}10%{opacity:0.05;stroke:#8B5CF6}15%{opacity:0.3;stroke:#a78bfa}22%{opacity:0;stroke:#7c3aed} }
+          @keyframes lb-idle-spark { 0%{opacity:0;r:0.4px}25%{opacity:0.8;r:1.5px}50%{opacity:0.2;r:0.6px}75%{opacity:0.7;r:1.2px}100%{opacity:0;r:0.4px} }
         `}</style>
         <defs>
           <filter id="lb-blur1"><feGaussianBlur stdDeviation="1.5" /></filter>
@@ -194,12 +200,17 @@ export default function LightningBorder() {
             <path className={`lb-idle-br lb-idle-${b.cls}`} d={b.d} />
           </React.Fragment>
         ))}
-        {/* Sparks */}
+        {/* Sparks — CSS keyframes (same opacity/r values as the old SMIL animation) */}
         {idleSvg.sparks.map((s, i) => (
-          <circle key={i} fill="#fff" cx={s.cx} cy={s.cy} r={0.8} opacity={0}>
-            <animate attributeName="opacity" values="0;0.8;0.2;0.7;0" dur={`${(1 + Math.random() * 1).toFixed(1)}s`} repeatCount="indefinite" begin={`${(Math.random() * 1.5).toFixed(1)}s`} />
-            <animate attributeName="r" values="0.4;1.5;0.6;1.2;0.4" dur={`${(1 + Math.random() * 1).toFixed(1)}s`} repeatCount="indefinite" begin={`${(Math.random() * 1.5).toFixed(1)}s`} />
-          </circle>
+          <circle
+            key={i}
+            fill="#fff"
+            cx={s.cx}
+            cy={s.cy}
+            r={0.8}
+            opacity={0}
+            style={{ animation: `lb-idle-spark ${s.dur}s linear ${s.delay}s infinite` }}
+          />
         ))}
       </svg>
 

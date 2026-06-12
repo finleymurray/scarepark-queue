@@ -23,6 +23,7 @@ export function useConnectionHealth(
 
   useEffect(() => {
     let checkInterval: ReturnType<typeof setInterval>;
+    let onlineTimeout: ReturnType<typeof setTimeout> | null = null;
 
     function checkConnection() {
       const channels = supabase.getChannels();
@@ -49,7 +50,8 @@ export function useConnectionHealth(
     // Also reload if we detect the browser went offline and came back
     function handleOnline() {
       // Give Supabase a moment to reconnect, then reload if it hasn't
-      setTimeout(() => {
+      if (onlineTimeout) clearTimeout(onlineTimeout);
+      onlineTimeout = setTimeout(() => {
         const channels = supabase.getChannels();
         const allDisconnected =
           channels.length > 0 &&
@@ -67,6 +69,7 @@ export function useConnectionHealth(
 
     return () => {
       clearInterval(checkInterval);
+      if (onlineTimeout) clearTimeout(onlineTimeout);
       window.removeEventListener('online', handleOnline);
     };
   }, [maxDowntime]);

@@ -66,9 +66,9 @@ export default function ShowReportsPage() {
 
       const { data: attrData } = await supabase
         .from('attractions')
-        .select('*')
+        .select('id,name,slug,sort_order')
         .order('sort_order', { ascending: true });
-      setAttractions(attrData || []);
+      setAttractions((attrData as Attraction[]) || []);
       setLoading(false);
     }
     init();

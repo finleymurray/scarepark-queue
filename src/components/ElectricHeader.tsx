@@ -75,12 +75,13 @@ export default function ElectricHeader({
 
     svg.setAttribute('viewBox', `0 0 ${w.toFixed(0)} ${h.toFixed(0)}`);
 
-    // Clean up old styles
-    if (styleRef.current) {
-      styleRef.current.remove();
+    // Reuse a single <style> element — update its contents instead of
+    // removing/re-creating a DOM node on every regeneration.
+    if (!styleRef.current) {
+      styleRef.current = document.createElement('style');
+      document.head.appendChild(styleRef.current);
     }
-    const style = document.createElement('style');
-    styleRef.current = style;
+    const style = styleRef.current;
 
     const prefix = `eh-${++idCounter}`;
     let css = '';
@@ -163,7 +164,6 @@ export default function ElectricHeader({
     }
 
     style.textContent = css;
-    document.head.appendChild(style);
     svg.innerHTML = svgContent;
   }, []);
 

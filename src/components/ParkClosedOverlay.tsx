@@ -24,6 +24,8 @@ export default function ParkClosedOverlay() {
       <img
         src="/splash.png"
         alt="Immersive Core"
+        loading="lazy"
+        decoding="async"
         style={{
           maxWidth: '100%',
           maxHeight: '100%',

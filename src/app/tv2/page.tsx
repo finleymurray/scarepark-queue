@@ -137,7 +137,7 @@ const BannerRow = React.memo(function BannerRow({
     <div style={rowStyle}>
       {/* Background art */}
       {bgSrc ? (
-        <img src={bgSrc} alt="" style={bgImgStyle} />
+        <img src={bgSrc} alt="" decoding="async" style={bgImgStyle} />
       ) : (
         <div style={fallbackBgStyle} />
       )}
@@ -146,7 +146,7 @@ const BannerRow = React.memo(function BannerRow({
 
       {/* Logo overlay */}
       {logoSrc && (
-        <img src={logoSrc} alt={attraction.name} style={logoImgStyle} />
+        <img src={logoSrc} alt={attraction.name} decoding="async" style={logoImgStyle} />
       )}
 
       {/* Status / wait time — no pill, text sits within the gradient fade */}
@@ -268,6 +268,7 @@ export default function TV25Display() {
   // Scroll state — use refs to avoid React re-render issues on TV browsers
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollIndexRef = useRef(0);
+  const snapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top);
@@ -440,8 +441,10 @@ export default function TV25Display() {
       el.style.transition = `transform ${ANIM_DURATION}ms ease-out`;
       el.style.transform = `translateY(${-(nextIndex * stepSize)}px)`;
 
-      // After transition completes, check if we need to snap back
-      setTimeout(() => {
+      // After transition completes, check if we need to snap back.
+      // Track the timeout so cleanup can clear it (only one pending at a time).
+      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+      snapTimeoutRef.current = setTimeout(() => {
         scrollIndexRef.current = nextIndex;
         if (scrollIndexRef.current >= totalRides) {
           scrollIndexRef.current = 0;
@@ -452,7 +455,13 @@ export default function TV25Display() {
       }, ANIM_DURATION + 50);
     }, SCROLL_INTERVAL);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (snapTimeoutRef.current) {
+        clearTimeout(snapTimeoutRef.current);
+        snapTimeoutRef.current = null;
+      }
+    };
   }, [totalRides, stepSize]);
 
   // Build the display list: original rides + just enough duplicates for seamless wrap

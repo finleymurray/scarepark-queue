@@ -1,4 +1,4 @@
-const CACHE_NAME = 'immersive-core-v4';
+const CACHE_NAME = 'immersive-core-v5';
 
 // Static assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -37,6 +37,30 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and Supabase API calls
   if (request.method !== 'GET') return;
   if (url.hostname.includes('supabase')) return;
+
+  // Fonts (Google Fonts CSS/files or any .woff2/.ttf) — CACHE-FIRST.
+  // next/font self-hosts under /_next/static (already cache-first below),
+  // but this catches any external font requests so the kiosk never
+  // re-downloads fonts on reload.
+  if (
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com' ||
+    /\.(woff2?|ttf)$/.test(url.pathname)
+  ) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
   // Next.js static chunks are content-hashed (immutable) — CACHE-FIRST.
   // GitHub Pages only sends max-age=600, so network-first re-downloaded the

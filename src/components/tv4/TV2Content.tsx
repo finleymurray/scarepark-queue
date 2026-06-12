@@ -87,7 +87,7 @@ const BannerRow = React.memo(function BannerRow({
   return (
     <div style={rowStyle}>
       {bgSrc ? (
-        <img src={bgSrc} alt="" style={bgImgStyle} />
+        <img src={bgSrc} alt="" decoding="async" style={bgImgStyle} />
       ) : (
         <div style={fallbackBgStyle} />
       )}
@@ -95,7 +95,7 @@ const BannerRow = React.memo(function BannerRow({
       <div style={gradientStyle} />
 
       {logoSrc && (
-        <img src={logoSrc} alt={attraction.name} style={logoStyle} />
+        <img src={logoSrc} alt={attraction.name} decoding="async" style={logoStyle} />
       )}
 
       <div style={statusOverlayStyle}>

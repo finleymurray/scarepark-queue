@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
@@ -101,9 +101,7 @@ export default function SupervisorDashboard() {
   const [dispatchGroupSize, setDispatchGroupSize] = useState(0);
   const [dispatchLogs, setDispatchLogs] = useState<DispatchLog[]>([]);
   const [lastDispatchAt, setLastDispatchAt] = useState<string | null>(null);
-  const [dispatchElapsed, setDispatchElapsed] = useState(0);
   const [dispatching, setDispatching] = useState(false);
-  const [dispatchFlashOn, setDispatchFlashOn] = useState(true);
   const [showAllDispatches, setShowAllDispatches] = useState(false);
   const [groupSizePadOpen, setGroupSizePadOpen] = useState(false);
   const [groupSizePadInput, setGroupSizePadInput] = useState('');
@@ -194,10 +192,17 @@ export default function SupervisorDashboard() {
         attractionsQuery = attractionsQuery.in('id', auth.allowedAttractions);
       }
 
-      const [attractionsRes, settingsRes] = await Promise.all([
+      const [attractionsRes, settingsRes, throughputRes] = await Promise.all([
         attractionsQuery,
         supabase.from('park_settings').select('key,value'),
+        supabase
+          .from('throughput_logs')
+          .select('id,attraction_id,slot_start,slot_end,guest_count,logged_by,log_date,created_at,updated_at')
+          .eq('log_date', getTodayDateStr()),
       ]);
+      if (!throughputRes.error && throughputRes.data) {
+        setThroughputLogs(throughputRes.data);
+      }
       if (settingsRes.data) {
         for (const s of settingsRes.data) {
           if (s.key === 'opening_time') setOpeningTime(s.value);
@@ -340,7 +345,7 @@ export default function SupervisorDashboard() {
 
   // Fetch dispatch logs when selectedId changes
   useEffect(() => {
-    if (!selectedId) { setDispatchLogs([]); setLastDispatchAt(null); setDispatchElapsed(0); return; }
+    if (!selectedId) { setDispatchLogs([]); setLastDispatchAt(null); return; }
 
     let dispatchChannel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -373,7 +378,29 @@ export default function SupervisorDashboard() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'dispatch_logs', filter: `attraction_id=eq.${selectedId}` },
-        () => { fetchDispatchLogs(selectedId); }
+        (payload) => {
+          const today = getTodayDateStr();
+          if (payload.eventType === 'INSERT') {
+            const newLog = payload.new as DispatchLog;
+            if (newLog.log_date !== today) return;
+            setDispatchLogs((prev) =>
+              prev.some((l) => l.id === newLog.id)
+                ? prev
+                : [newLog, ...prev].slice(0, 200)
+            );
+            setLastDispatchAt((prev) =>
+              !prev || new Date(newLog.dispatched_at) > new Date(prev)
+                ? newLog.dispatched_at
+                : prev
+            );
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as DispatchLog;
+            setDispatchLogs((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+          } else if (payload.eventType === 'DELETE') {
+            const deleted = payload.old as DispatchLog;
+            setDispatchLogs((prev) => prev.filter((l) => l.id !== deleted.id));
+          }
+        }
       )
       .subscribe();
 
@@ -382,27 +409,18 @@ export default function SupervisorDashboard() {
     };
   }, [selectedId]);
 
-  // Clock tick for current-slot highlighting
+  // Consolidated 1s clock tick — drives current-slot highlighting and the
+  // dispatch elapsed timer (derived below); over-target flash is pure CSS.
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Dispatch elapsed timer
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (lastDispatchAt) {
-        setDispatchElapsed(Math.floor((Date.now() - new Date(lastDispatchAt).getTime()) / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [lastDispatchAt]);
-
-  // Flashing timer for when way over target
-  useEffect(() => {
-    const interval = setInterval(() => setDispatchFlashOn((v) => !v), 500);
-    return () => clearInterval(interval);
-  }, []);
+  // Dispatch elapsed derived from the shared clock tick
+  const dispatchElapsed = useMemo(
+    () => (lastDispatchAt ? Math.max(0, Math.floor((now - new Date(lastDispatchAt).getTime()) / 1000)) : 0),
+    [now, lastDispatchAt]
+  );
 
   // Load existing notes when drawer opens or selectedId changes while open
   useEffect(() => {
@@ -446,24 +464,6 @@ export default function SupervisorDashboard() {
       }
     }, 2000);
   }
-
-  // Fetch throughput logs for today
-  const fetchThroughputLogs = useCallback(async () => {
-    const today = getTodayDateStr();
-
-    const { data, error } = await supabase
-      .from('throughput_logs')
-      .select('id,attraction_id,slot_start,slot_end,guest_count,logged_by,log_date,created_at,updated_at')
-      .eq('log_date', today);
-
-    if (!error && data) {
-      setThroughputLogs(data);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!loading) fetchThroughputLogs();
-  }, [loading, fetchThroughputLogs]);
 
   // Only rides (not shows) for supervisor dashboard
   const rides = useMemo(() => attractions.filter((a) => a.attraction_type !== 'show'), [attractions]);
@@ -575,7 +575,8 @@ export default function SupervisorDashboard() {
       }
       // Refresh throughput logs
       const { data } = await supabase.from('throughput_logs')
-        .select('*').eq('attraction_id', selectedId ?? '').eq('log_date', today);
+        .select('id,attraction_id,slot_start,slot_end,guest_count,logged_by,log_date,created_at,updated_at')
+        .eq('attraction_id', selectedId ?? '').eq('log_date', today);
       setThroughputLogs(data || []);
       pushToast('success', 'Throughput updated');
       return true;
@@ -615,27 +616,26 @@ export default function SupervisorDashboard() {
     if (dispatchGroupSize === 0 || dispatching || !selectedId) return;
     setDispatching(true);
     const today = getTodayDateStr();
-    const { error } = await supabase.from('dispatch_logs').insert({
+    const { data, error } = await supabase.from('dispatch_logs').insert({
       attraction_id: selectedId,
       group_size: dispatchGroupSize,
       dispatched_by: operatorSession?.operator_name || displayName || userEmail,
       log_date: today,
-    });
+    }).select('*').single();
     if (error) {
       pushToast('error', 'Dispatch failed to log — try again');
       setDispatching(false);
       return;
     }
     setDispatchGroupSize(0);
-    const now = new Date().toISOString();
-    setLastDispatchAt(now);
-    setDispatchElapsed(0);
+    if (data) {
+      setDispatchLogs((prev) => [data as DispatchLog, ...prev].slice(0, 200));
+      setLastDispatchAt((data as DispatchLog).dispatched_at);
+    } else {
+      setLastDispatchAt(new Date().toISOString());
+    }
     // Clear any manual reset so the new dispatch shows correctly after navigation
     if (selectedId && typeof window !== 'undefined') localStorage.removeItem(`ic-dispatch-reset-${selectedId}`);
-    const { data } = await supabase.from('dispatch_logs')
-      .select('*').eq('attraction_id', selectedId).eq('log_date', today)
-      .order('dispatched_at', { ascending: false }).limit(200);
-    setDispatchLogs(data || []);
     setDispatching(false);
   }
 
@@ -665,6 +665,7 @@ export default function SupervisorDashboard() {
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ height: '100dvh', background: surface.page, color: text.primary }}>
+      <style>{`@keyframes ic-dispatch-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } } .ic-dispatch-blink { animation: ic-dispatch-blink 1s steps(1, end) infinite; }`}</style>
       <OfflineBanner />
       {/* Header */}
       <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, height: 56, padding: '0 20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -850,7 +851,6 @@ export default function SupervisorDashboard() {
                 : dispatchElapsed > targetSeconds * 0.75 ? '#F59E0B'
                 : '#22C55E';
               const timerFlashing = lastDispatchAt !== null && dispatchElapsed > targetSeconds + 30;
-              const timerVisible = !timerFlashing || dispatchFlashOn;
 
               const dispatchMin = Math.floor(dispatchElapsed / 60);
               const dispatchSec = dispatchElapsed % 60;
@@ -880,11 +880,11 @@ export default function SupervisorDashboard() {
                       <div style={{ ...microLabel, fontSize: 11, marginBottom: 6 }}>
                         Time Since Last Dispatch
                       </div>
-                      <div style={{
+                      <div className={timerFlashing ? 'ic-dispatch-blink' : undefined} style={{
                         fontSize: 52,
                         fontWeight: 800,
                         ...FONT_NUM,
-                        color: timerVisible ? timerColor : 'transparent',
+                        color: timerColor,
                         transition: timerFlashing ? 'none' : 'color 0.3s',
                         letterSpacing: '-0.02em',
                       }}>
@@ -896,7 +896,6 @@ export default function SupervisorDashboard() {
                           <button
                             onClick={() => {
                               setLastDispatchAt(null);
-                              setDispatchElapsed(0);
                               if (selectedId && typeof window !== 'undefined') localStorage.setItem(`ic-dispatch-reset-${selectedId}`, new Date().toISOString());
                             }}
                             style={{ ...controlButton, background: 'none', color: text.muted, fontSize: 11, padding: '4px 10px', borderRadius: radius.sm }}

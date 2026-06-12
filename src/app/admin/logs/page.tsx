@@ -273,7 +273,7 @@ export default function LogsPage() {
   const fetchLogs = useCallback(async (offset: number, attractionFilter: string, typeFilter: string) => {
     let query = supabase
       .from('audit_logs')
-      .select('*')
+      .select('id,action_type,attraction_id,attraction_name,performed_by,old_value,new_value,details,created_at')
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
