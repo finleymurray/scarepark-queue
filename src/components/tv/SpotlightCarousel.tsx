@@ -191,14 +191,14 @@ function AttractionSlide({
 
       {/* Glowing logo art — top centre */}
       {logo && (
-        <div style={{ position: 'absolute', top: '13vh', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', top: '9vh', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logo}
             alt={attraction.name}
             style={{
-              height: '40vh',
-              maxWidth: '78vw',
+              height: '52vh',
+              maxWidth: '86vw',
               objectFit: 'contain',
               filter: resolveLogoGlow(attraction, 'strong'),
             }}

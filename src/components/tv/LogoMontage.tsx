@@ -113,8 +113,8 @@ function SlideContent({ attraction, active }: SlideContentProps) {
             src={logo}
             alt={attraction.name}
             style={{
-              height: '34vh',
-              maxWidth: '72vw',
+              height: '48vh',
+              maxWidth: '84vw',
               objectFit: 'contain',
               filter: resolveLogoGlow(attraction, 'strong'),
             }}
