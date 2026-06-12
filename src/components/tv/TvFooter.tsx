@@ -24,9 +24,12 @@ export function useTvBranding(): { brand: string; handle: string } {
         .select('key,value')
         .in('key', ['tv_brand_text', 'tv_social_handle']);
       if (disposed || !data) return;
+      // If the setting row exists, use its value verbatim — an explicitly
+      // blank value hides that text entirely. Defaults only apply when the
+      // setting has never been saved.
       for (const row of data) {
-        if (row.key === 'tv_brand_text' && row.value) setBrand(row.value);
-        if (row.key === 'tv_social_handle' && row.value) setHandle(row.value);
+        if (row.key === 'tv_brand_text') setBrand(row.value ?? '');
+        if (row.key === 'tv_social_handle') setHandle(row.value ?? '');
       }
     }
     fetchBranding();
@@ -60,12 +63,16 @@ export default function TvFooter({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.6vw', minWidth: 0 }}>
-        <span style={{ color: '#64748B', fontSize: '1.5vh', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-          {brand}
-        </span>
-        <span style={{ color: '#334155', fontSize: '1.4vh', letterSpacing: '0.12em', whiteSpace: 'nowrap' }}>
-          {handle}
-        </span>
+        {brand && (
+          <span style={{ color: '#64748B', fontSize: '1.5vh', fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            {brand}
+          </span>
+        )}
+        {handle && (
+          <span style={{ color: '#334155', fontSize: '1.4vh', letterSpacing: '0.12em', whiteSpace: 'nowrap' }}>
+            {handle}
+          </span>
+        )}
       </div>
 
       {center && (

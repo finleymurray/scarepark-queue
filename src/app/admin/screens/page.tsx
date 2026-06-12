@@ -409,7 +409,7 @@ export default function ScreensPage() {
             Screen branding
           </div>
           <p style={{ fontSize: 12, color: text.muted, marginTop: 2, marginBottom: 14 }}>
-            Shown in the footer of all TV screens. Screens pick up changes on their next load.
+            Shown in the footer of all TV screens. Leave a field blank to hide that text entirely. Screens pick up changes on their next load.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
             <div>
