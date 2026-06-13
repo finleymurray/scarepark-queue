@@ -8,7 +8,6 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 import { useTvAttractions } from './useTvAttractions';
-import { useTvBranding } from './TvFooter';
 
 /**
  * SpotlightCarousel — single-page photo spotlight carousel for TV4 / TV4.5.
@@ -181,8 +180,6 @@ function LowerThirdBar({
   slideCount: number;
   closingTime: string;
 }) {
-  const { brand, handle } = useTvBranding();
-  const brandLine = [brand, handle].filter(Boolean).join('  ·  ');
 
   return (
     <div
@@ -253,7 +250,7 @@ function LowerThirdBar({
 
       <BarDivider />
 
-      {/* Right: brand line + dots + closes pill */}
+      {/* Right: dots + closes pill (no branding on TV4 by design) */}
       <div
         style={{
           display: 'flex',
@@ -264,20 +261,6 @@ function LowerThirdBar({
           flexShrink: 0,
         }}
       >
-        {brandLine && (
-          <span
-            style={{
-              fontSize: '1.4vh',
-              fontWeight: 600,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: '#475569',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {brandLine}
-          </span>
-        )}
         <ProgressDots count={slideCount} active={slideIndex} glowRgb={glowRgb} />
         <ClosesPill closingTime={closingTime} />
       </div>
