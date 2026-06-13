@@ -47,7 +47,7 @@ interface SlideContentProps {
   active: boolean;
 }
 
-/** Static slide content — bg photo + scrim + glowing logo + tagline. */
+/** Static slide content — bg photo + scrim + glowing logo. */
 function SlideContent({ attraction, active }: SlideContentProps) {
   if (!attraction) return null;
 
@@ -94,7 +94,7 @@ function SlideContent({ attraction, active }: SlideContentProps) {
         }}
       />
 
-      {/* Centred logo + tagline */}
+      {/* Centred logo */}
       <div
         style={{
           position: 'absolute',
@@ -103,7 +103,6 @@ function SlideContent({ attraction, active }: SlideContentProps) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '3.5vh',
           padding: '0 6vw',
         }}
       >
@@ -133,23 +132,6 @@ function SlideContent({ attraction, active }: SlideContentProps) {
           >
             {attraction.name}
           </span>
-        )}
-        {attraction.tagline && (
-          <p
-            style={{
-              margin: 0,
-              maxWidth: '60vw',
-              textAlign: 'center',
-              fontSize: '2.4vh',
-              fontWeight: 500,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              lineHeight: 1.5,
-              color: 'rgba(255,255,255,0.5)',
-            }}
-          >
-            {attraction.tagline}
-          </p>
         )}
       </div>
     </>
