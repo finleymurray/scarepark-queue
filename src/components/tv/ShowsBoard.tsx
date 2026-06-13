@@ -5,7 +5,7 @@ import { resolveBg, resolveLogo, resolveLogoGlow, resolveGlowRgb } from '@/lib/l
 
 /**
  * ShowsBoard — shared "Tonight's Shows" board used by TV3 (full-screen,
- * standalone) and TV4's SpotlightCarousel shows slide.
+ * standalone) and TV4's shows view.
  *
  * Purely presentational: header with ClosesPill, photo hero with scrim +
  * logo + next-show time + tagline, upcoming show cards row, and optional

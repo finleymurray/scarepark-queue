@@ -1,244 +1,24 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { resolveLogo, resolveBg, resolveLogoGlow, resolveQueueTextTheme } from '@/lib/logos';
-import type { Attraction, AttractionStatus, ParkSetting } from '@/types/database';
+import type { Attraction, ParkSetting } from '@/types/database';
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+import BannerBoard from '@/components/tv/BannerBoard';
 import TvFooter from '@/components/tv/TvFooter';
 
 const ATTRACTION_SELECT =
   'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,tagline';
 
-function formatTime12h(time: string): string {
-  if (!time) return '--:--';
-  const [h, m] = time.split(':');
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${hour12}:${m} ${ampm}`;
-}
-
-/* ── Static styles ── */
-
-const bgImgStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center center',
-};
-
-/* Right-side dark scrim so wait digits always read over the photo */
-const gradientStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  background:
-    'linear-gradient(90deg, transparent 45%, rgba(0,0,0,0.5) 62%, rgba(0,0,0,0.8) 78%, rgba(0,0,0,0.9) 100%), linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 100%)',
-  zIndex: 3,
-};
-
-const statusOverlayStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  zIndex: 10,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'flex-end',
-  paddingRight: '4%',
-  paddingLeft: '3%',
-};
-
-/* Fallback when no background art exists */
-const fallbackBgStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  background: 'linear-gradient(135deg, #15181E 0%, #0A0C10 100%)',
-};
-
-/* Fixed right column so digits align across rows */
-const waitColStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  width: '10vw',
-  flexShrink: 0,
-};
-
-/* ── BannerRow Component ── */
-
-const BannerRow = React.memo(function BannerRow({
-  attraction,
-  style,
-}: {
-  attraction: Attraction;
-  style?: React.CSSProperties;
-}) {
-  const status = attraction.status as AttractionStatus;
-  const bgSrc = resolveBg(attraction);
-  const logoSrc = resolveLogo(attraction);
-  const logoGlow = resolveLogoGlow(attraction);
-  const theme = resolveQueueTextTheme(attraction);
-
-  const rowStyle = useMemo<React.CSSProperties>(
-    () => ({
-      ...style,
-      position: 'relative',
-      borderRadius: 0,
-      overflow: 'hidden',
-      minHeight: 0,
-      background: '#0A0C10',
-    }),
-    [style],
-  );
-
-  const logoImgStyle = useMemo<React.CSSProperties>(
-    () => ({
-      position: 'absolute',
-      left: '3%',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      zIndex: 6,
-      height: '80%',
-      width: 'auto',
-      maxWidth: '50%',
-      objectFit: 'contain',
-      filter: logoGlow || undefined,
-    }),
-    [logoGlow],
-  );
-
-  return (
-    <div style={rowStyle}>
-      {/* Background art */}
-      {bgSrc ? (
-        <img src={bgSrc} alt="" decoding="async" style={bgImgStyle} />
-      ) : (
-        <div style={fallbackBgStyle} />
-      )}
-      <div style={gradientStyle} />
-
-      {/* Glowing logo overlay */}
-      {logoSrc && (
-        <img src={logoSrc} alt={attraction.name} decoding="async" style={logoImgStyle} />
-      )}
-
-      {/* Status / wait time — fixed-width right column for consistent alignment */}
-      <div style={statusOverlayStyle}>
-        <div style={waitColStyle}>
-          {status === 'OPEN' && (
-            <div key={attraction.wait_time} className="tv-fade" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span
-                style={{
-                  fontSize: '4vw',
-                  fontWeight: 500,
-                  fontVariantNumeric: 'tabular-nums',
-                  lineHeight: 1,
-                  color: theme.color,
-                }}
-              >
-                {attraction.wait_time}
-              </span>
-              <span
-                style={{
-                  fontSize: '0.65vw',
-                  fontWeight: 500,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3em',
-                  color: '#475569',
-                  marginTop: 3,
-                }}
-              >
-                Minutes
-              </span>
-            </div>
-          )}
-          {status === 'CLOSED' && (
-            <span
-              className="tv-fade"
-              style={{
-                fontSize: '1.8vw',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                color: '#F87171',
-              }}
-            >
-              Closed
-            </span>
-          )}
-          {status === 'DELAYED' && (
-            <span
-              className="tv-fade"
-              style={{
-                fontSize: '1.5vw',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                color: '#FBBF24',
-                textAlign: 'center' as const,
-                lineHeight: 1.25,
-              }}
-            >
-              Technical<br />Delay
-            </span>
-          )}
-          {status === 'AT CAPACITY' && (
-            <span
-              className="tv-fade"
-              style={{
-                fontSize: '1.5vw',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                color: '#FBBF24',
-              }}
-            >
-              At Capacity
-            </span>
-          )}
-        </div>
-
-        {/* Fallback: show name if no logo */}
-        {!logoSrc && (
-          <div
-            style={{
-              position: 'absolute',
-              left: '3%',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 6,
-            }}
-          >
-            <span
-              style={{
-                fontSize: '2vw',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: '#E2E8F0',
-              }}
-            >
-              {attraction.name}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
-
-/* ── Main page ── */
-
-const SCROLL_INTERVAL = 5000;
-const ANIM_DURATION = 600;
-const VISIBLE_COUNT = 4;
-const GAP = 12;
-const TV_SAFE_PADDING = '3.5%';
-
+/**
+ * TV2.5 — standalone compact 4-up "Wait Times" board.
+ *
+ * Renders the shared BannerBoard (same design as TV4's rides view) full-screen,
+ * with its own data fetch + realtime channels, plus the brand-strip footer.
+ * The board's header carries the Closes pill, so the footer omits closeTime.
+ */
 export default function TV25Display() {
   useConnectionHealth('tv2.5');
   useScreenIdentity('/tv2.5');
@@ -246,43 +26,17 @@ export default function TV25Display() {
   const [autoSort, setAutoSort] = useState(false);
   const [closingTime, setClosingTime] = useState('');
   const [loading, setLoading] = useState(true);
-  const [mainHeight, setMainHeight] = useState(0);
-  const [isEmbedded, setIsEmbedded] = useState(false);
-  const mainRef = useRef<HTMLDivElement>(null);
-
-  // Scroll state — use refs to avoid React re-render issues on TV browsers
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollIndexRef = useRef(0);
-
-  useEffect(() => {
-    setIsEmbedded(window.self !== window.top);
-  }, []);
-
-  const measureHeight = useCallback(() => {
-    if (!mainRef.current) return;
-    setMainHeight(mainRef.current.getBoundingClientRect().height);
-  }, []);
 
   useEffect(() => {
     async function fetchData() {
       const [attractionsRes, autoSortRes, closingRes] = await Promise.all([
-        supabase
-          .from('attractions')
-          .select(ATTRACTION_SELECT)
-          .order('sort_order', { ascending: true }),
+        supabase.from('attractions').select(ATTRACTION_SELECT).order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
       ]);
-
-      if (!attractionsRes.error) {
-        setAttractions(attractionsRes.data || []);
-      }
-      if (autoSortRes.data) {
-        setAutoSort(autoSortRes.data.value === 'true');
-      }
-      if (closingRes.data) {
-        setClosingTime(closingRes.data.value);
-      }
+      if (!attractionsRes.error) setAttractions(attractionsRes.data || []);
+      if (autoSortRes.data) setAutoSort(autoSortRes.data.value === 'true');
+      if (closingRes.data) setClosingTime(closingRes.data.value);
       setLoading(false);
     }
 
@@ -290,44 +44,24 @@ export default function TV25Display() {
 
     const attractionsChannel = supabase
       .channel('tv25b-attractions')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'attractions' },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            setAttractions((prev) =>
-              prev.map((a) =>
-                a.id === (payload.new as Attraction).id ? (payload.new as Attraction) : a,
-              ),
-            );
-          } else if (payload.eventType === 'INSERT') {
-            setAttractions((prev) =>
-              [...prev, payload.new as Attraction].sort((a, b) => a.sort_order - b.sort_order),
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setAttractions((prev) =>
-              prev.filter((a) => a.id !== (payload.old as Attraction).id),
-            );
-          }
-        },
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attractions' }, (payload) => {
+        if (payload.eventType === 'UPDATE') {
+          setAttractions((prev) => prev.map((a) => (a.id === (payload.new as Attraction).id ? (payload.new as Attraction) : a)));
+        } else if (payload.eventType === 'INSERT') {
+          setAttractions((prev) => [...prev, payload.new as Attraction].sort((a, b) => a.sort_order - b.sort_order));
+        } else if (payload.eventType === 'DELETE') {
+          setAttractions((prev) => prev.filter((a) => a.id !== (payload.old as Attraction).id));
+        }
+      })
       .subscribe();
 
     const settingsChannel = supabase
       .channel('tv25b-settings')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'park_settings' },
-        (payload) => {
-          const setting = payload.new as ParkSetting;
-          if (setting.key === 'auto_sort_by_wait') {
-            setAutoSort(setting.value === 'true');
-          }
-          if (setting.key === 'closing_time') {
-            setClosingTime(setting.value);
-          }
-        },
-      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'park_settings' }, (payload) => {
+        const setting = payload.new as ParkSetting;
+        if (setting.key === 'auto_sort_by_wait') setAutoSort(setting.value === 'true');
+        if (setting.key === 'closing_time') setClosingTime(setting.value);
+      })
       .subscribe();
 
     return () => {
@@ -335,100 +69,6 @@ export default function TV25Display() {
       supabase.removeChannel(settingsChannel);
     };
   }, []);
-
-  useEffect(() => {
-    if (loading) return;
-
-    const timer = setTimeout(measureHeight, 100);
-
-    const handleResize = () => measureHeight();
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [loading, measureHeight]);
-
-  // Preload all attraction images so they don't pop in when scrolling
-  useEffect(() => {
-    if (attractions.length === 0) return;
-    attractions.forEach((a) => {
-      const bg = resolveBg(a);
-      const logo = resolveLogo(a);
-      if (bg) { const img = new Image(); img.src = bg; }
-      if (logo) { const img = new Image(); img.src = logo; }
-    });
-  }, [attractions]);
-
-  // Filter to rides only, then sort if enabled
-  const sortedRides = useMemo(() => {
-    const rides = attractions.filter((a) => a.attraction_type !== 'show');
-    if (!autoSort) return rides;
-    return [...rides].sort((a, b) => {
-      const aOpen = a.status === 'OPEN' ? 1 : 0;
-      const bOpen = b.status === 'OPEN' ? 1 : 0;
-      if (aOpen !== bOpen) return bOpen - aOpen;
-      return a.wait_time - b.wait_time;
-    });
-  }, [attractions, autoSort]);
-
-  const totalRides = sortedRides.length;
-
-  // Row height: space for VISIBLE_COUNT cards with gaps
-  const rowHeight = useMemo(() => {
-    const count = Math.min(VISIBLE_COUNT, totalRides || 1);
-    const totalGap = count > 1 ? (count - 1) * GAP : 0;
-    return count > 0 && mainHeight > 0
-      ? Math.floor((mainHeight - totalGap) / count)
-      : 100;
-  }, [totalRides, mainHeight]);
-
-  // Step size = one row height + gap
-  const stepSize = rowHeight + GAP;
-
-  // Reset scroll index when rides change
-  useEffect(() => {
-    scrollIndexRef.current = 0;
-    if (scrollRef.current) {
-      scrollRef.current.style.transform = 'translateY(0px)';
-    }
-  }, [totalRides]);
-
-  // Scroll via CSS transition + setTimeout (GPU-composited, no per-frame JS)
-  useEffect(() => {
-    if (totalRides <= VISIBLE_COUNT || stepSize <= 0) return;
-
-    const interval = setInterval(() => {
-      const el = scrollRef.current;
-      if (!el) return;
-
-      const nextIndex = scrollIndexRef.current + 1;
-
-      // Enable CSS transition and move up
-      el.style.transition = `transform ${ANIM_DURATION}ms ease-out`;
-      el.style.transform = `translateY(${-(nextIndex * stepSize)}px)`;
-
-      // After transition completes, check if we need to snap back
-      setTimeout(() => {
-        scrollIndexRef.current = nextIndex;
-        if (scrollIndexRef.current >= totalRides) {
-          scrollIndexRef.current = 0;
-          // Instant snap back — disable transition, reset position
-          el.style.transition = 'none';
-          el.style.transform = 'translateY(0px)';
-        }
-      }, ANIM_DURATION + 50);
-    }, SCROLL_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [totalRides, stepSize]);
-
-  // Build the display list: original rides + enough duplicates for seamless wrap
-  const displayRides = useMemo(() => {
-    if (totalRides === 0) return [];
-    return [...sortedRides, ...sortedRides.slice(0, VISIBLE_COUNT)];
-  }, [sortedRides, totalRides]);
 
   if (loading) {
     return (
@@ -440,80 +80,28 @@ export default function TV25Display() {
 
   return (
     <div
-      className="h-screen flex flex-col overflow-hidden"
       style={{
+        position: 'fixed',
+        inset: 0,
         background: '#07080B',
-        paddingLeft: isEmbedded ? 0 : TV_SAFE_PADDING,
-        paddingRight: isEmbedded ? 0 : TV_SAFE_PADDING,
-        paddingTop: isEmbedded ? 0 : '2%',
-        paddingBottom: isEmbedded ? 0 : '2%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: '#fff',
       }}
     >
       <ParkClosedOverlay />
-      <style>{`
-        .tv-fade {
-          animation: tv25fade 400ms ease;
-        }
-        @keyframes tv25fade {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-      `}</style>
 
-      {/* Header */}
-      {!isEmbedded && (
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            paddingBottom: '0.8vw',
-            borderBottom: '1px solid #15181E',
-            marginBottom: '1vw',
-          }}
-        >
-          <h1
-            style={{
-              fontSize: '1.6vw',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: '#E2E8F0',
-              margin: 0,
-            }}
-          >
-            Wait Times
-          </h1>
-        </div>
-      )}
+      {/* Banner board — closes pill lives in the board header */}
+      <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+        <BannerBoard attractions={attractions} autoSort={autoSort} closingTime={closingTime} />
+      </div>
 
-      {/* Ride banners — compact 4-up */}
-      <main ref={mainRef} className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
-        <div
-          ref={scrollRef}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: `${GAP}px`,
-          }}
-        >
-          {displayRides.map((attraction, idx) => (
-            <BannerRow
-              key={`${attraction.id}-${idx}`}
-              attraction={attraction}
-              style={{ height: `${rowHeight}px`, minHeight: '60px', flexShrink: 0 }}
-            />
-          ))}
-        </div>
-      </main>
-
-      {/* Footer — park brand strip */}
-      {!isEmbedded && (
-        <div style={{ flexShrink: 0, marginTop: '1vw' }}>
-          <TvFooter closeTime={closingTime ? formatTime12h(closingTime) : null} />
-        </div>
-      )}
+      {/* Footer — brand strip only (no closeTime; the board header has the pill) */}
+      <footer style={{ flexShrink: 0 }}>
+        <TvFooter />
+      </footer>
     </div>
   );
 }
