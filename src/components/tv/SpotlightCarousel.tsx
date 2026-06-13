@@ -7,6 +7,7 @@ import { resolveBg, resolveLogo, resolveLogoGlow, resolveGlowRgb } from '@/lib/l
 import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
+import ShowsBoard from './ShowsBoard';
 import { useTvAttractions } from './useTvAttractions';
 
 /**
@@ -32,19 +33,6 @@ function formatTime12h(time: string): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
   return `${hour12}:${m} ${ampm}`;
-}
-
-function getNextShowTime(showTimes: string[] | null): string | null {
-  if (!showTimes || showTimes.length === 0) return null;
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const sorted = [...showTimes].sort();
-  for (const time of sorted) {
-    const [h, m] = time.split(':');
-    const timeMinutes = parseInt(h, 10) * 60 + parseInt(m, 10);
-    if (timeMinutes > nowMinutes) return time;
-  }
-  return null;
 }
 
 type Slide =
@@ -340,192 +328,7 @@ function AttractionSlide({
   );
 }
 
-/* ── Shows slide — TV3-style hero + upcoming cards ── */
-
-function ShowsHero({ show, nextTime }: { show: Attraction; nextTime: string | null }) {
-  const bg = resolveBg(show);
-  const logo = resolveLogo(show);
-  const glowRgb = resolveGlowRgb(show) ?? FALLBACK_GLOW;
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        flex: 1,
-        minHeight: 0,
-        borderRadius: 6,
-        overflow: 'hidden',
-        background: '#0A0C10',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-      }}
-    >
-      {bg && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={bg}
-          alt=""
-          decoding="async"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center center',
-          }}
-        />
-      )}
-      {/* Left-to-right cinematic scrim + glow-tinted wash */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.72) 32%, rgba(0,0,0,0.3) 62%, rgba(0,0,0,0.05) 100%)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `linear-gradient(160deg, rgba(${glowRgb},0.18) 0%, transparent 55%)`,
-        }}
-      />
-
-      {/* Content — left stack */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          padding: '3vh 3.5vw',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-          maxWidth: '62%',
-        }}
-      >
-        <div
-          style={{
-            fontSize: '1.8vh',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.35em',
-            color: `rgb(${glowRgb})`,
-            textShadow: `0 0 18px rgba(${glowRgb},0.6)`,
-            marginBottom: '2vh',
-          }}
-        >
-          {show.status === 'DELAYED'
-            ? 'Technical Delay'
-            : show.status === 'CLOSED'
-              ? 'Closed'
-              : nextTime
-                ? 'Up Next'
-                : 'No More Shows Tonight'}
-        </div>
-
-        {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logo}
-            alt={show.name}
-            decoding="async"
-            style={{
-              height: '22vh',
-              width: 'auto',
-              maxWidth: '100%',
-              objectFit: 'contain',
-              objectPosition: 'left center',
-              filter: resolveLogoGlow(show, 'strong') || undefined,
-              marginBottom: '2.5vh',
-            }}
-          />
-        ) : (
-          <h2
-            style={{
-              fontSize: '6vh',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              color: '#fff',
-              margin: '0 0 2.5vh',
-              lineHeight: 1.05,
-            }}
-          >
-            {show.name}
-          </h2>
-        )}
-
-        {nextTime && show.status !== 'CLOSED' && (
-          <div
-            style={{
-              fontSize: '8vh',
-              fontWeight: 800,
-              lineHeight: 1,
-              fontVariantNumeric: 'tabular-nums',
-              color: `rgb(${glowRgb})`,
-              textShadow: `0 0 35px rgba(${glowRgb},0.55)`,
-            }}
-          >
-            {formatTime12h(nextTime)}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function UpcomingShowCard({ show, time }: { show: Attraction; time: string }) {
-  const glowRgb = resolveGlowRgb(show) ?? FALLBACK_GLOW;
-  return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        gap: '1.2vh',
-        padding: '0 1.6vw',
-        borderRadius: 4,
-        border: '1px solid #15181E',
-        borderLeft: `4px solid rgba(${glowRgb},0.65)`,
-        background: `linear-gradient(160deg, rgba(${glowRgb},0.08) 0%, rgba(0,0,0,0.3) 100%)`,
-        overflow: 'hidden',
-      }}
-    >
-      <span
-        style={{
-          fontSize: '3.5vh',
-          fontWeight: 600,
-          fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1,
-          color: `rgb(${glowRgb})`,
-        }}
-      >
-        {formatTime12h(time)}
-      </span>
-      <span
-        style={{
-          fontSize: '2vh',
-          fontWeight: 600,
-          lineHeight: 1.2,
-          textTransform: 'uppercase',
-          letterSpacing: '0.14em',
-          color: '#94A3B8',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {show.name}
-      </span>
-    </div>
-  );
-}
+/* ── Shows slide — thin wrapper around the shared ShowsBoard ── */
 
 function ShowsSlide({
   shows,
@@ -538,87 +341,14 @@ function ShowsSlide({
   slideCount: number;
   closingTime: string;
 }) {
-  // Flatten all upcoming (show, time) pairs, chronological — same logic as TV3.
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const upcoming = shows
-    .flatMap((show) =>
-      (show.show_times ?? []).map((time) => {
-        const [h, m] = time.split(':');
-        return { show, time, minutes: parseInt(h, 10) * 60 + parseInt(m, 10) };
-      }),
-    )
-    .filter((e) => e.minutes > nowMinutes)
-    .sort((a, b) => a.minutes - b.minutes);
-
-  const heroShow = upcoming[0]?.show ?? shows[0] ?? null;
-  const upcomingCards = upcoming.slice(1, 6);
-
   return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'radial-gradient(ellipse at center, #14161D 0%, #07080B 75%)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '4vh 4vw',
-        gap: '2vh',
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          paddingBottom: '1.5vh',
-          borderBottom: '1px solid #15181E',
-        }}
-      >
-        <h1
-          style={{
-            fontSize: '2.6vh',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            color: '#E2E8F0',
-            margin: 0,
-          }}
-        >
-          Tonight&apos;s Shows
-        </h1>
-        <ClosesPill closingTime={closingTime} />
-      </div>
-
-      {!heroShow ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: '#334155', fontSize: '2.4vh', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-            No shows configured
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Hero — next show */}
-          <ShowsHero show={heroShow} nextTime={getNextShowTime(heroShow.show_times)} />
-
-          {/* Upcoming show cards */}
-          {upcomingCards.length > 0 && (
-            <div style={{ flexShrink: 0, display: 'flex', gap: '1vw', height: '15vh' }}>
-              {upcomingCards.map(({ show, time }) => (
-                <UpcomingShowCard key={`${show.id}-${time}`} show={show} time={time} />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Progress dots */}
-      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-        <ProgressDots count={slideCount} active={slideIndex} glowRgb={FALLBACK_GLOW} />
-      </div>
-    </div>
+    <ShowsBoard
+      shows={shows}
+      closingTime={closingTime}
+      showDots
+      slideIndex={slideIndex}
+      slideCount={slideCount}
+    />
   );
 }
 
