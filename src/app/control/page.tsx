@@ -100,6 +100,7 @@ export default function SupervisorDashboard() {
   // Dispatch clicker state
   const [dispatchGroupSize, setDispatchGroupSize] = useState(0);
   const [dispatchLogs, setDispatchLogs] = useState<DispatchLog[]>([]);
+  const [parkGuests, setParkGuests] = useState(0); // all-attraction dispatch total tonight
   const [lastDispatchAt, setLastDispatchAt] = useState<string | null>(null);
   const [dispatching, setDispatching] = useState(false);
   const [showAllDispatches, setShowAllDispatches] = useState(false);
@@ -420,6 +421,36 @@ export default function SupervisorDashboard() {
     };
   }, [selectedId]);
 
+  // Park-wide guest total — sum of ALL attractions' dispatches tonight, kept
+  // live by its own unfiltered subscription (the per-attraction channel above
+  // only covers the selected attraction).
+  useEffect(() => {
+    const today = getTodayDateStr();
+    async function loadParkGuests() {
+      const { data } = await supabase
+        .from('dispatch_logs')
+        .select('group_size')
+        .eq('log_date', today);
+      setParkGuests((data || []).reduce((s, l) => s + (l.group_size || 0), 0));
+    }
+    loadParkGuests();
+
+    const channel = supabase
+      .channel('control-park-dispatch')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'dispatch_logs' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const row = payload.new as DispatchLog;
+          if (row.log_date === today) setParkGuests((g) => g + (row.group_size || 0));
+        } else {
+          // UPDATE/DELETE (e.g. Clear logs) — refetch the authoritative sum
+          loadParkGuests();
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   // Consolidated 1s clock tick — drives current-slot highlighting and the
   // dispatch elapsed timer (derived below); over-target flash is pure CSS.
   useEffect(() => {
@@ -539,12 +570,9 @@ export default function SupervisorDashboard() {
     return dispatchLogs.reduce((s, l) => s + l.group_size, 0);
   }, [dispatchLogs]);
 
-  // Total guests across ALL attractions tonight (throughput-based for park total)
-  const totalGuestsAllAttractions = useMemo(() => {
-    let sum = 0;
-    for (const l of throughputLogs) sum += l.guest_count;
-    return sum;
-  }, [throughputLogs]);
+  // Total guests across ALL attractions tonight — from dispatches (the real
+  // source of guests-through), kept live by its own park-wide subscription.
+  const totalGuestsAllAttractions = parkGuests;
 
   // Hourly slots derived from park hours + dispatch counts per slot
   const hourlySlots = useMemo(() => generateHourlySlots(openingTime, closingTime), [openingTime, closingTime]);

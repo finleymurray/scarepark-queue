@@ -10,6 +10,7 @@ import type {
   Attraction,
   AttractionStatus,
   ThroughputLog,
+  DispatchLog,
   AttractionStatusLog,
   OperatorSession,
   SignoffSection,
@@ -275,6 +276,7 @@ export default function TvOpsPage() {
 
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [throughput, setThroughput] = useState<ThroughputLog[]>([]);
+  const [dispatches, setDispatches] = useState<DispatchLog[]>([]);
   const [statusLogs, setStatusLogs] = useState<AttractionStatusLog[]>([]);
   const [operators, setOperators] = useState<OperatorSession[]>([]);
   const [sections, setSections] = useState<SignoffSection[]>([]);
@@ -296,9 +298,10 @@ export default function TvOpsPage() {
       const start = `${today}T00:00:00`;
       const end   = `${today}T23:59:59`;
 
-      const [attractionsRes, tpRes, logsRes, opsRes, secRes, compRes, closeRes] = await Promise.all([
+      const [attractionsRes, tpRes, dispRes, logsRes, opsRes, secRes, compRes, closeRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
         supabase.from('throughput_logs').select('*').eq('log_date', today),
+        supabase.from('dispatch_logs').select('*').eq('log_date', today),
         supabase.from('attraction_status_logs').select('*').gte('changed_at', start).lte('changed_at', end).order('changed_at', { ascending: true }),
         supabase.from('operator_sessions').select('*').eq('log_date', today).order('started_at', { ascending: true }),
         supabase.from('signoff_sections').select('*'),
@@ -308,6 +311,7 @@ export default function TvOpsPage() {
 
       setAttractions((attractionsRes.data || []).filter((a: Attraction) => a.attraction_type === 'ride'));
       setThroughput(tpRes.data || []);
+      setDispatches(dispRes.data || []);
       setStatusLogs(logsRes.data || []);
       setOperators(opsRes.data || []);
       setSections(secRes.data || []);
@@ -327,6 +331,10 @@ export default function TvOpsPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'throughput_logs' }, async () => {
         const { data } = await supabase.from('throughput_logs').select('*').eq('log_date', today);
         setThroughput(data || []);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'dispatch_logs' }, async () => {
+        const { data } = await supabase.from('dispatch_logs').select('*').eq('log_date', today);
+        setDispatches(data || []);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'attraction_status_logs' }, async () => {
         const start = `${today}T00:00:00`;
@@ -354,7 +362,9 @@ export default function TvOpsPage() {
   const nowMs = now.getTime();
   const attractionData: CardData[] = attractions.map((a) => {
     const aLogs = statusLogs.filter((l) => l.attraction_id === a.id);
-    const guests = throughput.filter((t) => t.attraction_id === a.id).reduce((s, t) => s + (t.guest_count || 0), 0);
+    // Guests come from the dispatch clicker (matches Control's figure), not
+    // the manual throughput_logs which are only occasional hourly overrides.
+    const guests = dispatches.filter((d) => d.attraction_id === a.id).reduce((s, d) => s + (d.group_size || 0), 0);
     const activeDelay = aLogs.find((l) => l.status === 'DELAYED' && !l.resolved_at) || null;
 
     // Downtime: sum over DELAYED logs of (resolved_at ?? now) − changed_at.
