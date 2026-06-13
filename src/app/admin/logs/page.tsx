@@ -21,6 +21,8 @@ const ACTION_LABELS: Record<string, string> = {
   attraction_deleted: 'Deleted',
   signoff_completion: 'Sign-Off',
   show_report_submission: 'Show Report',
+  operator_login: 'Operator In',
+  operator_logout: 'Operator Out',
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -34,6 +36,8 @@ const ACTION_COLORS: Record<string, string> = {
   attraction_deleted: 'bg-red-500/20 text-red-400 border-red-500/30',
   signoff_completion: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
   show_report_submission: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+  operator_login: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  operator_logout: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
 };
 
 /* ── Clear Test Data Modal ── */
@@ -43,6 +47,7 @@ const CLEAR_DATA_TABLES = [
   { key: 'dispatch_logs', label: 'Dispatch Logs', dateCol: 'log_date', isTimestamp: false },
   { key: 'attraction_status_logs', label: 'Status Change Logs', dateCol: 'changed_at', isTimestamp: true },
   { key: 'audit_logs', label: 'Audit Logs', dateCol: 'created_at', isTimestamp: true },
+  { key: 'operator_sessions', label: 'Operator Sessions', dateCol: 'log_date', isTimestamp: false },
   { key: 'signoff_completions', label: 'Sign-Off Completions', dateCol: 'sign_date', isTimestamp: false },
   { key: 'show_reports', label: 'Show Reports', dateCol: 'report_date', isTimestamp: false },
 ] as const;
@@ -409,6 +414,8 @@ export default function LogsPage() {
             <option value="attraction_deleted">Deleted</option>
             <option value="signoff_completion">Sign-Off</option>
             <option value="show_report_submission">Show Report</option>
+            <option value="operator_login">Operator In</option>
+            <option value="operator_logout">Operator Out</option>
           </select>
         </div>
 

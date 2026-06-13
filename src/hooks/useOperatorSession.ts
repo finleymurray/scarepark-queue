@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { logAudit } from '@/lib/audit';
 import type { OperatorSession } from '@/types/database';
 
 /**
@@ -14,7 +15,7 @@ import type { OperatorSession } from '@/types/database';
  * any existing active session (ended_reason='takeover') and starts a new one —
  * picking up a shift never requires the previous operator to log out first.
  */
-export default function useOperatorSession(attractionId: string | null) {
+export default function useOperatorSession(attractionId: string | null, attractionName = '') {
   const [session, setSession] = useState<OperatorSession | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,6 +76,7 @@ export default function useOperatorSession(attractionId: string | null) {
       user_roles: { id: string; display_name: string | null; email: string };
     };
     const operatorName = row.user_roles.display_name || row.user_roles.email;
+    const previousOperator = session?.operator_name ?? null;
 
     // End any existing active session for this attraction (takeover)
     await supabase
@@ -96,8 +98,18 @@ export default function useOperatorSession(attractionId: string | null) {
 
     if (insertError) return false;
     setSession((inserted as OperatorSession) || null);
+
+    await logAudit({
+      actionType: 'operator_login',
+      attractionId,
+      attractionName,
+      performedBy: operatorName,
+      oldValue: previousOperator,
+      newValue: operatorName,
+      details: previousOperator ? `Took over from ${previousOperator}` : 'Signed in as operator',
+    });
     return true;
-  }, [attractionId]);
+  }, [attractionId, attractionName, session]);
 
   /** Same takeover semantics as login — swapping who's on the panel. */
   const changeOperator = login;
@@ -109,8 +121,15 @@ export default function useOperatorSession(attractionId: string | null) {
       .from('operator_sessions')
       .update({ ended_at: new Date().toISOString(), ended_reason: 'logout' })
       .eq('id', session.id);
+    await logAudit({
+      actionType: 'operator_logout',
+      attractionId: session.attraction_id,
+      attractionName,
+      performedBy: session.operator_name,
+      details: 'Ended shift',
+    });
     setSession(null);
-  }, [session]);
+  }, [session, attractionName]);
 
   return { session, loading, login, changeOperator, endShift };
 }

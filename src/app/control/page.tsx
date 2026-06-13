@@ -115,7 +115,10 @@ export default function SupervisorDashboard() {
   const { toasts, pushToast } = useToasts();
 
   // Operator session — per-attraction "who's on the panel" state
-  const { session: operatorSession, loading: operatorLoading, login: operatorLogin, changeOperator, endShift } = useOperatorSession(selectedId);
+  const { session: operatorSession, loading: operatorLoading, login: operatorLogin, changeOperator, endShift } = useOperatorSession(
+    selectedId,
+    attractions.find((a) => a.id === selectedId)?.name ?? '',
+  );
   const [lockPinOpen, setLockPinOpen] = useState(false);
   const [lastSession, setLastSession] = useState<OperatorSession | null>(null);
 

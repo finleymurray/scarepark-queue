@@ -82,7 +82,7 @@ export interface UserRole {
   updated_at: string;
 }
 
-export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_added' | 'show_time_removed' | 'attraction_created' | 'attraction_deleted' | 'signoff_completion' | 'show_report_submission';
+export type AuditActionType = 'queue_time_change' | 'status_change' | 'throughput_entry' | 'show_time_added' | 'show_time_removed' | 'attraction_created' | 'attraction_deleted' | 'signoff_completion' | 'show_report_submission' | 'operator_login' | 'operator_logout';
 
 export interface AuditLog {
   id: string;
