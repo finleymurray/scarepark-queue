@@ -8,7 +8,7 @@ import { useConnectionHealth } from '@/hooks/useConnectionHealth';
 import { useScreenIdentity } from '@/hooks/useScreenIdentity';
 import ParkClosedOverlay from '@/components/ParkClosedOverlay';
 import { useTvAttractions } from './useTvAttractions';
-import TvFooter from './TvFooter';
+import { useTvBranding } from './TvFooter';
 
 /**
  * SpotlightCarousel — single-page photo spotlight carousel for TV4 / TV4.5.
@@ -17,6 +17,9 @@ import TvFooter from './TvFooter';
  * slide per ride (~10s each) with a 600ms CSS opacity crossfade — two stacked
  * absolutely-positioned slide layers; the incoming layer runs a one-shot
  * fade-in keyframe. No perpetual animation anywhere: safe for Pi 3/4 kiosks.
+ *
+ * Layout: "lower third" broadcast bar — logo floats large above, a fixed
+ * gradient bar along the bottom carries name / wait / dots / closes pill.
  */
 
 const SLIDE_DURATION = 10000;
@@ -32,112 +35,22 @@ function formatTime12h(time: string): string {
   return `${hour12}:${m} ${ampm}`;
 }
 
+function getNextShowTime(showTimes: string[] | null): string | null {
+  if (!showTimes || showTimes.length === 0) return null;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const sorted = [...showTimes].sort();
+  for (const time of sorted) {
+    const [h, m] = time.split(':');
+    const timeMinutes = parseInt(h, 10) * 60 + parseInt(m, 10);
+    if (timeMinutes > nowMinutes) return time;
+  }
+  return null;
+}
+
 type Slide =
   | { kind: 'attraction'; attraction: Attraction }
   | { kind: 'shows'; shows: Attraction[] };
-
-/* ── Glass chip ── */
-
-function Chip({ glowRgb, label, children }: { glowRgb: string; label: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: 'rgba(0,0,0,0.55)',
-        border: `1px solid rgba(${glowRgb},0.35)`,
-        borderRadius: 14,
-        padding: '2.5vh 3vw',
-        textAlign: 'center',
-        minWidth: '12vw',
-      }}
-    >
-      <div
-        style={{
-          fontSize: '1.8vh',
-          fontWeight: 700,
-          letterSpacing: '0.35em',
-          textIndent: '0.35em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.6)',
-          marginBottom: '1vh',
-        }}
-      >
-        {label}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/** Centre-stage wait display, directly under the logo — the slide's key info. */
-function CentreWait({ attraction, glowRgb }: { attraction: Attraction; glowRgb: string }) {
-  const glowColor = `rgb(${glowRgb})`;
-  if (attraction.status === 'OPEN') {
-    return (
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '1.2vw' }}>
-        <span
-          style={{
-            fontSize: '15vh',
-            fontWeight: 900,
-            lineHeight: 1,
-            fontVariantNumeric: 'tabular-nums',
-            color: glowColor,
-            textShadow: `0 0 45px rgba(${glowRgb},0.7), 0 0 110px rgba(${glowRgb},0.35), 0 4px 30px rgba(0,0,0,0.8)`,
-          }}
-        >
-          {attraction.wait_time}
-        </span>
-        <span
-          style={{
-            fontSize: '4.2vh',
-            fontWeight: 800,
-            letterSpacing: '0.22em',
-            color: `rgba(${glowRgb},0.85)`,
-            textShadow: `0 0 25px rgba(${glowRgb},0.4), 0 2px 15px rgba(0,0,0,0.8)`,
-          }}
-        >
-          MIN WAIT
-        </span>
-      </div>
-    );
-  }
-  const statusText =
-    attraction.status === 'DELAYED'
-      ? 'TECHNICAL DELAY'
-      : attraction.status === 'AT CAPACITY'
-        ? 'AT CAPACITY'
-        : 'CLOSED';
-  const statusColor = attraction.status === 'CLOSED' ? '#f87171' : '#F59E0B';
-  const statusRgb = attraction.status === 'CLOSED' ? '248,113,113' : '245,158,11';
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <span
-        style={{
-          fontSize: '8vh',
-          fontWeight: 900,
-          lineHeight: 1.1,
-          letterSpacing: '0.1em',
-          color: statusColor,
-          whiteSpace: 'nowrap',
-          textShadow: `0 0 40px rgba(${statusRgb},0.55), 0 4px 30px rgba(0,0,0,0.8)`,
-        }}
-      >
-        {statusText}
-      </span>
-    </div>
-  );
-}
-
-function FearChip({ rating, glowRgb }: { rating: number; glowRgb: string }) {
-  const stars = Math.max(0, Math.min(5, Math.round(rating)));
-  return (
-    <Chip glowRgb={glowRgb} label="Fear">
-      <span style={{ fontSize: '3vh', lineHeight: 1.2, letterSpacing: '0.12em', whiteSpace: 'nowrap' }}>
-        <span style={{ color: '#E2E8F0' }}>{'★'.repeat(stars)}</span>
-        <span style={{ color: 'rgba(255,255,255,0.22)' }}>{'☆'.repeat(5 - stars)}</span>
-      </span>
-    </Chip>
-  );
-}
 
 /* ── Progress dots ── */
 
@@ -150,12 +63,224 @@ function ProgressDots({ count, active, glowRgb }: { count: number; active: numbe
           style={{
             height: '0.6vh',
             borderRadius: '0.3vh',
-            width: i === active ? '3.5vh' : '1.4vh',
-            background: i === active ? `rgb(${glowRgb})` : 'rgba(255,255,255,0.18)',
+            width: i === active ? '3vh' : '1.4vh',
+            background: i === active ? `rgb(${glowRgb})` : '#2A3038',
             boxShadow: i === active ? `0 0 10px rgba(${glowRgb},0.7)` : 'none',
           }}
         />
       ))}
+    </div>
+  );
+}
+
+/* ── Lower-third bar pieces ── */
+
+function ClosesPill({ closingTime }: { closingTime: string }) {
+  if (!closingTime) return null;
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '0.7vh 1.4vw',
+        borderRadius: 999,
+        background: 'rgba(245,158,11,0.10)',
+        border: '1px solid rgba(245,158,11,0.3)',
+        color: '#FCD34D',
+        fontSize: '1.7vh',
+        fontWeight: 600,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      Closes {formatTime12h(closingTime)}
+    </span>
+  );
+}
+
+/** Centre wait block inside the lower-third bar. */
+function BarWait({ attraction, glowRgb }: { attraction: Attraction; glowRgb: string }) {
+  const glowColor = `rgb(${glowRgb})`;
+  return (
+    <div style={{ textAlign: 'center', flexShrink: 0 }}>
+      <div
+        style={{
+          fontSize: '1.5vh',
+          fontWeight: 700,
+          letterSpacing: '0.25em',
+          textIndent: '0.25em',
+          textTransform: 'uppercase',
+          color: '#475569',
+          marginBottom: '0.8vh',
+        }}
+      >
+        Wait
+      </div>
+      {attraction.status === 'OPEN' ? (
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.8vw' }}>
+          <span
+            style={{
+              fontSize: '9vh',
+              fontWeight: 500,
+              lineHeight: 1,
+              fontVariantNumeric: 'tabular-nums',
+              color: glowColor,
+              textShadow: `0 0 35px rgba(${glowRgb},0.55), 0 0 90px rgba(${glowRgb},0.25)`,
+            }}
+          >
+            {attraction.wait_time}
+          </span>
+          <span
+            style={{
+              fontSize: '2.2vh',
+              fontWeight: 700,
+              letterSpacing: '0.2em',
+              color: `rgba(${glowRgb},0.7)`,
+            }}
+          >
+            MIN
+          </span>
+        </div>
+      ) : (
+        <span
+          style={{
+            fontSize: '3.6vh',
+            fontWeight: 700,
+            lineHeight: 1.2,
+            letterSpacing: '0.12em',
+            whiteSpace: 'nowrap',
+            color: attraction.status === 'CLOSED' ? '#F87171' : '#FBBF24',
+          }}
+        >
+          {attraction.status === 'DELAYED'
+            ? 'TECHNICAL DELAY'
+            : attraction.status === 'AT CAPACITY'
+              ? 'AT CAPACITY'
+              : 'CLOSED'}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function BarDivider() {
+  return <div style={{ width: 1, height: '55%', background: '#1A1E26', flexShrink: 0 }} />;
+}
+
+/** Broadcast lower-third bar: name / wait / dots + closes pill. */
+function LowerThirdBar({
+  attraction,
+  glowRgb,
+  slideIndex,
+  slideCount,
+  closingTime,
+}: {
+  attraction: Attraction;
+  glowRgb: string;
+  slideIndex: number;
+  slideCount: number;
+  closingTime: string;
+}) {
+  const { brand, handle } = useTvBranding();
+  const brandLine = [brand, handle].filter(Boolean).join('  ·  ');
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '26vh',
+        background:
+          'linear-gradient(0deg, rgba(5,6,9,0.96) 60%, rgba(5,6,9,0.75) 85%, transparent 100%)',
+        borderTop: `1px solid rgba(${glowRgb},0.25)`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '3vw',
+        padding: '0 4vw',
+      }}
+    >
+      {/* Left: now haunting + name + tagline */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: '1.6vh',
+            fontWeight: 700,
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: `rgb(${glowRgb})`,
+            marginBottom: '1vh',
+          }}
+        >
+          Now Haunting
+        </div>
+        <div
+          style={{
+            fontSize: '3vh',
+            fontWeight: 500,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: '#fff',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {attraction.name}
+        </div>
+        {attraction.tagline && (
+          <div
+            style={{
+              marginTop: '0.8vh',
+              fontSize: '2vh',
+              fontWeight: 500,
+              color: '#64748B',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {attraction.tagline}
+          </div>
+        )}
+      </div>
+
+      <BarDivider />
+
+      {/* Centre: wait */}
+      <BarWait attraction={attraction} glowRgb={glowRgb} />
+
+      <BarDivider />
+
+      {/* Right: brand line + dots + closes pill */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '1.4vh',
+          textAlign: 'right',
+          flexShrink: 0,
+        }}
+      >
+        {brandLine && (
+          <span
+            style={{
+              fontSize: '1.4vh',
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: '#475569',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {brandLine}
+          </span>
+        )}
+        <ProgressDots count={slideCount} active={slideIndex} glowRgb={glowRgb} />
+        <ClosesPill closingTime={closingTime} />
+      </div>
     </div>
   );
 }
@@ -166,10 +291,12 @@ function AttractionSlide({
   attraction,
   slideIndex,
   slideCount,
+  closingTime,
 }: {
   attraction: Attraction;
   slideIndex: number;
   slideCount: number;
+  closingTime: string;
 }) {
   const bg = resolveBg(attraction);
   const logo = resolveLogo(attraction);
@@ -190,29 +317,17 @@ function AttractionSlide({
         />
       )}
 
-      {/* Bottom scrim */}
+      {/* Glowing logo art — centred in the area above the lower-third bar */}
       <div
         style={{
           position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(0deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.15) 38%, transparent 60%)',
-        }}
-      />
-
-      {/* Glowing logo art — top centre, with the wait time centre-stage beneath it */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '6vh',
+          top: 0,
           left: 0,
           right: 0,
-          bottom: '18vh',
+          bottom: '28%',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '5vh',
         }}
       >
         {logo && (
@@ -221,45 +336,210 @@ function AttractionSlide({
             src={logo}
             alt={attraction.name}
             style={{
-              height: '46vh',
-              maxWidth: '86vw',
+              height: '42vh',
+              maxWidth: '80vw',
               objectFit: 'contain',
               filter: resolveLogoGlow(attraction, 'strong'),
             }}
           />
         )}
-        <CentreWait attraction={attraction} glowRgb={glowRgb} />
       </div>
 
-      {/* Bottom-left: tagline + progress dots */}
-      <div style={{ position: 'absolute', left: '4.5vw', bottom: '8vh', maxWidth: '40vw' }}>
-        {attraction.tagline && (
-          <p
+      {/* Lower-third broadcast bar */}
+      <LowerThirdBar
+        attraction={attraction}
+        glowRgb={glowRgb}
+        slideIndex={slideIndex}
+        slideCount={slideCount}
+        closingTime={closingTime}
+      />
+    </div>
+  );
+}
+
+/* ── Shows slide — TV3-style hero + upcoming cards ── */
+
+function ShowsHero({ show, nextTime }: { show: Attraction; nextTime: string | null }) {
+  const bg = resolveBg(show);
+  const logo = resolveLogo(show);
+  const glowRgb = resolveGlowRgb(show) ?? FALLBACK_GLOW;
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        flex: 1,
+        minHeight: 0,
+        borderRadius: 6,
+        overflow: 'hidden',
+        background: '#0A0C10',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}
+    >
+      {bg && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={bg}
+          alt=""
+          decoding="async"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center center',
+          }}
+        />
+      )}
+      {/* Left-to-right cinematic scrim + glow-tinted wash */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.72) 32%, rgba(0,0,0,0.3) 62%, rgba(0,0,0,0.05) 100%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `linear-gradient(160deg, rgba(${glowRgb},0.18) 0%, transparent 55%)`,
+        }}
+      />
+
+      {/* Content — left stack */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          padding: '3vh 3.5vw',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          maxWidth: '62%',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '1.8vh',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.35em',
+            color: `rgb(${glowRgb})`,
+            textShadow: `0 0 18px rgba(${glowRgb},0.6)`,
+            marginBottom: '2vh',
+          }}
+        >
+          {show.status === 'DELAYED'
+            ? 'Technical Delay'
+            : show.status === 'CLOSED'
+              ? 'Closed'
+              : nextTime
+                ? 'Up Next'
+                : 'No More Shows Tonight'}
+        </div>
+
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logo}
+            alt={show.name}
+            decoding="async"
             style={{
+              height: '22vh',
+              width: 'auto',
+              maxWidth: '100%',
+              objectFit: 'contain',
+              objectPosition: 'left center',
+              filter: resolveLogoGlow(show, 'strong') || undefined,
+              marginBottom: '2.5vh',
+            }}
+          />
+        ) : (
+          <h2
+            style={{
+              fontSize: '6vh',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              color: '#fff',
               margin: '0 0 2.5vh',
-              fontSize: '2.6vh',
-              fontWeight: 600,
-              lineHeight: 1.3,
-              color: 'rgba(255,255,255,0.92)',
-              textShadow: '0 2px 20px rgba(0,0,0,0.8)',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              lineHeight: 1.05,
             }}
           >
-            {attraction.tagline}
-          </p>
+            {show.name}
+          </h2>
         )}
-        <ProgressDots count={slideCount} active={slideIndex} glowRgb={glowRgb} />
-      </div>
 
-      {/* Bottom-right: fear rating chip */}
-      {attraction.fear_rating != null && (
-        <div style={{ position: 'absolute', right: '4.5vw', bottom: '8vh', display: 'flex', alignItems: 'stretch' }}>
-          <FearChip rating={attraction.fear_rating} glowRgb={glowRgb} />
-        </div>
-      )}
+        {nextTime && show.status !== 'CLOSED' && (
+          <div
+            style={{
+              fontSize: '8vh',
+              fontWeight: 800,
+              lineHeight: 1,
+              fontVariantNumeric: 'tabular-nums',
+              color: `rgb(${glowRgb})`,
+              textShadow: `0 0 35px rgba(${glowRgb},0.55)`,
+            }}
+          >
+            {formatTime12h(nextTime)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UpcomingShowCard({ show, time }: { show: Attraction; time: string }) {
+  const glowRgb = resolveGlowRgb(show) ?? FALLBACK_GLOW;
+  return (
+    <div
+      style={{
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: '1.2vh',
+        padding: '0 1.6vw',
+        borderRadius: 4,
+        border: '1px solid #15181E',
+        borderLeft: `4px solid rgba(${glowRgb},0.65)`,
+        background: `linear-gradient(160deg, rgba(${glowRgb},0.08) 0%, rgba(0,0,0,0.3) 100%)`,
+        overflow: 'hidden',
+      }}
+    >
+      <span
+        style={{
+          fontSize: '3.5vh',
+          fontWeight: 600,
+          fontVariantNumeric: 'tabular-nums',
+          lineHeight: 1,
+          color: `rgb(${glowRgb})`,
+        }}
+      >
+        {formatTime12h(time)}
+      </span>
+      <span
+        style={{
+          fontSize: '2vh',
+          fontWeight: 600,
+          lineHeight: 1.2,
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          color: '#94A3B8',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {show.name}
+      </span>
     </div>
   );
 }
@@ -268,11 +548,29 @@ function ShowsSlide({
   shows,
   slideIndex,
   slideCount,
+  closingTime,
 }: {
   shows: Attraction[];
   slideIndex: number;
   slideCount: number;
+  closingTime: string;
 }) {
+  // Flatten all upcoming (show, time) pairs, chronological — same logic as TV3.
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const upcoming = shows
+    .flatMap((show) =>
+      (show.show_times ?? []).map((time) => {
+        const [h, m] = time.split(':');
+        return { show, time, minutes: parseInt(h, 10) * 60 + parseInt(m, 10) };
+      }),
+    )
+    .filter((e) => e.minutes > nowMinutes)
+    .sort((a, b) => a.minutes - b.minutes);
+
+  const heroShow = upcoming[0]?.show ?? shows[0] ?? null;
+  const upcomingCards = upcoming.slice(1, 6);
+
   return (
     <div
       style={{
@@ -281,59 +579,88 @@ function ShowsSlide({
         background: 'radial-gradient(ellipse at center, #14161D 0%, #07080B 75%)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 6vw',
+        padding: '4vh 4vw',
+        gap: '2vh',
       }}
     >
-      <h2
+      {/* Header */}
+      <div
         style={{
-          margin: '0 0 5vh',
-          fontSize: '3.2vw',
-          fontWeight: 800,
-          letterSpacing: '0.35em',
-          textIndent: '0.35em',
-          textTransform: 'uppercase',
-          color: '#fff',
-          textShadow: '0 0 30px rgba(255,255,255,0.25)',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          paddingBottom: '1.5vh',
+          borderBottom: '1px solid #15181E',
         }}
       >
-        Tonight&apos;s Shows
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '3vh', width: '100%', maxWidth: '60vw' }}>
-        {shows.map((show) => (
-          <div key={show.id} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '3vw' }}>
-            <span style={{ fontSize: '2.4vw', fontWeight: 700, color: 'rgba(255,255,255,0.92)', whiteSpace: 'nowrap' }}>
-              {show.name}
-            </span>
-            <span
-              style={{
-                fontSize: '1.8vw',
-                fontWeight: 600,
-                fontVariantNumeric: 'tabular-nums',
-                color: 'rgba(255,255,255,0.55)',
-                textAlign: 'right',
-              }}
-            >
-              {show.show_times && show.show_times.length > 0
-                ? show.show_times.map(formatTime12h).join('  ·  ')
-                : '—'}
-            </span>
-          </div>
-        ))}
+        <h1
+          style={{
+            fontSize: '2.6vh',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            color: '#E2E8F0',
+            margin: 0,
+          }}
+        >
+          Tonight&apos;s Shows
+        </h1>
+        <ClosesPill closingTime={closingTime} />
       </div>
-      <div style={{ position: 'absolute', left: '4vw', bottom: '7vh' }}>
+
+      {!heroShow ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#334155', fontSize: '2.4vh', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+            No shows configured
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Hero — next show */}
+          <ShowsHero show={heroShow} nextTime={getNextShowTime(heroShow.show_times)} />
+
+          {/* Upcoming show cards */}
+          {upcomingCards.length > 0 && (
+            <div style={{ flexShrink: 0, display: 'flex', gap: '1vw', height: '15vh' }}>
+              {upcomingCards.map(({ show, time }) => (
+                <UpcomingShowCard key={`${show.id}-${time}`} show={show} time={time} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Progress dots */}
+      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
         <ProgressDots count={slideCount} active={slideIndex} glowRgb={FALLBACK_GLOW} />
       </div>
     </div>
   );
 }
 
-function SlideView({ slide, slideIndex, slideCount }: { slide: Slide; slideIndex: number; slideCount: number }) {
+function SlideView({
+  slide,
+  slideIndex,
+  slideCount,
+  closingTime,
+}: {
+  slide: Slide;
+  slideIndex: number;
+  slideCount: number;
+  closingTime: string;
+}) {
   if (slide.kind === 'shows') {
-    return <ShowsSlide shows={slide.shows} slideIndex={slideIndex} slideCount={slideCount} />;
+    return <ShowsSlide shows={slide.shows} slideIndex={slideIndex} slideCount={slideCount} closingTime={closingTime} />;
   }
-  return <AttractionSlide attraction={slide.attraction} slideIndex={slideIndex} slideCount={slideCount} />;
+  return (
+    <AttractionSlide
+      attraction={slide.attraction}
+      slideIndex={slideIndex}
+      slideCount={slideCount}
+      closingTime={closingTime}
+    />
+  );
 }
 
 /* ── Main carousel ── */
@@ -455,7 +782,7 @@ export default function SpotlightCarousel({
       {/* Outgoing slide — stays fully visible underneath while the new one fades in */}
       {safePrev !== null && safePrev !== safeIndex && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-          <SlideView slide={slides[safePrev]} slideIndex={safePrev} slideCount={slides.length} />
+          <SlideView slide={slides[safePrev]} slideIndex={safePrev} slideCount={slides.length} closingTime={closingTime} />
         </div>
       )}
 
@@ -469,21 +796,7 @@ export default function SpotlightCarousel({
           animation: safePrev !== null ? `tvSlideFadeIn ${FADE_MS}ms ease both` : 'none',
         }}
       >
-        <SlideView slide={slides[safeIndex]} slideIndex={safeIndex} slideCount={slides.length} />
-      </div>
-
-      {/* Park brand strip — overlays the photo bottom edge */}
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 3,
-          pointerEvents: 'none',
-        }}
-      >
-        <TvFooter closeTime={closingTime ? formatTime12h(closingTime) : null} />
+        <SlideView slide={slides[safeIndex]} slideIndex={safeIndex} slideCount={slides.length} closingTime={closingTime} />
       </div>
     </div>
   );

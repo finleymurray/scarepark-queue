@@ -13,7 +13,6 @@ const TV_SCREENS = [
   { path: '/tv3', name: 'TV3', description: 'Show times with artwork' },
   { path: '/tv3.5', name: 'TV3.5', description: 'Fear rating' },
   { path: '/tv4', name: 'TV4', description: 'Auto-carousel of all TV views' },
-  { path: '/tv4.5', name: 'TV4.5', description: 'Lite carousel, Pi-friendly' },
   { path: '/tv5', name: 'TV5', description: 'Glitch logo montage' },
   { path: '/tv-ops', name: 'Operations View', description: 'Live ops dashboard' },
 ];

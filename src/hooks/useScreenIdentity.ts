@@ -10,7 +10,7 @@ const POLL_INTERVAL = 30_000;
 
 /** Static TV routes that exist in the build. */
 const STATIC_SCREEN_PATHS = new Set([
-  '/tv', '/tv1', '/tv2', '/tv2.5', '/tv3', '/tv3.5', '/tv4', '/tv4.5', '/tv5', '/tv-ops',
+  '/tv', '/tv1', '/tv2', '/tv2.5', '/tv3', '/tv3.5', '/tv4', '/tv5', '/tv-ops',
 ]);
 
 /**
@@ -39,7 +39,7 @@ export function isValidScreenPath(path: string): boolean {
  * If the device was NOT registered via /screen (no localStorage ID),
  * this hook does nothing — the page works standalone.
  *
- * @param pagePath  The current page path (e.g. '/tv1', '/tv4.5', '/queue/the-bunker')
+ * @param pagePath  The current page path (e.g. '/tv1', '/tv4', '/queue/the-bunker')
  */
 export function useScreenIdentity(pagePath: string) {
   const screenIdRef = useRef<string | null>(null);
