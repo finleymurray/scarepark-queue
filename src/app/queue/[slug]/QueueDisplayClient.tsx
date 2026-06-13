@@ -43,7 +43,7 @@ export default function QueueDisplayClient({ slug, identityPath }: { slug: strin
     async function fetchAttraction() {
       const { data } = await supabase
         .from('attractions')
-        .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating')
+        .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb')
         .eq('slug', slug)
         .single();
 

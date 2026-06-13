@@ -24,7 +24,6 @@ interface NewAttractionPayload {
   queueBgFile: File | null;
   glowHex: string | null;
   textColorHex: string | null;
-  fearRating: number | null;
 }
 
 function slugify(name: string): string {
@@ -120,11 +119,11 @@ const WIZARD_STEPS_RIDE = ['Basics', 'Artwork', 'Theming', 'Review'];
 const WIZARD_STEPS_SHOW = ['Basics', 'Artwork', 'Theming', 'Show Times'];
 
 function ReviewSummary({
-  name, type, slug, logoFile, bgFile, queueBgFile, glowHex, textHex, fearRating, showTimes, targetDispatch,
+  name, type, slug, logoFile, bgFile, queueBgFile, glowHex, textHex, showTimes, targetDispatch,
 }: {
   name: string; type: AttractionType; slug: string;
   logoFile: File | null; bgFile: File | null; queueBgFile: File | null;
-  glowHex: string | null; textHex: string | null; fearRating: number | null;
+  glowHex: string | null; textHex: string | null;
   showTimes: string[]; targetDispatch: number;
 }) {
   const assets = [logoFile && 'Logo', bgFile && 'Background', queueBgFile && 'Queue background'].filter(Boolean);
@@ -144,7 +143,6 @@ function ReviewSummary({
       <Row k="Assets" v={assets.length ? assets.join(', ') : 'None'} />
       <Row k="Glow" v={glowHex ? <span style={{ color: glowHex }}>{glowHex}</span> : 'Default'} />
       <Row k="Queue text" v={textHex ? <span style={{ color: textHex }}>{textHex}</span> : 'Default'} />
-      {type === 'ride' && <Row k="Fear rating" v={fearRating ? `${fearRating} 💀` : '—'} />}
       {type === 'show' && <Row k="Show times" v={showTimes.length ? showTimes.join(', ') : 'None'} />}
     </div>
   );
@@ -207,7 +205,6 @@ async function insertAttraction(
       glow_rgb: payload.glowHex ? hexToRgbString(payload.glowHex) : null,
       text_color: payload.textColorHex,
       text_rgb: payload.textColorHex ? hexToRgbString(payload.textColorHex).replace(/\s/g, '') : null,
-      fear_rating: payload.fearRating,
     })
     .select('id')
     .single();
@@ -242,7 +239,6 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
   const [glowEnabled, setGlowEnabled] = useState(false);
   const [textHex, setTextHex] = useState('#fbbf24');
   const [textEnabled, setTextEnabled] = useState(false);
-  const [fearRating, setFearRating] = useState<number | null>(null);
   const [showTimes, setShowTimes] = useState<string[]>([]);
   const [newShowTime, setNewShowTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -325,7 +321,6 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
         queueBgFile,
         glowHex: glowEnabled ? glowHex : null,
         textColorHex: textEnabled ? textHex : null,
-        fearRating: type === 'ride' ? fearRating : null,
       }, performer, nextOrder,
         uploadedUrls.current['logo'] ?? null,
         uploadedUrls.current['bg'] ?? null,
@@ -479,21 +474,6 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
               )}
             </div>
 
-            {type === 'ride' && (
-              <div>
-                <label className="block text-[#94A3B8] text-xs font-semibold mb-2" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>Fear rating</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setFearRating(fearRating === n ? null : n)}
-                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors border ${fearRating === n ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-transparent text-[#94A3B8] border-[#2E3543]'}`}
-                      aria-pressed={fearRating === n}
-                    >💀 {n}</button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -523,12 +503,12 @@ function NewAttractionWizard({ onCreated, performer }: { onCreated: () => void; 
                 </div>
               )}
             </div>
-            <ReviewSummary name={name} type={type} slug={slug} logoFile={logoFile} bgFile={bgFile} queueBgFile={queueBgFile} glowHex={glowEnabled ? glowHex : null} textHex={textEnabled ? textHex : null} fearRating={null} showTimes={showTimes} targetDispatch={targetDispatch} />
+            <ReviewSummary name={name} type={type} slug={slug} logoFile={logoFile} bgFile={bgFile} queueBgFile={queueBgFile} glowHex={glowEnabled ? glowHex : null} textHex={textEnabled ? textHex : null} showTimes={showTimes} targetDispatch={targetDispatch} />
           </div>
         )}
 
         {step === 3 && type === 'ride' && (
-          <ReviewSummary name={name} type={type} slug={slug} logoFile={logoFile} bgFile={bgFile} queueBgFile={queueBgFile} glowHex={glowEnabled ? glowHex : null} textHex={textEnabled ? textHex : null} fearRating={fearRating} showTimes={[]} targetDispatch={targetDispatch} />
+          <ReviewSummary name={name} type={type} slug={slug} logoFile={logoFile} bgFile={bgFile} queueBgFile={queueBgFile} glowHex={glowEnabled ? glowHex : null} textHex={textEnabled ? textHex : null} showTimes={[]} targetDispatch={targetDispatch} />
         )}
 
         {error && (

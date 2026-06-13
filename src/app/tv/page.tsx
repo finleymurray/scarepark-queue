@@ -11,7 +11,6 @@ const TV_SCREENS = [
   { path: '/tv2', name: 'TV2', description: 'Ride banners with scrolling ticker' },
   { path: '/tv2.5', name: 'TV2.5', description: 'Compact 4-up ride banners' },
   { path: '/tv3', name: 'TV3', description: 'Show times with artwork' },
-  { path: '/tv3.5', name: 'TV3.5', description: 'Fear rating' },
   { path: '/tv4', name: 'TV4', description: 'Auto-carousel of all TV views' },
   { path: '/tv5', name: 'TV5', description: 'Glitch logo montage' },
   { path: '/tv-ops', name: 'Operations View', description: 'Live ops dashboard' },

@@ -20,7 +20,6 @@ const SYSTEM_PATHS = [
   { value: '/tv2', label: 'TV2 — Ride Banners' },
   { value: '/tv2.5', label: 'TV2.5 — Compact Banners' },
   { value: '/tv3', label: 'TV3 — Show Times' },
-  { value: '/tv3.5', label: 'TV3.5 — Fear Rating' },
   { value: '/tv4', label: 'TV4 — Carousel' },
   { value: '/tv5', label: 'TV5 — Glitch Montage' },
   { value: '/tv-ops', label: 'Operations View' },

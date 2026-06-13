@@ -20,7 +20,6 @@ export interface Attraction {
   glow_rgb?: string | null;
   text_color?: string | null;
   text_rgb?: string | null;
-  fear_rating?: number | null;
   tagline?: string | null;
 }
 

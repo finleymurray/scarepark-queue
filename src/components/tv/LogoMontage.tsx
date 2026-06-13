@@ -30,7 +30,7 @@ const PRELOAD_TIMEOUT_MS = 5000;
 const FALLBACK_GLOW = '200,200,210';
 
 const MONTAGE_COLUMNS =
-  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
+  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,tagline';
 
 function preloadImage(src: string): Promise<void> {
   return new Promise((resolve) => {

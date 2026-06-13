@@ -129,48 +129,6 @@ function RgbField({
   );
 }
 
-/** 5 tappable skull glyphs; tap to set, tap current value to clear. */
-function FearRatingPicker({
-  value,
-  onSave,
-}: {
-  value: number | null;
-  onSave: (v: number | null) => void;
-}) {
-  return (
-    <div>
-      <label style={FIELD_LABEL}>Fear rating</label>
-      <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((n) => {
-          const active = value !== null && n <= value;
-          return (
-            <button
-              key={n}
-              type="button"
-              onClick={() => onSave(value === n ? null : n)}
-              aria-label={`Fear rating ${n}${value === n ? ' (tap to clear)' : ''}`}
-              aria-pressed={value === n}
-              style={{
-                flex: 1, padding: '8px 0', fontSize: 18, lineHeight: 1,
-                borderRadius: radius.sm, cursor: 'pointer',
-                background: active ? 'rgba(239,68,68,0.12)' : surface.control,
-                border: `1px solid ${active ? 'rgba(239,68,68,0.45)' : border.default}`,
-                opacity: active ? 1 : 0.45,
-                transition: 'all 0.15s',
-              }}
-            >
-              💀
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-[#475569] text-[11px] mt-1.5">
-        {value ? `${value} of 5 — tap the current rating to clear it.` : 'Not rated — tap a skull to set.'}
-      </p>
-    </div>
-  );
-}
-
 /* ── Asset re-upload ── */
 
 const ASSET_KINDS = [
@@ -365,17 +323,6 @@ function AttractionEditPanel({
         </div>
       </div>
 
-      {/* Fear rating */}
-      <FearRatingPicker
-        value={attraction.fear_rating ?? null}
-        onSave={(v) => saveFields(
-          { fear_rating: v },
-          'Fear rating',
-          attraction.fear_rating != null ? String(attraction.fear_rating) : null,
-          v != null ? String(v) : null,
-        )}
-      />
-
       {/* Dispatch */}
       {attraction.attraction_type === 'ride' && (
         <AutoSaveText
@@ -518,7 +465,7 @@ export default function AttractionDetailsPage() {
 
       const { data, error } = await supabase
         .from('attractions')
-        .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline')
+        .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,tagline')
         .order('sort_order', { ascending: true });
       if (error && process.env.NODE_ENV === 'development') console.error('Error fetching attractions:', error);
       setAttractions(data || []);
@@ -551,7 +498,7 @@ export default function AttractionDetailsPage() {
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px' }}>
         <h2 className="text-2xl font-bold" style={{ margin: '0 0 6px' }}>Attraction Details</h2>
         <p style={{ color: textTok.secondary, fontSize: 13, margin: '0 0 24px' }}>
-          Taglines, fear ratings, theming and artwork. Changes save automatically.
+          Taglines, theming and artwork. Changes save automatically.
         </p>
 
         {attractions.length === 0 && (

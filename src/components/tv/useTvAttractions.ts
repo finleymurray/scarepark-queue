@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Attraction } from '@/types/database';
 
 const ATTRACTION_COLUMNS =
-  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating,tagline';
+  'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,tagline';
 
 /**
  * Single attractions fetch + single realtime channel, shared by the TV

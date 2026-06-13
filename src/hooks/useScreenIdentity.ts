@@ -10,7 +10,7 @@ const POLL_INTERVAL = 30_000;
 
 /** Static TV routes that exist in the build. */
 const STATIC_SCREEN_PATHS = new Set([
-  '/tv', '/tv1', '/tv2', '/tv2.5', '/tv3', '/tv3.5', '/tv4', '/tv5', '/tv-ops',
+  '/tv', '/tv1', '/tv2', '/tv2.5', '/tv3', '/tv4', '/tv5', '/tv-ops',
 ]);
 
 /**

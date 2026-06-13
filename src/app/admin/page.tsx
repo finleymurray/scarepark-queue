@@ -1016,7 +1016,7 @@ export default function AdminDashboard() {
   const refetchAttractions = useCallback(async () => {
     const { data, error } = await supabase
       .from('attractions')
-      .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating')
+      .select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb')
       .order('sort_order', { ascending: true });
     if (!error && data) setAttractions(data);
   }, []);
@@ -1041,7 +1041,7 @@ export default function AdminDashboard() {
       setDisplayName(auth.displayName || '');
 
       const [attractionsRes, openingRes, closingRes, autoSortRes] = await Promise.all([
-        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,fear_rating').order('sort_order', { ascending: true }),
+        supabase.from('attractions').select('id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,target_dispatch_seconds,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb').order('sort_order', { ascending: true }),
         supabase.from('park_settings').select('key,value').eq('key', 'opening_time').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'closing_time').single(),
         supabase.from('park_settings').select('key,value').eq('key', 'auto_sort_by_wait').single(),
