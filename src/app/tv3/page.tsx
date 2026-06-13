@@ -488,10 +488,7 @@ export default function TV3ShowTimes() {
       {/* Footer — park brand strip */}
       {!isEmbedded && (
         <footer style={{ flexShrink: 0, marginTop: '1vw' }}>
-          <TvFooter
-            closeTime={closingTime ? formatTime12h(closingTime) : null}
-            center="Share your screams · #ImmersiveCore"
-          />
+          <TvFooter closeTime={closingTime ? formatTime12h(closingTime) : null} />
         </footer>
       )}
     </div>
