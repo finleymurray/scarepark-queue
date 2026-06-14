@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import AppSwitcher from './AppSwitcher';
 import { surface, border, text, accents, radius } from '@/lib/theme';
 
@@ -10,6 +11,9 @@ const PRIMARY_TABS = [
   { label: 'Operations', href: '/admin/operations' },
   { label: 'Sign-Off', href: '/admin/signoff' },
   { label: 'Reports', href: '/admin/reports' },
+  { label: 'Incidents', href: '/admin/incidents' },
+  { label: 'Screens', href: '/admin/screens' },
+  { label: 'Alerts', href: '/admin/alerts' },
 ];
 
 type MoreItem = { label: string; href: string };
@@ -24,17 +28,11 @@ const MORE_SECTIONS: MoreSection[] = [
     ],
   },
   {
-    heading: 'Monitoring',
+    heading: 'Records',
     items: [
-      { label: 'Screens', href: '/admin/screens' },
+      { label: 'Analytics', href: '/admin/analytics' },
       { label: 'Logs', href: '/admin/logs' },
-      { label: 'Incidents', href: '/admin/incidents' },
-      { label: 'Alerts', href: '/admin/alerts' },
     ],
-  },
-  {
-    heading: 'Insights',
-    items: [{ label: 'Analytics', href: '/admin/analytics' }],
   },
   {
     heading: 'People',
@@ -66,6 +64,25 @@ export default function AdminNav({
   const moreRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const [reviewCount, setReviewCount] = useState(0); // incidents awaiting review
+
+  // Badge: count of incidents submitted and awaiting review, kept live.
+  useEffect(() => {
+    let active = true;
+    async function loadCount() {
+      const { count } = await supabase
+        .from('incidents')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'submitted');
+      if (active) setReviewCount(count ?? 0);
+    }
+    loadCount();
+    const channel = supabase
+      .channel('adminnav-incidents')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, loadCount)
+      .subscribe();
+    return () => { active = false; supabase.removeChannel(channel); };
+  }, []);
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
@@ -145,9 +162,22 @@ export default function AdminNav({
                   flexShrink: 0,
                   borderBottom: active ? `2px solid ${accents.admin.base}` : '2px solid transparent',
                   transition: 'color 0.15s, border-color 0.15s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
                 {tab.label}
+                {tab.href === '/admin/incidents' && reviewCount > 0 && (
+                  <span style={{
+                    minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9,
+                    background: '#EF4444', color: '#fff', fontSize: 11, fontWeight: 700,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontVariantNumeric: 'tabular-nums', lineHeight: 1,
+                  }}>
+                    {reviewCount}
+                  </span>
+                )}
               </a>
             );
           })}

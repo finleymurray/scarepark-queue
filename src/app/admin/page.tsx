@@ -10,7 +10,7 @@ import { logStatusChange, resolveDelay, DELAY_REASONS } from '@/lib/statusLog';
 import { resolveLogo, resolveLogoGlow, resolveGlowRgb } from '@/lib/logos';
 import { getAllSignoffStatuses, getTodayDateStr } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
-import type { Attraction, AttractionStatus, AttractionType, ParkSetting, DelayReason } from '@/types/database';
+import type { Attraction, AttractionStatus, AttractionType, ParkSetting, DelayReason, OperatorSession } from '@/types/database';
 import { surface, border, text as textTok, accents, radius, FONT_NUM, microLabel, card, controlButton, primaryButton } from '@/lib/theme';
 import { useToasts, ToastStack } from '@/components/ui/Toast';
 
@@ -95,6 +95,173 @@ function formatTime12h(time: string): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
   return `${hour12}:${m} ${ampm}`;
+}
+
+/* ── Operator candidate type ── */
+type CandidateOperator = { user_id: string; display_name: string | null; email: string | null };
+
+function operatorInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function operatorShortName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return name;
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+function formatSince(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
+/* ── Operator Pill ── */
+function OperatorPill({ session, onClick }: { session: OperatorSession | undefined; onClick: () => void }) {
+  if (session) {
+    return (
+      <button
+        onClick={onClick}
+        title="Manage operator"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
+          padding: '4px 10px 4px 4px', borderRadius: 20,
+          background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.28)',
+        }}
+      >
+        <span style={{
+          width: 20, height: 20, borderRadius: '50%', background: accents.control.strong,
+          color: '#fff', fontSize: 9, fontWeight: 800, display: 'inline-flex',
+          alignItems: 'center', justifyContent: 'center', letterSpacing: '0.02em',
+        }}>
+          {operatorInitials(session.operator_name)}
+        </span>
+        <span style={{ color: '#4ADE80', fontSize: 11, fontWeight: 600, letterSpacing: '0.01em' }}>
+          {operatorShortName(session.operator_name)}
+        </span>
+      </button>
+    );
+  }
+  return (
+    <button
+      onClick={onClick}
+      title="Assign operator"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+        padding: '4px 12px', borderRadius: 20,
+        background: 'transparent', border: `1px dashed ${border.strong}`,
+        color: textTok.muted, fontSize: 11, fontWeight: 600,
+      }}
+    >
+      No operator
+    </button>
+  );
+}
+
+/* ── Operator Manage Modal ── */
+function OperatorModal({
+  open,
+  attractionName,
+  session,
+  candidates,
+  onLogout,
+  onAssign,
+  onClose,
+}: {
+  open: boolean;
+  attractionName: string;
+  session: OperatorSession | undefined;
+  candidates: CandidateOperator[];
+  onLogout: () => Promise<void>;
+  onAssign: (c: CandidateOperator) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { if (open) setSelected(''); }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 22, maxWidth: 340, width: '100%' }}
+      >
+        <h2 style={{ color: textTok.primary, fontSize: 15, fontWeight: 600, margin: '0 0 14px' }}>
+          Operator — {attractionName}
+        </h2>
+
+        {session ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, marginBottom: 16 }}>
+            <span style={{ width: 30, height: 30, borderRadius: '50%', background: accents.control.strong, color: '#fff', fontSize: 11, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {operatorInitials(session.operator_name)}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ color: textTok.primary, fontSize: 13, fontWeight: 600 }}>{session.operator_name}</div>
+              <div style={{ color: textTok.muted, fontSize: 11 }}>Since {formatSince(session.started_at)}</div>
+            </div>
+          </div>
+        ) : (
+          <p style={{ color: textTok.muted, fontSize: 13, margin: '0 0 16px' }}>No operator on this attraction.</p>
+        )}
+
+        {session && (
+          <button
+            onClick={async () => { setBusy(true); await onLogout(); setBusy(false); }}
+            disabled={busy}
+            style={{ ...controlButton, width: '100%', minHeight: 42, fontSize: 13, fontWeight: 600, borderRadius: 10, color: '#F87171', borderColor: 'rgba(239,68,68,0.4)', marginBottom: 16, opacity: busy ? 0.5 : 1, cursor: busy ? 'not-allowed' : 'pointer' }}
+          >
+            Log out operator
+          </button>
+        )}
+
+        <label style={{ display: 'block', color: textTok.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+          Reassign to
+        </label>
+        <select
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+          style={{ width: '100%', padding: '10px 12px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.primary, fontSize: 13, outline: 'none', marginBottom: 10 }}
+        >
+          <option value="">Select operator…</option>
+          {candidates.map((c) => (
+            <option key={c.user_id} value={c.user_id}>{c.display_name || c.email || c.user_id}</option>
+          ))}
+        </select>
+        <button
+          onClick={async () => {
+            const c = candidates.find((x) => x.user_id === selected);
+            if (!c) return;
+            setBusy(true);
+            await onAssign(c);
+            setBusy(false);
+          }}
+          disabled={busy || !selected}
+          style={{ ...primaryButton('admin'), width: '100%', minHeight: 42, fontSize: 13, borderRadius: 10, opacity: (busy || !selected) ? 0.4 : 1, cursor: (busy || !selected) ? 'not-allowed' : 'pointer', marginBottom: 10 }}
+        >
+          Assign
+        </button>
+
+        <button
+          onClick={onClose}
+          style={{ ...controlButton, width: '100%', minHeight: 42, fontSize: 13, fontWeight: 600, borderRadius: 10 }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /* ── Confirm Modal ── */
@@ -546,6 +713,8 @@ const RideControl = React.memo(function RideControl({
   isFirst,
   isLast,
   signoffStatus,
+  operatorSession,
+  onManageOperator,
 }: {
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
@@ -555,6 +724,8 @@ const RideControl = React.memo(function RideControl({
   isFirst: boolean;
   isLast: boolean;
   signoffStatus?: AttractionSignoffStatus;
+  operatorSession?: OperatorSession;
+  onManageOperator: (id: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -678,6 +849,11 @@ const RideControl = React.memo(function RideControl({
             {formatElapsed(delayElapsed)}
           </span>
         )}
+      </div>
+
+      {/* Operator pill — centred */}
+      <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+        <OperatorPill session={operatorSession} onClick={() => onManageOperator(attraction.id)} />
       </div>
 
       {/* Logo + Name — centred */}
@@ -831,6 +1007,8 @@ const ShowControl = React.memo(function ShowControl({
   isFirst,
   isLast,
   signoffStatus,
+  operatorSession,
+  onManageOperator,
 }: {
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
@@ -840,6 +1018,8 @@ const ShowControl = React.memo(function ShowControl({
   isFirst: boolean;
   isLast: boolean;
   signoffStatus?: AttractionSignoffStatus;
+  operatorSession?: OperatorSession;
+  onManageOperator: (id: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -928,6 +1108,11 @@ const ShowControl = React.memo(function ShowControl({
           const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           handleUpdate({ name: newName, slug: newSlug });
         }} />
+      </div>
+
+      {/* Operator pill — centred */}
+      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+        <OperatorPill session={operatorSession} onClick={() => onManageOperator(attraction.id)} />
       </div>
 
       {/* Sign-off badge — centred */}
@@ -1020,6 +1205,9 @@ export default function AdminDashboard() {
   const [displayName, setDisplayName] = useState('');
   const [autoSort, setAutoSort] = useState(false);
   const [signoffStatuses, setSignoffStatuses] = useState<Map<string, AttractionSignoffStatus>>(new Map());
+  const [operatorSessions, setOperatorSessions] = useState<Map<string, OperatorSession>>(new Map());
+  const [candidateOperators, setCandidateOperators] = useState<CandidateOperator[]>([]);
+  const [operatorModalId, setOperatorModalId] = useState<string | null>(null);
   const [delayModal, setDelayModal] = useState<{
     attractionId: string;
     attractionName: string;
@@ -1040,6 +1228,19 @@ export default function AdminDashboard() {
     if (!error && data) setAttractions(data);
   }, []);
 
+  /** Fetch all currently-active operator sessions (ended_at null) → map by attraction. */
+  const refetchOperatorSessions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('operator_sessions')
+      .select('id,attraction_id,user_id,operator_name,operator_email,started_at,ended_at,ended_reason,log_date')
+      .is('ended_at', null);
+    if (!error && data) {
+      const map = new Map<string, OperatorSession>();
+      for (const s of data as OperatorSession[]) map.set(s.attraction_id, s);
+      setOperatorSessions(map);
+    }
+  }, []);
+
   // Keep refs in sync for stable callbacks
   attractionsRef.current = attractions;
   userEmailRef.current = userEmail;
@@ -1049,6 +1250,7 @@ export default function AdminDashboard() {
     let attractionsChannel: ReturnType<typeof supabase.channel> | null = null;
     let settingsChannel: ReturnType<typeof supabase.channel> | null = null;
     let signoffChannel: ReturnType<typeof supabase.channel> | null = null;
+    let operatorChannel: ReturnType<typeof supabase.channel> | null = null;
 
     async function init() {
       const auth = await checkAuth();
@@ -1077,6 +1279,26 @@ export default function AdminDashboard() {
       }
       if (autoSortRes.data) {
         setAutoSort(autoSortRes.data.value === 'true');
+      }
+
+      // Active operator sessions + candidate operators
+      await refetchOperatorSessions();
+      const { data: candData } = await supabase
+        .from('signoff_pins')
+        .select('user_id, user_roles!inner(id, display_name, email)');
+      if (candData) {
+        const seen = new Set<string>();
+        const cands: CandidateOperator[] = [];
+        type CandRole = { id: string; display_name: string | null; email: string | null };
+        type CandRow = { user_id: string; user_roles: CandRole | CandRole[] };
+        for (const row of candData as unknown as CandRow[]) {
+          const ur = Array.isArray(row.user_roles) ? row.user_roles[0] : row.user_roles;
+          if (!ur || seen.has(row.user_id)) continue;
+          seen.add(row.user_id);
+          cands.push({ user_id: row.user_id, display_name: ur.display_name, email: ur.email });
+        }
+        cands.sort((a, b) => (a.display_name || a.email || '').localeCompare(b.display_name || b.email || ''));
+        setCandidateOperators(cands);
       }
 
       // Fetch signoff statuses
@@ -1150,6 +1372,16 @@ export default function AdminDashboard() {
           }
         )
         .subscribe();
+
+      // Operator sessions realtime — refetch active set on any change
+      operatorChannel = supabase
+        .channel('admin-operator-sessions')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'operator_sessions' },
+          () => { refetchOperatorSessions(); }
+        )
+        .subscribe();
     }
 
     init();
@@ -1158,8 +1390,9 @@ export default function AdminDashboard() {
       if (attractionsChannel) supabase.removeChannel(attractionsChannel);
       if (settingsChannel) supabase.removeChannel(settingsChannel);
       if (signoffChannel) supabase.removeChannel(signoffChannel);
+      if (operatorChannel) supabase.removeChannel(operatorChannel);
     };
-  }, [router]);
+  }, [router, refetchOperatorSessions]);
 
   const handleUpdate = useCallback(async (id: string, updates: Partial<Attraction>) => {
     const current = attractionsRef.current.find((a) => a.id === id);
@@ -1591,6 +1824,100 @@ export default function AdminDashboard() {
     });
   }
 
+  const handleOperatorLogout = useCallback(async (attractionId: string) => {
+    const session = operatorSessions.get(attractionId);
+    if (!session) return;
+    const admin = displayNameRef.current || userEmailRef.current;
+    const { error } = await supabase
+      .from('operator_sessions')
+      .update({ ended_at: new Date().toISOString(), ended_reason: 'logout' })
+      .eq('id', session.id);
+    if (error) {
+      console.error('Operator logout failed:', error);
+      pushToast('error', `Failed to log out ${session.operator_name}`);
+      return;
+    }
+    // Optimistic local update
+    setOperatorSessions((prev) => {
+      const next = new Map(prev);
+      next.delete(attractionId);
+      return next;
+    });
+    const attractionName = attractionsRef.current.find((a) => a.id === attractionId)?.name || '';
+    try {
+      await logAudit({
+        actionType: 'operator_logout',
+        attractionId,
+        attractionName,
+        performedBy: session.operator_name,
+        details: `Logged out by ${admin}`,
+      });
+    } catch (e) {
+      console.error('Audit logging failed:', e);
+    }
+    pushToast('success', `${session.operator_name} logged out`);
+  }, [operatorSessions, pushToast]);
+
+  const handleOperatorAssign = useCallback(async (attractionId: string, candidate: CandidateOperator) => {
+    const admin = displayNameRef.current || userEmailRef.current;
+    const name = candidate.display_name || candidate.email || candidate.user_id;
+    const today = getTodayDateStr();
+
+    // End any active session for this attraction (takeover)
+    const existing = operatorSessions.get(attractionId);
+    if (existing) {
+      const { error: endErr } = await supabase
+        .from('operator_sessions')
+        .update({ ended_at: new Date().toISOString(), ended_reason: 'takeover' })
+        .eq('id', existing.id);
+      if (endErr) {
+        console.error('Operator takeover (end) failed:', endErr);
+        pushToast('error', `Failed to reassign on ${name}`);
+        return;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('operator_sessions')
+      .insert({
+        attraction_id: attractionId,
+        user_id: candidate.user_id,
+        operator_name: name,
+        operator_email: candidate.email,
+        log_date: today,
+      })
+      .select('id,attraction_id,user_id,operator_name,operator_email,started_at,ended_at,ended_reason,log_date')
+      .single();
+
+    if (error || !data) {
+      console.error('Operator assign failed:', error);
+      pushToast('error', `Failed to assign ${name}`);
+      return;
+    }
+
+    // Optimistic local update
+    setOperatorSessions((prev) => {
+      const next = new Map(prev);
+      next.set(attractionId, data as OperatorSession);
+      return next;
+    });
+
+    const attractionName = attractionsRef.current.find((a) => a.id === attractionId)?.name || '';
+    try {
+      await logAudit({
+        actionType: 'operator_login',
+        attractionId,
+        attractionName,
+        performedBy: name,
+        details: `Assigned by ${admin}`,
+      });
+    } catch (e) {
+      console.error('Audit logging failed:', e);
+    }
+    pushToast('success', `${name} assigned`);
+    setOperatorModalId(null);
+  }, [operatorSessions, pushToast]);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: surface.page }}>
@@ -1637,6 +1964,17 @@ export default function AdminDashboard() {
         attractionName={delayModal?.attractionName || ''}
         onConfirm={handleDelayConfirm}
         onCancel={() => setDelayModal(null)}
+      />
+
+      {/* Operator Manage Modal */}
+      <OperatorModal
+        open={!!operatorModalId}
+        attractionName={attractions.find((a) => a.id === operatorModalId)?.name || ''}
+        session={operatorModalId ? operatorSessions.get(operatorModalId) : undefined}
+        candidates={candidateOperators}
+        onLogout={async () => { if (operatorModalId) await handleOperatorLogout(operatorModalId); }}
+        onAssign={async (c) => { if (operatorModalId) await handleOperatorAssign(operatorModalId, c); }}
+        onClose={() => setOperatorModalId(null)}
       />
 
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
@@ -1809,6 +2147,8 @@ export default function AdminDashboard() {
             isFirst: idx === 0,
             isLast: idx === attractions.length - 1,
             signoffStatus: signoffStatuses.get(attraction.id),
+            operatorSession: operatorSessions.get(attraction.id),
+            onManageOperator: (id: string) => setOperatorModalId(id),
           };
           return attraction.attraction_type === 'show'
             ? <ShowControl key={attraction.id} {...common} />
