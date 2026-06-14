@@ -541,6 +541,7 @@ const RideControl = React.memo(function RideControl({
   attraction,
   onUpdate,
   onDelete,
+  onRequestIncident,
   onMove,
   isFirst,
   isLast,
@@ -549,6 +550,7 @@ const RideControl = React.memo(function RideControl({
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
   onDelete: (id: string, name: string) => void;
+  onRequestIncident: (id: string, name: string) => void;
   onMove?: (dir: 'up' | 'down') => void;
   isFirst: boolean;
   isLast: boolean;
@@ -794,6 +796,17 @@ const RideControl = React.memo(function RideControl({
         onSave={(val) => handleUpdate({ target_dispatch_seconds: val })}
       />
 
+      {/* Request incident report */}
+      <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 12, width: '100%' }}>
+        <button
+          onClick={() => onRequestIncident(attraction.id, attraction.name)}
+          className="w-full py-2 text-xs text-[#94A3B8] hover:text-[#FBBF24] hover:bg-[#F59E0B]/10
+                     rounded-md transition-colors"
+        >
+          Request incident report
+        </button>
+      </div>
+
       {/* Remove */}
       <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 12, width: '100%' }}>
         <button
@@ -813,6 +826,7 @@ const ShowControl = React.memo(function ShowControl({
   attraction,
   onUpdate,
   onDelete,
+  onRequestIncident,
   onMove,
   isFirst,
   isLast,
@@ -821,6 +835,7 @@ const ShowControl = React.memo(function ShowControl({
   attraction: Attraction;
   onUpdate: (id: string, updates: Partial<Attraction>) => Promise<void>;
   onDelete: (id: string, name: string) => void;
+  onRequestIncident: (id: string, name: string) => void;
   onMove?: (dir: 'up' | 'down') => void;
   isFirst: boolean;
   isLast: boolean;
@@ -976,8 +991,12 @@ const ShowControl = React.memo(function ShowControl({
             Clear Times
           </button>
         )}
+        <button onClick={() => onRequestIncident(attraction.id, attraction.name)}
+          style={{ flex: 1, padding: '9px 8px', background: 'transparent', border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.muted, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+          Request report
+        </button>
         <button onClick={() => onDelete(attraction.id, attraction.name)}
-          style={{ flex: sortedTimes.length > 0 ? '0 0 auto' : 1, padding: '9px 12px', background: 'transparent', border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.muted, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+          style={{ flex: '0 0 auto', padding: '9px 12px', background: 'transparent', border: `1px solid ${border.strong}`, borderRadius: 8, color: textTok.muted, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
           Remove
         </button>
       </div>
@@ -1281,7 +1300,52 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error('Audit logging failed:', e);
     }
+
+    // Prompt Control to file an incident report for this delay.
+    try {
+      await supabase.from('incidents').insert({
+        attraction_id: attractionId,
+        attraction_name: attractionName,
+        log_date: getTodayDateStr(),
+        source: 'delay_auto',
+        status: 'requested',
+        delay_reason: reason,
+        requested_by: 'System (delay)',
+      });
+    } catch (e) {
+      console.error('Failed to create delay incident request:', e);
+    }
   }, [delayModal, pushToast]);
+
+  const handleRequestIncident = useCallback(async (id: string, name: string) => {
+    // Don't duplicate an outstanding request for the same attraction.
+    const { data: existing } = await supabase
+      .from('incidents')
+      .select('id')
+      .eq('attraction_id', id)
+      .eq('status', 'requested')
+      .limit(1);
+    if (existing && existing.length > 0) {
+      pushToast('error', `A report is already pending for ${name}`);
+      return;
+    }
+
+    const requester = displayNameRef.current || userEmailRef.current;
+    const { error } = await supabase.from('incidents').insert({
+      attraction_id: id,
+      attraction_name: name,
+      log_date: getTodayDateStr(),
+      source: 'admin_request',
+      status: 'requested',
+      requested_by: requester,
+    });
+    if (error) {
+      console.error('Failed to request incident report:', error);
+      pushToast('error', `Failed to request report for ${name}`);
+      return;
+    }
+    pushToast('success', 'Incident report requested from Control');
+  }, [pushToast]);
 
   const handleOpeningTimeUpdate = useCallback(async (value: string) => {
     const { error } = await supabase
@@ -1740,6 +1804,7 @@ export default function AdminDashboard() {
             attraction,
             onUpdate: handleUpdate,
             onDelete: (id: string, name: string) => setDeleteTarget({ id, name }),
+            onRequestIncident: handleRequestIncident,
             onMove: !autoSort ? (dir: 'up' | 'down') => handleMoveAttraction(attraction.id, dir) : undefined,
             isFirst: idx === 0,
             isLast: idx === attractions.length - 1,

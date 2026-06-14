@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import ElectricHeader from '@/components/ElectricHeader';
-import LightningBorder from '@/components/LightningBorder';
+import { surface, border, text, accents, radius, microLabel, FONT_NUM } from '@/lib/theme';
 import type { Screen } from '@/types/database';
 
 /* ── Constants ── */
@@ -328,89 +328,166 @@ export default function ScreenController() {
     return () => clearInterval(checkInterval);
   }, []);
 
+  // ── Shared page shell ──
+  const accent = accents.control;
+
+  const keyframes = (
+    <style>{`
+      @keyframes screen-dot-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.35; transform: scale(0.82); }
+      }
+      @keyframes screen-glow-pulse {
+        0%, 100% { opacity: 0.45; }
+        50%      { opacity: 0.85; }
+      }
+    `}</style>
+  );
+
+  const logo = (
+    <Image
+      src="/logo.png"
+      alt="CoreLink"
+      width={56}
+      height={56}
+      priority
+      style={{ width: 56, height: 'auto', marginBottom: 18 }}
+    />
+  );
+
   // ── Render: booting / registering ──
   if (status === 'booting' || status === 'registering') {
     return (
       <div style={{
-        width: '100vw', height: '100vh', background: '#000000',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: 'rgba(241,245,249,0.3)', fontSize: '2vw',
-        fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+        width: '100vw', minHeight: '100vh', background: surface.page,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        padding: '0 24px', boxSizing: 'border-box',
       }}>
-        {status === 'booting' ? 'Starting up...' : 'Registering...'}
+        {logo}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            width: 9, height: 9, borderRadius: '50%', background: accent.base,
+            boxShadow: `0 0 10px ${accent.base}`,
+            animation: 'screen-dot-pulse 1.4s ease-in-out infinite',
+          }} />
+          <span style={{ color: text.secondary, fontSize: 15 }}>
+            {status === 'booting' ? 'Starting up…' : 'Registering this screen…'}
+          </span>
+        </div>
+        {keyframes}
       </div>
     );
   }
 
   // ── Render: waiting for assignment ──
+  const chars = (code ?? '').split('');
+
   return (
     <div style={{
-      width: '100vw', height: '100vh', background: '#000000',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      width: '100vw', minHeight: '100vh', background: surface.page,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      overflow: 'hidden',
+      padding: '24px', boxSizing: 'border-box', overflow: 'hidden',
     }}>
-      <div style={{ width: '80%', maxWidth: 800 }}>
-        <ElectricHeader title="Screen Setup" fontSize="3vw" />
-        <LightningBorder />
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: '4vh' }}>
-        <div style={{
-          fontSize: 'min(20vw, 25vh)',
-          fontWeight: 400,
-          letterSpacing: '0.3em',
-          color: '#f0f0ff',
-          textShadow: '0 0 20px rgba(139,92,246,0.8), 0 0 60px rgba(139,92,246,0.4)',
-          fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-          lineHeight: 1,
-        }}>
-          {code}
-        </div>
-
-        <div style={{
-          fontSize: 'min(2.5vw, 3vh)',
-          color: 'rgba(255,255,255,0.3)',
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          marginTop: '3vh',
-          fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
-        }}>
-          Awaiting Assignment...
-        </div>
-      </div>
-
-      <div style={{ width: '80%', maxWidth: 800, marginTop: '4vh' }}>
-        <LightningBorder />
-      </div>
-
       <div style={{
-        position: 'fixed', bottom: '3vh',
-        fontSize: 'min(1.2vw, 1.5vh)',
-        color: 'rgba(255,255,255,0.15)',
-        letterSpacing: '0.15em',
-        textAlign: 'center',
-        fontFamily: "var(--font-bebas-neue), 'Bebas Neue', Impact, sans-serif",
+        position: 'relative',
+        width: '100%', maxWidth: 720,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        background: surface.card,
+        border: `1px solid ${border.default}`,
+        borderRadius: radius.xl,
+        padding: 'clamp(28px, 5vh, 56px) clamp(20px, 5vw, 56px)',
+        boxSizing: 'border-box',
       }}>
-        Enter this code in the admin panel to assign a display
+        {logo}
+
+        <h1 style={{
+          color: text.primary, fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '-0.02em',
+        }}>
+          Screen Setup
+        </h1>
+        <p style={{ color: text.faint, fontSize: 13, marginTop: 4, marginBottom: 0 }}>
+          CoreLink Operations Platform
+        </p>
+
+        {/* Code hero */}
+        <div style={{
+          position: 'relative',
+          marginTop: 'clamp(28px, 5vh, 48px)',
+          width: '100%',
+          display: 'flex', justifyContent: 'center',
+        }}>
+          {/* Subtle blue glow behind the tiles */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '90%', height: '160%',
+            background: `radial-gradient(ellipse at center, ${accent.soft} 0%, transparent 70%)`,
+            pointerEvents: 'none',
+            animation: 'screen-glow-pulse 3s ease-in-out infinite',
+          }} />
+
+          <div style={{
+            position: 'relative',
+            display: 'flex', gap: 'clamp(8px, 2vw, 18px)',
+          }}>
+            {chars.map((ch, i) => (
+              <div
+                key={i}
+                style={{
+                  background: surface.control,
+                  border: `1px solid ${accent.base}`,
+                  borderRadius: radius.lg,
+                  boxShadow: `0 0 24px ${accent.soft}, inset 0 0 0 1px rgba(59,130,246,0.08)`,
+                  width: 'clamp(56px, 16vw, 130px)',
+                  height: 'clamp(72px, 20vw, 168px)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: text.primary,
+                  fontSize: 'clamp(40px, 12vw, 104px)',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
+                  ...FONT_NUM,
+                }}
+              >
+                {ch}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p style={{
+          ...microLabel,
+          color: text.muted,
+          marginTop: 'clamp(20px, 4vh, 32px)',
+          marginBottom: 0,
+          textAlign: 'center',
+        }}>
+          Enter this code in Admin → Screens
+        </p>
+
+        {/* Live status line */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          marginTop: 'clamp(20px, 4vh, 32px)',
+          padding: '8px 16px',
+          background: surface.control,
+          border: `1px solid ${border.default}`,
+          borderRadius: radius.pill,
+        }}>
+          <span style={{
+            width: 9, height: 9, borderRadius: '50%',
+            background: '#22C55E', boxShadow: '0 0 10px rgba(34,197,94,0.8)',
+            animation: 'screen-dot-pulse 1.4s ease-in-out infinite',
+          }} />
+          <span style={{ color: text.secondary, fontSize: 14, fontWeight: 500 }}>
+            Waiting for assignment…
+          </span>
+        </div>
       </div>
 
-      {/* Subtle pulsing glow behind the code */}
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '40vw', height: '40vh',
-        background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.08) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        animation: 'screen-pulse 3s ease-in-out infinite',
-      }} />
-
-      <style>{`
-        @keyframes screen-pulse {
-          0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
-      `}</style>
+      {keyframes}
     </div>
   );
 }

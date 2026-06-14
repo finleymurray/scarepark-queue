@@ -17,6 +17,7 @@ const MORE_TABS = [
   { label: 'Screens', href: '/admin/screens' },
   { label: 'Analytics', href: '/admin/analytics' },
   { label: 'Logs', href: '/admin/logs' },
+  { label: 'Incidents', href: '/admin/incidents' },
   { label: 'Attraction Details', href: '/admin/attractions' },
   { label: 'Add Attraction', href: '/admin/attractions/new' },
 ];

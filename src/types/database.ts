@@ -44,6 +44,43 @@ export interface OperatorSession {
   log_date: string;
 }
 
+export type IncidentSource = 'operator' | 'delay_auto' | 'admin_request';
+export type IncidentStatus = 'requested' | 'submitted' | 'dismissed' | 'reviewed';
+export type IncidentSeverity = 'minor' | 'moderate' | 'serious';
+export type IncidentCategory =
+  | 'Injury'
+  | 'Guest behaviour'
+  | 'Ejection'
+  | 'Near miss'
+  | 'Lost child'
+  | 'Technical'
+  | 'Other';
+
+export type IncidentType = 'operational' | 'injury';
+
+export interface Incident {
+  id: string;
+  attraction_id: string | null;
+  attraction_name: string;
+  log_date: string;
+  source: IncidentSource;
+  status: IncidentStatus;
+  incident_type: IncidentType;
+  form_data: Record<string, unknown>;
+  severity: IncidentSeverity | null;
+  category: string | null;
+  description: string | null;
+  people_involved: string | null;
+  actions_taken: string | null;
+  reported_by: string | null;
+  requested_by: string | null;
+  delay_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ParkSetting {
   id: string;
   key: string;

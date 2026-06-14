@@ -9,7 +9,8 @@ import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
-import type { Attraction, ThroughputLog, DispatchLog, OperatorSession } from '@/types/database';
+import type { Attraction, ThroughputLog, DispatchLog, OperatorSession, Incident } from '@/types/database';
+import IncidentForm, { type IncidentFormValues } from '@/components/IncidentForm';
 import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
 import AppSwitcher from '@/components/AppSwitcher';
 import { surface, border, text, accents, radius, statusColors, FONT_NUM, microLabel, card, controlButton, primaryButton } from '@/lib/theme';
@@ -112,6 +113,9 @@ export default function SupervisorDashboard() {
   const [signoffStatus, setSignoffStatus] = useState<AttractionSignoffStatus | null>(null);
   const [delayStartedAt, setDelayStartedAt] = useState<string | null>(null);
   const [delayElapsed, setDelayElapsed] = useState(0);
+  // Incident reporting — pending request for the selected attraction + form modal
+  const [pendingIncident, setPendingIncident] = useState<Incident | null>(null);
+  const [incidentFormOpen, setIncidentFormOpen] = useState<null | 'request' | 'operator'>(null);
   const { toasts, pushToast } = useToasts();
 
   // Operator session — per-attraction "who's on the panel" state
@@ -330,6 +334,41 @@ export default function SupervisorDashboard() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'signoff_completions', filter: `attraction_id=eq.${selectedId}` },
         () => { fetch(); }
+      )
+      .subscribe();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [selectedId]);
+
+  // Incident requests — track the most recent pending 'requested' incident for
+  // the selected attraction, kept live so an Admin/delay request appears at once.
+  useEffect(() => {
+    if (!selectedId) { setPendingIncident(null); return; }
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function fetchPending(attractionId: string) {
+      const { data } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('attraction_id', attractionId)
+        .eq('status', 'requested')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setPendingIncident((data as Incident) || null);
+    }
+
+    fetchPending(selectedId);
+
+    channel = supabase
+      .channel(`control-incidents-${selectedId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'incidents', filter: `attraction_id=eq.${selectedId}` },
+        () => { fetchPending(selectedId); }
       )
       .subscribe();
 
@@ -681,6 +720,77 @@ export default function SupervisorDashboard() {
     setDispatching(false);
   }
 
+  // Reporter name for incident attribution
+  const incidentReporter = () => operatorSession?.operator_name || displayName || userEmail;
+
+  // Submit a report against an existing pending request → status 'submitted'.
+  async function handleSubmitRequestedIncident(values: IncidentFormValues) {
+    if (!pendingIncident) return;
+    const { error } = await supabase
+      .from('incidents')
+      .update({
+        status: 'submitted',
+        incident_type: values.incident_type,
+        category: values.category,
+        severity: values.severity,
+        description: values.description,
+        people_involved: values.people_involved,
+        actions_taken: values.actions_taken,
+        form_data: values.form_data,
+        reported_by: incidentReporter(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', pendingIncident.id);
+    if (error) throw error; // surfaced by IncidentForm
+    pushToast('success', 'Incident report submitted');
+    setIncidentFormOpen(null);
+    setPendingIncident(null);
+  }
+
+  // Quick-dismiss a pending request as "no incident — minor" → status 'dismissed'.
+  async function handleDismissRequestedIncident() {
+    if (!pendingIncident) return;
+    try {
+      const { error } = await supabase
+        .from('incidents')
+        .update({
+          status: 'dismissed',
+          severity: 'minor',
+          reported_by: incidentReporter(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pendingIncident.id);
+      if (error) throw error;
+      pushToast('success', 'Marked — no incident');
+      setPendingIncident(null);
+    } catch {
+      pushToast('error', 'Failed to update — try again');
+    }
+  }
+
+  // Operator-initiated incident → INSERT a new submitted row.
+  async function handleLogIncident(values: IncidentFormValues) {
+    if (!selected || !selectedId) return;
+    const { error } = await supabase.from('incidents').insert({
+      attraction_id: selectedId,
+      attraction_name: selected.name,
+      log_date: getTodayDateStr(),
+      source: 'operator',
+      status: 'submitted',
+      incident_type: values.incident_type,
+      category: values.category,
+      severity: values.severity,
+      description: values.description,
+      people_involved: values.people_involved,
+      actions_taken: values.actions_taken,
+      form_data: values.form_data,
+      reported_by: incidentReporter(),
+    });
+    if (error) throw error; // surfaced by IncidentForm
+    pushToast('success', 'Incident report submitted');
+    setIncidentFormOpen(null);
+  }
+
   async function handleLogout() {
     clearAuthCache(); await supabase.auth.signOut();
     window.location.href = '/control/login';
@@ -891,10 +1001,66 @@ export default function SupervisorDashboard() {
                         📝 Show Report
                       </button>
                     )}
+                    {/* Log incident — anyone on Control can raise a safety report */}
+                    <button
+                      onClick={() => setIncidentFormOpen('operator')}
+                      style={{
+                        ...controlButton,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: wide ? '8px 16px' : '12px 20px', minHeight: wide ? 38 : 44,
+                        fontSize: 13, fontWeight: 600,
+                        transition: 'border-color 0.15s, color 0.15s',
+                        touchAction: 'manipulation',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#F87171'; e.currentTarget.style.color = text.primary; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = border.strong; e.currentTarget.style.color = text.secondary; }}
+                    >
+                      ⚠️ Log incident
+                    </button>
                   </div>
                 </div>
               );
             })();
+
+            {/* ── Pending incident-request banner (does NOT block dispatch) ── */}
+            const incidentBanner = pendingIncident && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+                background: 'rgba(245,158,11,0.10)',
+                border: '1px solid rgba(245,158,11,0.4)',
+                borderRadius: radius.lg,
+                padding: '10px 14px',
+                ...(wide ? { flexShrink: 0 } : { marginBottom: 16 }),
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden>
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ color: text.primary, fontSize: 13, fontWeight: 700 }}>Incident report needed</div>
+                  <div style={{ color: text.muted, fontSize: 11, marginTop: 1 }}>
+                    {pendingIncident.delay_reason
+                      ? `After ${pendingIncident.delay_reason} delay`
+                      : `Requested by ${pendingIncident.requested_by || 'admin'}`}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    onClick={handleDismissRequestedIncident}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: text.muted, fontSize: 12, fontWeight: 600, padding: '8px 8px', whiteSpace: 'nowrap' }}
+                  >
+                    No incident — minor
+                  </button>
+                  <button
+                    onClick={() => setIncidentFormOpen('request')}
+                    style={{ ...primaryButton('control'), padding: '8px 16px', minHeight: 36, fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}
+                    className="touch-manipulation"
+                  >
+                    Report
+                  </button>
+                </div>
+              </div>
+            );
 
             {/* ── Dispatch Clicker (operator-gated) ── */}
             const dispatchSection = selected.attraction_type !== 'show' && (() => {
@@ -1338,6 +1504,7 @@ export default function SupervisorDashboard() {
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 12 }}>
                     {heroBlock}
+                    {incidentBanner}
                     <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                       <div style={{ ...gatedStyle, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} aria-hidden={panelLocked || undefined}>
                         {dispatchSection}
@@ -1360,6 +1527,7 @@ export default function SupervisorDashboard() {
             return (
               <>
                 {heroBlock}
+                {incidentBanner}
                 {/* ── Operator-gated panel: Dispatch + Queue Time ── */}
                 <div style={{ position: 'relative' }}>
                   <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
@@ -1513,6 +1681,20 @@ export default function SupervisorDashboard() {
             return ok;
           }}
           onCancel={() => setLockPinOpen(false)}
+        />
+      )}
+
+      {/* ── Incident report form ── */}
+      {incidentFormOpen && selected && (
+        <IncidentForm
+          attractionName={selected.name}
+          context={
+            incidentFormOpen === 'request'
+              ? (pendingIncident?.delay_reason ? `After ${pendingIncident.delay_reason} delay` : 'Requested')
+              : undefined
+          }
+          onSubmit={incidentFormOpen === 'request' ? handleSubmitRequestedIncident : handleLogIncident}
+          onCancel={() => setIncidentFormOpen(null)}
         />
       )}
 
