@@ -115,6 +115,7 @@ export default function SupervisorDashboard() {
   const [delayElapsed, setDelayElapsed] = useState(0);
   // Incident reporting — pending request for the selected attraction + form modal
   const [pendingIncident, setPendingIncident] = useState<Incident | null>(null);
+  const [dismissConfirmOpen, setDismissConfirmOpen] = useState(false);
   const [incidentFormOpen, setIncidentFormOpen] = useState<null | 'request' | 'operator'>(null);
   // Admin alerts — active alerts (global or per-attraction), realtime-refreshed.
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -822,6 +823,7 @@ export default function SupervisorDashboard() {
       if (error) throw error;
       pushToast('success', 'Marked — no incident');
       setPendingIncident(null);
+      setDismissConfirmOpen(false);
     } catch {
       pushToast('error', 'Failed to update — try again');
     }
@@ -1162,7 +1164,7 @@ export default function SupervisorDashboard() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <button
-                    onClick={handleDismissRequestedIncident}
+                    onClick={() => setDismissConfirmOpen(true)}
                     style={{ background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, cursor: 'pointer', color: text.secondary, fontSize: 13, fontWeight: 600, padding: '8px 12px', whiteSpace: 'nowrap' }}
                   >
                     No incident — minor
@@ -1814,6 +1816,43 @@ export default function SupervisorDashboard() {
           onSubmit={incidentFormOpen === 'request' ? handleSubmitRequestedIncident : handleLogIncident}
           onCancel={() => setIncidentFormOpen(null)}
         />
+      )}
+
+      {/* ── Confirm "No incident — minor" dismissal ── */}
+      {dismissConfirmOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setDismissConfirmOpen(false)}
+        >
+          <div
+            style={{ width: '100%', maxWidth: 360, background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24, textAlign: 'center' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ width: 44, height: 44, borderRadius: 12, margin: '0 auto 14px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <p style={{ color: text.primary, fontSize: 16, fontWeight: 600, margin: 0 }}>Dismiss this request?</p>
+            <p style={{ color: text.muted, fontSize: 13, margin: '8px 0 0', lineHeight: 1.5 }}>
+              Confirm there was no incident to log. This clears the request without filing a report.
+            </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button
+                onClick={() => setDismissConfirmOpen(false)}
+                style={{ ...controlButton, flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDismissRequestedIncident}
+                style={{ flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600, borderRadius: radius.md, border: 'none', cursor: 'pointer', background: '#D97706', color: '#fff' }}
+              >
+                Yes, no incident
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <ToastStack toasts={toasts} />
