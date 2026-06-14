@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CoreLink Training Manual</title>
+<style>
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: A4; margin: 0; }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1a1d24; }
+  .page {
+    width: 210mm; height: 285mm; padding: 16mm; margin: 0 auto; background: #fff;
+    page-break-after: always; break-after: page; position: relative; overflow: hidden;
+  }
+  h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 6px; }
+  h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 4px; }
+  h3 { font-size: 15px; font-weight: 700; margin: 0 0 8px; }
+  p { font-size: 12.5px; line-height: 1.55; color: #3a3f4a; margin: 0 0 10px; }
+  .muted { color: #6b7280; }
+  .kicker { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+  .accent-control { color: #2563EB; } .bg-control { background: #2563EB; }
+  .accent-signoff { color: #D97706; } .bg-signoff { background: #D97706; }
+  .accent-admin { color: #DC2626; } .bg-admin { background: #DC2626; }
+  .sectionbar { height: 6px; border-radius: 3px; margin-bottom: 18px; }
+  /* numbered steps */
+  .steps { list-style: none; padding: 0; margin: 14px 0; }
+  .steps li { position: relative; padding: 0 0 14px 42px; font-size: 12.5px; line-height: 1.5; color: #3a3f4a; }
+  .steps li:before {
+    counter-increment: s; content: counter(s); position: absolute; left: 0; top: -2px;
+    width: 28px; height: 28px; border-radius: 50%; color: #fff; font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps { counter-reset: s; }
+  .steps.c li:before { background: #2563EB; } .steps.s li:before { background: #D97706; } .steps.a li:before { background: #DC2626; }
+  .steps b { color: #1a1d24; }
+  /* callouts */
+  .note { border-left: 4px solid; border-radius: 0 8px 8px 0; padding: 11px 14px; font-size: 12px; line-height: 1.5; margin: 12px 0; }
+  .note.tip { border-color: #16a34a; background: #f0fdf4; } .note.tip b { color: #15803d; }
+  .note.warn { border-color: #d97706; background: #fffbeb; } .note.warn b { color: #b45309; }
+  .note.key { border-color: #2563EB; background: #eff6ff; } .note.key b { color: #1d4ed8; }
+  /* device frame / mockups (the app is dark) */
+  .device { background: #0A0B0E; border: 1px solid #23262E; border-radius: 14px; padding: 14px; color: #F8FAFC; }
+  .device .bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .pill { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:999px; font-size:11px; font-weight:700; }
+  .card-dark { background:#101318; border:1px solid #23262E; border-radius:12px; padding:12px 14px; }
+  .rail-green { border-left:3px solid #22C55E; } .rail-amber { border-left:3px solid #F59E0B; } .rail-red { border-left:3px solid #EF4444; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:700; }
+  table.ref { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+  table.ref td, table.ref th { border:1px solid #e5e7eb; padding:8px 10px; text-align:left; vertical-align:top; }
+  table.ref th { background:#f3f4f6; font-weight:700; }
+  .foot { position:absolute; bottom:10mm; left:16mm; right:16mm; display:flex; justify-content:space-between; font-size:10px; color:#9ca3af; border-top:1px solid #eee; padding-top:6px; }
+  .chip-num { width:22px;height:22px;border-radius:50%;background:#1D4ED8;color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center; }
+</style>
+</head>
+<body>
+
+<!-- ───────── COVER ───────── -->
+<div class="page" style="background:#0A0B0E; color:#fff; display:flex; flex-direction:column; justify-content:center;">
+  <div style="text-align:center;">
+    <div style="font-size:13px; letter-spacing:0.3em; text-transform:uppercase; color:#64748B; margin-bottom:20px;">Operations Platform</div>
+    <div style="font-size:64px; font-weight:800; letter-spacing:-0.03em; line-height:1;">CoreLink</div>
+    <div style="font-size:22px; font-weight:600; color:#94A3B8; margin-top:14px;">Staff Training Manual</div>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:48px;">
+      <span class="pill" style="background:rgba(59,130,246,0.15); color:#93C5FD;">● Control</span>
+      <span class="pill" style="background:rgba(245,158,11,0.15); color:#FCD34D;">● Sign-Off</span>
+      <span class="pill" style="background:rgba(239,68,68,0.15); color:#FCA5A5;">● Admin</span>
+    </div>
+    <div style="margin-top:60px; color:#475569; font-size:12px;">Immersive Core · Fright Nights · Edition 1</div>
+  </div>
+</div>
+
+<!-- ───────── HOW IT FITS ───────── -->
+<div class="page">
+  <div class="kicker muted">Welcome</div>
+  <h1>How the system fits together</h1>
+  <p>CoreLink is one connected platform with three apps and a set of guest-facing screens. Everything updates in <b>real time</b> — a change made on Control appears on the TV screens and in Admin within a second.</p>
+
+  <svg viewBox="0 0 560 250" style="width:100%; margin:14px 0;">
+    <!-- apps -->
+    <rect x="20" y="20" width="150" height="64" rx="10" fill="#eff6ff" stroke="#2563EB" stroke-width="1.5"/>
+    <text x="95" y="46" text-anchor="middle" font-size="15" font-weight="800" fill="#1d4ed8">Control</text>
+    <text x="95" y="64" text-anchor="middle" font-size="10" fill="#3b82f6">Queue · dispatch</text>
+    <rect x="205" y="20" width="150" height="64" rx="10" fill="#fffbeb" stroke="#D97706" stroke-width="1.5"/>
+    <text x="280" y="46" text-anchor="middle" font-size="15" font-weight="800" fill="#b45309">Sign-Off</text>
+    <text x="280" y="64" text-anchor="middle" font-size="10" fill="#d97706">Safety checks</text>
+    <rect x="390" y="20" width="150" height="64" rx="10" fill="#fef2f2" stroke="#DC2626" stroke-width="1.5"/>
+    <text x="465" y="46" text-anchor="middle" font-size="15" font-weight="800" fill="#dc2626">Admin</text>
+    <text x="465" y="64" text-anchor="middle" font-size="10" fill="#ef4444">Manage · review</text>
+    <!-- lines to db -->
+    <line x1="95" y1="84" x2="280" y2="130" stroke="#cbd5e1" stroke-width="1.5"/>
+    <line x1="280" y1="84" x2="280" y2="130" stroke="#cbd5e1" stroke-width="1.5"/>
+    <line x1="465" y1="84" x2="280" y2="130" stroke="#cbd5e1" stroke-width="1.5"/>
+    <!-- db -->
+    <rect x="180" y="130" width="200" height="50" rx="10" fill="#0A0B0E"/>
+    <text x="280" y="153" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">Live database</text>
+    <text x="280" y="170" text-anchor="middle" font-size="9.5" fill="#64748B">real-time · syncs every device</text>
+    <!-- screens -->
+    <line x1="280" y1="180" x2="280" y2="206" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect x="120" y="206" width="320" height="34" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2"/>
+    <text x="280" y="227" text-anchor="middle" font-size="11.5" font-weight="700" fill="#334155">Guest TV &amp; queue screens (Raspberry Pi)</text>
+  </svg>
+
+  <div class="grid3" style="margin-top:6px;">
+    <div class="note key" style="margin:0;"><b>Control</b><br>Operators run each attraction — queue times, dispatching groups, status.</div>
+    <div class="note warn" style="margin:0;"><b>Sign-Off</b><br>Supervisors complete opening &amp; closing safety checks on iPads.</div>
+    <div class="note" style="margin:0; border-color:#DC2626; background:#fef2f2;"><b style="color:#dc2626;">Admin</b><br>Managers oversee the whole park, screens, reports &amp; incidents.</div>
+  </div>
+
+  <h3 style="margin-top:22px;">Getting in</h3>
+  <ul class="steps a">
+    <li>Open the site and you'll land on the <b>sign-in</b> page. Enter your email and password.</li>
+    <li>You arrive at the <b>landing page</b> — tap the app you need (Control, Sign-Off, or Admin).</li>
+    <li>Switch apps anytime using the <b>logo menu</b> in the top-left of any app.</li>
+  </ul>
+  <div class="foot"><span>CoreLink Training Manual</span><span>How it fits together · 2</span></div>
+</div>
+
+<!-- ───────── CONTROL ───────── -->
+<div class="page">
+  <div class="sectionbar bg-control"></div>
+  <div class="kicker accent-control">The Control App</div>
+  <h1>Running an attraction</h1>
+  <p>Control is where operators manage a single attraction on a phone or tablet. <b>You must log in as the operator before you can dispatch or change the queue.</b></p>
+
+  <div class="grid2">
+    <div>
+      <h3 class="accent-control">1 · Take the panel</h3>
+      <ul class="steps c">
+        <li>Select your attraction from the tabs at the top.</li>
+        <li>The panel is <b>locked</b> until an operator signs in. Tap <b>"Enter PIN to operate"</b>.</li>
+        <li>Type your 4-digit PIN. Your name now shows in the green <b>operator chip</b>.</li>
+        <li>To hand over, tap the chip → <b>Change operator</b>. To finish, tap <b>End shift</b>.</li>
+      </ul>
+      <div class="note key"><b>Why it matters:</b> every dispatch and queue change is recorded against whoever is logged in, so the park always knows who was operating.</div>
+    </div>
+    <div class="device">
+      <div class="bar">
+        <span style="font-size:12px;font-weight:600;">Control</span>
+        <span class="pill" style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:#86EFAC;">● Maya R</span>
+      </div>
+      <div style="text-align:center; padding:6px 0 12px;">
+        <div style="font-size:22px;font-weight:800;color:#5EEAD4;text-shadow:0 0 16px rgba(94,234,212,0.5);">DROWNED</div>
+        <span class="pill bg" style="background:rgba(34,197,94,0.12); color:#4ADE80; margin-top:8px;">OPEN</span>
+      </div>
+      <div class="card-dark rail-green" style="border-radius:0 12px 12px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#94A3B8;margin-bottom:8px;"><span>Dispatch</span><span style="color:#3B82F6;">01:24 since last</span></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px;">
+          <span style="width:34px;height:34px;border-radius:9px;background:#13161C;border:1px solid #2E3543;color:#94A3B8;display:flex;align-items:center;justify-content:center;">−</span>
+          <span style="font-size:26px;font-weight:800;">6</span>
+          <span style="width:34px;height:34px;border-radius:9px;background:#13161C;border:1px solid #2E3543;color:#94A3B8;display:flex;align-items:center;justify-content:center;">+</span>
+        </div>
+        <div style="background:#1D4ED8;border-radius:9px;padding:9px;text-align:center;font-size:12px;font-weight:700;">Dispatch group</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px;">
+    <div>
+      <h3 class="accent-control">2 · Dispatch groups</h3>
+      <p>Set the group size with <b>− / +</b> (or tap the number to type it), then tap <b>Dispatch group</b> each time you send guests in. The timer shows how long since the last dispatch and turns amber → red if you're running slow.</p>
+    </div>
+    <div>
+      <h3 class="accent-control">3 · Queue time &amp; status</h3>
+      <p>Use the <b>−10 / −5 / +5 / +10</b> buttons to set the wait shown on the entrance screen. Set the status pill to <b>Delayed</b> or <b>Closed</b> when needed — dispatching locks while delayed/closed.</p>
+    </div>
+  </div>
+
+  <div class="note warn"><b>If a delay is logged,</b> a banner appears asking for an incident report. Tap <b>Report</b> to fill it in, or <b>No incident — minor</b> (then confirm) if nothing happened. See the Incidents section.</div>
+  <div class="foot"><span>CoreLink Training Manual</span><span class="accent-control">Control · 3</span></div>
+</div>
+
+<!-- ───────── CONTROL 2 ───────── -->
+<div class="page">
+  <div class="sectionbar bg-control"></div>
+  <div class="kicker accent-control">The Control App</div>
+  <h1>Throughput, reports &amp; alerts</h1>
+
+  <div class="grid2">
+    <div>
+      <h3 class="accent-control">Hourly throughput</h3>
+      <p>The throughput list fills automatically from your dispatches. To correct a figure, tap the small <b>pencil</b> on a row (or press &amp; hold the row) and type the real number.</p>
+      <h3 class="accent-control" style="margin-top:16px;">Show report</h3>
+      <p>At the end of the night tap <b>Show Report</b> under the logo to record operational, technical, construction and costume notes. It's submitted with a PIN.</p>
+    </div>
+    <div>
+      <h3 class="accent-control">Alerts from management</h3>
+      <p>Coloured banners appear at the top of the screen when Admin sends an alert — <span class="tag" style="background:#dbeafe;color:#1d4ed8;">info</span> <span class="tag" style="background:#fef3c7;color:#b45309;">warning</span> <span class="tag" style="background:#fee2e2;color:#b91c1c;">urgent</span>. Tap <b>×</b> to dismiss once read.</p>
+      <div class="card-dark" style="margin-top:10px; border-left:4px solid #EF4444;">
+        <div style="font-size:11px;color:#FCA5A5;font-weight:700;">URGENT</div>
+        <div style="font-size:12px;margin-top:3px;">Evacuate the Bunker — meet at point B.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note tip"><b>Tablet tip:</b> on an iPad the whole panel fits on one screen — status, dispatch, queue and throughput are all visible without scrolling.</div>
+
+  <h3 style="margin-top:18px;">The dispatch loop, at a glance</h3>
+  <svg viewBox="0 0 560 90" style="width:100%;">
+    <g font-size="11" font-weight="700" fill="#1a1d24">
+      <rect x="0" y="25" width="120" height="40" rx="8" fill="#eff6ff" stroke="#2563EB"/><text x="60" y="50" text-anchor="middle">Set group size</text>
+      <rect x="150" y="25" width="120" height="40" rx="8" fill="#eff6ff" stroke="#2563EB"/><text x="210" y="50" text-anchor="middle">Dispatch</text>
+      <rect x="300" y="25" width="130" height="40" rx="8" fill="#eff6ff" stroke="#2563EB"/><text x="365" y="50" text-anchor="middle">Adjust queue time</text>
+      <rect x="460" y="25" width="100" height="40" rx="8" fill="#eff6ff" stroke="#2563EB"/><text x="510" y="50" text-anchor="middle">Repeat</text>
+      <path d="M120 45 L150 45" stroke="#93c5fd" stroke-width="2" marker-end="url(#a)"/>
+      <path d="M270 45 L300 45" stroke="#93c5fd" stroke-width="2" marker-end="url(#a)"/>
+      <path d="M430 45 L460 45" stroke="#93c5fd" stroke-width="2" marker-end="url(#a)"/>
+    </g>
+    <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L6,4 L0,8" fill="#93c5fd"/></marker></defs>
+  </svg>
+  <div class="foot"><span>CoreLink Training Manual</span><span class="accent-control">Control · 4</span></div>
+</div>
+
+<!-- ───────── SIGN-OFF ───────── -->
+<div class="page">
+  <div class="sectionbar bg-signoff"></div>
+  <div class="kicker accent-signoff">The Sign-Off App</div>
+  <h1>Opening &amp; closing safety checks</h1>
+  <p>Sign-Off runs on iPads. Supervisors work through checklists for each attraction and sign them off by role with a PIN — building a full audit trail and the nightly report.</p>
+
+  <div class="grid2">
+    <div class="device">
+      <div class="bar"><span style="font-size:12px;font-weight:600;">Sign-Off</span><span style="font-size:10px;color:#64748B;">Opening</span></div>
+      <div class="grid3" style="gap:8px;">
+        <div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,rgba(94,234,212,0.18),#0A0B0E 70%);border:1px solid #23262E;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;"><span style="font-size:8px;color:#94A3B8;">Drowned</span></div>
+        <div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,rgba(226,232,240,0.14),#0A0B0E 70%);border:1px solid #23262E;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;"><span style="font-size:8px;color:#94A3B8;">N. Terrors</span></div>
+        <div style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,rgba(253,230,138,0.16),#0A0B0E 70%);border:1px solid #23262E;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;"><span style="font-size:8px;color:#94A3B8;">Strings</span></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:10px;">
+        <span style="color:#FCD34D;">Opening · 2/5 ready</span><span style="color:#94A3B8;">Closing · 0/5</span>
+      </div>
+    </div>
+    <div>
+      <h3 class="accent-signoff">Step by step</h3>
+      <ul class="steps s">
+        <li>Tap your attraction tile on the home screen.</li>
+        <li>Open a <b>section</b> (e.g. Technical) and flip each check's <b>green switch</b> as you complete it.</li>
+        <li>When all items are on, tap <b>Sign off section · enter PIN</b>.</li>
+        <li>Completed sections turn into a green <b>receipt</b> showing who signed and when.</li>
+        <li>Repeat for all sections; closing checks unlock for the end of the night.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note warn"><b>Only the right role can sign a section.</b> Your PIN carries your roles — if a section needs a role you don't hold, ask the right person to sign it.</div>
+
+  <div class="grid2" style="margin-top:8px;">
+    <div class="note tip" style="margin:0;"><b>Completed section</b><br>✓ Show &amp; actors — Maya R · 18:42</div>
+    <div class="note" style="margin:0;border-color:#6b7280;background:#f9fafb;"><b>End of night</b><br>Submit the show report from the attraction's screen once closing checks are done.</div>
+  </div>
+  <div class="foot"><span>CoreLink Training Manual</span><span class="accent-signoff">Sign-Off · 5</span></div>
+</div>
+
+<!-- ───────── ADMIN ───────── -->
+<div class="page">
+  <div class="sectionbar bg-admin"></div>
+  <div class="kicker accent-admin">The Admin App</div>
+  <h1>Managing the park</h1>
+  <p>Admin is the manager's view. The tab bar gives quick access to the key areas; less-used pages live under <b>More</b>.</p>
+
+  <table class="ref">
+    <tr><th>Tab</th><th>What you do there</th></tr>
+    <tr><td><b>Attractions</b></td><td>The main board — open/close, set status &amp; hours, see the current <b>operator</b> on each, reorder.</td></tr>
+    <tr><td><b>Operations</b></td><td>Live picture per attraction: queue chart, downtime, operator timeline, throughput. Printable.</td></tr>
+    <tr><td><b>Sign-Off</b></td><td>Configure checklists and see sign-off progress.</td></tr>
+    <tr><td><b>Reports</b></td><td>Nightly show reports, exportable to A4 PDF.</td></tr>
+    <tr><td><b>Incidents</b></td><td>Review queue for all incident reports — a red badge shows how many await review.</td></tr>
+    <tr><td><b>Screens</b></td><td>Pair, name, assign and blackout the guest screens.</td></tr>
+    <tr><td><b>Alerts</b></td><td>Send messages to Control and the ops view.</td></tr>
+    <tr><td class="muted">More ▸</td><td class="muted">Attraction Details · Add Attraction · Analytics · Logs · Users</td></tr>
+  </table>
+
+  <h3 style="margin-top:18px;" class="accent-admin">Managing operators</h3>
+  <p>Each attraction card shows a pill of who's operating. Tap it to <b>log the operator out</b> or <b>reassign</b> the attraction to another PIN-holder — useful at shift changes or if someone forgets to sign out.</p>
+
+  <div class="card-dark rail-amber" style="max-width:260px;border-radius:0 12px 12px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;font-weight:700;color:#fff;">The Bunker</span>
+      <span class="pill" style="background:rgba(245,158,11,0.12);color:#FBBF24;">DELAYED</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:8px;">
+      <span style="width:18px;height:18px;border-radius:50%;background:#1D4ED8;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;">JH</span>
+      <span style="font-size:11px;color:#94A3B8;">Jake Hollis · tap to manage</span>
+    </div>
+  </div>
+  <div class="foot"><span>CoreLink Training Manual</span><span class="accent-admin">Admin · 6</span></div>
+</div>
+
+<!-- ───────── SCREENS ───────── -->
+<div class="page">
+  <div class="sectionbar bg-admin"></div>
+  <div class="kicker accent-admin">Screens &amp; TV displays</div>
+  <h1>Setting up the guest screens</h1>
+  <p>Guest-facing screens run on small Raspberry Pi computers plugged into TVs. They pair to the system with a short code — no keyboard needed at the screen.</p>
+
+  <h3 class="accent-admin">Pairing a new screen</h3>
+  <ul class="steps a">
+    <li>The Pi boots to a setup screen showing a <b>4-character code</b>.</li>
+    <li>In Admin → <b>Screens</b>, find the screen and choose what it should display from the dropdown.</li>
+    <li>The screen switches to its assigned view within seconds. Give it a name so it's easy to find later.</li>
+  </ul>
+
+  <h3 class="accent-admin" style="margin-top:14px;">Screen types</h3>
+  <table class="ref">
+    <tr><th>Screen</th><th>Shows</th></tr>
+    <tr><td>TV1 / TV2</td><td>Wait-time boards &amp; photo banners for all attractions</td></tr>
+    <tr><td>TV3</td><td>Tonight's show times</td></tr>
+    <tr><td>TV4</td><td>Rotating carousel — wait times then shows</td></tr>
+    <tr><td>TV5</td><td>Attraction logo montage</td></tr>
+    <tr><td>Queue screen</td><td>One attraction's live wait time at its entrance</td></tr>
+    <tr><td>Operations view</td><td>Staff command board (not guest-facing)</td></tr>
+  </table>
+
+  <div class="note key"><b>Blackout.</b> Use the global blackout to switch every screen to the logo montage instantly, or blackout a <b>single screen</b> from its card. A queue screen in blackout shows just that attraction's logo.</div>
+  <div class="foot"><span>CoreLink Training Manual</span><span class="accent-admin">Screens · 7</span></div>
+</div>
+
+<!-- ───────── INCIDENTS ───────── -->
+<div class="page">
+  <div class="sectionbar bg-admin"></div>
+  <div class="kicker accent-admin">Incidents</div>
+  <h1>Reporting &amp; reviewing incidents</h1>
+  <p>Any issue — a guest problem, downtime, or an injury — is logged as an incident. Everything flows into one review queue in Admin, and every report can be printed for the accident book.</p>
+
+  <h3>Four ways a report starts</h3>
+  <svg viewBox="0 0 560 150" style="width:100%; margin:6px 0 4px;">
+    <g font-size="10.5" font-weight="700">
+      <rect x="0" y="10" width="130" height="34" rx="8" fill="#eff6ff" stroke="#2563EB"/><text x="65" y="31" text-anchor="middle" fill="#1d4ed8">Operator (Control)</text>
+      <rect x="0" y="52" width="130" height="34" rx="8" fill="#fef2f2" stroke="#DC2626"/><text x="65" y="73" text-anchor="middle" fill="#dc2626">Auto on a delay</text>
+      <rect x="0" y="94" width="130" height="34" rx="8" fill="#fef2f2" stroke="#DC2626"/><text x="65" y="115" text-anchor="middle" fill="#dc2626">Admin request</text>
+      <rect x="0" y="136" width="130" height="0" /><rect x="0" y="130" width="130" height="20" rx="6" fill="#f0fdf4" stroke="#16a34a"/><text x="65" y="144" text-anchor="middle" fill="#15803d">Staff QR form</text>
+      <!-- arrows to queue -->
+      <path d="M130 27 L250 67" stroke="#cbd5e1" stroke-width="1.5"/>
+      <path d="M130 69 L250 70" stroke="#cbd5e1" stroke-width="1.5"/>
+      <path d="M130 111 L250 73" stroke="#cbd5e1" stroke-width="1.5"/>
+      <path d="M130 140 L250 76" stroke="#cbd5e1" stroke-width="1.5"/>
+      <rect x="250" y="48" width="140" height="48" rx="10" fill="#0A0B0E"/><text x="320" y="70" text-anchor="middle" fill="#fff" font-size="12">Review queue</text><text x="320" y="86" text-anchor="middle" fill="#64748B" font-size="9">Admin → Incidents</text>
+      <path d="M390 72 L430 72" stroke="#cbd5e1" stroke-width="1.5"/>
+      <rect x="430" y="50" width="130" height="44" rx="8" fill="#f3f4f6" stroke="#9ca3af"/><text x="495" y="68" text-anchor="middle" fill="#374151" font-size="11">Manager reviews</text><text x="495" y="83" text-anchor="middle" fill="#6b7280" font-size="9">+ print for the book</text>
+    </g>
+  </svg>
+
+  <div class="grid2" style="margin-top:8px;">
+    <div>
+      <h3 class="accent-admin">On Control</h3>
+      <p>When a delay happens (or Admin asks), a banner appears. Choose <b>Report</b> to file it, or <b>No incident — minor</b> (with a confirm) if there's nothing to record. Operators can also tap <b>Log incident</b> anytime.</p>
+    </div>
+    <div>
+      <h3 class="accent-admin">The form branches</h3>
+      <p><b>Guest issue / downtime</b> → type, location, what happened, witness. <br><b>Injury or accident</b> → a full HSE report: injured person &amp; contact details, nature of injury, first aid, hospital, witnesses.</p>
+    </div>
+  </div>
+
+  <div class="note warn"><b>RIDDOR is decided by a manager,</b> not the operator. Injuries arrive flagged <b>"RIDDOR: not assessed"</b> — a manager sets the determination and adds the action taken &amp; remediation during review.</div>
+  <div class="foot"><span>CoreLink Training Manual</span><span class="accent-admin">Incidents · 8</span></div>
+</div>
+
+<!-- ───────── QUICK REFERENCE ───────── -->
+<div class="page">
+  <div class="sectionbar" style="background:linear-gradient(90deg,#2563EB,#D97706,#DC2626);"></div>
+  <div class="kicker muted">Quick reference</div>
+  <h1>Cheat sheet</h1>
+
+  <div class="grid2">
+    <div>
+      <h3 class="accent-control">Control</h3>
+      <table class="ref">
+        <tr><td>Start operating</td><td>Enter PIN to operate</td></tr>
+        <tr><td>Send guests</td><td>Set size → Dispatch group</td></tr>
+        <tr><td>Change wait</td><td>−10 / −5 / +5 / +10</td></tr>
+        <tr><td>Hand over</td><td>Chip → Change operator</td></tr>
+        <tr><td>Finish</td><td>Chip → End shift</td></tr>
+      </table>
+      <h3 class="accent-signoff" style="margin-top:14px;">Sign-Off</h3>
+      <table class="ref">
+        <tr><td>Do a check</td><td>Flip the green switch</td></tr>
+        <tr><td>Sign a section</td><td>All on → enter PIN</td></tr>
+        <tr><td>See who signed</td><td>Green receipt on the section</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3 class="accent-admin">Admin</h3>
+      <table class="ref">
+        <tr><td>Who's operating</td><td>Operator pill on each card</td></tr>
+        <tr><td>Reassign / log out</td><td>Tap the operator pill</td></tr>
+        <tr><td>Send a message</td><td>Alerts tab</td></tr>
+        <tr><td>Review incidents</td><td>Incidents tab (red badge)</td></tr>
+        <tr><td>Print a report</td><td>Print button on the report</td></tr>
+        <tr><td>Blackout a screen</td><td>Screens → screen card</td></tr>
+      </table>
+      <div class="note key" style="margin-top:14px;"><b>Remember</b><br>Nothing dispatches without an operator logged in. Every action is recorded against them.</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:18px;">Status colours (everywhere)</h3>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <span class="pill" style="background:#dcfce7;color:#15803d;">● Open</span>
+    <span class="pill" style="background:#fef3c7;color:#b45309;">● Delayed / At capacity</span>
+    <span class="pill" style="background:#fee2e2;color:#b91c1c;">● Closed</span>
+    <span class="pill" style="background:#f3f4f6;color:#6b7280;">● Not signed off</span>
+  </div>
+  <div class="foot"><span>CoreLink Training Manual · Immersive Core</span><span>Cheat sheet · 9</span></div>
+</div>
+
+</body>
+</html>
