@@ -15,6 +15,7 @@ import type {
   OperatorSession,
   SignoffSection,
   SignoffCompletion,
+  Alert,
 } from '@/types/database';
 
 /* ── Helpers ── */
@@ -281,6 +282,7 @@ export default function TvOpsPage() {
   const [operators, setOperators] = useState<OperatorSession[]>([]);
   const [sections, setSections] = useState<SignoffSection[]>([]);
   const [completions, setCompletions] = useState<SignoffCompletion[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [closingTime, setClosingTime] = useState('');
   const [now, setNow] = useState(new Date());
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -298,7 +300,7 @@ export default function TvOpsPage() {
       const start = `${today}T00:00:00`;
       const end   = `${today}T23:59:59`;
 
-      const [attractionsRes, tpRes, dispRes, logsRes, opsRes, secRes, compRes, closeRes] = await Promise.all([
+      const [attractionsRes, tpRes, dispRes, logsRes, opsRes, secRes, compRes, closeRes, alertsRes] = await Promise.all([
         supabase.from('attractions').select('*').order('sort_order', { ascending: true }),
         supabase.from('throughput_logs').select('*').eq('log_date', today),
         supabase.from('dispatch_logs').select('*').eq('log_date', today),
@@ -307,6 +309,7 @@ export default function TvOpsPage() {
         supabase.from('signoff_sections').select('*'),
         supabase.from('signoff_completions').select('*').eq('sign_date', today),
         supabase.from('park_settings').select('value').eq('key', 'closing_time').single(),
+        supabase.from('alerts').select('*').eq('active', true).order('created_at', { ascending: false }),
       ]);
 
       setAttractions((attractionsRes.data || []).filter((a: Attraction) => a.attraction_type === 'ride'));
@@ -317,6 +320,7 @@ export default function TvOpsPage() {
       setSections(secRes.data || []);
       setCompletions(compRes.data || []);
       setClosingTime(closeRes.data?.value || '');
+      setAlerts(alertsRes.data || []);
     }
     init();
   }, []);
@@ -353,6 +357,10 @@ export default function TvOpsPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'signoff_sections' }, async () => {
         const { data } = await supabase.from('signoff_sections').select('*');
         setSections(data || []);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, async () => {
+        const { data } = await supabase.from('alerts').select('*').eq('active', true).order('created_at', { ascending: false });
+        setAlerts(data || []);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -467,6 +475,34 @@ export default function TvOpsPage() {
 
       {/* Divider */}
       <div style={{ height: 1, background: border.divider }} />
+
+      {/* Active alerts strip */}
+      {alerts.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5vw', flexShrink: 0 }}>
+          {alerts.map((al) => {
+            const c = al.level === 'urgent' ? '#EF4444' : al.level === 'warning' ? '#F59E0B' : '#3B82F6';
+            const target = al.target_all
+              ? 'All attractions'
+              : attractions.find((a) => a.id === al.attraction_id)?.name || 'Attraction';
+            return (
+              <div key={al.id} style={{
+                display: 'flex', alignItems: 'center', gap: '0.8vw',
+                background: `${c}1A`, border: `1px solid ${c}55`, borderLeft: `4px solid ${c}`,
+                borderRadius: '0.5vw', padding: '0.6vw 1vw',
+              }}>
+                <svg width="1.3vw" height="1.3vw" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.3vw', height: '1.3vw', flexShrink: 0 }} aria-hidden>
+                  {al.level === 'info'
+                    ? <><circle cx="12" cy="12" r="10" /><line x1="12" y1="11" x2="12" y2="16" /><line x1="12" y1="8" x2="12.01" y2="8" /></>
+                    : <><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>}
+                </svg>
+                <span style={{ color: c, fontSize: '0.7vw', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>{al.level}</span>
+                <span style={{ color: text.primary, fontSize: '1vw', fontWeight: 600, flex: 1, lineHeight: 1.3 }}>{al.message}</span>
+                <span style={{ color: text.muted, fontSize: '0.7vw', fontWeight: 600, flexShrink: 0 }}>{target}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Attraction grid — 3 columns, fills remaining height with no scroll */}
       <div style={{
