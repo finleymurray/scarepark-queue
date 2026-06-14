@@ -2,7 +2,6 @@
 
 import { useParkClosed } from '@/hooks/useParkClosed';
 import LogoMontage from '@/components/tv/LogoMontage';
-import TvFooter from '@/components/tv/TvFooter';
 import { resolveBg, resolveLogo, resolveLogoGlow, resolveGlowRgb } from '@/lib/logos';
 import type { Attraction } from '@/types/database';
 
@@ -36,7 +35,7 @@ export default function ParkClosedOverlay({ attraction }: { attraction?: Attract
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/splash.png" alt="Immersive Core" decoding="async" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
-          {attraction ? <SingleLogoBlackout attraction={attraction} /> : <LogoMontage />}
+          {attraction ? <SingleLogoBlackout attraction={attraction} /> : <LogoMontage showFooter={false} />}
         </>
       )}
     </div>
@@ -72,10 +71,6 @@ function SingleLogoBlackout({ attraction }: { attraction: Attraction }) {
       </div>
       {/* Vignette */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
-      {/* Brand footer */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-        <TvFooter />
-      </div>
     </div>
   );
 }

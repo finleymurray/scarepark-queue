@@ -158,9 +158,11 @@ interface LogoMontageProps {
    *  Pass false when a host (e.g. the blackout overlay) paints its own
    *  fallback underneath — the montage stays transparent until ready. */
   showPlaceholder?: boolean;
+  /** Brand footer strip. Hidden on blackout screens. */
+  showFooter?: boolean;
 }
 
-export default function LogoMontage({ showPlaceholder = true }: LogoMontageProps) {
+export default function LogoMontage({ showPlaceholder = true, showFooter = true }: LogoMontageProps) {
   const [slides, setSlides] = useState<Attraction[]>([]);
   const [ready, setReady] = useState(false);
 
@@ -289,19 +291,21 @@ export default function LogoMontage({ showPlaceholder = true }: LogoMontageProps
       {/* Subtle vignette for depth */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
 
-      {/* Bottom brand strip — editable via Admin → Screens */}
-      <div
-        style={{
-          opacity: ready ? 1 : 0,
-          transition: `opacity ${FADE_MS}ms ease`,
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      >
-        <TvFooter />
-      </div>
+      {/* Bottom brand strip — editable via Admin → Screens; hidden on blackout */}
+      {showFooter && (
+        <div
+          style={{
+            opacity: ready ? 1 : 0,
+            transition: `opacity ${FADE_MS}ms ease`,
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+        >
+          <TvFooter />
+        </div>
+      )}
     </div>
   );
 }
