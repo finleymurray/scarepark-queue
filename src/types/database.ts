@@ -75,10 +75,26 @@ export interface Incident {
   reported_by: string | null;
   requested_by: string | null;
   delay_reason: string | null;
+  manager_actions: string | null;
+  remediation: string | null;
+  riddor_reportable: boolean | null; // null = not yet assessed by a manager
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export type AlertLevel = 'info' | 'warning' | 'urgent';
+
+export interface Alert {
+  id: string;
+  message: string;
+  level: AlertLevel;
+  target_all: boolean;
+  attraction_id: string | null;
+  active: boolean;
+  created_by: string | null;
+  created_at: string;
 }
 
 export interface ParkSetting {

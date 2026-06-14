@@ -11,6 +11,7 @@ const SEVERITIES: { value: IncidentSeverity; label: string; color: string }[] = 
   { value: 'serious', label: 'Serious', color: '#F87171' },
 ];
 const PERSON_TYPES = ['Guest', 'Staff', 'Contractor'] as const;
+type PersonType = (typeof PERSON_TYPES)[number];
 
 export interface IncidentFormValues {
   incident_type: IncidentType;
@@ -23,10 +24,12 @@ export interface IncidentFormValues {
 }
 
 /**
- * Shared incident report form (modal). Branches on incident type:
- *  - Operational: guest issue / downtime — category, what happened, action.
- *  - Injury: a structured HSE-style accident report.
- * Persistence is handled by the caller via onSubmit.
+ * Shared incident report form (modal), branching on type:
+ *  - Operational: guest issue / downtime.
+ *  - Injury: structured HSE accident report (RIDDOR is assessed by managers
+ *    in Admin, not here).
+ * Location and witness details are captured on both. Everything beyond the
+ * core columns is stored in form_data so all callers persist it unchanged.
  */
 export default function IncidentForm({
   attractionName,
@@ -46,23 +49,51 @@ export default function IncidentForm({
   // Shared
   const [severity, setSeverity] = useState<IncidentSeverity>('minor');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+
+  // Witness (shared)
+  const [witnessPresent, setWitnessPresent] = useState(false);
+  const [witnessName, setWitnessName] = useState('');
+  const [witnessIs, setWitnessIs] = useState<'public' | 'employee'>('public');
+  const [witnessPhone, setWitnessPhone] = useState('');
+  const [witnessEmail, setWitnessEmail] = useState('');
+  const [witnessEmpId, setWitnessEmpId] = useState('');
+  const [witnessRole, setWitnessRole] = useState('');
 
   // Operational
   const [category, setCategory] = useState<IncidentCategory>('Guest behaviour');
   const [people, setPeople] = useState('');
   const [actions, setActions] = useState('');
 
-  // Injury (HSE)
+  // Injury — person
   const [injuredName, setInjuredName] = useState('');
-  const [personType, setPersonType] = useState<(typeof PERSON_TYPES)[number]>('Guest');
+  const [personType, setPersonType] = useState<PersonType>('Guest');
+  const [cEmail, setCEmail] = useState('');
+  const [cPhone, setCPhone] = useState('');
+  const [cAddress, setCAddress] = useState('');
+  const [empId, setEmpId] = useState('');
+  const [jobRole, setJobRole] = useState('');
+  // Injury — clinical
   const [injuryNature, setInjuryNature] = useState('');
   const [bodyPart, setBodyPart] = useState('');
   const [firstAid, setFirstAid] = useState(false);
   const [firstAider, setFirstAider] = useState('');
   const [hospital, setHospital] = useState(false);
   const [ambulance, setAmbulance] = useState(false);
-  const [riddor, setRiddor] = useState(false);
-  const [witnesses, setWitnesses] = useState('');
+
+  const isStaff = personType === 'Staff';
+
+  function witnessData() {
+    if (!witnessPresent) return { witness_present: false };
+    return {
+      witness_present: true,
+      witness_name: witnessName.trim(),
+      witness_is: witnessIs,
+      ...(witnessIs === 'public'
+        ? { witness_phone: witnessPhone.trim(), witness_email: witnessEmail.trim() }
+        : { witness_employee_id: witnessEmpId.trim(), witness_job_role: witnessRole.trim() }),
+    };
+  }
 
   async function submit(values: IncidentFormValues) {
     setBusy(true); setError('');
@@ -72,87 +103,119 @@ export default function IncidentForm({
 
   function submitOperational() {
     if (!description.trim()) { setError('Please describe what happened.'); return; }
+    if (!location.trim()) { setError('Please enter where it happened.'); return; }
     submit({
       incident_type: 'operational', category, severity,
       description: description.trim(), people_involved: people.trim(), actions_taken: actions.trim(),
-      form_data: {},
+      form_data: { location: location.trim(), ...witnessData() },
     });
   }
 
   function submitInjury() {
     if (!injuredName.trim()) { setError('Enter the injured person’s name.'); return; }
+    if (!location.trim()) { setError('Please enter where it happened.'); return; }
     if (!description.trim()) { setError('Describe how the injury happened.'); return; }
+    const personData = isStaff
+      ? { employee_id: empId.trim(), job_role: jobRole.trim() }
+      : { contact_email: cEmail.trim(), contact_phone: cPhone.trim(), contact_address: cAddress.trim() };
     submit({
       incident_type: 'injury', category: 'Injury', severity,
       description: description.trim(),
       people_involved: `${injuredName.trim()} (${personType})`,
       actions_taken: [firstAid && `First aid by ${firstAider.trim() || 'unnamed'}`, hospital && 'Hospital', ambulance && 'Ambulance called'].filter(Boolean).join(' · '),
       form_data: {
+        location: location.trim(),
         injured_person: injuredName.trim(),
         person_type: personType,
+        ...personData,
         injury_nature: injuryNature.trim(),
         body_part: bodyPart.trim(),
         first_aid_given: firstAid,
         first_aider: firstAider.trim(),
         taken_to_hospital: hospital,
         ambulance_called: ambulance,
-        riddor_reportable: riddor,
-        witnesses: witnesses.trim(),
+        ...witnessData(),
       },
     });
   }
 
+  const witnessSection = (
+    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: 14 }}>
+      <Toggle label="Was a witness present?" on={witnessPresent} onToggle={() => setWitnessPresent((v) => !v)} />
+      {witnessPresent && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+          <Field label="Witness name" value={witnessName} onChange={setWitnessName} rows={1} placeholder="Full name" />
+          <Chips label="Witness is" options={['public', 'employee']} labels={{ public: 'Member of public', employee: 'Employee' }} value={witnessIs} onChange={(v) => setWitnessIs(v as 'public' | 'employee')} accent="#3B82F6" />
+          {witnessIs === 'public' ? (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}><Field label="Phone" value={witnessPhone} onChange={setWitnessPhone} rows={1} placeholder="Contact number" /></div>
+              <div style={{ flex: 1 }}><Field label="Email" value={witnessEmail} onChange={setWitnessEmail} rows={1} placeholder="Email" /></div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}><Field label="Employee ID" value={witnessEmpId} onChange={setWitnessEmpId} rows={1} placeholder="ID" /></div>
+              <div style={{ flex: 1 }}><Field label="Job role" value={witnessRole} onChange={setWitnessRole} rows={1} placeholder="Role" /></div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <Shell attractionName={attractionName} context={context} onCancel={onCancel}>
-      {/* Step 1 — choose type */}
       {type === null && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <p style={{ ...microLabel, marginBottom: 0 }}>What are you reporting?</p>
-          <TypeChoice
-            title="Guest issue / downtime"
-            body="Behaviour, ejection, near miss, technical fault or operational note."
-            accent="#3B82F6"
-            onClick={() => { setType('operational'); setError(''); }}
-          />
-          <TypeChoice
-            title="Injury or accident"
-            body="A guest or staff member was hurt — opens the full accident report."
-            accent="#F87171"
-            onClick={() => { setType('injury'); setError(''); }}
-          />
+          <TypeChoice title="Guest issue / downtime" body="Behaviour, ejection, near miss, technical fault or operational note." accent="#3B82F6" onClick={() => { setType('operational'); setError(''); }} />
+          <TypeChoice title="Injury or accident" body="A guest, contractor or staff member was hurt — opens the full accident report." accent="#F87171" onClick={() => { setType('injury'); setError(''); }} />
         </div>
       )}
 
-      {/* Step 2a — operational */}
       {type === 'operational' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Chips label="Type" options={OP_CATEGORIES} value={category} onChange={(v) => setCategory(v as IncidentCategory)} accent="#3B82F6" />
           <SeverityPicker value={severity} onChange={setSeverity} />
+          <Field label="Where did it happen?" value={location} onChange={setLocation} rows={1} placeholder="Queue line, exit, specific room…" />
           <Field label="What happened?" value={description} onChange={setDescription} rows={3} placeholder="Describe the incident…" />
-          <Field label="People involved (optional)" value={people} onChange={setPeople} rows={2} placeholder="Guests, staff, witnesses…" />
+          <Field label="People involved (optional)" value={people} onChange={setPeople} rows={2} placeholder="Guests, staff…" />
           <Field label="Action taken (optional)" value={actions} onChange={setActions} rows={2} placeholder="Attraction stopped, guest spoken to…" />
+          {witnessSection}
           {error && <ErrLine msg={error} />}
           <Actions busy={busy} onBack={() => setType(null)} onSubmit={submitOperational} />
         </div>
       )}
 
-      {/* Step 2b — injury (HSE) */}
       {type === 'injury' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Field label="Injured person — name" value={injuredName} onChange={setInjuredName} rows={1} placeholder="Full name" />
-          <Chips label="Who" options={[...PERSON_TYPES]} value={personType} onChange={(v) => setPersonType(v as (typeof PERSON_TYPES)[number])} accent="#F87171" />
+          <Chips label="Who" options={[...PERSON_TYPES]} value={personType} onChange={(v) => setPersonType(v as PersonType)} accent="#F87171" />
+          {isStaff ? (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}><Field label="Employee ID" value={empId} onChange={setEmpId} rows={1} placeholder="ID" /></div>
+              <div style={{ flex: 1 }}><Field label="Job role" value={jobRole} onChange={setJobRole} rows={1} placeholder="Role" /></div>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}><Field label="Phone" value={cPhone} onChange={setCPhone} rows={1} placeholder="Contact number" /></div>
+                <div style={{ flex: 1 }}><Field label="Email" value={cEmail} onChange={setCEmail} rows={1} placeholder="Email" /></div>
+              </div>
+              <Field label="Address" value={cAddress} onChange={setCAddress} rows={2} placeholder="Home address" />
+            </>
+          )}
           <SeverityPicker value={severity} onChange={setSeverity} />
+          <Field label="Where did it happen?" value={location} onChange={setLocation} rows={1} placeholder="Specific location…" />
           <Field label="How did it happen?" value={description} onChange={setDescription} rows={3} placeholder="Describe the accident and what they were doing…" />
           <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}><Field label="Nature of injury" value={injuryNature} onChange={setInjuryNature} rows={1} placeholder="Cut, sprain, bruise…" /></div>
+            <div style={{ flex: 1 }}><Field label="Nature of injury" value={injuryNature} onChange={setInjuryNature} rows={1} placeholder="Cut, sprain…" /></div>
             <div style={{ flex: 1 }}><Field label="Body part" value={bodyPart} onChange={setBodyPart} rows={1} placeholder="Ankle, head…" /></div>
           </div>
           <Toggle label="First aid given?" on={firstAid} onToggle={() => setFirstAid((v) => !v)} />
           {firstAid && <Field label="First aider" value={firstAider} onChange={setFirstAider} rows={1} placeholder="Who administered it" />}
           <Toggle label="Taken to hospital?" on={hospital} onToggle={() => setHospital((v) => !v)} />
           <Toggle label="Ambulance called?" on={ambulance} onToggle={() => setAmbulance((v) => !v)} />
-          <Toggle label="RIDDOR reportable?" on={riddor} onToggle={() => setRiddor((v) => !v)} hint="Death, specified injuries, or >7-day incapacitation" />
-          <Field label="Witnesses (optional)" value={witnesses} onChange={setWitnesses} rows={2} placeholder="Names of anyone who saw it" />
+          {witnessSection}
           {error && <ErrLine msg={error} />}
           <Actions busy={busy} onBack={() => setType(null)} onSubmit={submitInjury} submitLabel="Submit accident report" />
         </div>
@@ -194,7 +257,7 @@ function TypeChoice({ title, body, accent, onClick }: { title: string; body: str
   );
 }
 
-function Chips({ label, options, value, onChange, accent }: { label: string; options: string[]; value: string; onChange: (v: string) => void; accent: string }) {
+function Chips({ label, options, value, onChange, accent, labels }: { label: string; options: string[]; value: string; onChange: (v: string) => void; accent: string; labels?: Record<string, string> }) {
   return (
     <div>
       <p style={{ ...microLabel, marginBottom: 8 }}>{label}</p>
@@ -202,7 +265,7 @@ function Chips({ label, options, value, onChange, accent }: { label: string; opt
         {options.map((c) => (
           <button key={c} type="button" onClick={() => onChange(c)}
             style={{ padding: '8px 12px', borderRadius: radius.md, cursor: 'pointer', fontSize: 13, background: value === c ? `${accent}22` : surface.control, border: `1px solid ${value === c ? accent : border.default}`, color: value === c ? text.primary : text.secondary }}>
-            {c}
+            {labels?.[c] ?? c}
           </button>
         ))}
       </div>

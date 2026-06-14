@@ -128,7 +128,16 @@ function PrintContent() {
   const isInjury = inc.incident_type === 'injury';
   const fd = inc.form_data || {};
   const str = (k: string) => (typeof fd[k] === 'string' ? (fd[k] as string).trim() : '');
-  const riddor = fd['riddor_reportable'] === true;
+  const riddor = inc.riddor_reportable === true;
+  const riddorLabel =
+    inc.riddor_reportable === true ? 'Reportable'
+    : inc.riddor_reportable === false ? 'Not reportable'
+    : 'Not assessed';
+  const location = str('location');
+  const personType = str('person_type');
+  const isStaff = personType === 'Staff';
+  const witnessPresent = fd['witness_present'] === true;
+  const witnessIsEmployee = str('witness_is') === 'employee';
 
   const docType = isInjury ? 'Injury — Accident Report' : 'Operational';
 
@@ -183,6 +192,7 @@ function PrintContent() {
                 <Row label="Type" value={docType} />
                 {inc.category && <Row label="Category" value={inc.category} />}
                 {inc.severity && <Row label="Severity" value={titleCase(inc.severity)} />}
+                {location && <Row label="Location" value={location} />}
                 <Row label="Status" value={titleCase(inc.status)} />
                 <Row label="Source" value={sourceLabel(inc)} />
                 {inc.reported_by && <Row label="Reported by" value={inc.reported_by} />}
@@ -218,10 +228,39 @@ function PrintContent() {
                   />
                   <Row label="Taken to hospital" value={YesNo(fd['taken_to_hospital'])} />
                   <Row label="Ambulance called" value={YesNo(fd['ambulance_called'])} />
-                  <Row label="RIDDOR reportable" value={YesNo(riddor)} highlight={riddor} />
-                  <Row label="Witnesses" value={str('witnesses') || '—'} />
+                  {isStaff ? (
+                    <>
+                      {str('employee_id') && <Row label="Employee ID" value={str('employee_id')} />}
+                      {str('job_role') && <Row label="Job role" value={str('job_role')} />}
+                    </>
+                  ) : (
+                    <>
+                      {str('contact_email') && <Row label="Contact email" value={str('contact_email')} />}
+                      {str('contact_phone') && <Row label="Contact phone" value={str('contact_phone')} />}
+                      {str('contact_address') && <Row label="Address" value={str('contact_address')} />}
+                    </>
+                  )}
+                  <Row label="RIDDOR determination" value={riddorLabel} highlight={riddor} />
                 </tbody>
               </table>
+              {witnessPresent && (
+                <table className="detail-table" style={{ marginTop: 12 }}>
+                  <tbody>
+                    <Row label="Witness" value={str('witness_name') || '—'} />
+                    {witnessIsEmployee ? (
+                      <>
+                        {str('witness_employee_id') && <Row label="Witness employee ID" value={str('witness_employee_id')} />}
+                        {str('witness_job_role') && <Row label="Witness role" value={str('witness_job_role')} />}
+                      </>
+                    ) : (
+                      <>
+                        {str('witness_phone') && <Row label="Witness phone" value={str('witness_phone')} />}
+                        {str('witness_email') && <Row label="Witness email" value={str('witness_email')} />}
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              )}
               {riddor && (
                 <div className="riddor-flag">
                   RIDDOR reportable — may require notifying the HSE.
@@ -237,6 +276,50 @@ function PrintContent() {
                   <Row label="Actions taken" value={inc.actions_taken || '—'} />
                 </tbody>
               </table>
+              {witnessPresent && (
+                <table className="detail-table" style={{ marginTop: 12 }}>
+                  <tbody>
+                    <Row label="Witness" value={str('witness_name') || '—'} />
+                    {witnessIsEmployee ? (
+                      <>
+                        {str('witness_employee_id') && <Row label="Witness employee ID" value={str('witness_employee_id')} />}
+                        {str('witness_job_role') && <Row label="Witness role" value={str('witness_job_role')} />}
+                      </>
+                    ) : (
+                      <>
+                        {str('witness_phone') && <Row label="Witness phone" value={str('witness_phone')} />}
+                        {str('witness_email') && <Row label="Witness email" value={str('witness_email')} />}
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* ── Manager review ── */}
+          {(inc.manager_actions || inc.remediation || inc.riddor_reportable !== null) && (
+            <div className="section">
+              <h2 className="section-title">Manager Review</h2>
+              {inc.manager_actions && (
+                <>
+                  <div className="detail-label" style={{ marginBottom: 4 }}>Manager action taken</div>
+                  <p className="freetext" style={{ marginBottom: 12 }}>{inc.manager_actions}</p>
+                </>
+              )}
+              {inc.remediation && (
+                <>
+                  <div className="detail-label" style={{ marginBottom: 4 }}>Remediation / prevention</div>
+                  <p className="freetext" style={{ marginBottom: 12 }}>{inc.remediation}</p>
+                </>
+              )}
+              {isInjury && (
+                <table className="detail-table">
+                  <tbody>
+                    <Row label="RIDDOR determination" value={riddorLabel} highlight={riddor} />
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 

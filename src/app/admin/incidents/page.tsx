@@ -13,6 +13,8 @@ import IncidentForm, { type IncidentFormValues } from '@/components/IncidentForm
 
 type FilterKey = 'submitted' | 'requested' | 'all';
 
+const OWNER_EMAIL = 'finley@immersivecore.network';
+
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'submitted', label: 'To review' },
   { key: 'requested', label: 'Awaiting operator' },
@@ -82,37 +84,88 @@ function Field({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+/** A grid of label/value rows; empties are filtered out. */
+function DetailGrid({ rows }: { rows: [string, string][] }) {
+  const filtered = rows.filter(([, v]) => v) as [string, string][];
+  if (filtered.length === 0) return null;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+      {filtered.map(([label, value]) => (
+        <div key={label}>
+          <p style={{ ...microLabel, margin: '0 0 2px' }}>{label}</p>
+          <p style={{ color: textTok.primary, fontSize: 13, lineHeight: 1.4, margin: 0, whiteSpace: 'pre-wrap' }}>{value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function fdStr(data: Record<string, unknown>, k: string): string {
+  return typeof data[k] === 'string' ? (data[k] as string).trim() : '';
+}
+
+/** Structured witness block, shared by injury and operational reports. */
+function WitnessDetails({ data }: { data: Record<string, unknown> }) {
+  if (data['witness_present'] !== true) return null;
+  const name = fdStr(data, 'witness_name');
+  const who = fdStr(data, 'witness_is');
+  const rows: [string, string][] =
+    who === 'employee'
+      ? [
+          ['Witness', name],
+          ['Witness employee ID', fdStr(data, 'witness_employee_id')],
+          ['Witness role', fdStr(data, 'witness_job_role')],
+        ]
+      : [
+          ['Witness', name],
+          ['Witness phone', fdStr(data, 'witness_phone')],
+          ['Witness email', fdStr(data, 'witness_email')],
+        ];
+  if (!rows.some(([, v]) => v)) return null;
+  return (
+    <div style={{ marginTop: 12 }}>
+      <p style={{ ...microLabel, margin: '0 0 6px' }}>Witness ({who === 'employee' ? 'employee' : 'member of public'})</p>
+      <DetailGrid rows={rows} />
+    </div>
+  );
+}
+
 /** Renders the structured HSE accident fields stored in incidents.form_data. */
 function InjuryDetails({ data }: { data: Record<string, unknown> }) {
-  const str = (k: string) => (typeof data[k] === 'string' ? (data[k] as string).trim() : '');
+  const str = (k: string) => fdStr(data, k);
   const bool = (k: string) => data[k] === true;
   const injured = str('injured_person');
   const personType = str('person_type');
-  const rows: [string, string][] = [
+  const isStaff = personType === 'Staff';
+  const clinicalRows: [string, string][] = [
     ['Injured person', [injured, personType && `(${personType})`].filter(Boolean).join(' ')],
     ['Nature of injury', str('injury_nature')],
     ['Body part', str('body_part')],
     ['First aid', bool('first_aid_given') ? `Yes${str('first_aider') ? ` — ${str('first_aider')}` : ''}` : 'No'],
     ['Taken to hospital', bool('taken_to_hospital') ? 'Yes' : 'No'],
     ['Ambulance called', bool('ambulance_called') ? 'Yes' : 'No'],
-    ['Witnesses', str('witnesses')],
-  ].filter(([, v]) => v) as [string, string][];
+  ];
+  const contactRows: [string, string][] = isStaff
+    ? [
+        ['Employee ID', str('employee_id')],
+        ['Job role', str('job_role')],
+      ]
+    : [
+        ['Contact email', str('contact_email')],
+        ['Contact phone', str('contact_phone')],
+        ['Address', str('contact_address')],
+      ];
 
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-        {rows.map(([label, value]) => (
-          <div key={label}>
-            <p style={{ ...microLabel, margin: '0 0 2px' }}>{label}</p>
-            <p style={{ color: textTok.primary, fontSize: 13, lineHeight: 1.4, margin: 0 }}>{value}</p>
-          </div>
-        ))}
-      </div>
-      {bool('riddor_reportable') && (
-        <div style={{ marginTop: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#FCA5A5', fontSize: 12, fontWeight: 600 }}>
-          ⚠ Flagged RIDDOR reportable — may require notifying the HSE
+      <DetailGrid rows={clinicalRows} />
+      {contactRows.some(([, v]) => v) && (
+        <div style={{ marginTop: 12 }}>
+          <p style={{ ...microLabel, margin: '0 0 6px' }}>{isStaff ? 'Staff details' : 'Contact details'}</p>
+          <DetailGrid rows={contactRows} />
         </div>
       )}
+      <WitnessDetails data={data} />
     </div>
   );
 }
@@ -125,10 +178,40 @@ export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [filter, setFilter] = useState<FilterKey>('submitted');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [savingReviewId, setSavingReviewId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Per-incident manager editor drafts, keyed by incident id.
+  const [editors, setEditors] = useState<Record<string, { manager_actions: string; remediation: string; riddor_reportable: boolean | null }>>({});
+
+  const isOwner = userEmail === OWNER_EMAIL;
+
+  function patchLocal(id: string, patch: Partial<Incident>) {
+    setIncidents((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+  }
+  function removeLocal(id: string) {
+    setIncidents((prev) => prev.filter((i) => i.id !== id));
+  }
+  function editorFor(inc: Incident) {
+    return (
+      editors[inc.id] || {
+        manager_actions: inc.manager_actions || '',
+        remediation: inc.remediation || '',
+        riddor_reportable: inc.riddor_reportable,
+      }
+    );
+  }
+  function setEditor(id: string, patch: Partial<{ manager_actions: string; remediation: string; riddor_reportable: boolean | null }>) {
+    setEditors((prev) => {
+      const cur = prev[id] || { manager_actions: '', remediation: '', riddor_reportable: null };
+      return { ...prev, [id]: { ...cur, ...patch } };
+    });
+  }
   const [attractions, setAttractions] = useState<Pick<Attraction, 'id' | 'name' | 'slug'>[]>([]);
   const [creating, setCreating] = useState(false);
   // null = picker closed; '' = picker open, awaiting choice; otherwise chosen attraction id or 'general'
   const [chosenAttraction, setChosenAttraction] = useState<string | null>(null);
+  const [requesting, setRequesting] = useState(false);   // ad-hoc "request report" picker open
+  const [reqAttraction, setReqAttraction] = useState(''); // chosen attraction for the request
   const { toasts, pushToast } = useToasts();
 
   const fetchIncidents = useCallback(async () => {
@@ -190,16 +273,60 @@ export default function IncidentsPage() {
   async function markReviewed(inc: Incident) {
     setBusyId(inc.id);
     const reviewer = displayName || userEmail;
+    const reviewedAt = new Date().toISOString();
+    // Persist any unsaved manager editor values alongside the status change.
+    const draft = editorFor(inc);
     const { error } = await supabase
       .from('incidents')
-      .update({ status: 'reviewed', reviewed_by: reviewer, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .update({
+        status: 'reviewed',
+        reviewed_by: reviewer,
+        reviewed_at: reviewedAt,
+        manager_actions: draft.manager_actions || null,
+        remediation: draft.remediation || null,
+        riddor_reportable: draft.riddor_reportable,
+        updated_at: reviewedAt,
+      })
       .eq('id', inc.id);
     setBusyId(null);
     if (error) {
       pushToast('error', `Failed to mark ${inc.attraction_name} reviewed`);
       return;
     }
+    patchLocal(inc.id, {
+      status: 'reviewed',
+      reviewed_by: reviewer,
+      reviewed_at: reviewedAt,
+      manager_actions: draft.manager_actions || null,
+      remediation: draft.remediation || null,
+      riddor_reportable: draft.riddor_reportable,
+    });
     pushToast('success', 'Incident marked reviewed');
+  }
+
+  async function saveReview(inc: Incident) {
+    const draft = editorFor(inc);
+    setSavingReviewId(inc.id);
+    const { error } = await supabase
+      .from('incidents')
+      .update({
+        manager_actions: draft.manager_actions || null,
+        remediation: draft.remediation || null,
+        riddor_reportable: draft.riddor_reportable,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', inc.id);
+    setSavingReviewId(null);
+    if (error) {
+      pushToast('error', 'Failed to save manager review');
+      return;
+    }
+    patchLocal(inc.id, {
+      manager_actions: draft.manager_actions || null,
+      remediation: draft.remediation || null,
+      riddor_reportable: draft.riddor_reportable,
+    });
+    pushToast('success', 'Manager review saved');
   }
 
   async function reopen(inc: Incident) {
@@ -213,7 +340,21 @@ export default function IncidentsPage() {
       pushToast('error', `Failed to reopen ${inc.attraction_name}`);
       return;
     }
+    patchLocal(inc.id, { status: 'submitted', reviewed_by: null, reviewed_at: null });
     pushToast('success', 'Incident reopened');
+  }
+
+  async function deleteIncident(inc: Incident) {
+    setBusyId(inc.id);
+    const { error } = await supabase.from('incidents').delete().eq('id', inc.id);
+    setBusyId(null);
+    setConfirmDeleteId(null);
+    if (error) {
+      pushToast('error', `Failed to delete ${inc.attraction_name}`);
+      return;
+    }
+    removeLocal(inc.id);
+    pushToast('success', 'Incident deleted');
   }
 
   const chosenAttractionName =
@@ -248,6 +389,30 @@ export default function IncidentsPage() {
     await fetchIncidents();
   }
 
+  // Ad-hoc: send a report request to Control for an attraction (no delay needed).
+  async function sendRequestReport() {
+    const id = reqAttraction;
+    const name = attractions.find((a) => a.id === id)?.name;
+    if (!id || !name) { pushToast('error', 'Pick an attraction'); return; }
+    if (incidents.some((i) => i.attraction_id === id && i.status === 'requested')) {
+      pushToast('error', `A report is already pending for ${name}`);
+      setRequesting(false);
+      return;
+    }
+    const { error } = await supabase.from('incidents').insert({
+      source: 'admin_request',
+      status: 'requested',
+      attraction_id: id,
+      attraction_name: name,
+      requested_by: displayName || userEmail,
+      log_date: getTodayDateStr(),
+    });
+    if (error) { pushToast('error', 'Failed to send request'); return; }
+    pushToast('success', `Report requested from Control for ${name}`);
+    setRequesting(false);
+    await fetchIncidents();
+  }
+
   async function cancelRequest(inc: Incident) {
     setBusyId(inc.id);
     const { error } = await supabase
@@ -259,6 +424,7 @@ export default function IncidentsPage() {
       pushToast('error', `Failed to cancel request for ${inc.attraction_name}`);
       return;
     }
+    removeLocal(inc.id);
     pushToast('success', 'Request cancelled');
   }
 
@@ -282,15 +448,26 @@ export default function IncidentsPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '0 0 20px' }}>
           <h2 className="text-2xl font-bold" style={{ margin: 0 }}>Incident Review</h2>
-          <button
-            onClick={() => { setChosenAttraction('general'); setCreating(true); }}
-            style={{ ...primaryButton('admin'), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', fontSize: 13 }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New incident
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={() => { setReqAttraction(attractions[0]?.id || ''); setRequesting(true); }}
+              style={{ ...controlButton, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', fontSize: 13, fontWeight: 600 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M4 4h16v12H4z" /><path d="M8 20h8M12 16v4" />
+              </svg>
+              Request report
+            </button>
+            <button
+              onClick={() => { setChosenAttraction('general'); setCreating(true); }}
+              style={{ ...primaryButton('admin'), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', fontSize: 13 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New incident
+            </button>
+          </div>
         </div>
 
         {/* Segmented filter */}
@@ -358,6 +535,15 @@ export default function IncidentsPage() {
                       {inc.severity && (
                         <Pill bg={SEVERITY_PILL[inc.severity].bg} color={SEVERITY_PILL[inc.severity].text}>{inc.severity}</Pill>
                       )}
+                      {inc.incident_type === 'injury' && inc.status !== 'requested' && (
+                        inc.riddor_reportable === null ? (
+                          <Pill bg="rgba(245,158,11,0.14)" color="#FBBF24">RIDDOR: not assessed</Pill>
+                        ) : inc.riddor_reportable === true ? (
+                          <Pill bg="rgba(239,68,68,0.14)" color="#F87171">RIDDOR reportable</Pill>
+                        ) : (
+                          <Pill bg="rgba(148,163,184,0.12)" color="#94A3B8">Not RIDDOR</Pill>
+                        )
+                      )}
                     </div>
                     <span style={{ color: textTok.muted, fontSize: 12, ...FONT_NUM, whiteSpace: 'nowrap' }}>{formatTime(inc.created_at)}</span>
                   </div>
@@ -377,6 +563,7 @@ export default function IncidentsPage() {
                           Accident report
                         </div>
                       )}
+                      <Field label="Location" value={fdStr(inc.form_data, 'location') || null} />
                       <Field label={inc.incident_type === 'injury' ? 'How it happened' : 'Description'} value={inc.description} />
                       {inc.incident_type === 'injury' ? (
                         <InjuryDetails data={inc.form_data} />
@@ -384,6 +571,7 @@ export default function IncidentsPage() {
                         <>
                           <Field label="People involved" value={inc.people_involved} />
                           <Field label="Actions taken" value={inc.actions_taken} />
+                          <WitnessDetails data={inc.form_data} />
                         </>
                       )}
                       {inc.reported_by && (
@@ -399,6 +587,78 @@ export default function IncidentsPage() {
                       Reviewed by {inc.reviewed_by}{inc.reviewed_at ? ` · ${formatTime(inc.reviewed_at)}` : ''}
                     </p>
                   )}
+
+                  {/* Manager review editor (submitted + reviewed) */}
+                  {(inc.status === 'submitted' || inc.status === 'reviewed') && (() => {
+                    const draft = editorFor(inc);
+                    const segOpts: { val: boolean | null; label: string; activeBg: string; activeColor: string }[] = [
+                      { val: null, label: 'Not assessed', activeBg: 'rgba(245,158,11,0.2)', activeColor: '#FBBF24' },
+                      { val: true, label: 'RIDDOR reportable', activeBg: 'rgba(239,68,68,0.2)', activeColor: '#F87171' },
+                      { val: false, label: 'Not reportable', activeBg: 'rgba(148,163,184,0.2)', activeColor: '#CBD5E1' },
+                    ];
+                    const taStyle: React.CSSProperties = {
+                      width: '100%', marginTop: 4, background: surface.control, border: `1px solid ${border.strong}`,
+                      borderRadius: radius.md, color: textTok.primary, fontSize: 13, padding: '8px 10px',
+                      outline: 'none', resize: 'vertical', minHeight: 54, fontFamily: 'inherit',
+                    };
+                    return (
+                      <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${border.divider}` }}>
+                        <p style={{ ...microLabel, margin: '0 0 8px' }}>Manager review</p>
+                        <div>
+                          <label style={{ ...microLabel, fontWeight: 600 }}>Manager action taken</label>
+                          <textarea
+                            value={draft.manager_actions}
+                            onChange={(e) => setEditor(inc.id, { manager_actions: e.target.value })}
+                            style={taStyle}
+                          />
+                        </div>
+                        <div style={{ marginTop: 10 }}>
+                          <label style={{ ...microLabel, fontWeight: 600 }}>Remediation / prevention</label>
+                          <textarea
+                            value={draft.remediation}
+                            onChange={(e) => setEditor(inc.id, { remediation: e.target.value })}
+                            style={taStyle}
+                          />
+                        </div>
+                        {inc.incident_type === 'injury' && (
+                          <div style={{ marginTop: 10 }}>
+                            <label style={{ ...microLabel, fontWeight: 600 }}>RIDDOR determination</label>
+                            <div style={{ display: 'inline-flex', gap: 2, marginTop: 4, background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, padding: 3, flexWrap: 'wrap' }}>
+                              {segOpts.map((o) => {
+                                const active = draft.riddor_reportable === o.val;
+                                return (
+                                  <button
+                                    key={o.label}
+                                    onClick={() => setEditor(inc.id, { riddor_reportable: o.val })}
+                                    style={{
+                                      padding: '6px 12px', borderRadius: radius.sm, border: 'none', cursor: 'pointer',
+                                      fontSize: 12, fontWeight: 600,
+                                      background: active ? o.activeBg : 'transparent',
+                                      color: active ? o.activeColor : textTok.secondary,
+                                    }}
+                                  >
+                                    {o.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ marginTop: 12 }}>
+                          <button
+                            onClick={() => saveReview(inc)}
+                            disabled={savingReviewId === inc.id}
+                            style={{
+                              padding: '8px 16px', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md,
+                              color: textTok.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: savingReviewId === inc.id ? 0.5 : 1,
+                            }}
+                          >
+                            {savingReviewId === inc.id ? 'Saving…' : 'Save review'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Actions */}
                   {(inc.status === 'submitted' || inc.status === 'reviewed' || inc.status === 'requested' || inc.status === 'dismissed') && (
@@ -454,6 +714,26 @@ export default function IncidentsPage() {
                           {busyId === inc.id ? 'Cancelling…' : 'Cancel request'}
                         </button>
                       )}
+                      {isOwner && (
+                        <button
+                          onClick={() => {
+                            if (confirmDeleteId === inc.id) deleteIncident(inc);
+                            else setConfirmDeleteId(inc.id);
+                          }}
+                          onBlur={() => setConfirmDeleteId((cur) => (cur === inc.id ? null : cur))}
+                          disabled={busyId === inc.id}
+                          style={{
+                            marginLeft: 'auto',
+                            padding: '8px 14px', background: 'transparent',
+                            border: `1px solid ${confirmDeleteId === inc.id ? '#EF4444' : border.strong}`,
+                            borderRadius: radius.md,
+                            color: confirmDeleteId === inc.id ? '#F87171' : textTok.muted,
+                            fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: busyId === inc.id ? 0.5 : 1,
+                          }}
+                        >
+                          {busyId === inc.id ? 'Deleting…' : confirmDeleteId === inc.id ? 'Confirm delete?' : 'Delete'}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -462,6 +742,36 @@ export default function IncidentsPage() {
           </div>
         )}
       </div>
+
+      {/* Request report: pick attraction → send a request to Control */}
+      {requesting && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setRequesting(false)}
+        >
+          <div
+            style={{ width: '100%', maxWidth: 420, background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ color: textTok.primary, fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>Request a report</p>
+            <p style={{ color: textTok.muted, fontSize: 12, margin: '0 0 16px' }}>The operator on this attraction will be prompted on Control to file or dismiss a report.</p>
+            <p style={{ ...microLabel, marginBottom: 8 }}>Attraction</p>
+            <select
+              value={reqAttraction}
+              onChange={(e) => setReqAttraction(e.target.value)}
+              style={{ width: '100%', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, color: textTok.primary, fontSize: 14, padding: '10px 12px', outline: 'none' }}
+            >
+              {attractions.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button onClick={() => setRequesting(false)} style={{ ...controlButton, flex: 1, padding: '11px 0', fontSize: 14, fontWeight: 600 }}>Cancel</button>
+              <button onClick={sendRequestReport} style={{ ...primaryButton('admin'), flex: 2, padding: '11px 0', fontSize: 14 }}>Send request</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New incident: attraction picker → shared form */}
       {creating && (

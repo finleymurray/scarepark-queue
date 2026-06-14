@@ -9,7 +9,7 @@ import { logAudit } from '@/lib/audit';
 import { getAttractionLogo, getLogoGlow, getGlowRgb } from '@/lib/logos';
 import { getSignoffStatus } from '@/lib/signoff';
 import type { AttractionSignoffStatus } from '@/lib/signoff';
-import type { Attraction, ThroughputLog, DispatchLog, OperatorSession, Incident } from '@/types/database';
+import type { Attraction, ThroughputLog, DispatchLog, OperatorSession, Incident, Alert } from '@/types/database';
 import IncidentForm, { type IncidentFormValues } from '@/components/IncidentForm';
 import { saveShowReportDraft, getExistingReport } from '@/lib/showReport';
 import AppSwitcher from '@/components/AppSwitcher';
@@ -116,7 +116,54 @@ export default function SupervisorDashboard() {
   // Incident reporting — pending request for the selected attraction + form modal
   const [pendingIncident, setPendingIncident] = useState<Incident | null>(null);
   const [incidentFormOpen, setIncidentFormOpen] = useState<null | 'request' | 'operator'>(null);
+  // Admin alerts — active alerts (global or per-attraction), realtime-refreshed.
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  // Locally-dismissed alert ids (per device, persisted in localStorage).
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('ic-alerts-dismissed');
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
   const { toasts, pushToast } = useToasts();
+
+  function dismissAlert(id: string) {
+    setDismissedAlertIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('ic-alerts-dismissed', JSON.stringify(next)); } catch { /* ignore */ }
+      }
+      return next;
+    });
+  }
+
+  // Fetch active alerts once + subscribe to realtime changes (refetch on any change).
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchAlerts() {
+      const { data } = await supabase
+        .from('alerts')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false });
+      if (!cancelled) setAlerts((data as Alert[]) || []);
+    }
+    fetchAlerts();
+
+    const channel = supabase
+      .channel('control-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => { fetchAlerts(); })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Operator session — per-attraction "who's on the panel" state
   const { session: operatorSession, loading: operatorLoading, login: operatorLogin, changeOperator, endShift } = useOperatorSession(
@@ -562,6 +609,18 @@ export default function SupervisorDashboard() {
   // Selected attraction
   const selected = useMemo(() => rides.find((a) => a.id === selectedId) || null, [rides, selectedId]);
 
+  // Relevant alerts for the selected attraction: global (target_all) or matching
+  // this attraction, minus any locally-dismissed on this device.
+  const relevantAlerts = useMemo(
+    () =>
+      alerts.filter(
+        (a) =>
+          (a.target_all || a.attraction_id === selectedId) &&
+          !dismissedAlertIds.includes(a.id),
+      ),
+    [alerts, selectedId, dismissedAlertIds],
+  );
+
   // Fully signed off today = all opening sections complete
   const fullySignedOff = !!signoffStatus && signoffStatus.openingTotal > 0 && signoffStatus.openingCompleted === signoffStatus.openingTotal;
   // CLOSED reads as NOT SIGNED OFF until the opening sign-off is complete
@@ -967,22 +1026,22 @@ export default function SupervisorDashboard() {
                   {logo && (
                     <img src={logo} alt={selected.name} loading="lazy" decoding="async" className="object-contain w-[100px] sm:w-[160px]" style={{ height: 'auto', maxHeight: wide ? 'clamp(56px, 10vh, 90px)' : 100, filter: glow || undefined }} />
                   )}
-                  {/* Wide: status pill + Show Report sit on one row to save height */}
-                  <div style={{ display: 'flex', flexDirection: wide ? 'row' : 'column', alignItems: 'center', gap: wide ? 12 : 12 }}>
-                    {/* Attraction status — prominent */}
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-                      padding: '7px 18px', borderRadius: radius.pill,
-                      background: sc.soft, color: sc.text, border: `1px solid ${sc.rail}40`,
-                      ...FONT_NUM,
-                    }}>
-                      {st === 'DELAYED' && delayStartedAt
-                        ? `DELAYED — ${formatElapsed(delayElapsed)}`
-                        : st === 'CLOSED' && !fullySignedOff
-                        ? 'NOT SIGNED OFF'
-                        : st}
-                    </span>
+                  {/* Status pill — sits on its own centered row directly under the logo */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    padding: '7px 18px', borderRadius: radius.pill,
+                    background: sc.soft, color: sc.text, border: `1px solid ${sc.rail}40`,
+                    ...FONT_NUM,
+                  }}>
+                    {st === 'DELAYED' && delayStartedAt
+                      ? `DELAYED — ${formatElapsed(delayElapsed)}`
+                      : st === 'CLOSED' && !fullySignedOff
+                      ? 'NOT SIGNED OFF'
+                      : st}
+                  </span>
+                  {/* Action buttons — Show Report + Log incident on a centered row below the status */}
+                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                     {/* Show Report button — always visible under logo */}
                     {selected.attraction_type !== 'show' && (
                       <button
@@ -1022,6 +1081,63 @@ export default function SupervisorDashboard() {
               );
             })();
 
+            {/* ── Admin alerts banners (purely informational, dismissible) ── */}
+            const alertsBanner = relevantAlerts.length > 0 && (
+              <div style={{
+                display: 'flex', flexDirection: 'column', gap: 8,
+                ...(wide ? { flexShrink: 0 } : { marginBottom: 16 }),
+              }}>
+                {relevantAlerts.map((alert) => {
+                  const palette = alert.level === 'urgent'
+                    ? { rgb: '239,68,68', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.6)', icon: '#EF4444' }
+                    : alert.level === 'warning'
+                    ? { rgb: '245,158,11', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.4)', icon: '#F59E0B' }
+                    : { rgb: '59,130,246', bg: 'rgba(59,130,246,0.10)', border: 'rgba(59,130,246,0.4)', icon: '#3B82F6' };
+                  const isTriangle = alert.level !== 'info';
+                  return (
+                    <div key={alert.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+                      background: palette.bg,
+                      border: `1px solid ${palette.border}`,
+                      borderLeft: `4px solid ${palette.icon}`,
+                      borderRadius: radius.lg,
+                      padding: '10px 14px',
+                    }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={palette.icon} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden>
+                        {isTriangle ? (
+                          <>
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                          </>
+                        ) : (
+                          <>
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                          </>
+                        )}
+                      </svg>
+                      <div style={{ flex: 1, minWidth: 140 }}>
+                        <div style={{ color: text.primary, fontSize: 13, fontWeight: alert.level === 'urgent' ? 800 : 700 }}>
+                          {alert.message}
+                        </div>
+                        {alert.created_by && (
+                          <div style={{ color: text.muted, fontSize: 11, marginTop: 1 }}>from {alert.created_by}</div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => dismissAlert(alert.id)}
+                        aria-label="Dismiss alert"
+                        title="Dismiss"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: text.muted, fontSize: 20, lineHeight: 1, padding: '2px 6px', flexShrink: 0 }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+
             {/* ── Pending incident-request banner (does NOT block dispatch) ── */}
             const incidentBanner = pendingIncident && (
               <div style={{
@@ -1044,10 +1160,10 @@ export default function SupervisorDashboard() {
                       : `Requested by ${pendingIncident.requested_by || 'admin'}`}
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <button
                     onClick={handleDismissRequestedIncident}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: text.muted, fontSize: 12, fontWeight: 600, padding: '8px 8px', whiteSpace: 'nowrap' }}
+                    style={{ background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, cursor: 'pointer', color: text.secondary, fontSize: 13, fontWeight: 600, padding: '8px 12px', whiteSpace: 'nowrap' }}
                   >
                     No incident — minor
                   </button>
@@ -1503,6 +1619,7 @@ export default function SupervisorDashboard() {
               return (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 12 }}>
+                    {alertsBanner}
                     {heroBlock}
                     {incidentBanner}
                     <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -1526,6 +1643,7 @@ export default function SupervisorDashboard() {
             // Phones: existing single-column layout
             return (
               <>
+                {alertsBanner}
                 {heroBlock}
                 {incidentBanner}
                 {/* ── Operator-gated panel: Dispatch + Queue Time ── */}

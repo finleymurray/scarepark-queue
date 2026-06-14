@@ -12,15 +12,37 @@ const PRIMARY_TABS = [
   { label: 'Reports', href: '/admin/reports' },
 ];
 
-const MORE_TABS = [
-  { label: 'Users', href: '/admin/users' },
-  { label: 'Screens', href: '/admin/screens' },
-  { label: 'Analytics', href: '/admin/analytics' },
-  { label: 'Logs', href: '/admin/logs' },
-  { label: 'Incidents', href: '/admin/incidents' },
-  { label: 'Attraction Details', href: '/admin/attractions' },
-  { label: 'Add Attraction', href: '/admin/attractions/new' },
+type MoreItem = { label: string; href: string };
+type MoreSection = { heading: string; items: MoreItem[] };
+
+const MORE_SECTIONS: MoreSection[] = [
+  {
+    heading: 'Attractions',
+    items: [
+      { label: 'Attraction Details', href: '/admin/attractions' },
+      { label: 'Add Attraction', href: '/admin/attractions/new' },
+    ],
+  },
+  {
+    heading: 'Monitoring',
+    items: [
+      { label: 'Screens', href: '/admin/screens' },
+      { label: 'Logs', href: '/admin/logs' },
+      { label: 'Incidents', href: '/admin/incidents' },
+      { label: 'Alerts', href: '/admin/alerts' },
+    ],
+  },
+  {
+    heading: 'Insights',
+    items: [{ label: 'Analytics', href: '/admin/analytics' }],
+  },
+  {
+    heading: 'People',
+    items: [{ label: 'Users', href: '/admin/users' }],
+  },
 ];
+
+const MORE_TABS: MoreItem[] = MORE_SECTIONS.flatMap((s) => s.items);
 
 // App switching (Control / Sign-Off) now happens via the AppSwitcher logo;
 // only the TV Screens directory remains as an external link.
@@ -177,26 +199,45 @@ export default function AdminNav({
                 zIndex: 9999,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
               }}>
-                {MORE_TABS.map((tab) => {
-                  const active = isActive(tab.href);
-                  return (
-                    <a
-                      key={tab.href}
-                      href={tab.href}
-                      onClick={() => setMoreOpen(false)}
-                      className={`admin-nav-dropdown ${active ? 'admin-nav-dropdown-active' : ''}`}
+                {MORE_SECTIONS.map((section, i) => (
+                  <div key={section.heading}>
+                    {i > 0 && (
+                      <div style={{ height: 1, background: border.default, margin: '4px 0' }} />
+                    )}
+                    <div
                       style={{
-                        display: 'block',
-                        padding: '8px 16px',
-                        textDecoration: 'none',
-                        fontSize: 14,
-                        fontWeight: active ? 600 : 400,
+                        padding: '6px 16px 4px',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: text.muted,
                       }}
                     >
-                      {tab.label}
-                    </a>
-                  );
-                })}
+                      {section.heading}
+                    </div>
+                    {section.items.map((tab) => {
+                      const active = isActive(tab.href);
+                      return (
+                        <a
+                          key={tab.href}
+                          href={tab.href}
+                          onClick={() => setMoreOpen(false)}
+                          className={`admin-nav-dropdown ${active ? 'admin-nav-dropdown-active' : ''}`}
+                          style={{
+                            display: 'block',
+                            padding: '8px 16px',
+                            textDecoration: 'none',
+                            fontSize: 14,
+                            fontWeight: active ? 600 : 400,
+                          }}
+                        >
+                          {tab.label}
+                        </a>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
