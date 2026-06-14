@@ -248,6 +248,12 @@ export default function ScreensPage() {
     }
   }
 
+  async function handleToggleScreenBlackout(screen: Screen) {
+    const { error } = await supabase.from('screens').update({ blackout: !screen.blackout }).eq('id', screen.id);
+    if (error) { pushToast('error', 'Failed to toggle blackout'); return; }
+    pushToast('success', screen.blackout ? `${screen.label || screen.code} restored` : `${screen.label || screen.code} blacked out`);
+  }
+
   async function handleDeleteScreen(screen: Screen) {
     const { error } = await supabase.from('screens').delete().eq('id', screen.id);
     if (error) pushToast('error', 'Failed to remove screen');
@@ -395,6 +401,7 @@ export default function ScreensPage() {
                 onAssign={handleAssignPath}
                 onDelete={handleDeleteScreen}
                 onLabelChange={handleLabelChange}
+                onToggleBlackout={handleToggleScreenBlackout}
                 assignablePaths={assignablePaths}
               />
             ))}
@@ -445,12 +452,14 @@ function ManagedScreenCard({
   onAssign,
   onDelete,
   onLabelChange,
+  onToggleBlackout,
   assignablePaths,
 }: {
   screen: Screen;
   onAssign: (screen: Screen, path: string) => void;
   onDelete: (screen: Screen) => void;
   onLabelChange: (screen: Screen, label: string) => void;
+  onToggleBlackout: (screen: Screen) => void;
   assignablePaths: { value: string; label: string }[];
 }) {
   const status = getStatus(screen.last_seen);
@@ -598,6 +607,25 @@ function ManagedScreenCard({
           ))}
         </select>
       </div>
+
+      {/* Blackout this screen */}
+      <button
+        onClick={() => onToggleBlackout(screen)}
+        style={{
+          width: '100%', marginBottom: 8, padding: '9px 0', borderRadius: radius.md, cursor: 'pointer',
+          fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          background: screen.blackout ? 'rgba(168,85,247,0.14)' : surface.control,
+          border: `1px solid ${screen.blackout ? 'rgba(168,85,247,0.5)' : border.strong}`,
+          color: screen.blackout ? '#C4B5FD' : text.secondary,
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          {screen.blackout
+            ? <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></>
+            : <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></>}
+        </svg>
+        {screen.blackout ? 'Blacked out — tap to restore' : 'Blackout this screen'}
+      </button>
 
       {/* Last seen */}
       <div style={{ fontSize: 11, color: text.secondary, ...FONT_NUM }}>

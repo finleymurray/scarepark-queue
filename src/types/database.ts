@@ -169,6 +169,7 @@ export interface Screen {
   label: string | null;
   last_seen: string;
   user_agent: string | null;
+  blackout: boolean;
   created_at: string;
 }
 
