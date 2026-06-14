@@ -44,3 +44,6 @@ next-env.d.ts
 /deploy/
 /pi-gen/.pi-gen-repo/
 /pi-gen/wifi.conf
+
+# Local Claude Code config
+.claude/

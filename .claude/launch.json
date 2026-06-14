@@ -1,3 +1,0 @@
-{ "version":"0.0.1","configurations":[
-  {"name":"turtle-viewer","runtimeExecutable":"python3","runtimeArgs":["-m","http.server","8755","--directory","/tmp/tt"],"port":8755}
-]}
