@@ -23,11 +23,20 @@ import TvFooter from './TvFooter';
  *   `will-change: opacity` on the two layers only.
  */
 
-const SLIDE_MS = 8000;
-const FADE_MS = 1200;
-const KEN_BURNS_MS = 12000;
+const SLIDE_MS = 4500;
+const FADE_MS = 700;
+const KEN_BURNS_MS = 5400; // a touch longer than a slide so motion never freezes
 const PRELOAD_TIMEOUT_MS = 5000;
 const FALLBACK_GLOW = '200,200,210';
+
+/* Per-slide Ken Burns moves so consecutive slides feel different. Scale stays
+   >1 so the pan never reveals an edge. Transform-only → GPU-composited, Pi-safe. */
+const KEN_BURNS: { from: string; to: string }[] = [
+  { from: 'scale(1.02)', to: 'scale(1.14)' },                          // push in
+  { from: 'scale(1.14)', to: 'scale(1.02)' },                          // pull out
+  { from: 'scale(1.12) translate(-3%, 0)', to: 'scale(1.12) translate(3%, 0)' },  // pan right
+  { from: 'scale(1.12) translate(0, -3%)', to: 'scale(1.12) translate(0, 3%)' },  // pan down
+];
 
 const MONTAGE_COLUMNS =
   'id,name,slug,status,wait_time,sort_order,attraction_type,show_times,updated_at,logo_url,bg_url,queue_bg_url,glow_rgb,text_color,text_rgb,tagline';
@@ -45,19 +54,22 @@ interface SlideContentProps {
   attraction: Attraction | null;
   /** Whether this layer is currently the visible one (drives Ken Burns). */
   active: boolean;
+  /** Which Ken Burns move to use (varies per slide). */
+  variant: number;
 }
 
 /** Static slide content — bg photo + scrim + glowing logo. */
-function SlideContent({ attraction, active }: SlideContentProps) {
+function SlideContent({ attraction, active, variant }: SlideContentProps) {
   if (!attraction) return null;
 
   const bg = resolveBg(attraction);
   const logo = resolveLogo(attraction);
   const glowRgb = resolveGlowRgb(attraction) ?? FALLBACK_GLOW;
+  const kb = KEN_BURNS[variant % KEN_BURNS.length];
 
   return (
     <>
-      {/* Background photo with slow Ken Burns (transform-only) */}
+      {/* Background photo with varied Ken Burns (transform-only) */}
       {bg ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -70,8 +82,9 @@ function SlideContent({ attraction, active }: SlideContentProps) {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transform: active ? 'scale(1.06)' : 'scale(1)',
+            transform: active ? kb.to : kb.from,
             transition: active ? `transform ${KEN_BURNS_MS}ms linear` : 'none',
+            willChange: 'transform',
           }}
         />
       ) : (
@@ -109,6 +122,7 @@ function SlideContent({ attraction, active }: SlideContentProps) {
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
+            key={attraction.id}
             src={logo}
             alt={attraction.name}
             style={{
@@ -116,6 +130,7 @@ function SlideContent({ attraction, active }: SlideContentProps) {
               maxWidth: '84vw',
               objectFit: 'contain',
               filter: resolveLogoGlow(attraction, 'strong'),
+              animation: active ? 'lm-logo-in 700ms cubic-bezier(0.22,1,0.36,1) both' : undefined,
             }}
           />
         ) : (
@@ -226,6 +241,9 @@ export default function LogoMontage({ showPlaceholder = true }: LogoMontageProps
     willChange: 'opacity',
   });
 
+  // Ken Burns move varies by each slide's position in the list.
+  const variantFor = (a: Attraction | null) => (a ? Math.max(0, slides.findIndex((s) => s.id === a.id)) : 0);
+
   return (
     <div
       style={{
@@ -258,13 +276,18 @@ export default function LogoMontage({ showPlaceholder = true }: LogoMontageProps
         </div>
       )}
 
+      <style>{`@keyframes lm-logo-in{from{opacity:0;transform:translateY(2.5vh) scale(0.94)}to{opacity:1;transform:translateY(0) scale(1)}}`}</style>
+
       {/* Two persistent slide layers — never unmount, only opacity flips. */}
       <div style={layerStyle(ready && frontIsA)}>
-        <SlideContent attraction={layerA} active={ready && frontIsA} />
+        <SlideContent attraction={layerA} active={ready && frontIsA} variant={variantFor(layerA)} />
       </div>
       <div style={layerStyle(ready && !frontIsA)}>
-        <SlideContent attraction={layerB} active={ready && !frontIsA} />
+        <SlideContent attraction={layerB} active={ready && !frontIsA} variant={variantFor(layerB)} />
       </div>
+
+      {/* Subtle vignette for depth */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
 
       {/* Bottom brand strip — editable via Admin → Screens */}
       <div
