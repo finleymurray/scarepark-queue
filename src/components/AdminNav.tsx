@@ -159,8 +159,8 @@ export default function AdminNav({
               onClick={() => {
                 if (!moreOpen && moreButtonRef.current) {
                   const r = moreButtonRef.current.getBoundingClientRect();
-                  // Clamp so dropdown never overflows right edge of screen
-                  const left = Math.min(r.left, window.innerWidth - 170);
+                  // Clamp so the two-column dropdown never overflows the screen
+                  const left = Math.max(8, Math.min(r.left, window.innerWidth - 332));
                   setDropdownPos({ top: r.bottom + 4, left });
                 }
                 setMoreOpen((v) => !v);
@@ -193,25 +193,27 @@ export default function AdminNav({
                 left: dropdownPos.left,
                 background: surface.raised,
                 border: `1px solid ${border.strong}`,
-                borderRadius: radius.sm,
-                padding: '4px 0',
-                minWidth: 160,
+                borderRadius: radius.md,
+                padding: 12,
+                width: 324,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                columnGap: 14,
+                rowGap: 12,
+                alignItems: 'start',
                 zIndex: 9999,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
               }}>
-                {MORE_SECTIONS.map((section, i) => (
+                {MORE_SECTIONS.map((section) => (
                   <div key={section.heading}>
-                    {i > 0 && (
-                      <div style={{ height: 1, background: border.default, margin: '4px 0' }} />
-                    )}
                     <div
                       style={{
-                        padding: '6px 16px 4px',
-                        fontSize: 10,
-                        fontWeight: 600,
-                        letterSpacing: '0.06em',
+                        padding: '0 8px 4px',
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: '0.07em',
                         textTransform: 'uppercase',
-                        color: text.muted,
+                        color: text.faint,
                       }}
                     >
                       {section.heading}
@@ -226,9 +228,10 @@ export default function AdminNav({
                           className={`admin-nav-dropdown ${active ? 'admin-nav-dropdown-active' : ''}`}
                           style={{
                             display: 'block',
-                            padding: '8px 16px',
+                            padding: '6px 8px',
+                            borderRadius: radius.sm,
                             textDecoration: 'none',
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: active ? 600 : 400,
                           }}
                         >
