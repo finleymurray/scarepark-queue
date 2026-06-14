@@ -44,7 +44,7 @@ export interface OperatorSession {
   log_date: string;
 }
 
-export type IncidentSource = 'operator' | 'delay_auto' | 'admin_request';
+export type IncidentSource = 'operator' | 'delay_auto' | 'admin_request' | 'staff' | 'admin';
 export type IncidentStatus = 'requested' | 'submitted' | 'dismissed' | 'reviewed';
 export type IncidentSeverity = 'minor' | 'moderate' | 'serious';
 export type IncidentCategory =

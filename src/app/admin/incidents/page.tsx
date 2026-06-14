@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkAuth, clearAuthCache } from '@/lib/auth';
 import AdminNav from '@/components/AdminNav';
-import type { Incident, IncidentStatus, IncidentSeverity } from '@/types/database';
-import { surface, border, text as textTok, accents, radius, FONT_NUM, microLabel } from '@/lib/theme';
+import type { Incident, IncidentStatus, IncidentSeverity, Attraction } from '@/types/database';
+import { surface, border, text as textTok, accents, radius, FONT_NUM, microLabel, primaryButton, controlButton } from '@/lib/theme';
 import { useToasts, ToastStack } from '@/components/ui/Toast';
+import { getTodayDateStr } from '@/lib/signoff';
+import IncidentForm, { type IncidentFormValues } from '@/components/IncidentForm';
 
 type FilterKey = 'submitted' | 'requested' | 'all';
 
@@ -42,6 +44,8 @@ const STATUS_PILL: Record<IncidentStatus, { bg: string; text: string; label: str
 function sourceLabel(inc: Incident): string {
   if (inc.source === 'operator') return 'Operator report';
   if (inc.source === 'delay_auto') return `Auto: ${inc.delay_reason || 'unspecified'} delay`;
+  if (inc.source === 'staff') return 'Staff report';
+  if (inc.source === 'admin') return 'Admin report';
   return 'Admin request';
 }
 
@@ -121,6 +125,10 @@ export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [filter, setFilter] = useState<FilterKey>('submitted');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [attractions, setAttractions] = useState<Pick<Attraction, 'id' | 'name' | 'slug'>[]>([]);
+  const [creating, setCreating] = useState(false);
+  // null = picker closed; '' = picker open, awaiting choice; otherwise chosen attraction id or 'general'
+  const [chosenAttraction, setChosenAttraction] = useState<string | null>(null);
   const { toasts, pushToast } = useToasts();
 
   const fetchIncidents = useCallback(async () => {
@@ -145,6 +153,11 @@ export default function IncidentsPage() {
       setUserEmail(auth.email || '');
       setDisplayName(auth.displayName || '');
       await fetchIncidents();
+      const { data: attrs } = await supabase
+        .from('attractions')
+        .select('id, name, slug')
+        .order('sort_order', { ascending: true });
+      setAttractions(attrs || []);
       setLoading(false);
     }
     init();
@@ -203,6 +216,38 @@ export default function IncidentsPage() {
     pushToast('success', 'Incident reopened');
   }
 
+  const chosenAttractionName =
+    chosenAttraction && chosenAttraction !== 'general'
+      ? attractions.find((a) => a.id === chosenAttraction)?.name || 'General'
+      : 'General';
+
+  async function createIncident(values: IncidentFormValues) {
+    const attractionId = chosenAttraction && chosenAttraction !== 'general' ? chosenAttraction : null;
+    const { error } = await supabase.from('incidents').insert({
+      source: 'admin',
+      status: 'submitted',
+      attraction_id: attractionId,
+      attraction_name: chosenAttractionName,
+      log_date: getTodayDateStr(),
+      incident_type: values.incident_type,
+      category: values.category,
+      severity: values.severity,
+      description: values.description,
+      people_involved: values.people_involved,
+      actions_taken: values.actions_taken,
+      form_data: values.form_data,
+      reported_by: displayName || userEmail,
+    });
+    if (error) {
+      pushToast('error', 'Failed to log incident');
+      throw error;
+    }
+    pushToast('success', 'Incident logged');
+    setCreating(false);
+    setChosenAttraction(null);
+    await fetchIncidents();
+  }
+
   async function cancelRequest(inc: Incident) {
     setBusyId(inc.id);
     const { error } = await supabase
@@ -235,7 +280,18 @@ export default function IncidentsPage() {
       <AdminNav userEmail={userEmail} displayName={displayName} onLogout={handleLogout} />
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <h2 className="text-2xl font-bold" style={{ margin: '0 0 20px' }}>Incident Review</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '0 0 20px' }}>
+          <h2 className="text-2xl font-bold" style={{ margin: 0 }}>Incident Review</h2>
+          <button
+            onClick={() => { setChosenAttraction('general'); setCreating(true); }}
+            style={{ ...primaryButton('admin'), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', fontSize: 13 }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New incident
+          </button>
+        </div>
 
         {/* Segmented filter */}
         <div style={{ display: 'inline-flex', gap: 2, background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, padding: 3, marginBottom: 24 }}>
@@ -345,8 +401,23 @@ export default function IncidentsPage() {
                   )}
 
                   {/* Actions */}
-                  {(inc.status === 'submitted' || inc.status === 'reviewed' || inc.status === 'requested') && (
+                  {(inc.status === 'submitted' || inc.status === 'reviewed' || inc.status === 'requested' || inc.status === 'dismissed') && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 16, paddingTop: 14, borderTop: `1px solid ${border.divider}` }}>
+                      {!isRequested && (
+                        <a
+                          href={`/admin/incidents/print?id=${inc.id}&print=1`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ ...controlButton, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                          </svg>
+                          Print
+                        </a>
+                      )}
                       {inc.status === 'submitted' && (
                         <button
                           onClick={() => markReviewed(inc)}
@@ -391,6 +462,58 @@ export default function IncidentsPage() {
           </div>
         )}
       </div>
+
+      {/* New incident: attraction picker → shared form */}
+      {creating && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+            onClick={() => { setCreating(false); setChosenAttraction(null); }}
+          >
+            <div
+              style={{ width: '100%', maxWidth: 420, background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 24 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p style={{ color: textTok.primary, fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>New incident</p>
+              <p style={{ color: textTok.muted, fontSize: 12, margin: '0 0 16px' }}>Choose the attraction this relates to.</p>
+              <p style={{ ...microLabel, marginBottom: 8 }}>Attraction</p>
+              <select
+                value={chosenAttraction || 'general'}
+                onChange={(e) => setChosenAttraction(e.target.value)}
+                style={{ width: '100%', background: surface.control, border: `1px solid ${border.strong}`, borderRadius: radius.md, color: textTok.primary, fontSize: 14, padding: '10px 12px', outline: 'none' }}
+              >
+                <option value="general">General</option>
+                {attractions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button
+                  onClick={() => { setCreating(false); setChosenAttraction(null); }}
+                  style={{ ...controlButton, flex: 1, padding: '11px 0', fontSize: 14, fontWeight: 600 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setCreating(false)}
+                  style={{ ...primaryButton('admin'), flex: 2, padding: '11px 0', fontSize: 14 }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Once an attraction is chosen and the picker is dismissed, render the shared form */}
+      {!creating && chosenAttraction !== null && (
+        <IncidentForm
+          attractionName={chosenAttractionName}
+          onSubmit={createIncident}
+          onCancel={() => setChosenAttraction(null)}
+        />
+      )}
 
       <ToastStack toasts={toasts} />
     </div>
