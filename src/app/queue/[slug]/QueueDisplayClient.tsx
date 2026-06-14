@@ -106,7 +106,7 @@ export default function QueueDisplayClient({ slug, identityPath }: { slug: strin
         background: '#000',
       }}
     >
-      <ParkClosedOverlay />
+      <ParkClosedOverlay attraction={attraction} />
       {/* Full-bleed background image */}
       {bgSrc && (
         <div
