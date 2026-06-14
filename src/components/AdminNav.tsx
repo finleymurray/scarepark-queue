@@ -12,8 +12,8 @@ const PRIMARY_TABS = [
   { label: 'Sign-Off', href: '/admin/signoff' },
   { label: 'Reports', href: '/admin/reports' },
   { label: 'Incidents', href: '/admin/incidents' },
-  { label: 'Screens', href: '/admin/screens' },
   { label: 'Alerts', href: '/admin/alerts' },
+  { label: 'Screens', href: '/admin/screens' },
 ];
 
 type MoreItem = { label: string; href: string };
