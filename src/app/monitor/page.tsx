@@ -7,7 +7,7 @@ import { checkAuth } from '@/lib/auth';
 import type { Attraction, MazeZone } from '@/types/database';
 import { floorplans } from '@/lib/floorplans';
 import AppSwitcher from '@/components/AppSwitcher';
-import { surface, border, text, accents, radius, statusColors, microLabel } from '@/lib/theme';
+import { surface, border, text, accents, radius, statusColors, microLabel, FONT_NUM } from '@/lib/theme';
 
 const accent = accents.monitor;
 
@@ -17,6 +17,14 @@ export default function MonitorIndex() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [clock, setClock] = useState('');
+
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleTimeString('en-GB'));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -64,9 +72,10 @@ export default function MonitorIndex() {
         <AppSwitcher currentApp="monitor" isAdmin={isAdmin} />
         <div>
           <h1 style={{ color: text.primary, fontSize: 17, fontWeight: 700, lineHeight: 1.2 }}>Monitor</h1>
-          <p style={{ color: text.muted, fontSize: 11 }}>Maze safety · floorplans & equipment</p>
+          <p style={{ color: text.muted, fontSize: 11 }}>Pick a maze to open its CCTV & safety console</p>
         </div>
         <span style={{ marginLeft: 'auto', color: text.muted, fontSize: 12 }}>{displayName}</span>
+        <span style={{ color: text.primary, fontSize: 15, fontWeight: 600, ...FONT_NUM }}>{clock}</span>
       </header>
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '26px 22px 60px' }}>
@@ -77,8 +86,8 @@ export default function MonitorIndex() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {mazes.map((m) => {
               const zones = zonesByAttraction[m.id] ?? [];
+              const cams = zones.filter((z) => z.zone_number != null).length;
               const hasPlan = Boolean(floorplans[m.slug]);
-              const estops = zones.filter((z) => z.has_estop).length;
               const sc = statusColors(m.status);
               return (
                 <Link
@@ -102,7 +111,7 @@ export default function MonitorIndex() {
                   </div>
                   <p style={{ color: text.muted, fontSize: 12, marginTop: 8 }}>
                     {hasPlan
-                      ? `${zones.filter((z) => z.zone_number != null).length} zones · ${estops} E-Stops · ${zones.filter((z) => z.has_break_glass).length} break-glass points`
+                      ? `${cams} cameras · ${zones.filter((z) => z.has_estop).length} E-Stops · ${zones.filter((z) => z.has_break_glass).length} break-glass points`
                       : 'Awaiting CoSWP — no floorplan yet'}
                   </p>
                 </Link>

@@ -15,7 +15,7 @@ const APPS: App[] = [
   { id: 'control',  label: 'Control', sublabel: 'Queue & throughput',  href: '/control',  logo: '/logo-control.png',  accent: '#3B82F6' },
   { id: 'signoff',  label: 'Sign-Off',       sublabel: 'Checklists & reports', href: '/signoff',  logo: '/logo-signoff.png',  accent: '#F59E0B' },
   { id: 'admin',    label: 'Admin',           sublabel: 'Management & ops',    href: '/admin',    logo: '/logo-admin.png',    accent: '#EF4444' },
-  { id: 'monitor',  label: 'Monitor',         sublabel: 'Maze safety & CCTV',  href: '/monitor',  logo: '/logo-monitor.png',  accent: '#16A34A' },
+  { id: 'monitor',  label: 'Monitor',         sublabel: 'Maze safety & CCTV',  href: '/monitor',  logo: '/logo-monitor.png?v=2',  accent: '#16A34A' },
 ];
 
 export default function AppSwitcher({
