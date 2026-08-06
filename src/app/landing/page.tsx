@@ -22,6 +22,14 @@ const APPS = [
     glow: '245,158,11',
   },
   {
+    id: 'monitor',
+    href: '/monitor',
+    logo: '/logo-monitor.png?v=2',
+    name: 'Monitor',
+    description: 'Maze CCTV, floorplans & safety',
+    glow: '22,163,74',
+  },
+  {
     id: 'admin',
     href: '/admin',
     logo: '/logo-admin.png',

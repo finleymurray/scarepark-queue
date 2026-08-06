@@ -266,9 +266,9 @@ function MazeConsole() {
           </span>
         )}
         <StatusChip label={`CAMS 0/${cameraZones.length} — AWAITING INSTALL`} tone="warn" />
-        <StatusChip label="E-STOP CHAIN — NOT COMMISSIONED" tone="muted" />
+        <span className="hidden md:inline-flex"><StatusChip label="E-STOP CHAIN — NOT COMMISSIONED" tone="muted" /></span>
         {holdReq && <StatusChip label={`HOLD REQUESTED ${holdReq.at}`} tone="warn" />}
-        <span style={{ marginLeft: 'auto', color: text.muted, fontSize: 12 }}>{reporter}</span>
+        <span className="hidden sm:inline" style={{ marginLeft: 'auto', color: text.muted, fontSize: 12 }}>{reporter}</span>
         <span style={{ color: text.primary, fontSize: 14, fontWeight: 600, ...FONT_NUM }}>{clock}</span>
       </header>
 
@@ -370,8 +370,8 @@ function MazeConsole() {
             </p>
           </section>
 
-          {/* ── map + rail ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.45fr) minmax(300px, 1fr)', gap: 16, alignItems: 'start' }}>
+          {/* ── map + rail — stacks on phones, two columns from lg up ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)] items-start" style={{ gap: 16 }}>
             <section style={{ background: surface.card, border: `1px solid ${border.default}`, borderRadius: radius.xl, padding: 14, minWidth: 0 }}>
               <p style={{ ...microLabel, marginBottom: 10 }}>Live map — tap a zone to pull its camera</p>
               {plan ? (
