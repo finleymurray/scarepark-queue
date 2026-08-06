@@ -34,6 +34,7 @@ export const accents = {
   control: { base: '#3B82F6', strong: '#1D4ED8', soft: 'rgba(59,130,246,0.12)', text: '#93C5FD' },
   signoff: { base: '#F59E0B', strong: '#D97706', soft: 'rgba(245,158,11,0.12)', text: '#FCD34D' },
   admin:   { base: '#EF4444', strong: '#B91C1C', soft: 'rgba(239,68,68,0.12)', text: '#FCA5A5' },
+  monitor: { base: '#16A34A', strong: '#15803D', soft: 'rgba(22,163,74,0.12)', text: '#86EFAC' },
 } as const;
 
 export type AppKey = keyof typeof accents;

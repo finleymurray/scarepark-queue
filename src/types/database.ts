@@ -272,3 +272,20 @@ export interface ShowReport {
   draft_updated_at: string | null;
   created_at: string;
 }
+
+export interface MazeZone {
+  id: string;
+  attraction_id: string;
+  zone_number: number | null;
+  slug: string;
+  name: string;
+  level: number;
+  sort_order: number;
+  is_entrance: boolean;
+  is_exit: boolean;
+  is_bypass: boolean;
+  has_estop: boolean;
+  has_break_glass: boolean;
+  extinguishers: string[];
+  notes: string | null;
+}
