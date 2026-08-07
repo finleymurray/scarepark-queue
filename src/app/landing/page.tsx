@@ -46,14 +46,17 @@ export default function LandingPage() {
   useEffect(() => {
     async function check() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        const { data } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('email', session.user.email)
-          .single();
-        setRole(data?.role ?? null);
+      if (!session?.user?.email) {
+        // Landing is staff-only — no session, no app directory.
+        window.location.href = '/login?next=/landing';
+        return;
       }
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('email', session.user.email)
+        .single();
+      setRole(data?.role ?? null);
       setChecking(false);
     }
     check();
@@ -155,17 +158,6 @@ export default function LandingPage() {
         ))}
       </div>
 
-      {/* Sign in link if not authenticated */}
-      {role === null && (
-        <div style={{ marginTop: 36 }}>
-          <a
-            href="/login"
-            style={{ color: textTok.faint, fontSize: 13, textDecoration: 'none', borderBottom: `1px solid ${border.divider}`, paddingBottom: 2 }}
-          >
-            Sign in
-          </a>
-        </div>
-      )}
     </div>
   );
 }
