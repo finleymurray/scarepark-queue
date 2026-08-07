@@ -36,7 +36,7 @@ The setup script will:
 - Reboot automatically
 
 ### Step 4: Assign screen
-1. Open the admin panel at `https://control.immersivecore.network/admin`
+1. Open the admin panel at `https://corelink.immersivecore.network/admin`
 2. Go to **Screens** — the new Pi should appear with its hostname
 3. Assign it to the desired attraction/TV
 
@@ -61,7 +61,7 @@ DISPLAY=:0 /opt/custompios/scripts/start_chromium_browser &
 
 ### Change the URL remotely
 ```bash
-ssh pi@<ip> "echo 'https://control.immersivecore.network/screen?hostname=\$(hostname)' | sudo tee /boot/firmware/fullpageos.txt && sudo reboot"
+ssh pi@<ip> "echo 'https://corelink.immersivecore.network/screen?hostname=\$(hostname)' | sudo tee /boot/firmware/fullpageos.txt && sudo reboot"
 ```
 
 ### Force reboot

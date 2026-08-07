@@ -17,7 +17,7 @@
 # ═══════════════════════════════════════════════════════════════════
 
 # ── Defaults ──
-KIOSK_URL="https://control.immersivecore.network"
+KIOSK_URL="https://corelink.immersivecore.network"
 KIOSK_HOSTNAME="ic-kiosk"
 KIOSK_ROTATE=0
 KIOSK_USER="kiosk"

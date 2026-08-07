@@ -51,4 +51,4 @@ exec $CHROMIUM_BIN \
   --disable-gpu-compositing \
   --autoplay-policy=no-user-gesture-required \
   --start-fullscreen \
-  "https://control.immersivecore.network/screen?hostname=${KIOSK_HOSTNAME}"
+  "https://corelink.immersivecore.network/screen?hostname=${KIOSK_HOSTNAME}"

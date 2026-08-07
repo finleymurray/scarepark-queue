@@ -1,5 +1,5 @@
 -- ============================================================
--- Security Fixes for scarepark-queue (control.immersivecore.network)
+-- Security Fixes for scarepark-queue (corelink.immersivecore.network)
 -- Run this in Supabase SQL Editor
 -- ============================================================
 --

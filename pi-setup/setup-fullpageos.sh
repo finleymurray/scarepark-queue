@@ -83,7 +83,7 @@ CHROMEOF
 sudo chmod +x /opt/custompios/scripts/start_chromium_browser
 
 # ── 6. Set kiosk URL ─────────────────────────────────────────────────
-echo "https://control.immersivecore.network/screen?hostname=${HOSTNAME}" | sudo tee /boot/firmware/fullpageos.txt > /dev/null
+echo "https://corelink.immersivecore.network/screen?hostname=${HOSTNAME}" | sudo tee /boot/firmware/fullpageos.txt > /dev/null
 
 # ── 7. Disable unnecessary services (free RAM & CPU) ─────────────────
 echo "Disabling unnecessary services..."
@@ -116,7 +116,7 @@ echo ""
 echo "=== Setup complete! ==="
 echo "Hostname:  ${HOSTNAME}"
 echo "SSH:       ssh pi@${HOSTNAME}.local"
-echo "URL:       https://control.immersivecore.network/screen"
+echo "URL:       https://corelink.immersivecore.network/screen"
 echo "Watchdog:  enabled"
 echo "Swap:      1GB"
 echo "Bluetooth: disabled"
