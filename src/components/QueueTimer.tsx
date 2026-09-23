@@ -10,8 +10,10 @@ import {
   type QueueTiming,
 } from '@/lib/queueTimer';
 import { surface, border, text, accents, radius, FONT_NUM, controlButton, primaryButton } from '@/lib/theme';
+import jsQR from 'jsqr';
 
-/* Native BarcodeDetector (Chrome/Android — the operator devices). */
+/* Native BarcodeDetector where available (Chrome/Android — fast, multi-format);
+ * everywhere else (iPhone Safari/WebKit) frames are decoded with jsQR. */
 interface DetectedBarcode { rawValue: string }
 interface BarcodeDetectorLike { detect(source: CanvasImageSource): Promise<DetectedBarcode[]> }
 type BarcodeDetectorCtor = new (opts?: { formats?: string[] }) => BarcodeDetectorLike;
@@ -24,6 +26,24 @@ function getBarcodeDetector(): BarcodeDetectorLike | null {
   } catch {
     return null;
   }
+}
+
+/** Decode a QR from the current video frame via jsQR (downscaled for speed). */
+function decodeFrameWithJsQR(video: HTMLVideoElement, canvas: HTMLCanvasElement): string | null {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) return null;
+  const scale = Math.min(1, 480 / vw);
+  const w = Math.round(vw * scale);
+  const h = Math.round(vh * scale);
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(video, 0, 0, w, h);
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const result = jsQR(imageData.data, w, h, { inversionAttempts: 'dontInvert' });
+  return result?.data?.trim() || null;
 }
 
 function formatDuration(secs: number): string {
@@ -147,13 +167,9 @@ export default function QueueTimer({
   useEffect(() => stopCamera, [stopCamera]); // release camera on unmount
 
   async function openCamera() {
-    const detector = getBarcodeDetector();
+    const detector = getBarcodeDetector(); // null on iPhone → jsQR fallback
     setCameraOpen(true);
     setCameraError(null);
-    if (!detector) {
-      setCameraError('Camera scanning not supported on this device — type the code instead.');
-      return;
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' },
@@ -164,24 +180,33 @@ export default function QueueTimer({
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
+      const scratchCanvas = document.createElement('canvas');
+      let lastDecodeAt = 0;
       const loop = async () => {
         const video = videoRef.current;
         if (!video || !streamRef.current) return;
         if (video.readyState >= 2) {
+          let code: string | null = null;
           try {
-            const codes = await detector.detect(video);
-            const code = codes[0]?.rawValue?.trim();
-            if (code) {
-              const last = recentScansRef.current.get(code) || 0;
-              if (Date.now() - last > 5000) {
-                recentScansRef.current.set(code, Date.now());
-                const msg = await handleScan(code);
-                if (msg) setCameraFeedback(msg);
-                if (navigator.vibrate) navigator.vibrate(80);
-              }
+            if (detector) {
+              const codes = await detector.detect(video);
+              code = codes[0]?.rawValue?.trim() || null;
+            } else if (Date.now() - lastDecodeAt > 150) {
+              // jsQR is CPU-bound — throttle to ~6 fps to keep the phone cool
+              lastDecodeAt = Date.now();
+              code = decodeFrameWithJsQR(video, scratchCanvas);
             }
           } catch {
             /* frame not ready — keep looping */
+          }
+          if (code) {
+            const last = recentScansRef.current.get(code) || 0;
+            if (Date.now() - last > 5000) {
+              recentScansRef.current.set(code, Date.now());
+              const msg = await handleScan(code);
+              if (msg) setCameraFeedback(msg);
+              if (navigator.vibrate) navigator.vibrate(80);
+            }
           }
         }
         detectLoopRef.current = requestAnimationFrame(loop);
