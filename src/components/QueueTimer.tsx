@@ -78,7 +78,6 @@ export default function QueueTimer({
   const [scanning, setScanning] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [cameraFeedback, setCameraFeedback] = useState<string | null>(null);
   const [, forceTick] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -160,7 +159,6 @@ export default function QueueTimer({
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     setCameraOpen(false);
-    setCameraFeedback(null);
     setCameraError(null);
   }, []);
 
@@ -204,8 +202,13 @@ export default function QueueTimer({
             if (Date.now() - last > 5000) {
               recentScansRef.current.set(code, Date.now());
               const msg = await handleScan(code);
-              if (msg) setCameraFeedback(msg);
               if (navigator.vibrate) navigator.vibrate(80);
+              if (msg) {
+                // Successful scan → close the camera and confirm via toast
+                onToast('success', msg);
+                stopCamera();
+                return;
+              }
             }
           }
         }
@@ -375,14 +378,9 @@ export default function QueueTimer({
                 style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: radius.md, background: '#000' }}
               />
             )}
-            <div style={{ minHeight: 22, textAlign: 'center', marginTop: 10 }}>
-              {cameraFeedback && (
-                <span style={{ color: accents.control.base, fontSize: 13, fontWeight: 600, ...FONT_NUM }}>{cameraFeedback}</span>
-              )}
-            </div>
             <button
               onClick={stopCamera}
-              style={{ ...controlButton, width: '100%', minHeight: 48, marginTop: 8, fontSize: 14, fontWeight: 600 }}
+              style={{ ...controlButton, width: '100%', minHeight: 48, marginTop: 14, fontSize: 14, fontWeight: 600 }}
               className="transition-colors touch-manipulation"
             >
               Done
