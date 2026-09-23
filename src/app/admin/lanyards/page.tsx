@@ -28,7 +28,9 @@ function generateCodes(count: number): string[] {
   return Array.from(codes);
 }
 
-const CARDS_PER_PAGE = 10;
+// A6 cards (110 × 160mm) to suit standard A6 lanyard holders — two per
+// landscape A4 sheet with a single cut down the middle.
+const CARDS_PER_PAGE = 2;
 
 export default function LanyardsPage() {
   const [loading, setLoading] = useState(true);
@@ -115,7 +117,7 @@ export default function LanyardsPage() {
           <div>
             <h1 style={{ color: textTok.primary, fontSize: 20, fontWeight: 700, margin: 0 }}>Queue Timer Lanyards</h1>
             <p style={{ color: textTok.muted, fontSize: 13, margin: '4px 0 0' }}>
-              Print A4 sheets of unique QR cards for lanyard inserts — 10 per page, cut along the guides.
+              Print A6 (11 × 16cm) QR cards for lanyard holders — two per landscape A4 sheet, one cut down the middle.
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -156,7 +158,7 @@ export default function LanyardsPage() {
         </div>
         <p style={{ color: textTok.faint, fontSize: 12, margin: '0 0 20px' }}>
           Every batch is unique — codes work the moment they&apos;re first scanned, no registration needed.
-          In the print dialog choose A4, portrait, and set margins to &quot;None&quot; or &quot;Default&quot;.
+          In the print dialog choose A4, landscape, and set margins to &quot;None&quot;.
         </p>
       </div>
 
@@ -166,7 +168,7 @@ export default function LanyardsPage() {
           <div key={pi} className="sheet">
             {pageCodes.map((code) => (
               <div key={code} className="card">
-                <div className="card-brand">CORELINK · QUEUE TIMER</div>
+                <div className="card-brand">QUEUE TIMER</div>
                 {qrUrls[code] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={qrUrls[code]} alt={code} className="card-qr" />
@@ -187,14 +189,15 @@ export default function LanyardsPage() {
 
       <style jsx global>{`
         .sheet {
-          width: 210mm;
-          min-height: 297mm;
+          width: 297mm;
+          height: 210mm;
           background: #ffffff;
-          padding: 8mm 10mm;
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          grid-auto-rows: 55mm;
-          gap: 0;
+          grid-template-columns: repeat(2, 110mm);
+          grid-auto-rows: 160mm;
+          justify-content: center;
+          align-content: center;
+          column-gap: 10mm;
           box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
         }
         .card {
@@ -204,50 +207,50 @@ export default function LanyardsPage() {
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 3mm;
+          padding: 8mm;
           color: #000;
           background: #fff;
           overflow: hidden;
           font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
         .card-brand {
-          font-size: 6.5pt;
+          font-size: 10pt;
           font-weight: 700;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.16em;
           color: #666;
           white-space: nowrap;
-          margin-bottom: 1.5mm;
+          margin-bottom: 8mm;
         }
         .card-qr {
-          width: 20mm;
-          height: 20mm;
+          width: 60mm;
+          height: 60mm;
         }
         .card-code {
-          font-size: 12pt;
+          font-size: 26pt;
           font-weight: 800;
           font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          letter-spacing: 0.06em;
-          margin-top: 1.5mm;
+          letter-spacing: 0.08em;
+          margin-top: 8mm;
           color: #000;
           white-space: nowrap;
         }
         .card-note {
-          font-size: 8pt;
+          font-size: 13pt;
           font-weight: 600;
-          line-height: 1.3;
+          line-height: 1.4;
           color: #222;
-          margin-top: 1.5mm;
+          margin-top: 8mm;
         }
-        @media screen and (max-width: 850px) {
+        @media screen and (max-width: 1200px) {
           .sheet {
             transform: scale(0.44);
             transform-origin: top center;
-            margin-bottom: calc(-297mm * 0.56);
+            margin-bottom: calc(-210mm * 0.56);
           }
         }
         @media print {
           @page {
-            size: A4 portrait;
+            size: A4 landscape;
             margin: 0;
           }
           body {
