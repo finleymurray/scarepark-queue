@@ -25,6 +25,7 @@ const MORE_SECTIONS: MoreSection[] = [
     items: [
       { label: 'Attraction Details', href: '/admin/attractions' },
       { label: 'Add Attraction', href: '/admin/attractions/new' },
+      { label: 'Queue Lanyards', href: '/admin/lanyards' },
     ],
   },
   {
