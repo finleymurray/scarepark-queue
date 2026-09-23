@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 
 interface App {
   id: string;
@@ -104,7 +105,7 @@ export default function AppSwitcher({
 
           {/* Other apps */}
           {others.map((app) => (
-            <a
+            <Link
               key={app.id}
               href={app.href}
               onClick={() => setOpen(false)}
@@ -125,7 +126,7 @@ export default function AppSwitcher({
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: '#374151', marginLeft: 'auto', flexShrink: 0 }}>
                 <path d="M3 2H10V9M10 2L2 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </a>
+            </Link>
           ))}
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import AppSwitcher from './AppSwitcher';
 import { surface, border, text, accents, radius } from '@/lib/theme';
@@ -122,9 +123,9 @@ export default function AdminNav({
       <div style={{ background: surface.card, borderBottom: `1px solid ${border.default}`, padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppSwitcher currentApp="admin" isAdmin={isAdmin} />
-          <a href="/admin" style={{ textDecoration: 'none' }}>
+          <Link href="/admin" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: text.primary, fontSize: 15, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Admin</h1>
-          </a>
+          </Link>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: text.secondary }}>
           {userEmail && (
@@ -151,7 +152,7 @@ export default function AdminNav({
           {PRIMARY_TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
-              <a
+              <Link
                 key={tab.href}
                 href={tab.href}
                 className={`admin-nav-tab ${active ? 'admin-nav-tab-active' : ''}`}
@@ -179,7 +180,7 @@ export default function AdminNav({
                     {reviewCount}
                   </span>
                 )}
-              </a>
+              </Link>
             );
           })}
 
@@ -252,7 +253,7 @@ export default function AdminNav({
                     {section.items.map((tab) => {
                       const active = isActive(tab.href);
                       return (
-                        <a
+                        <Link
                           key={tab.href}
                           href={tab.href}
                           onClick={() => setMoreOpen(false)}
@@ -267,7 +268,7 @@ export default function AdminNav({
                           }}
                         >
                           {tab.label}
-                        </a>
+                        </Link>
                       );
                     })}
                   </div>
