@@ -20,6 +20,7 @@ import PinPad from '@/components/ui/PinPad';
 import { useToasts, ToastStack } from '@/components/ui/Toast';
 import useOperatorSession from '@/hooks/useOperatorSession';
 import OperatorChip from '@/components/OperatorChip';
+import QueueTimer from '@/components/QueueTimer';
 
 /* ── Helpers ── */
 
@@ -753,6 +754,32 @@ export default function SupervisorDashboard() {
     });
   }
 
+  // Set queue time to an absolute value (from a timed lanyard run)
+  async function handleWaitTimeSet(newTime: number): Promise<boolean> {
+    if (!selected) return false;
+    const oldTime = selected.wait_time || 0;
+    const clamped = Math.max(0, Math.min(180, newTime));
+    if (clamped === oldTime) return true;
+    const { error } = await supabase
+      .from('attractions')
+      .update({ wait_time: clamped, updated_at: new Date().toISOString() })
+      .eq('id', selected.id);
+    if (error) {
+      pushToast('error', 'Failed to update queue time');
+      return false;
+    }
+    logAudit({
+      actionType: 'queue_time_change',
+      attractionId: selected.id,
+      attractionName: selected.name,
+      performedBy: operatorSession?.operator_name || displayName || userEmail,
+      oldValue: String(oldTime),
+      newValue: String(clamped),
+      details: `Wait time set from ${oldTime}min to ${clamped}min (timed queue run)`,
+    });
+    return true;
+  }
+
   async function handleDispatch() {
     if (dispatchGroupSize === 0 || dispatching || !selectedId) return;
     setDispatching(true);
@@ -1426,6 +1453,25 @@ export default function SupervisorDashboard() {
             </section>
             );
 
+            {/* ── Queue Timer (lanyard scan-in / scan-out) ── */}
+            const queueTimerSection = selected.attraction_type !== 'show' && (
+              <section style={wide ? { marginBottom: 0, flexShrink: 0 } : { marginBottom: 48 }}>
+                <div className="flex items-center gap-2.5" style={{ marginBottom: wide ? 8 : 20 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: accents.control.base }} />
+                  <h2 style={{ ...microLabel, color: text.secondary, fontSize: 11, margin: 0 }}>Queue Timer</h2>
+                </div>
+                <div style={{ ...card(selected.status), padding: wide ? 16 : 24 }}>
+                  <QueueTimer
+                    attractionId={selected.id}
+                    currentWait={selected.wait_time || 0}
+                    operatorName={operatorSession?.operator_name || displayName || userEmail}
+                    onSetWaitTime={handleWaitTimeSet}
+                    onToast={pushToast}
+                  />
+                </div>
+              </section>
+            );
+
             {/* ── Lock overlay — no operator on shift ── */}
             const lockOverlay = (
               <div style={{
@@ -1634,6 +1680,7 @@ export default function SupervisorDashboard() {
                   <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 12 }}>
                     <div style={{ ...gatedStyle, flexShrink: 0 }} aria-hidden={panelLocked || undefined}>
                       {queueSection}
+                      {queueTimerSection}
                     </div>
                     {throughputSection}
                   </div>
@@ -1653,6 +1700,7 @@ export default function SupervisorDashboard() {
                   <div style={gatedStyle} aria-hidden={panelLocked || undefined}>
                     {dispatchSection}
                     {queueSection}
+                    {queueTimerSection}
                   </div>
                   {panelLocked && lockOverlay}
                 </div>
