@@ -1241,12 +1241,12 @@ export default function SupervisorDashboard() {
                     padding: wide ? 16 : 32,
                     // Subtle attraction art-wash — status rail stays load-bearing on the left
                     background: `linear-gradient(105deg, rgba(${cardGlowRgb}, 0.08) 0%, ${surface.card} 55%)`,
-                    // Wide: dispatch card absorbs the column's spare height; internals
-                    // vertically centred so it never pushes the page taller.
-                    ...(wide ? { flex: 1, minHeight: 0, display: 'flex' as const, flexDirection: 'column' as const, justifyContent: 'center' as const, overflow: 'hidden' as const } : {}),
+                    // Wide: dispatch card absorbs the column's spare height; controls
+                    // stay fixed and the dispatch history scrolls internally.
+                    ...(wide ? { flex: 1, minHeight: 0, display: 'flex' as const, flexDirection: 'column' as const, overflow: 'hidden' as const } : {}),
                   }}>
                     {/* Timer */}
-                    <div style={{ textAlign: 'center', marginBottom: wide ? 14 : 28 }}>
+                    <div style={{ textAlign: 'center', marginBottom: wide ? 14 : 28, ...(wide ? { flexShrink: 0 } : {}) }}>
                       <div style={{ ...microLabel, fontSize: 11, marginBottom: 6 }}>
                         Time Since Last Dispatch
                       </div>
@@ -1277,7 +1277,7 @@ export default function SupervisorDashboard() {
                     </div>
 
                     {/* Group size counter */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: wide ? 14 : 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: wide ? 14 : 24, ...(wide ? { flexShrink: 0 } : {}) }}>
                       <button
                         onClick={() => setDispatchGroupSize((v) => Math.max(0, v - 1))}
                         className="flex items-center justify-center rounded-xl bg-transparent border-2 border-red-400 text-red-400 text-3xl font-black active:bg-red-900/20 transition-colors touch-manipulation"
@@ -1345,9 +1345,14 @@ export default function SupervisorDashboard() {
                       </div>
                     )}
 
-                    {/* Today's dispatches summary */}
-                    <div style={{ borderTop: `1px solid ${border.divider}`, paddingTop: wide ? 10 : 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    {/* Today's dispatches summary — on wide layouts only this
+                        list scrolls; the controls above stay put. */}
+                    <div style={{
+                      borderTop: `1px solid ${border.divider}`,
+                      paddingTop: wide ? 10 : 16,
+                      ...(wide ? { flex: 1, minHeight: 0, display: 'flex' as const, flexDirection: 'column' as const } : {}),
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, ...(wide ? { flexShrink: 0 } : {}) }}>
                         <p style={{ color: text.muted, fontSize: 12, margin: 0, ...FONT_NUM }}>
                           {totalDispatches} dispatch{totalDispatches !== 1 ? 'es' : ''} · {totalGuests} guests today
                         </p>
@@ -1362,20 +1367,22 @@ export default function SupervisorDashboard() {
                       </div>
 
                       {/* Most recent dispatch only by default */}
-                      {dispatchLogs.slice(0, showAllDispatches ? dispatchLogs.length : 1).map((log) => {
-                        const t = new Date(log.dispatched_at);
-                        const h = t.getHours();
-                        const m = t.getMinutes();
-                        const ampm = h >= 12 ? 'PM' : 'AM';
-                        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                        const timeStr = `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
-                        return (
-                          <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: text.secondary, fontSize: 13, padding: '4px 0', borderTop: `1px solid ${border.divider}`, ...FONT_NUM }}>
-                            <span>{timeStr}</span>
-                            <span style={{ color: text.primary }}>{log.group_size} guests</span>
-                          </div>
-                        );
-                      })}
+                      <div style={wide ? { flex: 1, minHeight: 0, overflowY: 'auto' } : undefined}>
+                        {dispatchLogs.slice(0, showAllDispatches ? dispatchLogs.length : 1).map((log) => {
+                          const t = new Date(log.dispatched_at);
+                          const h = t.getHours();
+                          const m = t.getMinutes();
+                          const ampm = h >= 12 ? 'PM' : 'AM';
+                          const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                          const timeStr = `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+                          return (
+                            <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', color: text.secondary, fontSize: 13, padding: '4px 0', borderTop: `1px solid ${border.divider}`, ...FONT_NUM }}>
+                              <span>{timeStr}</span>
+                              <span style={{ color: text.primary }}>{log.group_size} guests</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </section>
